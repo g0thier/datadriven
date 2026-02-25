@@ -6,6 +6,7 @@ import Login from './pages/Login.jsx'
 import Innovation from './pages/innovation/Innovation.jsx'
 import Navbar from './components/Navbar.jsx'
 import Profil from './components/Profil.jsx'
+import Team from './pages/team/Team.jsx'
 
 function App() {
   const [count, setCount] = useState(0)
@@ -15,8 +16,9 @@ function App() {
       <div>
         {/* <Login />*/}
         <Navbar />
-        <Profil />
-        <Innovation />
+        {/* <Profil />
+        <Innovation />*/}
+        <Team />
       </div>
     </>
   )
