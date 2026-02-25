@@ -1,23 +1,20 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
+import Header from './components/Navbar.jsx'
+import Settings from './components/Settings.jsx'  
+import Login from './pages/Login.jsx'
+import Innovation from './pages/innovation/Innovation.jsx'
+import Navbar from './components/Navbar.jsx'
 
 function App() {
   const [count, setCount] = useState(0)
 
   return (
     <>
-      <h1 class="text-3xl font-bold underline text-red-500">
-        Hello world!
-      </h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
+      <div>
+         {/* <Login />*/}
+        <Navbar />
+        <Innovation />
       </div>
     </>
   )
