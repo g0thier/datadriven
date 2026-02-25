@@ -30,7 +30,7 @@ function Profil() {
 
   return (
     <>
-      <aside className="fixed right-6.25 top-21 bottom-12 w-80 bg-white rounded-2xl shadow-md p-5 z-[9999] flex flex-col">
+      <aside className="fixed right-6.25 top-21 bottom-12 w-80 bg-white rounded-2xl shadow-md p-5 z-9999 flex flex-col">
         <h2 className="text-xl font-bold mb-4">Mon Profil</h2>
 
         {/* 1er cadre arrondi */}
@@ -75,7 +75,7 @@ function Profil() {
                     className="w-full bg-transparent text-sm text-gray-900 outline-none border-b border-transparent focus:border-gray-300"
                   />
                 ) : (
-                  <div className="text-sm text-gray-900 break-words">
+                  <div className="text-sm text-gray-900 wrap-break-word">
                     {f.value}
                   </div>
                 )}
