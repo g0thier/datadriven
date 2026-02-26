@@ -55,11 +55,19 @@ function TemplateProfil() {
   );
 }
 
+function TemplateMail() {
+  return (
+    <>
+      <Mail />
+    </>
+  );
+}
+
 function App() {
 
   return (
     <>
-      <Mail />
+      <TemplateMail />
     </>
   )
 }

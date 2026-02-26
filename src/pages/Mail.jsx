@@ -20,7 +20,7 @@ function Mail() {
       {/* Contenu */}
       <div className="min-h-screen relative flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-3xl">
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-8 sm:p-12">
+          <div className="bg-white rounded-3xl shadow-xl p-8 sm:p-12">
             <h1 className="text-4xl sm:text-5xl text-gray-900 font-extrabold mb-6">
               Bonjour {inviteeName},
             </h1>
