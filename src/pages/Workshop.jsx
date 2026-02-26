@@ -166,7 +166,7 @@ function Workshop() {
                 Aucun département disponible (departments est vide).
               </p>
             ) : (
-              <div className="space-y-2 max-h-[360px] overflow-auto pr-1">
+              <div className="space-y-2 max-h-90 overflow-auto pr-1">
                 {departmentsNormalized.map((d) => {
                   const checked = selectedDepartmentIds.includes(d.__id);
                   return (
@@ -228,7 +228,7 @@ function Workshop() {
                 Aucun membre disponible (teamMembers est vide).
               </p>
             ) : (
-              <div className="space-y-2 max-h-[360px] overflow-auto pr-1">
+              <div className="space-y-2 max-h-90 overflow-auto pr-1">
                 {filteredMembers.map((m) => {
                   const checked = selectedMemberIds.includes(m.__id);
                   return (
