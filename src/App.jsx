@@ -8,6 +8,7 @@ import Workshop from './pages/Workshop.jsx'
 import Navbar from './components/Navbar.jsx'
 import Profil from './components/Profil.jsx'
 import Team from './pages/team/Team.jsx'
+import Mail from './pages/Mail.jsx'
 
 function TemplateLogin() {
   return (
@@ -58,7 +59,7 @@ function App() {
 
   return (
     <>
-      <TemplateWorkshop />
+      <Mail />
     </>
   )
 }
