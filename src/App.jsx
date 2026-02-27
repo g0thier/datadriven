@@ -2,6 +2,7 @@ import { useState } from 'react'
 import './App.css'
 import Header from './components/Navbar.jsx'
 import Settings from './components/Profil.jsx'  
+import StepTime from './components/StepTime.jsx'
 import Login from './pages/Login.jsx'
 import Innovation from './pages/innovation/Innovation.jsx'
 import Workshop from './pages/Workshop.jsx'
@@ -63,11 +64,20 @@ function TemplateMail() {
   );
 }
 
+function TemplateActivity() {
+  return (
+    <>
+      <StepTime />
+      <Workshop />
+    </>
+  );
+}
+
 function App() {
 
   return (
     <>
-      <TemplateMail />
+      <TemplateActivity />
     </>
   )
 }
