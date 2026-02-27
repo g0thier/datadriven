@@ -1,21 +1,50 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { data } from "./StepTimeData.jsx";
 
+// Transforme les étapes pour calculer les temps de début et de fin de chaque étape (en minutes)
+function computeSteps(steps) {
+  let t = 0;
+  return steps.map((step) => {
+    const stepStart = t;
+    const stepEnd = t + step.duration;
+    t = stepEnd;
+    return { ...step, stepStart, stepEnd };
+  });
+}
 
+// Formate un nombre de secondes en MM:SS
+function formatMMSS(totalSeconds) {
+  const s = Math.max(0, Math.floor(totalSeconds));
+  const mm = String(Math.floor(s / 60)).padStart(2, "0");
+  const ss = String(s % 60).padStart(2, "0");
+  return `${mm}:${ss}`;
+}
+
+// Composant principal pour afficher le timer et les étapes
 function StepTime() {
   const [startDate] = useState(() => new Date());
-  const [elapsed, setElapsed] = useState(0);
-  
-  // remplace pour le temps restant de data.duration - elapsed
-  const elapsedTime = useMemo(() => {
+  const [elapsed, setElapsed] = useState(0); // secondes écoulées
+
+  // Timer pour mettre à jour le temps écoulé chaque seconde
+  useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
-      const diff = Math.floor((now - startDate) / 1000); // Temps écoulé en secondes
-      setElapsed(diff);
+      const diffSeconds = Math.floor((now - startDate) / 1000);
+      setElapsed(diffSeconds);
     }, 1000);
-    return () => clearInterval(interval); // Nettoie l'intervalle à la fin
+
+    return () => clearInterval(interval);
   }, [startDate]);
 
+  // Pré-calcul des temps d'étapes (en minutes)
+  const computedSteps = useMemo(() => computeSteps(data.steps), []);
+
+  // calcule du temps total de l'atelier grace aux étapes (en minutes)
+  const totalDuration = computedSteps.length > 0 ? computedSteps[computedSteps.length - 1].stepEnd : 0;
+
+  // Temps restant (data.duration est en minutes)
+  const totalSeconds = totalDuration * 60;
+  const remainingSeconds = totalSeconds - elapsed;
 
   return (
     <>
@@ -32,7 +61,7 @@ function StepTime() {
             />
             <div className="min-w-0">
               <div className="font-semibold truncate">{data.title}</div>
-              <div className="text-sm text-gray-600 truncate">⏱ {data.duration} minutes</div>
+              <div className="text-sm text-gray-600 truncate">⏱ {totalDuration} minutes</div>
               <div className="text-sm text-gray-500 truncate">👥 {data.groupSize}</div>
             </div>
           </div>
@@ -40,9 +69,7 @@ function StepTime() {
 
         {/* 2e cadre arrondi */}
         <div className="rounded-2xl border border-gray-100 p-4 mb-4 flex items-center justify-center">
-          <div className="text-2xl font-bold">{`${Math.floor((data.duration * 60 - elapsed) / 60)
-            .toString()
-            .padStart(2, "0")}:${((data.duration * 60 - elapsed) % 60).toString().padStart(2, "0")}`}</div>
+          <div className="text-2xl font-bold">{formatMMSS(remainingSeconds)}</div>
         </div>
 
         {/* 3e cadre arrondi */}
@@ -51,19 +78,24 @@ function StepTime() {
             <div className="font-semibold">Étapes de la séance</div>
           </div>
 
-          {/* Liste des étapes*/}
+          {/* Liste des étapes */}
           <div className="flex flex-col gap-3 overflow-y-auto">
-            {data.steps.map((step, index) => {
-              const stepStart = data.steps.slice(0, index).reduce((acc, s) => acc + s.duration, 0);
-              const stepEnd = stepStart + step.duration;
-              const isCurrent = elapsed >= stepStart && elapsed < stepEnd;
-              const isPast = elapsed >= stepEnd;
+            {computedSteps.map((step, index) => {
+              // elapsed est en secondes, stepStart/End sont en minutes
+              const elapsedMinutes = elapsed / 60;
+
+              const isCurrent = elapsedMinutes >= step.stepStart && elapsedMinutes < step.stepEnd;
+              const isPast = elapsedMinutes >= step.stepEnd;
 
               return (
                 <div key={index} className="flex items-center gap-3">
                   <div
                     className={`w-3 h-3 rounded-full ${
-                      isCurrent ? "bg-violet-500" : isPast ? "bg-violet-300" : "bg-gray-300"
+                      isCurrent
+                        ? "bg-violet-500"
+                        : isPast
+                        ? "bg-violet-300"
+                        : "bg-gray-300"
                     }`}
                   />
                   <div className="flex-1">

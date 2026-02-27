@@ -2,7 +2,6 @@ import paperBrain from '../pages/innovation/assets/paper-brain.png'
 
 export const data = {
     title: 'Paper Brain',
-    duration: 50,
     groupSize: 'à partir de 3 personnes',
     image: paperBrain,
     benefits: [
