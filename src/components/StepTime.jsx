@@ -89,6 +89,8 @@ function StepTime() {
 
               return (
                 <div key={index} className="flex items-center gap-3">
+
+                  {/* Affichage d'une puce colorée */}
                   <div
                     className={`w-3 h-3 rounded-full ${
                       isCurrent
@@ -98,10 +100,33 @@ function StepTime() {
                         : "bg-gray-300"
                     }`}
                   />
+                  {/* Affichage du contenu de l'étape */}
                   <div className="flex-1">
                     <div className="font-medium">{step.label}</div>
-                    <div className="text-sm text-gray-600">{step.duration} min</div>
+                    {/* Si c'est l'étape en cours, on affiche le temps restant, sinon la durée totale de l'étape */}
+                    {isCurrent && (
+                      <div className="text-sm text-gray-500">
+                        {formatMMSS((step.stepEnd - elapsedMinutes) * 60)}
+                      </div>)
+                    }
+                    {!isCurrent && (
+                      <div className="text-sm text-gray-600">{step.duration} min</div>
+                    )} 
                   </div>
+
+                  {/* Barre de progression horizontale */}
+                  {isCurrent && (() => {
+                    const percentage = ((elapsedMinutes - step.stepStart) / step.duration) * 100;
+
+                    return (
+                      <div className="w-1 h-full bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className="w-full bg-violet-500 transition-all duration-300"
+                          style={{ height: `${percentage}%` }}
+                        />
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })}
