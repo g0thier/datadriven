@@ -49,7 +49,7 @@ function StepTime() {
   return (
     <>
       <aside className="fixed right-6.25 top-21 bottom-12 w-80 bg-white rounded-2xl shadow-md p-5 z-9999 flex flex-col">
-        <h2 className="text-xl font-bold mb-4">Atelier en groupe</h2>
+        <h2 className="text-xl font-bold mb-4">Atelier de groupe</h2>
 
         {/* 1er cadre arrondi */}
         <div className="rounded-2xl border border-gray-100 p-4 mb-4">
@@ -68,11 +68,6 @@ function StepTime() {
         </div>
 
         {/* 2e cadre arrondi */}
-        <div className="rounded-2xl border border-gray-100 p-4 mb-4 flex items-center justify-center">
-          <div className="text-2xl font-bold">{formatMMSS(remainingSeconds)}</div>
-        </div>
-
-        {/* 3e cadre arrondi */}
         <div className="rounded-2xl border border-gray-100 p-4 flex flex-col flex-1 min-h-0">
           <div className="flex items-center justify-between mb-3">
             <div className="font-semibold">Étapes de la séance</div>
@@ -144,6 +139,22 @@ function StepTime() {
                 </div>
               );
             })}
+
+            {/* Puce et Fin */}
+            <div className="flex -mt-0.5">
+              {/* Colonne timeline */}
+              <div className="flex flex-col items-center w-6">
+                <div className="w-3 h-3 rounded-sm bg-gray-300"/>
+              </div>
+
+              {/* Contenu */}
+              <div className="flex-1 pb-4 -mt-1.5">
+                <div className="font-medium">
+                  Fin dans {formatMMSS(remainingSeconds)}
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </aside>

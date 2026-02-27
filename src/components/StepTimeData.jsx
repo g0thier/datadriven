@@ -24,7 +24,7 @@ export const data = {
         ],
       },
       {
-        label: 'Phase individuelle silencieuse',
+        label: 'Phase individuelle',
         duration: 10,
         page : './pages/innovation/paper-brain/Step2.jsx',
         description: [
