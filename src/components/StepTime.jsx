@@ -81,52 +81,66 @@ function StepTime() {
           {/* Liste des étapes */}
           <div className="flex flex-col gap-3 overflow-y-auto">
             {computedSteps.map((step, index) => {
-              // elapsed est en secondes, stepStart/End sont en minutes
               const elapsedMinutes = elapsed / 60;
 
-              const isCurrent = elapsedMinutes >= step.stepStart && elapsedMinutes < step.stepEnd;
+              const isCurrent =
+                elapsedMinutes >= step.stepStart &&
+                elapsedMinutes < step.stepEnd;
+
               const isPast = elapsedMinutes >= step.stepEnd;
 
+              const percentage =
+                isCurrent
+                  ? ((elapsedMinutes - step.stepStart) / step.duration) * 100
+                  : isPast
+                  ? 100
+                  : 0;
+
               return (
-                <div key={index} className="flex items-center gap-3">
+                <div key={index} className="flex">
 
-                  {/* Affichage d'une puce colorée */}
-                  <div
-                    className={`w-3 h-3 rounded-full ${
-                      isCurrent
-                        ? "bg-violet-500"
-                        : isPast
-                        ? "bg-violet-300"
-                        : "bg-gray-300"
-                    }`}
-                  />
-                  {/* Affichage du contenu de l'étape */}
-                  <div className="flex-1">
-                    <div className="font-medium">{step.label}</div>
-                    {/* Si c'est l'étape en cours, on affiche le temps restant, sinon la durée totale de l'étape */}
-                    {isCurrent && (
-                      <div className="text-sm text-gray-500">
-                        {formatMMSS((step.stepEnd - elapsedMinutes) * 60)}
-                      </div>)
-                    }
-                    {!isCurrent && (
-                      <div className="text-sm text-gray-600">{step.duration} min</div>
-                    )} 
-                  </div>
+                  {/* Colonne timeline (puce + barre) */}
+                  <div className="flex flex-col items-center w-6">
+                    {/* Puce */}
+                    <div
+                      className={`w-3 h-3 rounded-full ${
+                        isCurrent
+                          ? "bg-violet-500"
+                          : isPast
+                          ? "bg-violet-300"
+                          : "bg-gray-300"
+                      }`}
+                    />
 
-                  {/* Barre de progression horizontale */}
-                  {isCurrent && (() => {
-                    const percentage = ((elapsedMinutes - step.stepStart) / step.duration) * 100;
-
-                    return (
-                      <div className="w-1 h-full bg-gray-200 rounded-full overflow-hidden">
+                    {/* Barre verticale */}
+                    {isCurrent ? (
+                      <div className="w-1 flex-1 bg-gray-300 rounded-full mt-2 overflow-hidden">
                         <div
                           className="w-full bg-violet-500 transition-all duration-300"
                           style={{ height: `${percentage}%` }}
                         />
                       </div>
-                    );
-                  })()}
+                    ): isPast ? (
+                      <div className="w-1 flex-1 bg-violet-300 rounded-full mt-2" />
+                    ) : (
+                      <div className="w-1 flex-1 bg-gray-300 rounded-full mt-2" />
+                    )}
+                  </div>
+
+                  {/* Contenu */}
+                  <div className="flex-1 pb-4 -mt-1.5">
+                    <div className="font-medium">{step.label}</div>
+
+                    {isCurrent ? (
+                      <div className="text-sm text-gray-500">
+                        {formatMMSS((step.stepEnd - elapsedMinutes) * 60)}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-600">
+                        {step.duration} min
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
