@@ -25,6 +25,8 @@ function Step3() {
     },
   ]);
 
+  const [currentNoteIndex, setCurrentNoteIndex] = useState(0);
+
   // --- COMMENTAIRES ---
   const addComment = (noteIndex) => {
     setNotes((prev) =>
@@ -93,7 +95,7 @@ function Step3() {
             <span className="relative -top-px">&lt;</span>
           </button>
 
-          <p className="text-gray-600 text-sm">Notes du participant y/x</p>
+          <p className="text-gray-600 text-sm">Notes du participant {currentNoteIndex + 1}/{notes.length}</p>
 
           <button className="rounded-full bg-violet-500 text-white w-8 h-8 flex items-center justify-center shadow-md hover:bg-violet-600 transition">
             <span className="relative -top-px">&gt;</span>
