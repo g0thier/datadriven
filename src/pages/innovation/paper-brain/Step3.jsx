@@ -27,6 +27,18 @@ function Step3() {
 
   const [currentNoteIndex, setCurrentNoteIndex] = useState(0);
 
+  const goToPreviousNote = () => {
+    setCurrentNoteIndex((prev) =>
+      prev === 0 ? notes.length - 1 : prev - 1
+    );
+  };
+
+  const goToNextNote = () => {
+    setCurrentNoteIndex((prev) =>
+      prev === notes.length - 1 ? 0 : prev + 1
+    );
+  };
+
   // --- COMMENTAIRES ---
   const addComment = (noteIndex) => {
     setNotes((prev) =>
@@ -91,13 +103,15 @@ function Step3() {
 
         {/* navigation entre les différentes notes utilisateur */}
         <div className="flex justify-between items-center col-span-full mb-3 px-2">
-          <button className="rounded-full bg-violet-500 text-white w-8 h-8 flex items-center justify-center shadow-md hover:bg-violet-600 transition">
+          <button className="rounded-full bg-violet-500 text-white w-8 h-8 flex items-center justify-center shadow-md hover:bg-violet-600 transition"
+            onClick={goToPreviousNote}>
             <span className="relative -top-px">&lt;</span>
           </button>
 
           <p className="text-gray-600 text-sm">Notes du participant {currentNoteIndex + 1}/{notes.length}</p>
 
-          <button className="rounded-full bg-violet-500 text-white w-8 h-8 flex items-center justify-center shadow-md hover:bg-violet-600 transition">
+          <button className="rounded-full bg-violet-500 text-white w-8 h-8 flex items-center justify-center shadow-md hover:bg-violet-600 transition"
+            onClick={goToNextNote}>
             <span className="relative -top-px">&gt;</span>
           </button>
 
