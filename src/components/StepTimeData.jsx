@@ -28,18 +28,10 @@ export const data = {
         duration: 10,
         page : './pages/innovation/paper-brain/Step2.jsx',
         description: [
-          "Chaque participant :",
-          "- Écrit ses idées sur une feuille",
-          "- Une idée par ligne (ou par post-it)",
-          "- En silence",
-          "- Sans autocensure",
-          "- Sans discussion",
-          "C’est la différence clé avec le brainstorming classique :",
-          "🧠 On réfléchit d’abord seul.",
-          "Pourquoi ?",
-          "- Évite l’influence des autres",
-          "- Stimule les profils introvertis",
-          "- Permet des idées plus originales"
+          "Chaque participant note ses idées :",
+          "- Une idée par post-it",
+          "- Sans discussion, ni autocensure",
+          "Objectifs : éviter l’influence, libérer les introvertis et favoriser l’originalité."
         ],
       },
       {

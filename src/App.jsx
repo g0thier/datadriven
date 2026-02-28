@@ -12,6 +12,7 @@ import Workshop from './pages/Workshop.jsx'
 import Innovation from './pages/innovation/Innovation.jsx'
 import Step1 from './pages/innovation/paper-brain/Step1.jsx'
 import Team from './pages/team/Team.jsx'
+import Step2 from './pages/innovation/paper-brain/Step2.jsx'
 
 
 
@@ -73,7 +74,7 @@ function TemplateActivity() {
   return (
     <>
       <StepTime />
-      <Step1 />
+      <Step2 />
     </>
   );
 }
