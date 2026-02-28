@@ -42,10 +42,13 @@ function Step2() {
 
         {/* Zone des post-it */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {notes.map((note, index) => (
+        {notes.map((note, index) => {
+          const isLast = index === notes.length - 1;
+
+          return (
             <div
               key={index}
-              className="relative bg-yellow-100 rounded-lg shadow-md p-4 min-h-[150px] flex flex-col"
+              className="relative bg-yellow-100 rounded-lg shadow-md p-4 min-h-37.5 flex flex-col"
             >
               <textarea
                 className="flex-1 bg-transparent resize-none focus:outline-none text-gray-800"
@@ -54,6 +57,7 @@ function Step2() {
                 onChange={(e) => handleChange(index, e.target.value)}
               />
 
+              {/* Bouton supprimer */}
               {notes.length > 1 && (
                 <button
                   onClick={() => removeNote(index)}
@@ -62,17 +66,19 @@ function Step2() {
                   ✕
                 </button>
               )}
+
+              {/* Bouton ajouter sur le dernier post-it */}
+              {isLast && (
+                <button
+                  onClick={addNote}
+                  className="absolute bottom-3 right-3 w-8 h-8 -mb-5 -mr-5 rounded-full bg-violet-500 text-white flex items-center justify-center shadow-md hover:bg-violet-600 transition"
+                >
+                  +
+                </button>
+              )}
             </div>
-          ))}
-        </div>
-        {/* Bouton ajouter */}
-        <div className="mt-8">
-          <button
-            onClick={addNote}
-            className="px-6 py-3 bg-blue-600 text-white rounded-xl shadow-md hover:bg-blue-700 transition"
-          >
-            + Ajouter un post-it
-          </button>
+          );
+        })}
         </div>
 
     </div>
