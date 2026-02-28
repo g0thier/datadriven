@@ -15,11 +15,11 @@ export const data = {
         duration : 5,
         page : './pages/innovation/paper-brain/Step1.jsx',
         description: [
-          "Le facilitateur pose une question claire, souvent formulée en **“Comment pourrions-nous… ?”**", 
+          "Le facilitateur pose une question claire, souvent formulée en « Comment pourrions-nous… ? »",
           "Exemples :",
-          "* Comment pourrions-nous améliorer l’expérience des télétravailleurs ?",
-          "* Comment pourrions-nous réduire les irritants d’un parcours client ?",
-          "* Comment pourrions-nous inventer un produit antistress pour cadres en burn-out ?",
+          "- Comment pourrions-nous améliorer l’expérience des télétravailleurs ?",
+          "- Comment pourrions-nous réduire les irritants d’un parcours client ?",
+          "- Comment pourrions-nous inventer un produit antistress pour cadres en burn-out ?",
           "👉 La question doit être précise mais ouverte."
         ],
       },
@@ -29,17 +29,17 @@ export const data = {
         page : './pages/innovation/paper-brain/Step2.jsx',
         description: [
           "Chaque participant :",
-          "* Écrit ses idées sur une feuille",
-          "* Une idée par ligne (ou par post-it)",
-          "* En silence",
-          "* Sans autocensure",
-          "* Sans discussion",
+          "- Écrit ses idées sur une feuille",
+          "- Une idée par ligne (ou par post-it)",
+          "- En silence",
+          "- Sans autocensure",
+          "- Sans discussion",
           "C’est la différence clé avec le brainstorming classique :",
           "🧠 On réfléchit d’abord seul.",
           "Pourquoi ?",
-          "* Évite l’influence des autres",
-          "* Stimule les profils introvertis",
-          "* Permet des idées plus originales"
+          "- Évite l’influence des autres",
+          "- Stimule les profils introvertis",
+          "- Permet des idées plus originales"
         ],
       },
       {
@@ -49,11 +49,11 @@ export const data = {
         description: [
           "Les feuilles circulent entre les participants.",
           "Chacun :",
-          "* Lit les idées des autres",
-          "* Complète",
-          "* Améliore",
-          "* Combine",
-          "* Ajoute de nouvelles idées inspirées des précédentes",
+          "- Lit les idées des autres",
+          "- Complète",
+          "- Améliore",
+          "- Combine",
+          "- Ajoute de nouvelles idées inspirées des précédentes",
           "👉 On parle peu ou pas.",
           "👉 On construit sur les idées existantes.",
           "C’est là que la richesse collective apparaît."
@@ -65,9 +65,9 @@ export const data = {
         page : './pages/innovation/paper-brain/Step4.jsx',
         description: [
           "Le groupe :",
-          "* Affiche les idées au mur",
-          "* Regroupe par thèmes",
-          "* Clarifie si besoin",
+          "- Affiche les idées au mur",
+          "- Regroupe par thèmes",
+          "- Clarifie si besoin",
           "Pas de critique à ce stade, juste clarification."
         ],
       },

@@ -1,15 +1,20 @@
 import { useState } from 'react'
 import './App.css'
-import Header from './components/Navbar.jsx'
-import Settings from './components/Profil.jsx'  
-import StepTime from './components/StepTime.jsx'
-import Login from './pages/Login.jsx'
-import Innovation from './pages/innovation/Innovation.jsx'
-import Workshop from './pages/Workshop.jsx'
+
 import Navbar from './components/Navbar.jsx'
 import Profil from './components/Profil.jsx'
-import Team from './pages/team/Team.jsx'
+import StepTime from './components/StepTime.jsx'
+
+import Login from './pages/Login.jsx'
 import Mail from './pages/Mail.jsx'
+import Workshop from './pages/Workshop.jsx'
+
+import Innovation from './pages/innovation/Innovation.jsx'
+import Step1 from './pages/innovation/paper-brain/Step1.jsx'
+import Team from './pages/team/Team.jsx'
+
+
+
 
 function TemplateLogin() {
   return (
@@ -68,7 +73,7 @@ function TemplateActivity() {
   return (
     <>
       <StepTime />
-      <Workshop />
+      <Step1 />
     </>
   );
 }
