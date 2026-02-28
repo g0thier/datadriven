@@ -1,4 +1,4 @@
-# Open Source Project Template (Gauthier)
+# Data-Driven Management System
 
 ## Description
 
