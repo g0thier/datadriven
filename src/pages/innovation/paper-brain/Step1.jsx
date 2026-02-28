@@ -10,7 +10,7 @@ function Step1() {
 
         <h1 className='text-4xl font-bold text-gray-800 mb-8'>{data.title}</h1>
         <h2 className='text-2xl font-semibold text-gray-700 mb-4'>{data.steps[0].label}</h2>
-        {/* a gerer comme du markdown */}
+        {/* description de l'étape */}
         <div className='bg-white rounded-2xl shadow-md p-6 mb-6'>
           {data.steps[0].description.map((item, index) => (
             <p key={index} className='text-gray-600 mb-1 text-sm'>{item}</p>
