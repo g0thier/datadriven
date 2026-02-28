@@ -132,7 +132,7 @@ function Step3() {
                 {/* + : ajoute un commentaire SUR CETTE NOTE */}
                 <button
                   onClick={() => addComment(index)}
-                  className="absolute bottom-3 right-3 w-8 h-8 -mb-5 -mr-5 rounded-full bg-violet-500 text-white flex items-center justify-center shadow-md hover:bg-violet-600 transition"
+                  className="absolute bottom-3 right-3 w-5 h-5 -mb-1 -mr-1 rounded-full bg-violet-500 text-white text-xs flex items-center justify-center shadow-md hover:bg-violet-600 transition"
                   aria-label="Ajouter un commentaire"
                 >
                   +
