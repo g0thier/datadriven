@@ -83,8 +83,22 @@ function Step3() {
         </div>
 
         {/* challenge proposé */}
-        <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
+        <div className="bg-white rounded-2xl shadow-md p-6 mb-4">
           <p className="text-gray-600 mb-1 text-sm">{challenge}</p>
+        </div>
+
+        {/* navigation entre les différentes notes utilisateur */}
+        <div className="flex justify-between items-center col-span-full mb-3 px-2">
+          <button className="rounded-full bg-violet-500 text-white w-8 h-8 flex items-center justify-center shadow-md hover:bg-violet-600 transition">
+            <span className="relative -top-px">&lt;</span>
+          </button>
+
+          <p className="text-gray-600 text-sm">Notes du participant y/x</p>
+
+          <button className="rounded-full bg-violet-500 text-white w-8 h-8 flex items-center justify-center shadow-md hover:bg-violet-600 transition">
+            <span className="relative -top-px">&gt;</span>
+          </button>
+
         </div>
 
         {/* Zone des post-it */}
