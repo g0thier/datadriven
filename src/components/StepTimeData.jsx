@@ -40,15 +40,9 @@ export const data = {
         page : './pages/innovation/paper-brain/Step3.jsx',
         description: [
           "Les feuilles circulent entre les participants.",
-          "Chacun :",
-          "- Lit les idées des autres",
-          "- Complète",
-          "- Améliore",
-          "- Combine",
-          "- Ajoute de nouvelles idées inspirées des précédentes",
-          "👉 On parle peu ou pas.",
+          "Chacun lit, complète, améliore, combine et ajoute des idées.",
           "👉 On construit sur les idées existantes.",
-          "C’est là que la richesse collective apparaît."
+          "La richesse collective émerge."
         ],
       },
       {
