@@ -9,7 +9,6 @@ function Step3() {
   const [participants, setParticipants] = useState([
     {
       id: 1,
-      nom: "Participant 1",
       notes: [
         {
           note: "Une app de micro-pauses guidées de 3 minutes, intégrée au calendrier pro.",
@@ -38,7 +37,6 @@ function Step3() {
     },
     {
       id: 2,
-      nom: "Participant 2",
       notes: [
         { note: "Une cabine de sieste express au bureau.", 
           commentaires: [
@@ -54,7 +52,6 @@ function Step3() {
     },
     {
       id: 3,
-      nom: "Participant 3",
       notes: [
         { note: "Un mini-programme de respiration en réalité augmentée.", commentaires: [] },
         { note: "Un service d'accompagnement nutrition + sommeil.", commentaires: [] },
@@ -64,12 +61,12 @@ function Step3() {
   ]);
 
   const [currentIdUser] = useState(1); // utilisateur connecté (celui qui écrit/modifie SES commentaires)
-  const [currentParticipantIndex, setCurrentParticipantIndex] = useState(0); // ✅ navigation participants
+  const [currentParticipantIndex, setCurrentParticipantIndex] = useState(0); // Navigation participants
 
   const currentParticipant = participants[currentParticipantIndex];
   const visibleNotes = currentParticipant?.notes ?? [];
 
-  // ✅ navigation participant par participant
+  // Navigation participant par participant
   const goToPreviousParticipant = () => {
     setCurrentParticipantIndex((prev) =>
       prev === 0 ? participants.length - 1 : prev - 1
@@ -171,7 +168,7 @@ function Step3() {
           <p className="text-gray-600 mb-1 text-sm">{challenge}</p>
         </div>
 
-        {/* ✅ navigation entre participants */}
+        {/* Navigation entre participants */}
         <div className="flex justify-between items-center col-span-full mb-3 px-2">
           <button
             className="rounded-full bg-violet-500 text-white w-8 h-8 flex items-center justify-center shadow-md hover:bg-violet-600 transition"
@@ -180,9 +177,16 @@ function Step3() {
             <span className="relative -top-px">&lt;</span>
           </button>
 
-          <p className="text-gray-600 text-sm">
-            Notes de {currentParticipant?.nom ?? "—"} ({currentParticipantIndex + 1}/{participants.length})
-          </p>
+          {!isOwnNotes && (
+            <p className="text-gray-600 text-sm">
+              Notes {currentParticipantIndex + 1} parmis {participants.length} participants.
+            </p>
+          )}
+          {isOwnNotes && (
+            <p className="text-gray-600 text-sm">
+              Vos notes parmis {participants.length} participants.
+            </p>
+          )}
 
           <button
             className="rounded-full bg-violet-500 text-white w-8 h-8 flex items-center justify-center shadow-md hover:bg-violet-600 transition"
