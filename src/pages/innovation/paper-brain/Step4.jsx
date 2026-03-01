@@ -300,7 +300,6 @@ function Step4() {
                         <span className="text-[11px] text-gray-500">
                           Participant {n.participantId}
                         </span>
-                        <span className="text-[11px] text-gray-400">⇕</span>
                       </div>
 
                       {/* note text */}
@@ -333,9 +332,6 @@ function Step4() {
             </div>
           </div>
 
-          <p className="mt-3 text-xs text-gray-500">
-            Astuce : augmente CANVAS_W / CANVAS_H pour un espace plus grand.
-          </p>
         </div>
       </div>
     </div>
