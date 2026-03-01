@@ -10,8 +10,19 @@ function Step3() {
       note: "Une app de micro-pauses guidées de 3 minutes, intégrée au calendrier pro.",
       commentaires: [
         {
+          id: crypto.randomUUID(),
           idUser: 1,
           text: "J'aime l'idée de micro-pauses, ça peut vraiment aider à réduire le stress au travail.",
+        },
+        {
+          id: crypto.randomUUID(),
+          idUser: 2,
+          text: "Ajouter des rappels pour encourager à prendre ces pauses régulièrement.",
+        },
+        {
+          id: crypto.randomUUID(),
+          idUser: 3,
+          text: "Ajouter des exercices de respiration ou de méditation pour maximiser les bénéfices.",
         },
       ],
     },
@@ -24,6 +35,8 @@ function Step3() {
       commentaires: [],
     },
   ]);
+
+  const [currentIdUser, setCurrentIdUser] = useState(1); // Simule l'utilisateur connecté
 
   const [currentNoteIndex, setCurrentNoteIndex] = useState(0);
 
@@ -44,37 +57,46 @@ function Step3() {
     setNotes((prev) =>
       prev.map((n, i) => {
         if (i !== noteIndex) return n;
-        const current = n.commentaires ?? [];
+
         return {
           ...n,
-          commentaires: [...current, { idUser: 1, text: "" }],
+          commentaires: [
+            ...(n.commentaires ?? []),
+            {
+              id: crypto.randomUUID(), // ✅ ID unique
+              idUser: currentIdUser,
+              text: "",
+            },
+          ],
         };
       })
     );
   };
 
-  const updateComment = (noteIndex, commentIndex, value) => {
+  const updateComment = (noteIndex, commentId, value) => {
     setNotes((prev) =>
       prev.map((n, i) => {
         if (i !== noteIndex) return n;
-        const current = n.commentaires ?? [];
+
         return {
           ...n,
-          commentaires: current.map((c, j) =>
-            j === commentIndex ? { ...c, text: value } : c
+          commentaires: n.commentaires.map((c) =>
+            c.id === commentId ? { ...c, text: value } : c
           ),
         };
       })
     );
   };
 
-  const removeComment = (noteIndex, commentIndex) => {
+  const removeComment = (noteIndex, commentId) => {
     setNotes((prev) =>
       prev.map((n, i) => {
         if (i !== noteIndex) return n;
-        const current = n.commentaires ?? [];
-        const next = current.filter((_, j) => j !== commentIndex);
-        return { ...n, commentaires: next };
+
+        return {
+          ...n,
+          commentaires: n.commentaires.filter((c) => c.id !== commentId),
+        };
       })
     );
   };
@@ -118,7 +140,7 @@ function Step3() {
         </div>
 
         {/* Zone des post-it */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 items-start">
           {notes.map((item, index) => {
             const isLast = index === notes.length - 1;
 
@@ -132,31 +154,47 @@ function Step3() {
                   {item.note || <span className="text-gray-400">—</span>}
                 </p>
 
-                {/* COMMENTAIRES (violet) */}
-                <div className="mt-4 space-y-2">
-                  {(item.commentaires ?? []).map((c, j) => (
-                    <div
-                      key={j}
-                      className="relative bg-violet-100 border border-violet-200 rounded-lg p-2"
-                    >
-                      <textarea
-                        className="w-full bg-transparent resize-none focus:outline-none text-gray-800 text-sm"
-                        placeholder="Ajouter un commentaire…"
-                        value={c.text}
-                        onChange={(e) => updateComment(index, j, e.target.value)}
-                        rows={2}
-                      />
+                {/* COMMENTAIRES */}
+                <div className="mt-2 space-y-2">
 
-                      {/* supprimer commentaire */}
-                      <button
-                        onClick={() => removeComment(index, j)}
-                        className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-xs"
-                        aria-label="Supprimer le commentaire"
+                  {/* commentaires autres utilisateur  (affichage)  */}
+                  {(item.commentaires ?? [])
+                    .filter((c) => c.idUser !== currentIdUser)
+                    .map((c) => (
+                      <div key={c.id} className="bg-transparent">
+                        <p className="text-violet-500 text-xs whitespace-pre-wrap">
+                          {c.text}
+                        </p>
+                      </div>
+                    ))}
+
+                  {/* Commentaire utilisateur courant (modifiable) */}
+                  {(item.commentaires ?? [])
+                    .filter((c) => c.idUser === currentIdUser)
+                    .map((c) => (
+                      <div
+                        key={c.id}
+                        className="relative bg-violet-100 border border-violet-200 rounded-lg p-2"
                       >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
+                        <textarea
+                          className="w-full bg-transparent resize-none focus:outline-none text-gray-800 text-sm"
+                          placeholder="Ajouter un commentaire…"
+                          value={c.text}
+                          onChange={(e) =>
+                            updateComment(index, c.id, e.target.value)
+                          }
+                          rows={2}
+                        />
+
+                        <button
+                          onClick={() => removeComment(index, c.id)}
+                          className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-xs"
+                          aria-label="Supprimer le commentaire"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
                 </div>
 
                 {/* + : ajoute un commentaire SUR CETTE NOTE */}
