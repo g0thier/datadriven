@@ -212,6 +212,8 @@ function Step4() {
   const CANVAS_W = 2800;
   const CANVAS_H = 1600;
 
+  const [zoom, setZoom] = useState(100); // en %
+
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-200 py-12 px-6">
       <div className="min-h-screen lg:mr-86">
@@ -242,29 +244,39 @@ function Step4() {
               {allNotes.length} notes • Glissez-déposez pour organiser
             </p>
 
-            <button
-              className="text-sm px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 transition"
-              onClick={() => {
-                // reset positions (optionnel)
-                setPositions({});
-              }}
-            >
-              Réinitialiser la disposition
-            </button>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-gray-500 w-12 text-right">
+                {zoom}%
+              </span>
+
+              <input
+                type="range"
+                min="10"
+                max="100"
+                step="5"
+                value={zoom}
+                onChange={(e) => setZoom(Number(e.target.value))}
+                className="w-40 accent-slate-600"
+              />
+            </div>
           </div>
 
           <div className="w-full overflow-auto rounded-xl border border-slate-200">
             {/* Zone réelle du canvas */}
             <div
-              ref={canvasRef}
-              className="relative"
-              style={{ width: CANVAS_W, height: CANVAS_H }}
+                ref={canvasRef}
+                className="relative origin-top-left"
+                style={{
+                  width: CANVAS_W,
+                  height: CANVAS_H,
+                  transform: `scale(${zoom / 100})`,
+                }}
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
               onPointerCancel={onPointerUp}
               onPointerLeave={onPointerUp}
             >
-              {/* (optionnel) grille légère */}
+              {/* grille légère */}
               <div
                 className="absolute inset-0 pointer-events-none opacity-30"
                 style={{
