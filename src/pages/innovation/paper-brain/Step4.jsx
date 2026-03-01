@@ -10,7 +10,7 @@ function clamp(v, min, max) {
  * - drag uniquement dans le canvas
  * - positions en state via setPositions
  */
-function useDragNotes({ canvasRef, setPositions }) {
+function useDragNotes({ canvasRef, setPositions, getScale }) {
   const dragRef = useRef({
     draggingId: null,
     pointerId: null,
@@ -53,27 +53,26 @@ function useDragNotes({ canvasRef, setPositions }) {
     const canvasEl = canvasRef.current;
     if (!canvasEl) return;
 
-    // delta pointer
-    const dx = e.clientX - st.startPointerX;
-    const dy = e.clientY - st.startPointerY;
+    const s = getScale?.() ?? 1;
 
-    // tentative new pos
+    // delta pointer -> delta "logique"
+    const dx = (e.clientX - st.startPointerX) / s;
+    const dy = (e.clientY - st.startPointerY) / s;
+
     let nextX = st.startX + dx;
     let nextY = st.startY + dy;
 
-    // limites dans le canvas
-    // on calcule les dimensions "logiques" du canvas via scrollWidth/scrollHeight
-    const canvasW = canvasEl.scrollWidth;
-    const canvasH = canvasEl.scrollHeight;
+    // scrollWidth est désormais "scalé", donc on revient en logique
+    const canvasW = canvasEl.scrollWidth / s;
+    const canvasH = canvasEl.scrollHeight / s;
 
-    // taille du post-it (px)
-    const noteW = st.noteRect?.width ?? 260;
-    const noteH = st.noteRect?.height ?? 180;
+    // noteRect est "scalé" visuellement -> revenir en logique
+    const noteW = (st.noteRect?.width ?? 260) / s;
+    const noteH = (st.noteRect?.height ?? 180) / s;
 
     nextX = clamp(nextX, 0, canvasW - noteW);
     nextY = clamp(nextY, 0, canvasH - noteH);
 
-    // update position
     setPositions((prev) => ({
       ...prev,
       [st.draggingId]: { x: nextX, y: nextY },
@@ -206,6 +205,7 @@ function Step4() {
   const { onPointerDown, onPointerMove, onPointerUp } = useDragNotes({
     canvasRef,
     setPositions,
+    getScale: () => scale,
   });
 
   // Taille "espace" : tu peux augmenter sans problème
@@ -213,6 +213,7 @@ function Step4() {
   const CANVAS_H = 1600;
 
   const [zoom, setZoom] = useState(100); // en %
+  const scale = zoom / 100;
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-200 py-12 px-6">
@@ -267,9 +268,8 @@ function Step4() {
                 ref={canvasRef}
                 className="relative origin-top-left"
                 style={{
-                  width: CANVAS_W,
-                  height: CANVAS_H,
-                  transform: `scale(${zoom / 100})`,
+                  width: CANVAS_W * scale,
+                  height: CANVAS_H * scale,
                 }}
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
@@ -282,7 +282,7 @@ function Step4() {
                 style={{
                   backgroundImage:
                     "linear-gradient(to right, rgba(15,23,42,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(15,23,42,0.08) 1px, transparent 1px)",
-                  backgroundSize: "60px 60px",
+                  backgroundSize: `${60 * scale}px ${60 * scale}px`,
                 }}
               />
 
@@ -294,7 +294,8 @@ function Step4() {
                     key={n.id}
                     className="absolute select-none touch-none"
                     style={{
-                      transform: `translate(${pos.x}px, ${pos.y}px)`,
+                      transform: `translate(${pos.x * scale}px, ${pos.y * scale}px) scale(${scale})`,
+                      transformOrigin: "top left",
                       width: 260,
                     }}
                   >
