@@ -15,6 +15,8 @@ import Team from './pages/team/Team.jsx'
 import Step2 from './pages/innovation/paper-brain/Step2.jsx'
 import Step3 from './pages/innovation/paper-brain/Step3.jsx'
 import Step4 from './pages/innovation/paper-brain/Step4.jsx'
+import Step5 from './pages/innovation/paper-brain/Step5.jsx'
+
 
 
 
@@ -76,7 +78,7 @@ function TemplateActivity() {
   return (
     <>
       <StepTime />
-      <Step4 />
+      <Step5 />
     </>
   );
 }
