@@ -4,10 +4,11 @@ import SwapLink from "../components/SwapLink";
 
 function RegisterCompany() {
   // Step-by-step :
-  // 1 = Infos entreprise
-  // 2 = Infos admin
-  // 3 = Mot de passe
-  // 4 = Confirmation
+  // 1 = Infos société
+  // 2 = Adresse
+  // 3 = Infos admin
+  // 4 = Mot de passe
+  // 5 = Confirmation
   const [step, setStep] = useState(1);
 
   // --- Entreprise
@@ -45,10 +46,12 @@ function RegisterCompany() {
       case 1:
         return "Créer un compte entreprise";
       case 2:
-        return "Votre administrateur";
+        return "Adresse de la société";
       case 3:
-        return "Sécuriser le compte";
+        return "Votre administrateur";
       case 4:
+        return "Sécuriser le compte";
+      case 5:
         return "Vérifier & créer";
       default:
         return "Créer un compte entreprise";
@@ -58,12 +61,14 @@ function RegisterCompany() {
   const subtitle = useMemo(() => {
     switch (step) {
       case 1:
-        return "Renseignez les informations de votre société pour commencer.";
+        return "Renseignez les informations générales de votre société.";
       case 2:
-        return "Qui gérera ce compte au quotidien ?";
+        return "Indiquez l’adresse officielle de l’entreprise.";
       case 3:
-        return "Choisissez un mot de passe robuste et acceptez les conditions.";
+        return "Qui gérera ce compte au quotidien ?";
       case 4:
+        return "Choisissez un mot de passe robuste et acceptez les conditions.";
+      case 5:
         return "Vérifiez les informations avant la création du compte.";
       default:
         return "";
@@ -72,22 +77,27 @@ function RegisterCompany() {
 
   const canGoNext = useMemo(() => {
     if (step === 1) {
+      return companyName.trim();
+    }
+
+    if (step === 2) {
       return (
-        companyName.trim() &&
         companyAddress.trim() &&
         companyCity.trim() &&
         companyZip.trim() &&
         companyCountry.trim()
       );
     }
-    if (step === 2) {
+
+    if (step === 3) {
       return (
         adminFirstName.trim() &&
         adminLastName.trim() &&
         adminEmail.trim()
       );
     }
-    if (step === 3) {
+
+    if (step === 4) {
       return (
         password.length >= 8 &&
         passwordConfirm.length >= 8 &&
@@ -95,6 +105,7 @@ function RegisterCompany() {
         acceptTerms
       );
     }
+
     return true;
   }, [
     step,
@@ -114,7 +125,7 @@ function RegisterCompany() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (step < 4) {
+    if (step < 5) {
       if (!canGoNext) return;
       setStep((s) => s + 1);
       return;
@@ -173,7 +184,7 @@ function RegisterCompany() {
 
         {/* Progress */}
         <div className="flex items-center gap-2 mb-6">
-          {[1, 2, 3, 4].map((n) => (
+          {[1, 2, 3, 4, 5].map((n) => (
             <div
               key={n}
               className={
@@ -191,7 +202,8 @@ function RegisterCompany() {
           {/* STEP 1 — Entreprise */}
           {step === 1 && (
             <div className="flex flex-col gap-4 items-center w-full">
-              <input
+
+            <input
                 className={inputClass}
                 name="companyName"
                 type="text"
@@ -199,37 +211,44 @@ function RegisterCompany() {
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 placeholder="Nom de l’entreprise"
-              />
+            />
 
-              <div className="flex flex-col md:flex-row gap-4 items-center w-full justify-center">
+            <div className="flex flex-col md:flex-row gap-4 items-center w-full justify-center">
                 <input
-                  className="bg-white p-5 rounded shadow-md w-80 md:w-51.25"
-                  name="legalForm"
-                  type="text"
-                  value={legalForm}
-                  onChange={(e) => setLegalForm(e.target.value)}
-                  placeholder="Forme (SA, Sàrl...)"
+                className="bg-white p-5 rounded shadow-md w-80 md:w-51.25"
+                name="legalForm"
+                type="text"
+                value={legalForm}
+                onChange={(e) => setLegalForm(e.target.value)}
+                placeholder="Forme (SA, Sàrl...)"
                 />
                 <input
-                  className="bg-white p-5 rounded shadow-md w-80 md:w-51.25"
-                  name="vatNumber"
-                  type="text"
-                  value={vatNumber}
-                  onChange={(e) => setVatNumber(e.target.value)}
-                  placeholder="N° TVA (optionnel)"
+                className="bg-white p-5 rounded shadow-md w-80 md:w-51.25"
+                name="vatNumber"
+                type="text"
+                value={vatNumber}
+                onChange={(e) => setVatNumber(e.target.value)}
+                placeholder="N° TVA (optionnel)"
                 />
-              </div>
+            </div>
 
-              <input
+            <input
                 className={inputClass}
                 name="siret"
                 type="text"
                 value={siret}
                 onChange={(e) => setSiret(e.target.value)}
                 placeholder="N° registre (UID/SIRET) (optionnel)"
-              />
+            />
 
-              <input
+            </div>
+          )}
+
+          {/* STEP 2 — Adresse */}
+          {step === 2 && (
+            <div className="flex flex-col gap-4 items-center w-full">
+
+                <input
                 className={inputClass}
                 name="companyAddress"
                 type="text"
@@ -237,30 +256,30 @@ function RegisterCompany() {
                 value={companyAddress}
                 onChange={(e) => setCompanyAddress(e.target.value)}
                 placeholder="Adresse"
-              />
+                />
 
-              <div className="flex flex-col md:flex-row gap-4 items-center w-full justify-center">
+                <div className="flex flex-col md:flex-row gap-4 items-center w-full justify-center">
                 <input
-                  className="bg-white p-5 rounded shadow-md w-80 md:w-51.25"
-                  name="companyZip"
-                  type="text"
-                  required
-                  value={companyZip}
-                  onChange={(e) => setCompanyZip(e.target.value)}
-                  placeholder="Code postal"
+                    className="bg-white p-5 rounded shadow-md w-80 md:w-51.25"
+                    name="companyZip"
+                    type="text"
+                    required
+                    value={companyZip}
+                    onChange={(e) => setCompanyZip(e.target.value)}
+                    placeholder="Code postal"
                 />
                 <input
-                  className="bg-white p-5 rounded shadow-md w-80 md:w-51.25"
-                  name="companyCity"
-                  type="text"
-                  required
-                  value={companyCity}
-                  onChange={(e) => setCompanyCity(e.target.value)}
-                  placeholder="Ville"
+                    className="bg-white p-5 rounded shadow-md w-80 md:w-51.25"
+                    name="companyCity"
+                    type="text"
+                    required
+                    value={companyCity}
+                    onChange={(e) => setCompanyCity(e.target.value)}
+                    placeholder="Ville"
                 />
-              </div>
+                </div>
 
-              <input
+                <input
                 className={inputClass}
                 name="companyCountry"
                 type="text"
@@ -268,12 +287,13 @@ function RegisterCompany() {
                 value={companyCountry}
                 onChange={(e) => setCompanyCountry(e.target.value)}
                 placeholder="Pays"
-              />
+                />
+
             </div>
           )}
 
-          {/* STEP 2 — Admin */}
-          {step === 2 && (
+          {/* STEP 3 — Admin */}
+          {step === 3 && (
             <div className="flex flex-col gap-4 items-center w-full">
               <div className="flex flex-col md:flex-row gap-4 items-center w-full justify-center">
                 <input
@@ -317,8 +337,8 @@ function RegisterCompany() {
             </div>
           )}
 
-          {/* STEP 3 — Password + CGU */}
-          {step === 3 && (
+          {/* STEP 4 — Password + CGU */}
+          {step === 4 && (
             <div className="flex flex-col gap-4 items-center w-full">
               <input
                 className={inputClass}
@@ -358,8 +378,8 @@ function RegisterCompany() {
             </div>
           )}
 
-          {/* STEP 4 — Recap */}
-          {step === 4 && (
+          {/* STEP 5 — Recap */}
+          {step === 5 && (
             <div className="bg-white/70 rounded shadow-md w-80 md:w-105 p-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">
                 Récapitulatif
