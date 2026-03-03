@@ -1,5 +1,8 @@
 # Data-Driven Management System
 
+This App is hosted on Firebase and is accessible at the following address:
+- [g0thier-project-datadriven.web.app](https://g0thier-project-datadriven.web.app)
+
 ## Description
 
 This project represents the first building block of a **SaaS (Software as a Service)** solution dedicated to data-driven strategic management for companies, designed for executives and C-level leaders (C-suite).
@@ -10,7 +13,7 @@ This initial version includes a module entitled **“Innovation & Creativity”*
 
 ## Table of Contents
 
-- [Open Source Project Template (Gauthier)](#open-source-project-template-gauthier)
+- [Data-Driven Management System](#data-driven-management-system)
   - [Description](#description)
   - [Table of Contents](#table-of-contents)
   - [🎯 Objective of the project](#-objective-of-the-project)
