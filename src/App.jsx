@@ -121,7 +121,7 @@ function App() {
 
   return (
     <>
-      <TemplateResetPassword />
+      <TemplateLogin />
     </>
   )
 }
