@@ -6,9 +6,11 @@ import Navbar from './components/Navbar.jsx'
 import Profil from './components/Profil.jsx'
 import StepTime from './components/StepTime.jsx'
 
+import Mail from './emails/Mail.jsx'
+import ResetPasswordMail from './emails/ResetPasswordMail.jsx';
+
 import Login from './pages/Login.jsx'
 import NotFound from './pages/NotFound.jsx'
-import Mail from './pages/Mail.jsx'
 import Workshop from './pages/Workshop.jsx'
 
 import Innovation from './pages/innovation/Innovation.jsx'
@@ -89,6 +91,14 @@ function TemplateMail() {
   );
 }
 
+function TemplateResetPasswordMail() {
+  return (
+    <>
+      <ResetPasswordMail />
+    </>
+  );
+}
+
 function TemplateActivity() {
   return (
     <>
@@ -102,7 +112,7 @@ function App() {
 
   return (
     <>
-      <TemplateNotFound />
+      <TemplateResetPasswordMail />
     </>
   )
 }
