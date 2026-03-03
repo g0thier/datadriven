@@ -10,6 +10,7 @@ import Mail from './emails/Mail.jsx'
 import ResetPasswordMail from './emails/ResetPasswordMail.jsx';
 
 import Login from './pages/Login.jsx'
+import ResetPassword from './pages/ResetPassword.jsx'
 import NotFound from './pages/NotFound.jsx'
 import Workshop from './pages/Workshop.jsx'
 
@@ -99,6 +100,14 @@ function TemplateResetPasswordMail() {
   );
 }
 
+function TemplateResetPassword() {
+  return (
+    <>
+      <ResetPassword />
+    </>
+  );
+}
+
 function TemplateActivity() {
   return (
     <>
@@ -112,7 +121,7 @@ function App() {
 
   return (
     <>
-      <TemplateLogin />
+      <TemplateResetPassword />
     </>
   )
 }
