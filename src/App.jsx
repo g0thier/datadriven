@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import './App.css'
 
 import Navbar from './components/Navbar.jsx'
@@ -6,6 +7,7 @@ import Profil from './components/Profil.jsx'
 import StepTime from './components/StepTime.jsx'
 
 import Login from './pages/Login.jsx'
+import NotFound from './pages/NotFound.jsx'
 import Mail from './pages/Mail.jsx'
 import Workshop from './pages/Workshop.jsx'
 
@@ -25,6 +27,19 @@ function TemplateLogin() {
   return (
     <>
       <Login />
+    </>
+  );
+}
+
+function TemplateNotFound() {
+  return (
+    <>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="*" element={<NotFound code={"FAIL"} />} />
+        </Routes>
+      </BrowserRouter>
     </>
   );
 }
@@ -87,7 +102,7 @@ function App() {
 
   return (
     <>
-      <TemplateActivity />
+      <TemplateNotFound />
     </>
   )
 }
