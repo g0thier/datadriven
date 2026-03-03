@@ -10,13 +10,14 @@ import Mail from './emails/Mail.jsx'
 import ResetPasswordMail from './emails/ResetPasswordMail.jsx';
 
 import Login from './pages/Login.jsx'
+import RegisterCompany from './pages/RegisterCompany.jsx'
 import ResetPassword from './pages/ResetPassword.jsx'
 import NotFound from './pages/NotFound.jsx'
 import Workshop from './pages/Workshop.jsx'
 
 import Innovation from './pages/innovation/Innovation.jsx'
-import Step1 from './pages/innovation/paper-brain/Step1.jsx'
 import Team from './pages/team/Team.jsx'
+import Step1 from './pages/innovation/paper-brain/Step1.jsx'
 import Step2 from './pages/innovation/paper-brain/Step2.jsx'
 import Step3 from './pages/innovation/paper-brain/Step3.jsx'
 import Step4 from './pages/innovation/paper-brain/Step4.jsx'
@@ -84,6 +85,14 @@ function TemplateProfil() {
   );
 }
 
+function TemplateRegister() {
+  return (
+    <>
+      <RegisterCompany />
+    </>
+  );
+}
+
 function TemplateMail() {
   return (
     <>
@@ -121,7 +130,7 @@ function App() {
 
   return (
     <>
-      <TemplateLogin />
+      <TemplateRegister />
     </>
   )
 }
