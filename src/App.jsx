@@ -14,6 +14,7 @@ import RegisterCompany from './pages/RegisterCompany.jsx'
 import ResetPassword from './pages/ResetPassword.jsx'
 import NotFound from './pages/NotFound.jsx'
 import Workshop from './pages/Workshop.jsx'
+import RouteFallback from './components/fallback/RouteFallback.jsx'
 
 import Innovation from './pages/innovation/Innovation.jsx'
 import Team from './pages/team/Team.jsx'
@@ -32,7 +33,7 @@ function TemplateLogin() {
     <>
       <Login />
     </>
-  );
+  );  
 }
 
 function TemplateNotFound() {
@@ -130,7 +131,7 @@ function App() {
 
   return (
     <>
-      <TemplateRegister />
+      <RouteFallback />
     </>
   )
 }

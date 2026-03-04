@@ -1,0 +1,12 @@
+.route-fallback {
+  background: oklch(87.9% 0.169 91.605); /* bg-amber-300 */
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.route-fallback img {
+  width: 200px;
+}
