@@ -5,8 +5,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import './App.css'
 
 import RouteFallback from './components/fallback/RouteFallback.jsx'
-
-import Navbar from './components/Navbar.jsx'
 import Profil from './components/Profil.jsx'
 import StepTime from './components/StepTime.jsx'
 
@@ -33,7 +31,6 @@ function App() {
       <Suspense fallback={<RouteFallback />}>
       <Routes>
         <Route path="/" element={<Login />} />
-        <Route path="/navbar" element={<Navbar />} />
         <Route path="/register" element={<RegisterCompany />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/profil" element={<Profil />} />

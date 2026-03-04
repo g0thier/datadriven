@@ -1,3 +1,4 @@
+import Navbar from '../../components/Navbar.jsx'
 import React, { useMemo, useState } from "react";
 // ✅ Adapte le chemin si besoin
 import {
@@ -315,6 +316,8 @@ export default function Team() {
   }
 
   return (
+    <>
+    <Navbar />
     <div style={{ padding: 16, display: "grid", gap: 16 }}>
       {/* Tabs */}
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -572,5 +575,6 @@ export default function Team() {
         </TableShell>
       )}
     </div>
+    </>
   );
 }

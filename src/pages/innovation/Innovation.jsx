@@ -1,3 +1,4 @@
+import Navbar from '../../components/Navbar.jsx'
 import data from './data_cards.jsx'
 
 function Cards() {
@@ -58,10 +59,13 @@ function Cards() {
 
 function Innovation() {
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-200 py-12 px-6">
-      <h1 className='text-4xl font-bold text-gray-800 mb-8'>Innovation & Créativité</h1>
-      <Cards />
-    </div>
+    <>
+      <Navbar />
+      <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-200 py-12 px-6">
+        <h1 className='text-4xl font-bold text-gray-800 mb-8'>Innovation & Créativité</h1>
+        <Cards />
+      </div>
+    </>
   );
 }
 
