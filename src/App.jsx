@@ -1,6 +1,10 @@
 import { useState } from 'react'
+import { lazy } from 'react';
+import { Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import './App.css'
+
+import RouteFallback from './components/fallback/RouteFallback.jsx'
 
 import Navbar from './components/Navbar.jsx'
 import Profil from './components/Profil.jsx'
@@ -9,130 +13,45 @@ import StepTime from './components/StepTime.jsx'
 import Mail from './emails/Mail.jsx'
 import ResetPasswordMail from './emails/ResetPasswordMail.jsx';
 
-import Login from './pages/Login.jsx'
-import RegisterCompany from './pages/RegisterCompany.jsx'
-import ResetPassword from './pages/ResetPassword.jsx'
-import NotFound from './pages/NotFound.jsx'
-import Workshop from './pages/Workshop.jsx'
-import RouteFallback from './components/fallback/RouteFallback.jsx'
-
-import Innovation from './pages/innovation/Innovation.jsx'
-import Team from './pages/team/Team.jsx'
-import Step1 from './pages/innovation/paper-brain/Step1.jsx'
-import Step2 from './pages/innovation/paper-brain/Step2.jsx'
-import Step3 from './pages/innovation/paper-brain/Step3.jsx'
-import Step4 from './pages/innovation/paper-brain/Step4.jsx'
-import Step5 from './pages/innovation/paper-brain/Step5.jsx'
-
-
-
-
-
-function TemplateLogin() {
-  return (
-    <>
-      <Login />
-    </>
-  );  
-}
-
-function TemplateNotFound() {
-  return (
-    <>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="*" element={<NotFound code={"FAIL"} />} />
-        </Routes>
-      </BrowserRouter>
-    </>
-  );
-}
-
-function TemplateTeam() {
-  return (
-    <>
-      <Navbar />
-      <Team />
-    </>
-  );
-}
-
-function TemplateInnovation() {
-  return (
-    <>
-      <Navbar />
-      <Innovation />
-    </>
-  );
-}
-
-function TemplateWorkshop() {
-  return (
-    <>
-      <Navbar />
-      <Workshop />
-    </>
-  );
-}
-
-function TemplateProfil() {
-  return (
-    <>
-      <Navbar />
-      <Profil />
-      <Innovation />
-    </>
-  );
-}
-
-function TemplateRegister() {
-  return (
-    <>
-      <RegisterCompany />
-    </>
-  );
-}
-
-function TemplateMail() {
-  return (
-    <>
-      <Mail />
-    </>
-  );
-}
-
-function TemplateResetPasswordMail() {
-  return (
-    <>
-      <ResetPasswordMail />
-    </>
-  );
-}
-
-function TemplateResetPassword() {
-  return (
-    <>
-      <ResetPassword />
-    </>
-  );
-}
-
-function TemplateActivity() {
-  return (
-    <>
-      <StepTime />
-      <Step5 />
-    </>
-  );
-}
+const Login = lazy(() => import('./pages/Login.jsx'));
+const RegisterCompany = lazy(() => import('./pages/RegisterCompany.jsx'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword.jsx'));
+const NotFound = lazy(() => import('./pages/NotFound.jsx'));
+const Workshop = lazy(() => import('./pages/Workshop.jsx'));
+const Innovation = lazy(() => import('./pages/innovation/Innovation.jsx'));
+const Team = lazy(() => import('./pages/team/Team.jsx'));
+const Step1 = lazy(() => import('./pages/innovation/paper-brain/Step1.jsx'));
+const Step2 = lazy(() => import('./pages/innovation/paper-brain/Step2.jsx'));
+const Step3 = lazy(() => import('./pages/innovation/paper-brain/Step3.jsx'));
+const Step4 = lazy(() => import('./pages/innovation/paper-brain/Step4.jsx'));
+const Step5 = lazy(() => import('./pages/innovation/paper-brain/Step5.jsx'));
 
 function App() {
 
   return (
-    <>
-      <RouteFallback />
-    </>
+    <BrowserRouter>
+      <Suspense fallback={<RouteFallback />}>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/navbar" element={<Navbar />} />
+        <Route path="/register" element={<RegisterCompany />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/profil" element={<Profil />} />
+        <Route path="/step-time" element={<StepTime />} />
+        <Route path="/workshop" element={<Workshop />} />
+        <Route path="/innovation" element={<Innovation />} />
+        <Route path="/team" element={<Team />} />
+        <Route path="/innovation/paper-brain/step1" element={<Step1 />} />
+        <Route path="/innovation/paper-brain/step2" element={<Step2 />} />
+        <Route path="/innovation/paper-brain/step3" element={<Step3 />} />
+        <Route path="/innovation/paper-brain/step4" element={<Step4 />} />
+        <Route path="/innovation/paper-brain/step5" element={<Step5 />} />
+        <Route path="/mail" element={<Mail />} />
+        <Route path="/reset-password-mail" element={<ResetPasswordMail />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+      </Suspense>
+    </BrowserRouter>
   )
 }
 
