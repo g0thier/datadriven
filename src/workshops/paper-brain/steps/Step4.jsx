@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState, useEffect } from "react";
-import WorkshopStepLayout from "./WorkshopStepLayout.jsx";
+import WorkshopStepLayout from "../../WorkshopStepLayout.jsx";
 
 function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));

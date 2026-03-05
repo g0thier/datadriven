@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useStepTimeline } from "../hooks/useStepTimeline";
+import { useStepTimeline } from "./useStepTimeline";
 
 // Formate un nombre de secondes en MM:SS
 function formatMMSS(totalSeconds) {

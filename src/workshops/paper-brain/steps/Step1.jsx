@@ -1,5 +1,5 @@
 import { useState } from "react";
-import WorkshopStepLayout from "./WorkshopStepLayout.jsx";
+import WorkshopStepLayout from "../../WorkshopStepLayout.jsx";
 
 export default function Step1({ sessionTitle, step }) {
   const [description, setDescription] = useState("");

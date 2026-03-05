@@ -6,7 +6,6 @@ import './App.css'
 
 import RouteFallback from './components/fallback/RouteFallback.jsx'
 import Profil from './components/Profil.jsx'
-import StepTime from './components/StepTime.jsx'
 
 import Mail from './emails/Mail.jsx'
 import ResetPasswordMail from './emails/ResetPasswordMail.jsx';
@@ -16,10 +15,9 @@ const RegisterCompany = lazy(() => import('./pages/auth/RegisterCompany.jsx'));
 const ResetPassword = lazy(() => import('./pages/auth/ResetPassword.jsx'));
 
 const NotFound = lazy(() => import('./pages/NotFound.jsx'));
-const Workshop = lazy(() => import('./pages/Workshop.jsx'));
+const WorkshopRunner = lazy(() => import('./workshops/WorkshopRunner.jsx'));
 const Innovation = lazy(() => import('./pages/innovation/Innovation.jsx'));
 const Team = lazy(() => import('./pages/team/Team.jsx'));
-const PaperBrain = lazy(() => import('./pages/innovation/paper-brain/PaperBrain.jsx'));
 
 function App() {
 
@@ -32,11 +30,9 @@ function App() {
         <Route path="/register" element={<RegisterCompany />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/profil" element={<Profil />} />
-        <Route path="/step-time" element={<StepTime />} />
-        <Route path="/workshop" element={<Workshop />} />
         <Route path="/innovation" element={<Innovation />} />
+        <Route path="/innovation/:workshopId/:id" element={<WorkshopRunner />} />
         <Route path="/team" element={<Team />} />
-        <Route path="/innovation/paper-brain/:id" element={<PaperBrain />} />
         <Route path="/mail" element={<Mail />} />
         <Route path="/reset-password-mail" element={<ResetPasswordMail />} />
         <Route path="*" element={<NotFound />} />

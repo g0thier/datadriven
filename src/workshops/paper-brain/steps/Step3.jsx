@@ -1,5 +1,5 @@
 import { useState } from "react";
-import WorkshopStepLayout from "./WorkshopStepLayout.jsx";
+import WorkshopStepLayout from "../../WorkshopStepLayout.jsx";
 
 function Step3({ step, sessionTitle }) {
   const challenge =
