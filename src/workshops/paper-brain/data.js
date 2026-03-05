@@ -1,4 +1,4 @@
-import paperBrainImg from "../../pages/innovation/assets/paper-brain.png";
+import paperBrainImg from "../../assets/workshops/paper-brain.png";
 
 import Step1 from "./steps/Step1.jsx";
 import Step2 from "./steps/Step2.jsx";
