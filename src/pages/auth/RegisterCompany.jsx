@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import zebra from "../assets/zebra.svg";
-import SwapLink from "../components/SwapLink";
+import zebra from "../../assets/zebra.svg";
+import SwapLink from "../../components/SwapLink";
 
 function RegisterCompany() {
   // Step-by-step :
@@ -456,15 +456,9 @@ function RegisterCompany() {
         {/* Liens */}
         <div className="flex items-center gap-6 mt-8 flex-wrap justify-center">
           <SwapLink
-            href="/login"
+            to="/login"
             part1="Déjà un compte ?"
             part2="Connectez-vous !"
-            align="center"
-          />
-          <SwapLink
-            href="/reset-password"
-            part1="Mot de passe oublié ?"
-            part2="Réinitialisez-le !"
             align="center"
           />
         </div>

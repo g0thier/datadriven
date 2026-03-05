@@ -1,6 +1,6 @@
 import { useState } from "react";
-import zebra from '../assets/zebra.svg';
-import SwapLink from "../components/SwapLink";
+import zebra from '../../assets/zebra.svg';
+import SwapLink from "../../components/SwapLink";
 
 function ResetPassword() {
   const [email, setEmail] = useState("");
@@ -88,7 +88,7 @@ function ResetPassword() {
         {/* Lien retour login */}
         <div className="mt-8">
           <SwapLink
-            href="/login"
+            to="/login"
             part1="Retour à la connexion"
             part2="Se connecter"
             align="center"

@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { data } from "../../../components/StepTimeData";
+import WorkshopStepLayout from "./WorkshopStepLayout.jsx";
 
-function Step3() {
+function Step3({ step, sessionTitle }) {
   const challenge =
     "Comment pourrions-nous inventer un produit antistress pour cadres en burn-out ?";
 
@@ -149,20 +149,11 @@ function Step3() {
   const isOwnNotes = currentParticipant?.id === currentIdUser;
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-200 py-12 px-6">
-      <div className="min-h-screen lg:mr-86">
-        <h1 className="text-4xl font-bold text-gray-800 mb-8">{data.title}</h1>
-        <h2 className="text-2xl font-semibold text-gray-700 mb-4">
-          {data.steps[2].label}
-        </h2>
-
-        <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
-          {data.steps[2].description.map((item, index) => (
-            <p key={index} className="text-gray-600 mb-1 text-sm">
-              {item}
-            </p>
-          ))}
-        </div>
+    <WorkshopStepLayout
+      title={sessionTitle}
+      stepLabel={step.label}
+      description={step.description}
+    >
 
         <div className="bg-white rounded-2xl shadow-md p-6 mb-4">
           <p className="text-gray-600 mb-1 text-sm">{challenge}</p>
@@ -261,8 +252,7 @@ function Step3() {
             </div>
           ))}
         </div>
-      </div>
-    </div>
+    </WorkshopStepLayout>
   );
 }
 

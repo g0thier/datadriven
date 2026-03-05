@@ -1,4 +1,6 @@
-function SwapLink({ href = "#", part1, part2, align = "left" }) {
+import { NavLink } from "react-router-dom";
+
+function SwapLink({ to = "#", part1, part2, align = "left" }) {
   const alignmentClasses = {
     left: "justify-start text-left",
     center: "justify-center text-center",
@@ -6,7 +8,7 @@ function SwapLink({ href = "#", part1, part2, align = "left" }) {
   };
 
   return (
-    <a href={href} className="group inline-block text-sm text-indigo-500">
+    <NavLink to={to} className="group inline-block text-sm text-indigo-500">
       <span className="relative inline-block align-middle w-full">
         <span className="invisible whitespace-nowrap">
           {part1.length > part2.length ? part1 : part2}
@@ -47,7 +49,7 @@ function SwapLink({ href = "#", part1, part2, align = "left" }) {
           </span>
         </span>
       </span>
-    </a>
+    </NavLink>
   );
 }
 

@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState, useEffect } from "react";
-import { data } from "../../../components/StepTimeData";
+import WorkshopStepLayout from "./WorkshopStepLayout.jsx";
 
 function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
@@ -98,7 +98,7 @@ function useDragNotes({ canvasRef, setPositions, getScale }) {
   return { onPointerDown, onPointerMove, onPointerUp };
 }
 
-function Step4() {
+function Step4({ step, sessionTitle }) {
   const challenge =
     "Comment pourrions-nous inventer un produit antistress pour cadres en burn-out ?";
 
@@ -216,23 +216,11 @@ function Step4() {
   const scale = zoom / 100;
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-200 py-12 px-6">
-      <div className="min-h-screen lg:mr-86">
-        <h1 className="text-4xl font-bold text-gray-800 mb-8">{data.title}</h1>
-        <h2 className="text-2xl font-semibold text-gray-700 mb-4">
-          {data.steps[3]?.label ?? "Étape 4"}
-        </h2>
-
-        <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
-          {(data.steps[3]?.description ?? [
-            "Déplacez toutes les idées sur le canvas pour les regrouper par thèmes.",
-            "Vous pouvez organiser librement l’espace.",
-          ]).map((item, index) => (
-            <p key={index} className="text-gray-600 mb-1 text-sm">
-              {item}
-            </p>
-          ))}
-        </div>
+    <WorkshopStepLayout
+      title={sessionTitle}
+      stepLabel={step.label}
+      description={step.description}
+    >
 
         <div className="bg-white rounded-2xl shadow-md p-6 mb-4">
           <p className="text-gray-600 mb-1 text-sm">{challenge}</p>
@@ -346,8 +334,7 @@ function Step4() {
           </div>
 
         </div>
-      </div>
-    </div>
+    </WorkshopStepLayout>
   );
 }
 

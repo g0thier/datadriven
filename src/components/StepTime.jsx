@@ -1,16 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { data } from "./StepTimeData.jsx";
-
-// Transforme les étapes pour calculer les temps de début et de fin de chaque étape (en minutes)
-function computeSteps(steps) {
-  let t = 0;
-  return steps.map((step) => {
-    const stepStart = t;
-    const stepEnd = t + step.duration;
-    t = stepEnd;
-    return { ...step, stepStart, stepEnd };
-  });
-}
+import { useStepTimeline } from "../hooks/useStepTimeline";
 
 // Formate un nombre de secondes en MM:SS
 function formatMMSS(totalSeconds) {
@@ -21,48 +10,38 @@ function formatMMSS(totalSeconds) {
 }
 
 // Composant principal pour afficher le timer et les étapes
-function StepTime() {
-  const [startDate] = useState(() => new Date());
-  const [elapsed, setElapsed] = useState(0); // secondes écoulées
+function StepTime({ sessionData, startAt }) {
+  const {
+    elapsedSeconds,
+    elapsedMinutes,
+    computedSteps,
+    totalDuration,
+    remainingSeconds,
+  } = useStepTimeline(sessionData, startAt);
 
-  // Timer pour mettre à jour le temps écoulé chaque seconde
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date();
-      const diffSeconds = Math.floor((now - startDate) / 1000);
-      setElapsed(diffSeconds);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [startDate]);
-
-  // Pré-calcul des temps d'étapes (en minutes)
-  const computedSteps = useMemo(() => computeSteps(data.steps), []);
-
-  // calcule du temps total de l'atelier grace aux étapes (en minutes)
-  const totalDuration = computedSteps.length > 0 ? computedSteps[computedSteps.length - 1].stepEnd : 0;
-
-  // Temps restant (data.duration est en minutes)
-  const totalSeconds = totalDuration * 60;
-  const remainingSeconds = totalSeconds - elapsed;
+  // Normalise startAt -> Date
+  const startDate = useMemo(() => {
+    const d = startAt instanceof Date ? startAt : new Date(startAt);
+    return Number.isNaN(d.getTime()) ? new Date() : d;
+  }, [startAt]);
 
   return (
     <>
-      <aside className="fixed right-6.25 top-21 bottom-12 w-80 bg-white rounded-2xl shadow-md p-5 z-9999 flex flex-col">
+      <aside className="fixed right-6 top-6 bottom-6 w-80 bg-white rounded-2xl shadow-md p-5 z-9999 flex flex-col">
         <h2 className="text-xl font-bold mb-4">Atelier de groupe</h2>
 
         {/* 1er cadre arrondi */}
         <div className="rounded-2xl border border-gray-100 p-4 mb-4">
           <div className="flex items-center gap-3">
             <img
-              src={data.image}
+              src={sessionData.image}
               alt="Profil"
               className="w-14 h-14 rounded-lg object-cover"  
             />
             <div className="min-w-0">
-              <div className="font-semibold truncate">{data.title}</div>
+              <div className="font-semibold truncate">{sessionData.title}</div>
               <div className="text-sm text-gray-600 truncate">⏱ {totalDuration} minutes</div>
-              <div className="text-sm text-gray-500 truncate">👥 {data.groupSize}</div>
+              <div className="text-sm text-gray-500 truncate">👥 {sessionData.groupSize}</div>
             </div>
           </div>
         </div>
@@ -76,7 +55,6 @@ function StepTime() {
           {/* Liste des étapes */}
           <div className="flex flex-col gap-3 overflow-y-auto">
             {computedSteps.map((step, index) => {
-              const elapsedMinutes = elapsed / 60;
 
               const isCurrent =
                 elapsedMinutes >= step.stepStart &&

@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { data } from "../../../components/StepTimeData";
+import WorkshopStepLayout from "./WorkshopStepLayout.jsx";
 
-function Step2() {
+function Step2({ step, sessionTitle }) {
+
   const [description, setDescription] = useState("");
 
   const challenge = "Comment pourrions-nous inventer un produit antistress pour cadres en burn-out ?";
@@ -23,22 +24,11 @@ function Step2() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-200 py-12 px-6">
-      <div className="min-h-screen lg:mr-86">
-
-        <h1 className='text-4xl font-bold text-gray-800 mb-8'>{data.title}</h1>
-        <h2 className='text-2xl font-semibold text-gray-700 mb-4'>{data.steps[1].label}</h2>
-        {/* description de l'étape */}
-        <div className='bg-white rounded-2xl shadow-md p-6 mb-6'>
-          {data.steps[1].description.map((item, index) => (
-            <p key={index} className='text-gray-600 mb-1 text-sm'>{item}</p>
-          ))}
-        </div>
-
-        {/* challenge proposé */}
-        <div className='bg-white rounded-2xl shadow-md p-6 mb-6'>
-          <p className='text-gray-600 mb-1 text-sm'>{challenge}</p>
-        </div>
+    <WorkshopStepLayout
+      title={sessionTitle}
+      stepLabel={step.label}
+      description={step.description}
+    >
 
         {/* Zone des post-it */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
@@ -81,8 +71,7 @@ function Step2() {
         })}
         </div>
 
-    </div>
-    </div>
+    </WorkshopStepLayout>
   );
 }
 

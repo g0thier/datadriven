@@ -1,6 +1,6 @@
 import { useState } from "react";
-import zebra from "../assets/zebra.svg";
-import SwapLink from "../components/SwapLink";
+import zebra from "../../assets/zebra.svg";
+import SwapLink from "../../components/SwapLink";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -92,13 +92,13 @@ function Login() {
         {/* Liens */}
         <div className="flex items-center gap-6 mt-8">
           <SwapLink
-            href="/register"
+            to="/register"
             part1="Pas de compte ?"
             part2="Créez-en un !"
             align="center"
           />
           <SwapLink
-            href="/reset-password"
+            to="/reset-password"
             part1="Mot de passe oublié ?"
             part2="Réinitialisez-le !"
             align="center"
