@@ -96,49 +96,67 @@ function WorkshopInvitation() {
       <div className="mx-auto max-w-5xl">
         <h1 className="text-4xl font-bold text-gray-800 mb-8">Atelier</h1>
 
-        {/* Ligne: titre atelier à gauche + bouton à droite */}
-        <div className="bg-white/80 backdrop-blur rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-slate-500">Atelier sélectionné</p>
-              <h2 className="text-2xl font-semibold text-slate-900">
-                {atelier?.title ?? "Atelier"}
-              </h2>
-            </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Présentation de l'atelier */}
+          <div className="relative rounded-2xl shadow-sm border border-slate-200 mb-6 overflow-hidden">
 
-            <button
-              type="button"
-              onClick={handleSendInvites}
-              disabled={!canSend}
-              className={[
-                "inline-flex items-center justify-center rounded-xl px-5 py-3 font-semibold",
-                "transition shadow-sm",
-                canSend
-                  ? "bg-slate-900 text-white hover:bg-slate-800"
-                  : "bg-slate-200 text-slate-500 cursor-not-allowed",
-              ].join(" ")}
-            >
-              Envoyer les invitations
-            </button>
+            {/* Image en fond */}
+            {atelier?.image && (
+              <img
+                src={atelier.image}
+                alt={atelier?.title ?? "Atelier"}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            )}
+
+            {/* Léger dégradé */}
+            <div className="absolute inset-0 bg-linear-to-b from-black/40 via-black/20 to-transparent" />
+
+
+            {/* Contenu */}
+            <div className="relative z-10 p-6 space-y-4">
+              
+              <div>
+                <p className="text-xs text-white/80">Atelier sélectionné</p>
+                <h2 className="text-white text-2xl font-bold leading-tight">
+                  {atelier?.title ?? "Atelier"}
+                </h2>
+              </div>
+
+              {/* Meta */}
+              {(atelier?.duration || atelier?.groupSize) && (
+                <div className="flex flex-wrap gap-2">
+                  {atelier?.duration && (
+                    <span className="inline-flex items-center gap-2 rounded-full bg-white text-slate-700 px-3 py-1 text-sm">
+                      ⏱ {atelier.duration}
+                    </span>
+                  )}
+                  {atelier?.groupSize && (
+                    <span className="inline-flex items-center gap-2 rounded-full bg-white text-slate-700 px-3 py-1 text-sm">
+                      👥 {atelier.groupSize}
+                    </span>
+                  )}
+                </div>
+              )}
+
+            </div>
           </div>
 
           {/* Date */}
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Date de l’atelier
-              </label>
-              <input
-                type="date"
-                value={workshopDate}
-                onChange={(e) => setWorkshopDate(e.target.value)}
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-              />
-              <p className="mt-2 text-xs text-slate-500">
-                Choisis la date, puis sélectionne des équipes et/ou des invités.
-              </p>
+          <div className="bg-white/80 backdrop-blur rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Date de l’atelier
+                </label>
+                <input
+                  type="date"
+                  value={workshopDate}
+                  onChange={(e) => setWorkshopDate(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                />
+              </div>
             </div>
-
           </div>
         </div>
 
@@ -297,6 +315,24 @@ function WorkshopInvitation() {
               Pour envoyer, choisis une date + au moins une équipe ou un invité.
             </p>
           )}
+        </div>
+
+        {/* Bouton en bas */}
+        <div className="mt-6 flex justify-end">
+          <button
+            type="button"
+            onClick={handleSendInvites}
+            disabled={!canSend}
+            className={[
+              "inline-flex items-center justify-center rounded-xl px-6 py-3 font-semibold",
+              "transition shadow-sm",
+              canSend
+                ? "bg-slate-900 text-white hover:bg-slate-800"
+                : "bg-slate-200 text-slate-500 cursor-not-allowed",
+            ].join(" ")}
+          >
+            Envoyer les invitations
+          </button>
         </div>
       </div>
     </div>
