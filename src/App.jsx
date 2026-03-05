@@ -16,6 +16,7 @@ const ResetPassword = lazy(() => import('./pages/auth/ResetPassword.jsx'));
 
 const NotFound = lazy(() => import('./pages/NotFound.jsx'));
 const WorkshopRunner = lazy(() => import('./workshops/WorkshopRunner.jsx'));
+const WorkshopInvitation = lazy(() => import('./pages/innovation/WorkshopInvitation.jsx'));
 const Innovation = lazy(() => import('./pages/innovation/Innovation.jsx'));
 const Team = lazy(() => import('./pages/team/Team.jsx'));
 
@@ -31,6 +32,7 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/profil" element={<Profil />} />
         <Route path="/innovation" element={<Innovation />} />
+        <Route path="/innovation/invitation" element={<WorkshopInvitation />} />
         <Route path="/innovation/:workshopId/:id" element={<WorkshopRunner />} />
         <Route path="/team" element={<Team />} />
         <Route path="/mail" element={<Mail />} />

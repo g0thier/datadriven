@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 
-import { officeLocations, departments, teamMembers } from "./team/data_corp.jsx";
-import data from "./innovation/data_cards.jsx";
+import { officeLocations, departments, teamMembers } from "../team/data_corp.jsx";
+import data from "./data_cards.jsx";
 
-function Workshop() {
-  const atelier = data?.[0] ?? { title: "Atelier" };
+function WorkshopInvitation() {
+  const location = useLocation();
+  const atelier = location.state?.workshop ?? { title: "Atelier" };
 
   const [selectedDepartmentIds, setSelectedDepartmentIds] = useState([]);
   const [selectedMemberIds, setSelectedMemberIds] = useState([]);
@@ -137,15 +139,6 @@ function Workshop() {
               </p>
             </div>
 
-            {/* (Option) lieux - juste affiché si tu veux t’en servir */}
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-sm font-medium text-slate-700">Sites (optionnel)</p>
-              <p className="text-xs text-slate-500 mt-1">
-                {Array.isArray(officeLocations) && officeLocations.length > 0
-                  ? `${officeLocations.length} site(s) disponible(s) — utilise-les si besoin pour filtrer ou informer.`
-                  : "Aucun site détecté dans officeLocations."}
-              </p>
-            </div>
           </div>
         </div>
 
@@ -310,4 +303,4 @@ function Workshop() {
   );
 }
 
-export default Workshop;
+export default WorkshopInvitation;

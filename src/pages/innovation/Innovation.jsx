@@ -1,12 +1,18 @@
+import { useNavigate } from "react-router-dom";
 import Navbar from '../../components/Navbar.jsx'
 import data from './data_cards.jsx'
 
 function Cards() {
+  const navigate = useNavigate();
+
   return (
       <div className="max-w-7xl mx-auto grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {data.map((card, index) => (
           <div
             key={index}
+            onClick={() =>
+            navigate("/innovation/invitation", { state: { workshop: card } })
+            }
             className="group bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden hover:-translate-y-2"
           >
             {/* Image */}
@@ -45,10 +51,6 @@ function Cards() {
                   ))}
                 </ul>
               </div>
-
-              <button className="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-indigo-400 py-2 rounded-xl font-medium transition-colors duration-300">
-                Proposer cette activité
-              </button>
             </div>
           </div>
         ))}
