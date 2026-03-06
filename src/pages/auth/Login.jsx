@@ -1,6 +1,7 @@
 import { useState } from "react";
 import zebra from "../../assets/zebra.svg";
 import SwapLink from "../../components/SwapLink";
+import MaterialIcon from "../../components/MaterialIcon";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -8,8 +9,6 @@ function Login() {
 
   // Step-by-step : d'abord email, puis password
   const [step, setStep] = useState(1); // 1 = email, 2 = password
-  const icon = "./src/assets/material/send_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg";
-  const passwordIcon = "./src/assets/material/password_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg";
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -78,12 +77,10 @@ function Login() {
             className="bg-indigo-500 text-white p-4 rounded-full shadow-md hover:bg-indigo-600 transition flex items-center justify-center"
             aria-label={step === 1 ? "Continuer" : "Se connecter"}
           >
-            <img
-              src={step === 1 ? passwordIcon : icon}
-              alt=""
-              className={step === 1 ? 
-                "h-6 w-6 brightness-0 invert" : 
-                "h-6 w-6 brightness-0 invert rotate-330 -translate-y-px translate-px"}
+            <MaterialIcon 
+              name={step === 1 ? "password" : "send"} 
+              size={24} 
+              className={step === 1 ? "" : "rotate-330 -translate-y-px translate-px"}
             />
           </button>
         </form>

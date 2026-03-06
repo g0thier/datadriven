@@ -1,12 +1,11 @@
 import { useState } from "react";
 import zebra from '../../assets/zebra.svg';
 import SwapLink from "../../components/SwapLink";
+import MaterialIcon from "../../components/MaterialIcon";
 
 function ResetPassword() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
-  const icon = "./src/assets/material/send_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg";
-
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -55,26 +54,23 @@ function ResetPassword() {
                 type="submit"
                 className="bg-indigo-500 text-white p-4 rounded-full shadow-md hover:bg-indigo-600 transition flex items-center justify-center"
               >
-                <img src={icon} alt="Envoyer icon" className="h-6 w-6 brightness-0 invert rotate-330 -translate-y-px translate-px" />
+                <MaterialIcon 
+                  name="send"
+                  size={24} 
+                  className={
+                    "h-6 w-6 brightness-0 invert rotate-330 -translate-y-px translate-px"
+                  }
+                />
               </button>
             </form>
           </>
         ) : (
           <>
             <h1 className="text-4xl text-gray-800 font-bold mb-4 text-center flex items-center justify-center gap-3">
-            <span
-                className="h-12 w-12 bg-gray-800 rotate-330 -translate-y-2 translate-x-3 inline-block"
-                style={{
-                WebkitMaskImage: `url(${icon})`,
-                WebkitMaskRepeat: "no-repeat",
-                WebkitMaskPosition: "center",
-                WebkitMaskSize: "contain",
-                maskImage: `url(${icon})`,
-                maskRepeat: "no-repeat",
-                maskPosition: "center",
-                maskSize: "contain",
-                }}
-                aria-hidden="true"
+            <MaterialIcon 
+              name="send"
+              size={50} 
+              className= "rotate-330 -translate-y-2 translate-x-3"
             />
             Email envoyé !
             </h1>

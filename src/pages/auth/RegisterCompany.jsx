@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import zebra from "../../assets/zebra.svg";
 import SwapLink from "../../components/SwapLink";
+import MaterialIcon from "../../components/MaterialIcon";
 
 function RegisterCompany() {
   // Step-by-step :
@@ -31,15 +32,6 @@ function RegisterCompany() {
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
-
-  const iconSend =
-    "./src/assets/material/send_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg";
-  const iconNext =
-    "./src/assets/material/arrow_right_alt_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg";
-  const iconBack =
-    "./src/assets/material/arrow_back_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg";
-  const iconPassword =
-    "./src/assets/material/password_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg";
 
   const title = useMemo(() => {
     switch (step) {
@@ -426,7 +418,10 @@ function RegisterCompany() {
                 className="bg-white text-gray-800 p-4 rounded-full shadow-md hover:bg-gray-50 transition flex items-center justify-center"
                 aria-label="Retour"
               >
-                <img src={iconBack} alt="" className="h-6 w-6" />
+                <MaterialIcon 
+                  name="arrow_back" 
+                  size={24} 
+                />
               </button>
             )}
 
@@ -441,12 +436,12 @@ function RegisterCompany() {
               }
               aria-label={step < 4 ? "Continuer" : "Créer le compte"}
             >
-              <img
-                src={step === 3 ? iconPassword : step < 4 ? iconNext : iconSend}
-                alt=""
+              <MaterialIcon 
+                name={step === 3 ? "password" : step < 5 ? "arrow_right_alt" : "send"}
+                size={24} 
                 className={
                   "h-6 w-6 brightness-0 invert " +
-                  (step === 4 ? "rotate-330 -translate-y-px translate-px" : "")
+                  (step === 5 ? "rotate-330 -translate-y-px translate-px" : "")
                 }
               />
             </button>
