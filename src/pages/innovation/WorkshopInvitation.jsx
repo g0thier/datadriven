@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 
 import { officeLocations, departments, teamMembers } from "../team/data_corp.jsx";
-import data from "./data_cards.jsx";
 
 function WorkshopInvitation() {
   const location = useLocation();
@@ -10,7 +9,8 @@ function WorkshopInvitation() {
 
   const [selectedDepartmentIds, setSelectedDepartmentIds] = useState([]);
   const [selectedMemberIds, setSelectedMemberIds] = useState([]);
-  const [workshopDate, setWorkshopDate] = useState(""); // format YYYY-MM-DD (input type="date")
+  const [workshopDate, setWorkshopDate] = useState("");
+  const [workshopTime, setWorkshopTime] = useState("");
   const [search, setSearch] = useState("");
 
   // Helpers robustes (au cas où tes objets ont des formes différentes)
@@ -72,13 +72,21 @@ function WorkshopInvitation() {
 
   const canSend =
     Boolean(workshopDate) &&
+    Boolean(workshopTime) &&
     (selectedDepartmentIds.length > 0 || selectedMemberIds.length > 0);
 
   const handleSendInvites = () => {
+
+    const workshopDateTime =
+    workshopDate && workshopTime
+      ? `${workshopDate}T${workshopTime}`
+      : "";
     // TODO: brancher ton backend / email service
     const payload = {
       atelierTitle: atelier?.title,
       date: workshopDate,
+      time: workshopTime,
+      datetime: workshopDateTime,
       departments: selectedDepartments.map((d) => ({ id: d.__id, label: d.__label })),
       guests: selectedMembers.map((m) => ({ id: m.__id, label: m.__label })),
       // Optionnel si tu veux inclure les sites:
@@ -87,7 +95,7 @@ function WorkshopInvitation() {
 
     console.log("Invitations payload:", payload);
     alert(
-      `Invitations prêtes à être envoyées ✅\n\nAtelier: ${atelier?.title}\nDate: ${workshopDate}\nÉquipes: ${selectedDepartmentIds.length}\nInvités: ${selectedMemberIds.length}`
+      `Invitations prêtes à être envoyées ✅\n\nAtelier: ${atelier?.title}\nDate: ${workshopDateTime}\nÉquipes: ${selectedDepartmentIds.length}\nInvités: ${selectedMemberIds.length}`
     );
   };
 
@@ -144,18 +152,24 @@ function WorkshopInvitation() {
 
           {/* Date */}
           <div className="bg-white/80 backdrop-blur rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Date de l’atelier
-                </label>
-                <input
-                  type="date"
-                  value={workshopDate}
-                  onChange={(e) => setWorkshopDate(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                />
-              </div>
+            <label className="block text-sm font-medium text-slate-700 mb-3">
+              Date et heure de l’atelier
+            </label>
+
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                type="date"
+                value={workshopDate}
+                onChange={(e) => setWorkshopDate(e.target.value)}
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+              />
+
+              <input
+                type="time"
+                value={workshopTime}
+                onChange={(e) => setWorkshopTime(e.target.value)}
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+              />
             </div>
           </div>
         </div>
@@ -289,9 +303,9 @@ function WorkshopInvitation() {
 
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
-              <p className="text-xs text-slate-500">Date</p>
+              <p className="text-xs text-slate-500">Date et heure</p>
               <p className="text-sm font-semibold text-slate-900">
-                {workshopDate || "—"}
+                {workshopDate && workshopTime ? `${workshopDate} ${workshopTime}` : "—"}
               </p>
             </div>
 
