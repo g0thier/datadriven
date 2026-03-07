@@ -13,6 +13,7 @@ export default function Navbar() {
     { label: "Innovation & Créativité", to: "/innovation", icon: "emoji_objects" },
     { label: "Gestion des Ressources Humaines", to: "/team", icon: "conversation" },
     { label: "À venir", to: "/", icon: "select" },
+    { label: "Gestion des accès", to: "/management", icon: "shield_toggle" }
   ];
 
   const base = "rounded-lg px-3 py-2 text-sm font-medium text-gray-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300";
