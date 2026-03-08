@@ -18,13 +18,13 @@ import { getDatabase, ref, set, update, push, get, onValue } from "firebase/data
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAbFeXgec8gRr3MhGxM3TcL5xzBDhRV954",
-  authDomain: "g0thier-project-datadriven.firebaseapp.com",
-  databaseURL: "https://g0thier-project-datadriven-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "g0thier-project-datadriven",
-  storageBucket: "g0thier-project-datadriven.firebasestorage.app",
-  messagingSenderId: "326707760074",
-  appId: "1:326707760074:web:4b563d7a8dce951f459d33"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 // Initialize Firebase
