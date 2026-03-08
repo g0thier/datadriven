@@ -1,7 +1,7 @@
 # Data-Driven Management System
 
 This App is hosted on Firebase and is accessible at the following address:
-- [g0thier-project-datadriven.web.app](https://g0thier-project-datadriven.web.app)
+- [zzzbre.com](https://zzzbre.com)
 
 ## Description
 
