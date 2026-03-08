@@ -3,7 +3,8 @@ import zebra from "../../assets/zebra.svg";
 import SwapLink from "../../components/SwapLink";
 import MaterialIcon from "../../components/MaterialIcon";
 
-import { signUpWithEmail } from "../../firebase/config";
+import { signUpWithEmail, createCompany } from "../../firebase/config";
+import { useNavigate } from "react-router-dom";
 
 function RegisterCompany() {
   // Step-by-step :
@@ -34,6 +35,9 @@ function RegisterCompany() {
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
+
+  // --- Navigation
+  const navigate = useNavigate();
 
   const title = useMemo(() => {
     switch (step) {
@@ -142,15 +146,20 @@ function RegisterCompany() {
         email: adminEmail,
         phone: adminPhone,
       },
-      security: { password },
       acceptTerms,
     };
 
     try {
-      await signUpWithEmail(adminEmail, password);
+      const user = await signUpWithEmail(adminEmail, password);
+      console.log("Compte Firebase Auth créé :", user.uid);
 
-      console.log("Compte Firebase créé");
-      console.log("RegisterCompany :", payload);
+      if (!user) { throw new Error("Utilisateur introuvable après inscription.");}
+
+      const result = await createCompany(user.uid, payload);
+      console.log("Entreprise créée dans Realtime Database :", result);
+
+      // Navigate to dashboard after successful registration
+      navigate("/innovation");
 
     } catch (error) {
       console.error("Erreur Firebase :", error);

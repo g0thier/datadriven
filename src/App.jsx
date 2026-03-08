@@ -6,7 +6,6 @@ import './App.css'
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import RouteFallback from './components/fallback/RouteFallback.jsx'
-import Profil from './components/Profil.jsx'
 
 import Mail from './emails/Mail.jsx'
 import ResetPasswordMail from './emails/ResetPasswordMail.jsx';
@@ -30,17 +29,20 @@ function App() {
     <BrowserRouter>
       <Suspense fallback={<RouteFallback />}>
       <Routes>
+        {/* Authentification routes */}
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<RegisterCompany />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         
+        {/* Dashboard et pages protégées */}
         <Route path="/management" element={<ProtectedRoute><Management /></ProtectedRoute>} />
         <Route path="/innovation" element={<ProtectedRoute><Innovation /></ProtectedRoute>} />
         <Route path="/innovation/invitation" element={<ProtectedRoute><WorkshopInvitation /></ProtectedRoute>} />
-        <Route path="/innovation/:workshopId/:id" element={<WorkshopRunner />} />
         <Route path="/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
 
+        {/* Pages publiques */}
+        <Route path="/innovation/:workshopId/:id" element={<WorkshopRunner />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       </Suspense>
