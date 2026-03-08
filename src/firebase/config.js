@@ -112,6 +112,19 @@ const slugify = (value) => {
     .replace(/^-+|-+$/g, "");
 };
 
+const DEFAULT_DEPARTMENTS = [
+  "Ressources Humaines",
+  "Développement",
+  "Marketing",
+  "Ventes",
+  "Support Client",
+  "Finance",
+  "Opérations",
+  "Informatique",
+  "Recherche et Développement",
+  "Logistique",
+];
+
 // Create a new company in the database
 export const createCompany = async (uid, payload) => {
   if (!uid) {
@@ -119,12 +132,63 @@ export const createCompany = async (uid, payload) => {
   }
 
   const db = database;
+  const now = new Date().toISOString();
 
+  // Création de la société
   const companyRef = push(ref(db, "companies"));
   const companyId = companyRef.key;
 
+  if (!companyId) {
+    throw new Error("Impossible de générer companyId");
+  }
+
   const slug = `${slugify(payload.company.name)}-${companyId.slice(-6)}`;
-  const now = new Date().toISOString();
+
+  // Normalisation des adresses
+  const addressesInput = Array.isArray(payload.company.addresses)
+    ? payload.company.addresses
+    : [];
+
+  const addresses = {};
+  addressesInput.forEach((item) => {
+    const addressRef = push(ref(db, `companies/${companyId}/addresses`));
+    const addressId = addressRef.key;
+
+    if (!addressId) return;
+
+    addresses[addressId] = {
+      alias: item.alias || "",
+      address: item.address || "",
+      city: item.city || "",
+      zip: item.zip || "",
+      country: item.country || "",
+      isDefault: Boolean(item.isDefault),
+      createdAt: now,
+    };
+  });
+
+  // Assurer qu'il y a une adresse par défaut
+  const addressIds = Object.keys(addresses);
+  if (addressIds.length > 0 && !addressIds.some((id) => addresses[id].isDefault)) {
+    addresses[addressIds[0]].isDefault = true;
+  }
+
+  // Normalisation des départements
+  const departmentsInput =
+    Array.isArray(payload.company.departments) && payload.company.departments.length > 0
+      ? payload.company.departments
+      : DEFAULT_DEPARTMENTS;
+
+  const departments = {};
+  departmentsInput.forEach((name) => {
+    const departmentSlug = slugify(name);
+    departments[departmentSlug] = {
+      name,
+      slug: departmentSlug,
+      isActive: true,
+      createdAt: now,
+    };
+  });
 
   const updates = {};
 
@@ -145,15 +209,13 @@ export const createCompany = async (uid, payload) => {
     legalForm: payload.company.legalForm || "",
     siret: payload.company.siret || "",
     vatNumber: payload.company.vatNumber || "",
-    address: payload.company.address || "",
-    city: payload.company.city || "",
-    zip: payload.company.zip || "",
-    country: payload.company.country || "",
     ownerUid: uid,
     plan: "free",
     status: "active",
     acceptTerms: payload.acceptTerms,
     createdAt: now,
+    addresses,
+    departments,
     employees: {
       [uid]: {
         role: "owner",

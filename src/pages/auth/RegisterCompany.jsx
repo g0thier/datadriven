@@ -129,25 +129,47 @@ function RegisterCompany() {
       return;
     }
 
-    const payload = {
-      company: {
-        name: companyName,
-        legalForm,
-        siret,
-        vatNumber,
-        address: companyAddress,
-        city: companyCity,
-        zip: companyZip,
-        country: companyCountry,
-      },
-      admin: {
-        firstName: adminFirstName,
-        lastName: adminLastName,
-        email: adminEmail,
-        phone: adminPhone,
-      },
-      acceptTerms,
-    };
+  const payload = {
+    company: {
+      name: companyName,
+      legalForm,
+      siret,
+      vatNumber,
+
+      addresses: [
+        {
+          alias: "Siège",
+          address: companyAddress,
+          city: companyCity,
+          zip: companyZip,
+          country: companyCountry,
+          isDefault: true,
+        }
+      ],
+
+      departments: [
+        "Ressources Humaines",
+        "Développement",
+        "Marketing",
+        "Ventes",
+        "Support Client",
+        "Finance",
+        "Opérations",
+        "Informatique",
+        "Recherche et Développement",
+        "Logistique"
+      ]
+    },
+
+    admin: {
+      firstName: adminFirstName,
+      lastName: adminLastName,
+      email: adminEmail,
+      phone: adminPhone,
+    },
+
+    acceptTerms,
+  };
 
     try {
       const user = await signUpWithEmail(adminEmail, password);
