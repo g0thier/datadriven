@@ -3,6 +3,8 @@ import zebra from '../../assets/zebra.svg';
 import SwapLink from "../../components/SwapLink";
 import MaterialIcon from "../../components/MaterialIcon";
 
+import {resetPassword} from "../../firebase/config";
+
 function ResetPassword() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
@@ -10,8 +12,9 @@ function ResetPassword() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // 👉 Ici tu mettras ton appel API
+    // Déclenche l'envoi de l'email de reset
     console.log("Email envoyé pour reset :", email);
+    resetPassword(email);
 
     setSent(true);
   };

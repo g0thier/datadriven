@@ -3,6 +3,8 @@ import zebra from "../../assets/zebra.svg";
 import SwapLink from "../../components/SwapLink";
 import MaterialIcon from "../../components/MaterialIcon";
 
+import { signUpWithEmail } from "../../firebase/config";
+
 function RegisterCompany() {
   // Step-by-step :
   // 1 = Infos société
@@ -114,7 +116,7 @@ function RegisterCompany() {
     acceptTerms,
   ]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (step < 5) {
@@ -123,7 +125,6 @@ function RegisterCompany() {
       return;
     }
 
-    // 👉 Ici tu mettras ton appel API register company
     const payload = {
       company: {
         name: companyName,
@@ -145,12 +146,20 @@ function RegisterCompany() {
       acceptTerms,
     };
 
-    console.log("RegisterCompany :", payload);
+    try {
+      await signUpWithEmail(adminEmail, password);
+
+      console.log("Compte Firebase créé");
+      console.log("RegisterCompany :", payload);
+
+    } catch (error) {
+      console.error("Erreur Firebase :", error);
+    }
   };
 
-  const handleBack = () => {
+  function handleBack() {
     setStep((s) => Math.max(1, s - 1));
-  };
+  }
 
   const inputClass =
     "bg-white p-5 rounded shadow-md w-80 md:w-[420px]";

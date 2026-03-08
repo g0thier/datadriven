@@ -1,9 +1,24 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import zebra from "../../assets/zebra.svg";
 import SwapLink from "../../components/SwapLink";
 import MaterialIcon from "../../components/MaterialIcon";
 
+import { useNavigate } from "react-router-dom";
+import {signInWithEmail, onAuthStateChangedListener} from "../../firebase/config";
+
 function Login() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChangedListener((user) => {
+      if (user) {
+        navigate("/innovation", { replace: true });
+      }
+    });
+
+    return () => unsubscribe();
+  }, [navigate]);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -19,8 +34,8 @@ function Login() {
       return;
     }
 
-    // 👉 Ici tu mettras ton appel API login
-    console.log("Login :", { email, password });
+    // à l'étape 2, on tente de se connecter
+    signInWithEmail(email, password);
   };
 
   const handleBack = () => {
@@ -110,7 +125,6 @@ function Login() {
             </button>
           )}
         </div>
-        {/* Bouton retour (quand on est au step 2) */}
 
       </div>
     </div>

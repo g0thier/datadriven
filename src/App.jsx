@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import './App.css'
 
+import ProtectedRoute from "./components/ProtectedRoute";
 import RouteFallback from './components/fallback/RouteFallback.jsx'
 import Profil from './components/Profil.jsx'
 
@@ -33,14 +34,13 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<RegisterCompany />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/profil" element={<Profil />} />
-        <Route path="/management" element={<Management />} />
-        <Route path="/innovation" element={<Innovation />} />
-        <Route path="/innovation/invitation" element={<WorkshopInvitation />} />
+        
+        <Route path="/management" element={<ProtectedRoute><Management /></ProtectedRoute>} />
+        <Route path="/innovation" element={<ProtectedRoute><Innovation /></ProtectedRoute>} />
+        <Route path="/innovation/invitation" element={<ProtectedRoute><WorkshopInvitation /></ProtectedRoute>} />
         <Route path="/innovation/:workshopId/:id" element={<WorkshopRunner />} />
-        <Route path="/team" element={<Team />} />
-        <Route path="/mail" element={<Mail />} />
-        <Route path="/reset-password-mail" element={<ResetPasswordMail />} />
+        <Route path="/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
+
         <Route path="*" element={<NotFound />} />
       </Routes>
       </Suspense>

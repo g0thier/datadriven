@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { logout } from "../firebase/config";
+import MaterialIcon from "../components/MaterialIcon";
 
 function Profil() {
   const [profilPicture] = useState(
@@ -28,10 +30,23 @@ function Profil() {
     [firstName, lastName, jobTitle, officeLocation]
   );
 
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login", { replace: true });
+  };
+
   return (
     <>
       <aside className="fixed right-6 top-6 bottom-6 w-80 bg-white rounded-2xl shadow-md p-5 z-9999 flex flex-col">
-        <h2 className="text-xl font-bold mb-4">Mon Profil</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold">Mon Profil</h2>
+
+          <button onClick={handleLogout}>
+            <MaterialIcon 
+              name="account_circle_off" 
+              className="text-indigo-600 hover:text-rose-800 transition-colors duration-600" />
+          </button>
+        </div>
 
         {/* 1er cadre arrondi */}
         <div className="rounded-2xl border border-gray-100 p-4 mb-4">
