@@ -1,5 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
+import slugify from "../utils/string";
+import DEFAULT_DEPARTMENTS from "../constants/defaults";
 
 // Import Authentication and Database functions
 import { 
@@ -34,8 +36,12 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const database = getDatabase(app);
 
-
-// Signing up with email and password
+/**
+ * Sign up a new user with email and password
+ * @param {*} email 
+ * @param {*} password 
+ * @returns 
+ */
 export const signUpWithEmail = async (email, password) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -48,7 +54,12 @@ export const signUpWithEmail = async (email, password) => {
   }
 };
 
-// Signing in with email and password
+/**
+ * Sign in a user with email and password
+ * @param {*} email 
+ * @param {*} password 
+ * @returns 
+ */
 export const signInWithEmail = async (email, password) => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -68,7 +79,10 @@ export const login = async () => {
     console.log('User info', result);
 } */
 
-// Logging out
+/**
+ * Logging out the current user
+ * @returns 
+ */
 export const logout = async () => {
   try {
     await signOut(auth);
@@ -79,7 +93,11 @@ export const logout = async () => {
   };
 };
 
-// Sending password reset email
+/**
+ * Sending password reset email
+ * @param {*} email 
+ * @returns 
+ */
 export const resetPassword = async (email) => {
    await sendPasswordResetEmail(auth, email)
     .then(() => {
@@ -94,38 +112,23 @@ export const resetPassword = async (email) => {
     });
 };
 
-// Listening to auth state changes
+/**
+ * Listening to auth state changes
+ * @param {*} callback 
+ * @returns 
+ */
 export const onAuthStateChangedListener = (callback) => {
     return onAuthStateChanged(auth, callback);
 };
 
 // Database functions
 
-// Utility function to create a URL-friendly slug from the company name
-const slugify = (value) => {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-};
-
-const DEFAULT_DEPARTMENTS = [
-  "Ressources Humaines",
-  "Développement",
-  "Marketing",
-  "Ventes",
-  "Support Client",
-  "Finance",
-  "Opérations",
-  "Informatique",
-  "Recherche et Développement",
-  "Logistique",
-];
-
-// Create a new company in the database
+/**
+ * Creates a new company in the database
+ * @param {*} uid UID of the user creating the company
+ * @param {*} payload Payload containing company and admin information
+ * @returns 
+ */
 export const createCompany = async (uid, payload) => {
   if (!uid) {
     throw new Error("createCompany: uid manquant");
