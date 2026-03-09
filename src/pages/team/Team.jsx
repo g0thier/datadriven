@@ -7,22 +7,25 @@ import DepartmentsView from "./DepartmentsView";
 import MembersView from "./MembersView";
 
 import {
-  officeLocations as officeLocationsSeed,
   teamMembers as teamMembersSeed,
 } from "./data_corp";
 import {
+  addCompanyOffice,
   addCompanyDepartment,
   getUserCompanyId,
   onAuthStateChangedListener,
+  removeCompanyOffice,
   removeCompanyDepartment,
   subscribeCompanyDepartments,
+  subscribeCompanyOffices,
   updateCompanyDepartment,
+  updateCompanyOffice,
 } from "../../firebase/config";
 
 export default function Team() {
   const [activeTab, setActiveTab] = useState("BUREAUX");
 
-  const [officeLocations, setOfficeLocations] = useState(() => officeLocationsSeed || []);
+  const [officeLocations, setOfficeLocations] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [teamMembers, setTeamMembers] = useState(() => teamMembersSeed || []);
   const [companyId, setCompanyId] = useState(null);
@@ -48,6 +51,7 @@ export default function Team() {
     const unsubscribe = onAuthStateChangedListener(async (currentUser) => {
       if (!currentUser) {
         setCompanyId(null);
+        setOfficeLocations([]);
         setDepartments([]);
         return;
       }
@@ -55,10 +59,14 @@ export default function Team() {
       try {
         const nextCompanyId = await getUserCompanyId(currentUser.uid);
         setCompanyId(nextCompanyId || null);
-        if (!nextCompanyId) setDepartments([]);
+        if (!nextCompanyId) {
+          setOfficeLocations([]);
+          setDepartments([]);
+        }
       } catch (error) {
         console.error("Impossible de récupérer le companyId de l'utilisateur :", error);
         setCompanyId(null);
+        setOfficeLocations([]);
         setDepartments([]);
       }
     });
@@ -71,23 +79,51 @@ export default function Team() {
     return () => unsubscribe();
   }, [companyId]);
 
+  useEffect(() => {
+    const unsubscribe = subscribeCompanyOffices(companyId, setOfficeLocations);
+    return () => unsubscribe();
+  }, [companyId]);
+
   // ------- BUREAUX -------
-  function addOffice() {
-    const id = nextId(officeLocations);
-    setOfficeLocations((prev) => [...prev, { id, name: "", address: "" }]);
-    setEditingOfficeId(id);
+  async function addOffice() {
+    if (!companyId) return;
+
+    try {
+      const id = await addCompanyOffice(companyId, { name: "", address: "" });
+      setEditingOfficeId(id);
+    } catch (error) {
+      console.error("Impossible d'ajouter le bureau :", error);
+    }
   }
 
-  function updateOffice(id, patch) {
+  async function updateOffice(id, patch) {
     setOfficeLocations((prev) => prev.map((o) => (o.id === id ? { ...o, ...patch } : o)));
+
+    if (!companyId) return;
+
+    try {
+      await updateCompanyOffice(companyId, id, patch);
+    } catch (error) {
+      console.error("Impossible de modifier le bureau :", error);
+    }
   }
 
-  function removeOffice(id) {
+  async function removeOffice(id) {
     setOfficeLocations((prev) => prev.filter((o) => o.id !== id));
     if (editingOfficeId === id) setEditingOfficeId(null);
 
     // Optionnel: nettoyer les membres qui pointaient vers ce bureau
-    setTeamMembers((prev) => prev.map((m) => (m.office === id ? { ...m, office: null } : m)));
+    setTeamMembers((prev) =>
+      prev.map((m) => (String(m.office) === String(id) ? { ...m, office: null } : m))
+    );
+
+    if (!companyId) return;
+
+    try {
+      await removeCompanyOffice(companyId, id);
+    } catch (error) {
+      console.error("Impossible de supprimer le bureau :", error);
+    }
   }
 
   // ------- EQUIPES (departments) -------
