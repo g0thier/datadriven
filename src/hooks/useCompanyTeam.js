@@ -80,9 +80,33 @@ export default function useCompanyTeam() {
   }, [companyId]);
 
   useEffect(() => {
-    const unsubscribe = watchCompanyMembers(companyId, setTeamMembers);
+    const unsubscribe = watchCompanyMembers(companyId, (nextMembers) => {
+      setTeamMembers((prev) => {
+        if (!editingMemberId) return nextMembers;
+
+        const localEditingMember = (prev || []).find((member) => member.id === editingMemberId);
+        if (!localEditingMember) return nextMembers;
+
+        return (nextMembers || []).map((member) => {
+          if (member.id !== editingMemberId) return member;
+
+          return {
+            ...member,
+            firstName: localEditingMember.firstName,
+            lastName: localEditingMember.lastName,
+            name: localEditingMember.name,
+            role: localEditingMember.role,
+            email: localEditingMember.email,
+            phone: localEditingMember.phone,
+            isActive: localEditingMember.isActive,
+            office: localEditingMember.office,
+            departments: localEditingMember.departments,
+          };
+        });
+      });
+    });
     return () => unsubscribe();
-  }, [companyId]);
+  }, [companyId, editingMemberId]);
 
   async function addOffice() {
     if (!companyId) return;
@@ -203,7 +227,22 @@ export default function useCompanyTeam() {
 
   async function updateMember(id, patch) {
     setTeamMembers((prev) =>
-      prev.map((member) => (member.id === id ? { ...member, ...patch } : member))
+      prev.map((member) => {
+        if (member.id !== id) return member;
+
+        const next = { ...member, ...patch };
+
+        if (
+          Object.prototype.hasOwnProperty.call(patch, "firstName") ||
+          Object.prototype.hasOwnProperty.call(patch, "lastName")
+        ) {
+          const firstName = patch.firstName ?? next.firstName ?? "";
+          const lastName = patch.lastName ?? next.lastName ?? "";
+          next.name = `${firstName} ${lastName}`.trim();
+        }
+
+        return next;
+      })
     );
 
     if (!companyId) return;

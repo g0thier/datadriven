@@ -18,12 +18,20 @@ const toMemberViewModel = (uid, employeeData = {}, userData = {}) => {
 
   return {
     id: uid,
+    firstName,
+    lastName,
     name: fullName,
     role: employeeData.role || userData.role || "",
     email: userData.email || "",
     phone: userData.phone || "",
     departments: userData.departmentIds || employeeData.departmentIds || [],
     office: userData.officeId || employeeData.officeId || null,
+    isActive:
+      typeof userData.isActive === "boolean"
+        ? userData.isActive
+        : typeof employeeData.isActive === "boolean"
+          ? employeeData.isActive
+          : true,
   };
 };
 
@@ -34,8 +42,12 @@ export const subscribeCompanyMembers = (companyId, callback) => {
   }
 
   const employeesRef = ref(database, `companies/${companyId}/employees`);
+  let latestSnapshotSeq = 0;
 
   return onValue(employeesRef, async (snapshot) => {
+    latestSnapshotSeq += 1;
+    const currentSeq = latestSnapshotSeq;
+
     const employees = snapshot.val() || {};
     const employeeEntries = Object.entries(employees);
 
@@ -46,6 +58,9 @@ export const subscribeCompanyMembers = (companyId, callback) => {
         return toMemberViewModel(uid, employeeData, userData);
       })
     );
+
+    // Ignore stale async resolutions to prevent older snapshots from overriding newer edits.
+    if (currentSeq !== latestSnapshotSeq) return;
 
     const sortedMembers = members.sort((a, b) => a.name.localeCompare(b.name, "fr"));
     callback(sortedMembers);
@@ -61,23 +76,29 @@ export const addCompanyMember = async (companyId, payload = {}) => {
 
   if (!memberId) throw new Error("Impossible de générer memberId");
 
-  const { firstName, lastName } = splitFullName(payload.name);
+  const resolvedFirstName =
+    typeof payload.firstName === "string" ? payload.firstName.trim() : "";
+  const resolvedLastName =
+    typeof payload.lastName === "string" ? payload.lastName.trim() : "";
+  const fallbackName = splitFullName(payload.name || "");
+  const firstName = resolvedFirstName || fallbackName.firstName;
+  const lastName = resolvedLastName || fallbackName.lastName;
   const departments = Array.isArray(payload.departments) ? payload.departments : [];
   const officeId = payload.office || null;
   const role = payload.role || "";
+  const isActive = typeof payload.isActive === "boolean" ? payload.isActive : true;
 
   const updates = {};
   updates[`users/${memberId}`] = {
     firstName,
     lastName,
-    name: payload.name || "",
     email: payload.email || "",
     phone: payload.phone || "",
     companyId,
     role,
     officeId,
     departmentIds: departments,
-    isActive: true,
+    isActive,
     createdAt: now,
     updatedAt: now,
   };
@@ -86,7 +107,7 @@ export const addCompanyMember = async (companyId, payload = {}) => {
     role,
     officeId,
     departmentIds: departments,
-    isActive: true,
+    isActive,
     joinedAt: now,
     updatedAt: now,
   };
@@ -102,9 +123,14 @@ export const updateCompanyMember = async (companyId, memberId, patch = {}) => {
   const userPatch = { updatedAt: now };
   const employeePatch = { updatedAt: now };
 
+  if (Object.prototype.hasOwnProperty.call(patch, "firstName")) {
+    userPatch.firstName = patch.firstName || "";
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, "lastName")) {
+    userPatch.lastName = patch.lastName || "";
+  }
   if (Object.prototype.hasOwnProperty.call(patch, "name")) {
     const { firstName, lastName } = splitFullName(patch.name);
-    userPatch.name = patch.name || "";
     userPatch.firstName = firstName;
     userPatch.lastName = lastName;
   }
@@ -123,12 +149,16 @@ export const updateCompanyMember = async (companyId, memberId, patch = {}) => {
     userPatch.role = patch.role || "";
     employeePatch.role = patch.role || "";
   }
+  if (Object.prototype.hasOwnProperty.call(patch, "isActive")) {
+    const isActive = Boolean(patch.isActive);
+    userPatch.isActive = isActive;
+    employeePatch.isActive = isActive;
+  }
 
-  const updates = {};
-  updates[`users/${memberId}`] = userPatch;
-  updates[`companies/${companyId}/employees/${memberId}`] = employeePatch;
-
-  await update(ref(database), updates);
+  await Promise.all([
+    update(ref(database, `users/${memberId}`), userPatch),
+    update(ref(database, `companies/${companyId}/employees/${memberId}`), employeePatch),
+  ]);
 };
 
 export const removeCompanyMember = async (companyId, memberId) => {

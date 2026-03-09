@@ -72,10 +72,12 @@ export function deleteDepartment(companyId, id) {
 // members
 export function createMember(companyId) {
   return addCompanyMember(companyId, {
-    name: "",
+    firstName: "",
+    lastName: "",
     role: "",
     email: "",
     phone: "",
+    isActive: true,
     departments: [],
     office: null,
   });

@@ -22,14 +22,16 @@ export default function MembersView({
 }) {
   return (
     <TableShell title="Personnels" onAdd={addMember}>
-      <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1200 }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1360 }}>
         <thead>
           <tr>
             <Th>Modifier</Th>
+            <Th>Prénom</Th>
             <Th>Nom</Th>
             <Th>Rôle</Th>
             <Th>Email</Th>
             <Th>Téléphone</Th>
+            <Th>Actif</Th>
             <Th>Bureau</Th>
             <Th>Équipes (tags)</Th>
             <Th>Actions</Th>
@@ -54,19 +56,31 @@ export default function MembersView({
                   </ActionButton>
                 </Td>
 
-                <Td style={{ minWidth: 220 }}>
+                <Td style={{ minWidth: 180 }}>
                   {isEditing ? (
                     <CellInput
-                      value={m.name ?? ""}
-                      onChange={(v) => updateMember(m.id, { name: v })}
-                      placeholder="Nom"
+                      value={m.firstName ?? ""}
+                      onChange={(v) => updateMember(m.id, { firstName: v })}
+                      placeholder="Prénom"
                     />
                   ) : (
-                    <span>{m.name || "—"}</span>
+                    <span>{m.firstName || "—"}</span>
                   )}
                 </Td>
 
-                <Td style={{ minWidth: 220 }}>
+                <Td style={{ minWidth: 180 }}>
+                  {isEditing ? (
+                    <CellInput
+                      value={m.lastName ?? ""}
+                      onChange={(v) => updateMember(m.id, { lastName: v })}
+                      placeholder="Nom"
+                    />
+                  ) : (
+                    <span>{m.lastName || "—"}</span>
+                  )}
+                </Td>
+
+                <Td style={{ minWidth: 180 }}>
                   {isEditing ? (
                     <CellInput
                       value={m.role ?? ""}
@@ -99,6 +113,23 @@ export default function MembersView({
                     />
                   ) : (
                     <span>{m.phone || "—"}</span>
+                  )}
+                </Td>
+
+                <Td style={{ minWidth: 120 }}>
+                  {isEditing ? (
+                    <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <input
+                        type="checkbox"
+                        checked={Boolean(m.isActive)}
+                        onChange={(e) => updateMember(m.id, { isActive: e.target.checked })}
+                      />
+                      <span>{m.isActive ? "Oui" : "Non"}</span>
+                    </label>
+                  ) : m.isActive ? (
+                    <span>Oui</span>
+                  ) : (
+                    <span>Non</span>
                   )}
                 </Td>
 
@@ -155,7 +186,7 @@ export default function MembersView({
 
           {(!teamMembers || teamMembers.length === 0) && (
             <tr>
-              <Td colSpan={8} style={{ color: "#777" }}>
+              <Td colSpan={10} style={{ color: "#777" }}>
                 Aucun personnel
               </Td>
             </tr>
