@@ -58,7 +58,7 @@ export function deleteOffice(companyId, id) {
 
 // departments
 export function createDepartment(companyId) {
-  return addCompanyDepartment(companyId, { name: "" });
+  return addCompanyDepartment(companyId, { name: "Nouveau département", isActive: true });
 }
 
 export function editDepartment(companyId, id, patch) {

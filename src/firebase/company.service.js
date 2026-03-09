@@ -53,10 +53,13 @@ export const createCompany = async (uid, payload) => {
 
   const departments = {};
   departmentsInput.forEach((name) => {
-    const departmentSlug = slugify(name);
-    departments[departmentSlug] = {
+    const departmentRef = push(ref(database, `companies/${companyId}/departments`));
+    const departmentId = departmentRef.key;
+
+    if (!departmentId) return;
+
+    departments[departmentId] = {
       name,
-      slug: departmentSlug,
       isActive: true,
       createdAt: now,
     };
