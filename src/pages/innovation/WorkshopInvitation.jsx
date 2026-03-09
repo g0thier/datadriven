@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 
-import { officeLocations, departments, teamMembers } from "../team/data_corp.jsx";
+import { officeLocations, departments, teamMembers } from "../management/data_corp.jsx";
 
 function WorkshopInvitation() {
   const location = useLocation();

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import Navbar from "../../components/Navbar.jsx";
-import { teamMembers as teamMembersSeed } from "../team/data_corp.jsx";
+import { teamMembers as teamMembersSeed } from "./data_corp.jsx";
 
 const TEAM_SECTIONS = [
   { key: "offices", label: "Bureaux" },
