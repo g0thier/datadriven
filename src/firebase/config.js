@@ -36,6 +36,16 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const database = getDatabase(app);
 
+
+/**
+ * @module firebase/config
+ * @description Firebase configuration and utility functions for authentication and database operations.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ * @see
+ */
+
 /**
  * Sign up a new user with email and password
  * @param {*} email 
@@ -114,8 +124,8 @@ export const resetPassword = async (email) => {
 
 /**
  * Listening to auth state changes
- * @param {*} callback 
- * @returns 
+ * @param {function} callback Callback function to handle auth state changes
+ * @returns {function} Unsubscribe function to stop listening
  */
 export const onAuthStateChangedListener = (callback) => {
     return onAuthStateChanged(auth, callback);
@@ -127,7 +137,7 @@ export const onAuthStateChangedListener = (callback) => {
  * Creates a new company in the database
  * @param {*} uid UID of the user creating the company
  * @param {*} payload Payload containing company and admin information
- * @returns 
+ * @returns {Promise<{companyId: string, slug: string}>} The created company's ID and slug
  */
 export const createCompany = async (uid, payload) => {
   if (!uid) {

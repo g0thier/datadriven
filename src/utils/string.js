@@ -1,4 +1,13 @@
 /**
+ * @module utils/string
+ * @description Utility functions for string manipulation, including slugification.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ * @see
+ */
+
+/**
  * Creates a URL-friendly slug from a given string.
  * @param {string} value - The string to be converted into a slug.
  * @returns {string} - The URL-friendly slug.

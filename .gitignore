@@ -33,6 +33,9 @@ __pycache__/
 .env.test.local
 .env.production.local
 
+# Documentation
+/out
+
 # Logs
 npm-debug.log*
 yarn-debug.log*
