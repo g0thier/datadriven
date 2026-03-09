@@ -6,19 +6,6 @@
     { id: 5, name: 'Bureau de Berlin', address: '1415 Alexanderplatz, Berlin, Allemagne' },
   ];
 
-  const departments = [
-    { id: 1, name: 'Ressources Humaines' },
-    { id: 2, name: 'Développement' },
-    { id: 3, name: 'Marketing' },
-    { id: 4, name: 'Ventes' },
-    { id: 5, name: 'Support Client' },
-    { id: 6, name: 'Finance' },
-    { id: 7, name: 'Opérations' },
-    { id: 8, name: 'Informatique' },
-    { id: 9, name: 'Recherche et Développement' },
-    { id: 10, name: 'Logistique' }
-  ];
-
   const teamMembers = [
     { id: 1, name: 'Alice Dupont', role: 'Responsable RH', email: 'a.d@exemple.com', phone: '+41 22 123 45 67', departments: [1], office: 1 },
     { id: 2, name: 'Bob Martin', role: 'Chargé de recrutement', email: 'b.m@exemple.com', phone: '+41 22 234 56 78', departments: [1], office: 1 },
@@ -29,4 +16,4 @@
     { id: 7, name: 'Grace Lambert', role: 'Chargé de la gestion des talents', email: 'g.l@exemple.com', phone: '+41 22 789 01 23', departments: [3], office: 1 }
   ];
 
-export { officeLocations, departments, teamMembers };
+export { officeLocations, teamMembers };

@@ -13,7 +13,7 @@ import {
     onAuthStateChanged, 
     // signInWithPopup, 
     signOut } from "firebase/auth";
-import { getDatabase, ref, set, update, push, get, onValue } from "firebase/database";
+import { getDatabase, ref, set, update, push, get, onValue, remove } from "firebase/database";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -241,4 +241,91 @@ export const createCompany = async (uid, payload) => {
   await update(ref(db), updates);
 
   return { companyId, slug };
+};
+
+/**
+ * Returns the companyId associated to the authenticated user profile.
+ * @param {string} uid
+ * @returns {Promise<string|null>}
+ */
+export const getUserCompanyId = async (uid) => {
+  if (!uid) return null;
+  const snapshot = await get(ref(database, `users/${uid}/companyId`));
+  return snapshot.exists() ? snapshot.val() : null;
+};
+
+/**
+ * Subscribes to company departments in Realtime Database.
+ * @param {string} companyId
+ * @param {(departments: Array<{id: string, name: string}>) => void} callback
+ * @returns {() => void}
+ */
+export const subscribeCompanyDepartments = (companyId, callback) => {
+  if (!companyId) {
+    callback([]);
+    return () => {};
+  }
+
+  const departmentsRef = ref(database, `companies/${companyId}/departments`);
+  return onValue(departmentsRef, (snapshot) => {
+    const rawDepartments = snapshot.val() || {};
+    const departments = Object.entries(rawDepartments)
+      .map(([id, data]) => ({
+        id,
+        name: data?.name || "",
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, "fr"));
+
+    callback(departments);
+  });
+};
+
+/**
+ * Creates a new department for a company.
+ * @param {string} companyId
+ * @param {{name?: string}} payload
+ * @returns {Promise<string>} departmentId
+ */
+export const addCompanyDepartment = async (companyId, payload = {}) => {
+  if (!companyId) throw new Error("addCompanyDepartment: companyId manquant");
+
+  const now = new Date().toISOString();
+  const departmentRef = push(ref(database, `companies/${companyId}/departments`));
+  const departmentId = departmentRef.key;
+
+  if (!departmentId) throw new Error("Impossible de générer departmentId");
+
+  await set(departmentRef, {
+    name: payload.name || "",
+    isActive: true,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  return departmentId;
+};
+
+/**
+ * Updates an existing department.
+ * @param {string} companyId
+ * @param {string} departmentId
+ * @param {Record<string, unknown>} patch
+ */
+export const updateCompanyDepartment = async (companyId, departmentId, patch = {}) => {
+  if (!companyId || !departmentId) return;
+
+  await update(ref(database, `companies/${companyId}/departments/${departmentId}`), {
+    ...patch,
+    updatedAt: new Date().toISOString(),
+  });
+};
+
+/**
+ * Removes a company department.
+ * @param {string} companyId
+ * @param {string} departmentId
+ */
+export const removeCompanyDepartment = async (companyId, departmentId) => {
+  if (!companyId || !departmentId) return;
+  await remove(ref(database, `companies/${companyId}/departments/${departmentId}`));
 };
