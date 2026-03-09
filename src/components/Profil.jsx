@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { logout } from "../firebase/config";
+import { logout } from "../firebase";
 import MaterialIcon from "../components/MaterialIcon";
 
 function Profil() {

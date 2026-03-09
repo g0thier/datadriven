@@ -21,7 +21,7 @@ import {
   updateCompanyMember,
   updateCompanyDepartment,
   updateCompanyOffice,
-} from "../../firebase/config";
+} from "../../firebase";
 
 export default function Team() {
   const [activeTab, setActiveTab] = useState("BUREAUX");

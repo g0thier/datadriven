@@ -3,7 +3,7 @@ import zebra from "../../assets/zebra.svg";
 import SwapLink from "../../components/SwapLink";
 import MaterialIcon from "../../components/MaterialIcon";
 
-import { signUpWithEmail, createCompany } from "../../firebase/config";
+import { signUpWithEmail, createCompany } from "../../firebase";
 import { useNavigate } from "react-router-dom";
 
 function RegisterCompany() {

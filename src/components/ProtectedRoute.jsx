@@ -1,7 +1,7 @@
 // components/ProtectedRoute.jsx
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { onAuthStateChangedListener } from "../firebase/config";
+import { onAuthStateChangedListener } from "../firebase";
 import RouteFallback from "./fallback/RouteFallback";
 
 export default function ProtectedRoute({ children }) {

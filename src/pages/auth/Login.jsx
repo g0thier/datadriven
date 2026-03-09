@@ -4,7 +4,7 @@ import SwapLink from "../../components/SwapLink";
 import MaterialIcon from "../../components/MaterialIcon";
 
 import { useNavigate } from "react-router-dom";
-import {signInWithEmail, onAuthStateChangedListener} from "../../firebase/config";
+import {signInWithEmail, onAuthStateChangedListener} from "../../firebase";
 
 function Login() {
   const navigate = useNavigate();
