@@ -39,7 +39,13 @@ export function watchCompanyMembers(companyId, callback) {
 
 // offices
 export function createOffice(companyId) {
-  return addCompanyOffice(companyId, { name: "", address: "" });
+  return addCompanyOffice(companyId, {
+    alias: "",
+    address: "",
+    city: "",
+    zip: "",
+    country: "",
+  });
 }
 
 export function editOffice(companyId, id, patch) {

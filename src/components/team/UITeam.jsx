@@ -95,7 +95,7 @@ export function OfficeSelect({ value, officeLocations, onChange }) {
   return (
     <select
       value={v}
-      onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))}
+      onChange={(e) => onChange(e.target.value === "" ? null : e.target.value)}
       style={{
         width: "100%",
         padding: "8px 10px",
@@ -107,7 +107,7 @@ export function OfficeSelect({ value, officeLocations, onChange }) {
       <option value="">—</option>
       {(officeLocations || []).map((o) => (
         <option key={o.id} value={String(o.id)}>
-          {o.name}
+          {o.alias || o.name}
         </option>
       ))}
     </select>

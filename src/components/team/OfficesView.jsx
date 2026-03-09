@@ -10,12 +10,16 @@ export default function OfficesView({
 }) {
   return (
     <TableShell title="Bureaux" onAdd={addOffice}>
-      <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 900 }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1200 }}>
         <thead>
           <tr>
             <Th>Modifier</Th>
-            <Th>Nom</Th>
+            <Th>Alias</Th>
             <Th>Adresse</Th>
+            <Th>Ville</Th>
+            <Th>NPA</Th>
+            <Th>Pays</Th>
+            <Th>Principal</Th>
             <Th>Actions</Th>
           </tr>
         </thead>
@@ -37,11 +41,11 @@ export default function OfficesView({
                 <Td>
                   {isEditing ? (
                     <CellInput
-                      value={o.name ?? ""}
-                      onChange={(v) => updateOffice(o.id, { name: v })}
+                      value={o.alias ?? o.name ?? ""}
+                      onChange={(v) => updateOffice(o.id, { alias: v })}
                     />
                   ) : (
-                    o.name || "—"
+                    o.alias || o.name || "—"
                   )}
                 </Td>
 
@@ -53,6 +57,60 @@ export default function OfficesView({
                     />
                   ) : (
                     o.address || "—"
+                  )}
+                </Td>
+
+                <Td>
+                  {isEditing ? (
+                    <CellInput
+                      value={o.city ?? ""}
+                      onChange={(v) => updateOffice(o.id, { city: v })}
+                    />
+                  ) : (
+                    o.city || "—"
+                  )}
+                </Td>
+
+                <Td>
+                  {isEditing ? (
+                    <CellInput
+                      value={o.zip ?? ""}
+                      onChange={(v) => updateOffice(o.id, { zip: v })}
+                    />
+                  ) : (
+                    o.zip || "—"
+                  )}
+                </Td>
+
+                <Td>
+                  {isEditing ? (
+                    <CellInput
+                      value={o.country ?? ""}
+                      onChange={(v) => updateOffice(o.id, { country: v })}
+                    />
+                  ) : (
+                    o.country || "—"
+                  )}
+                </Td>
+
+                <Td>
+                  {isEditing ? (
+                    <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <input
+                        type="checkbox"
+                        checked={Boolean(o.isDefault)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            updateOffice(o.id, { isDefault: true });
+                          }
+                        }}
+                      />
+                      <span>{o.isDefault ? "Oui" : "Non"}</span>
+                    </label>
+                  ) : o.isDefault ? (
+                    "Oui"
+                  ) : (
+                    "Non"
                   )}
                 </Td>
 

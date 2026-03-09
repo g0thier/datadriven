@@ -97,7 +97,22 @@ export default function useCompanyTeam() {
 
   async function updateOffice(id, patch) {
     setOfficeLocations((prev) =>
-      prev.map((office) => (office.id === id ? { ...office, ...patch } : office))
+      prev.map((office) => {
+        if (office.id === id) {
+          return {
+            ...office,
+            ...patch,
+            ...(Object.prototype.hasOwnProperty.call(patch, "alias") ? { name: patch.alias } : {}),
+            ...(Object.prototype.hasOwnProperty.call(patch, "name") ? { alias: patch.name } : {}),
+          };
+        }
+
+        if (patch.isDefault === true) {
+          return { ...office, isDefault: false };
+        }
+
+        return office;
+      })
     );
 
     if (!companyId) return;

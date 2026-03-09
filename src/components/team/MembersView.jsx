@@ -39,7 +39,9 @@ export default function MembersView({
         <tbody>
           {(teamMembers || []).map((m) => {
             const isEditing = editingMemberId === m.id;
-            const officeLabel = m.office ? officeById.get(m.office)?.name : "";
+            const officeLabel = m.office
+              ? officeById.get(m.office)?.alias || officeById.get(m.office)?.name
+              : "";
             const deptLabels = (m.departments || [])
               .map((id) => deptById.get(id)?.name)
               .filter(Boolean);
