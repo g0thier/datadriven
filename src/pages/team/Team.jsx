@@ -7,17 +7,18 @@ import DepartmentsView from "./DepartmentsView";
 import MembersView from "./MembersView";
 
 import {
-  teamMembers as teamMembersSeed,
-} from "./data_corp";
-import {
   addCompanyOffice,
   addCompanyDepartment,
+  addCompanyMember,
   getUserCompanyId,
   onAuthStateChangedListener,
+  removeCompanyMember,
   removeCompanyOffice,
   removeCompanyDepartment,
   subscribeCompanyDepartments,
+  subscribeCompanyMembers,
   subscribeCompanyOffices,
+  updateCompanyMember,
   updateCompanyDepartment,
   updateCompanyOffice,
 } from "../../firebase/config";
@@ -27,7 +28,7 @@ export default function Team() {
 
   const [officeLocations, setOfficeLocations] = useState([]);
   const [departments, setDepartments] = useState([]);
-  const [teamMembers, setTeamMembers] = useState(() => teamMembersSeed || []);
+  const [teamMembers, setTeamMembers] = useState([]);
   const [companyId, setCompanyId] = useState(null);
 
   // Row editing state (id en édition)
@@ -53,6 +54,7 @@ export default function Team() {
         setCompanyId(null);
         setOfficeLocations([]);
         setDepartments([]);
+        setTeamMembers([]);
         return;
       }
 
@@ -62,12 +64,14 @@ export default function Team() {
         if (!nextCompanyId) {
           setOfficeLocations([]);
           setDepartments([]);
+          setTeamMembers([]);
         }
       } catch (error) {
         console.error("Impossible de récupérer le companyId de l'utilisateur :", error);
         setCompanyId(null);
         setOfficeLocations([]);
         setDepartments([]);
+        setTeamMembers([]);
       }
     });
 
@@ -81,6 +85,11 @@ export default function Team() {
 
   useEffect(() => {
     const unsubscribe = subscribeCompanyOffices(companyId, setOfficeLocations);
+    return () => unsubscribe();
+  }, [companyId]);
+
+  useEffect(() => {
+    const unsubscribe = subscribeCompanyMembers(companyId, setTeamMembers);
     return () => unsubscribe();
   }, [companyId]);
 
@@ -172,30 +181,47 @@ export default function Team() {
   }
 
   // ------- PERSONNELS (teamMembers) -------
-  function addMember() {
-    const id = nextId(teamMembers);
-    setTeamMembers((prev) => [
-      ...prev,
-      {
-        id,
+  async function addMember() {
+    if (!companyId) return;
+
+    try {
+      const id = await addCompanyMember(companyId, {
         name: "",
         role: "",
         email: "",
         phone: "",
         departments: [],
-        office: null, // id bureau
-      },
-    ]);
-    setEditingMemberId(id);
+        office: null,
+      });
+      setEditingMemberId(id);
+    } catch (error) {
+      console.error("Impossible d'ajouter le membre :", error);
+    }
   }
 
-  function updateMember(id, patch) {
+  async function updateMember(id, patch) {
     setTeamMembers((prev) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)));
+
+    if (!companyId) return;
+
+    try {
+      await updateCompanyMember(companyId, id, patch);
+    } catch (error) {
+      console.error("Impossible de modifier le membre :", error);
+    }
   }
 
-  function removeMember(id) {
+  async function removeMember(id) {
     setTeamMembers((prev) => prev.filter((m) => m.id !== id));
     if (editingMemberId === id) setEditingMemberId(null);
+
+    if (!companyId) return;
+
+    try {
+      await removeCompanyMember(companyId, id);
+    } catch (error) {
+      console.error("Impossible de supprimer le membre :", error);
+    }
   }
 
   return (
