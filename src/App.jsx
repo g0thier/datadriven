@@ -7,8 +7,6 @@ import './App.css'
 import ProtectedRoute from "./components/ProtectedRoute";
 import RouteFallback from './components/fallback/RouteFallback.jsx'
 
-import Mail from './emails/Mail.jsx'
-import ResetPasswordMail from './emails/ResetPasswordMail.jsx';
 // Authentification
 const Login = lazy(() => import('./pages/auth/Login.jsx'));
 const RegisterCompany = lazy(() => import('./pages/auth/RegisterCompany.jsx'));
@@ -21,7 +19,7 @@ const WorkshopRunner = lazy(() => import('./workshops/WorkshopRunner.jsx'));
 const Management = lazy(() => import('./pages/management/Management.jsx'));
 const WorkshopInvitation = lazy(() => import('./pages/innovation/WorkshopInvitation.jsx'));
 const Innovation = lazy(() => import('./pages/innovation/Innovation.jsx'));
-const Team = lazy(() => import('./pages/team/Team.jsx'));
+const Team = lazy(() => import('./pages/Team.jsx'));
 
 function App() {
 

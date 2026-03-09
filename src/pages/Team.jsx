@@ -1,10 +1,10 @@
-import Navbar from '../../components/Navbar.jsx'
+import Navbar from '../components/Navbar.jsx'
 import { useEffect, useMemo, useState } from "react";
 
-import { TabButton } from './UITeam.jsx';
-import OfficesView from "./OfficesView";
-import DepartmentsView from "./DepartmentsView";
-import MembersView from "./MembersView";
+import { TabButton } from '../components/team/UITeam.jsx';
+import OfficesView from "../components/team/OfficesView";
+import DepartmentsView from "../components/team/DepartmentsView";
+import MembersView from "../components/team/MembersView";
 
 import {
   addCompanyOffice,
@@ -21,7 +21,7 @@ import {
   updateCompanyMember,
   updateCompanyDepartment,
   updateCompanyOffice,
-} from "../../firebase";
+} from "../firebase";
 
 export default function Team() {
   const [activeTab, setActiveTab] = useState("BUREAUX");
