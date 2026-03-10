@@ -1,11 +1,7 @@
 import { useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 
-import {
-  officeLocations,
-  departments,
-  teamMembers,
-} from "../pages/management/data_corp.jsx";
+import useCompanyTeam from "./useCompanyTeam";
 import {
   normalizeDepartments,
   normalizeMembers,
@@ -15,6 +11,7 @@ import {
 function useWorkshopInvitation() {
   const location = useLocation();
   const atelier = location.state?.workshop ?? { title: "Atelier" };
+  const { officeLocations, departments, teamMembers } = useCompanyTeam();
 
   const [selectedDepartmentIds, setSelectedDepartmentIds] = useState([]);
   const [selectedMemberIds, setSelectedMemberIds] = useState([]);
@@ -25,10 +22,13 @@ function useWorkshopInvitation() {
 
   const departmentsNormalized = useMemo(
     () => normalizeDepartments(departments ?? []),
-    []
+    [departments]
   );
 
-  const membersNormalized = useMemo(() => normalizeMembers(teamMembers ?? []), []);
+  const membersNormalized = useMemo(
+    () => normalizeMembers(teamMembers ?? []),
+    [teamMembers]
+  );
 
   const filteredDepartments = useMemo(() => {
     const query = departmentSearch.trim().toLowerCase();
