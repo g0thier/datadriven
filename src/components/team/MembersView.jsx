@@ -39,7 +39,7 @@ export default function MembersView({
         </thead>
 
         <tbody>
-          {(teamMembers || []).map((m) => {
+          {(teamMembers || []).map((m, index) => {
             const isEditing = editingMemberId === m.id;
             const officeLabel = m.office
               ? officeById.get(m.office)?.alias || officeById.get(m.office)?.name
@@ -49,7 +49,7 @@ export default function MembersView({
               .filter(Boolean);
 
             return (
-              <tr key={m.id}>
+              <tr key={m.id} className={index % 2 === 0 ? "bg-white" : "bg-slate-50"}>
                 <Td>
                   <ActionButton onClick={() => setEditingMemberId(isEditing ? null : m.id)}>
                     {isEditing ? "Voir" : "Modifier"}

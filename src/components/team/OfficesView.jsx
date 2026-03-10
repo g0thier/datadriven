@@ -25,11 +25,11 @@ export default function OfficesView({
         </thead>
 
         <tbody>
-          {(officeLocations || []).map((o) => {
+          {(officeLocations || []).map((o, index) => {
             const isEditing = editingOfficeId === o.id;
 
             return (
-              <tr key={o.id}>
+              <tr key={o.id} className={index % 2 === 0 ? "bg-white" : "bg-slate-50"}>
                 <Td>
                   <ActionButton
                     onClick={() => setEditingOfficeId(isEditing ? null : o.id)}

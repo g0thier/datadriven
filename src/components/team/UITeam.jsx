@@ -213,7 +213,14 @@ export function TableShell({ title, onAdd, children }) {
         <ActionButton onClick={onAdd}>Ajouter</ActionButton>
       </div>
 
-      <div style={{ border: "1px solid #e5e5e5", borderRadius: 14, overflow: "hidden" }}>
+      <div
+        style={{
+          border: "1px solid #e5e5e5",
+          borderRadius: 14,
+          overflow: "hidden",
+          background: "#fff",
+        }}
+      >
         <div style={{ overflowX: "auto" }}>{children}</div>
       </div>
     </div>

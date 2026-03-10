@@ -21,11 +21,11 @@ export default function DepartmentsView({
         </thead>
 
         <tbody>
-          {(departments || []).map((d) => {
+          {(departments || []).map((d, index) => {
             const isEditing = editingDeptId === d.id;
 
             return (
-              <tr key={d.id}>
+              <tr key={d.id} className={index % 2 === 0 ? "bg-white" : "bg-slate-50"}>
                 <Td>
                   <ActionButton onClick={() => setEditingDeptId(isEditing ? null : d.id)}>
                     {isEditing ? "Voir" : "Modifier"}
