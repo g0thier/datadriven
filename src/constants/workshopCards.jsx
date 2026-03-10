@@ -1,6 +1,6 @@
 import paperBrain from '../assets/workshops/paper-brain.png'
 
-const data = [
+const workshopCards = [
   {
     title: 'Paper Brain',
     duration: '50 minutes',
@@ -15,4 +15,4 @@ const data = [
   }
 ]
 
-export default data
+export default workshopCards

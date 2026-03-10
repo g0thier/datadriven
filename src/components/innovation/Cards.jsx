@@ -1,13 +1,13 @@
 import { useNavigate } from "react-router-dom";
 
-import data from "../../constants/data_cards.jsx";
+import workshopCards from "../../constants/workshopCards.jsx";
 
 function Cards() {
   const navigate = useNavigate();
 
   return (
     <div className="max-w-7xl mx-auto grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-      {data.map((card, index) => (
+      {workshopCards.map((card, index) => (
         <div
           key={index}
           onClick={() =>
