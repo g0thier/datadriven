@@ -76,20 +76,61 @@ function useWorkshopInvitation() {
   const handleSendInvites = () => {
     const workshopDateTime =
       workshopDate && workshopTime ? `${workshopDate}T${workshopTime}` : "";
+    const selectedDepartmentIdSet = new Set(selectedDepartmentIds.map(String));
+
+    const membersFromSelectedDepartments = membersNormalized.filter((member) => {
+      const memberDepartments = Array.isArray(member.departments) ? member.departments : [];
+      return memberDepartments.some((departmentId) =>
+        selectedDepartmentIdSet.has(String(departmentId))
+      );
+    });
+
+    const recipientsById = new Map();
+    const addRecipient = (member, source) => {
+      const existing = recipientsById.get(member.__id);
+      if (existing) {
+        existing.sources.add(source);
+        return;
+      }
+
+      recipientsById.set(member.__id, {
+        id: member.__id,
+        label: member.__label,
+        email: member.email ?? "",
+        phone: member.phone ?? "",
+        firstName: member.firstName ?? "",
+        lastName: member.lastName ?? "",
+        name: member.name ?? "",
+        sources: new Set([source]),
+      });
+    };
+
+    membersFromSelectedDepartments.forEach((member) => addRecipient(member, "department"));
+    selectedMembers.forEach((member) => addRecipient(member, "direct"));
+
+    const allGuests = Array.from(recipientsById.values()).map((recipient) => ({
+      ...recipient,
+      sources: Array.from(recipient.sources),
+    }));
 
     const payload = {
       atelierTitle: atelier?.title,
       date: workshopDate,
       time: workshopTime,
       datetime: workshopDateTime,
-      departments: selectedDepartments.map((department) => ({
+      selectedDepartments: selectedDepartments.map((department) => ({
         id: department.__id,
         label: department.__label,
       })),
-      guests: selectedMembers.map((member) => ({
+      selectedGuests: selectedMembers.map((member) => ({
         id: member.__id,
         label: member.__label,
       })),
+      guestsFromSelectedDepartments: membersFromSelectedDepartments.map((member) => ({
+        id: member.__id,
+        label: member.__label,
+      })),
+      allGuests,
       officeLocations: officeLocations ?? [],
     };
 
