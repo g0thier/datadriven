@@ -25,6 +25,7 @@ function WorkshopInvitation() {
     filteredMembers,
     selectedDepartmentIds,
     selectedMemberIds,
+    totalUniqueGuestCount,
     toggleDepartment,
     toggleMember,
     canSend,
@@ -72,6 +73,7 @@ function WorkshopInvitation() {
           workshopTime={workshopTime}
           selectedDepartmentCount={selectedDepartmentIds.length}
           selectedMemberCount={selectedMemberIds.length}
+          totalGuestCount={totalUniqueGuestCount}
           canSend={canSend}
         />
 

@@ -60,6 +60,31 @@ function useWorkshopInvitation() {
     return membersNormalized.filter((member) => selectedSet.has(member.__id));
   }, [membersNormalized, selectedMemberIds]);
 
+  const guestsFromSelectedDepartments = useMemo(() => {
+    const selectedDepartmentIdSet = new Set(selectedDepartmentIds.map(String));
+
+    return membersNormalized.filter((member) => {
+      const memberDepartments = Array.isArray(member.departments) ? member.departments : [];
+      return memberDepartments.some((departmentId) =>
+        selectedDepartmentIdSet.has(String(departmentId))
+      );
+    });
+  }, [membersNormalized, selectedDepartmentIds]);
+
+  const totalUniqueGuestCount = useMemo(() => {
+    const allGuestIds = new Set();
+
+    guestsFromSelectedDepartments.forEach((member) => {
+      allGuestIds.add(String(member.__id));
+    });
+
+    selectedMembers.forEach((member) => {
+      allGuestIds.add(String(member.__id));
+    });
+
+    return allGuestIds.size;
+  }, [guestsFromSelectedDepartments, selectedMembers]);
+
   const toggleDepartment = (id) => {
     setSelectedDepartmentIds((previous) => toggleInArray(previous, id));
   };
@@ -76,14 +101,6 @@ function useWorkshopInvitation() {
   const handleSendInvites = () => {
     const workshopDateTime =
       workshopDate && workshopTime ? `${workshopDate}T${workshopTime}` : "";
-    const selectedDepartmentIdSet = new Set(selectedDepartmentIds.map(String));
-
-    const membersFromSelectedDepartments = membersNormalized.filter((member) => {
-      const memberDepartments = Array.isArray(member.departments) ? member.departments : [];
-      return memberDepartments.some((departmentId) =>
-        selectedDepartmentIdSet.has(String(departmentId))
-      );
-    });
 
     const recipientsById = new Map();
     const addRecipient = (member, source) => {
@@ -105,7 +122,7 @@ function useWorkshopInvitation() {
       });
     };
 
-    membersFromSelectedDepartments.forEach((member) => addRecipient(member, "department"));
+    guestsFromSelectedDepartments.forEach((member) => addRecipient(member, "department"));
     selectedMembers.forEach((member) => addRecipient(member, "direct"));
 
     const allGuests = Array.from(recipientsById.values()).map((recipient) => ({
@@ -126,7 +143,7 @@ function useWorkshopInvitation() {
         id: member.__id,
         label: member.__label,
       })),
-      guestsFromSelectedDepartments: membersFromSelectedDepartments.map((member) => ({
+      guestsFromSelectedDepartments: guestsFromSelectedDepartments.map((member) => ({
         id: member.__id,
         label: member.__label,
       })),
@@ -156,6 +173,7 @@ function useWorkshopInvitation() {
     filteredMembers,
     selectedDepartmentIds,
     selectedMemberIds,
+    totalUniqueGuestCount,
     toggleDepartment,
     toggleMember,
     canSend,
