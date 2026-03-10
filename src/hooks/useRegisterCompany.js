@@ -1,48 +1,11 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DEFAULT_DEPARTMENTS from "../constants/defaults";
+import {
+  REGISTER_COMPANY_INITIAL_FORM,
+  REGISTER_COMPANY_STEP_CONTENT,
+} from "../constants/registerCompany";
 import { registerCompanyAccount } from "../services/registerCompanyService";
-
-const STEP_CONTENT = {
-  1: {
-    title: "Créer un compte entreprise",
-    subtitle: "Renseignez les informations générales de votre société.",
-  },
-  2: {
-    title: "Adresse de la société",
-    subtitle: "Indiquez l’adresse officielle de l’entreprise.",
-  },
-  3: {
-    title: "Votre administrateur",
-    subtitle: "Qui gérera ce compte au quotidien ?",
-  },
-  4: {
-    title: "Sécuriser le compte",
-    subtitle: "Choisissez un mot de passe robuste et acceptez les conditions.",
-  },
-  5: {
-    title: "Vérifier & créer",
-    subtitle: "Vérifiez les informations avant la création du compte.",
-  },
-};
-
-const INITIAL_FORM = {
-  companyName: "",
-  legalForm: "",
-  siret: "",
-  vatNumber: "",
-  companyAddress: "",
-  companyCity: "",
-  companyZip: "",
-  companyCountry: "Suisse",
-  adminFirstName: "",
-  adminLastName: "",
-  adminEmail: "",
-  adminPhone: "",
-  password: "",
-  passwordConfirm: "",
-  acceptTerms: false,
-};
 
 function buildPayload(form) {
   return {
@@ -75,13 +38,15 @@ function buildPayload(form) {
 
 export default function useRegisterCompany() {
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState(INITIAL_FORM);
+  const [form, setForm] = useState(REGISTER_COMPANY_INITIAL_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const navigate = useNavigate();
 
-  const title = STEP_CONTENT[step]?.title ?? STEP_CONTENT[1].title;
-  const subtitle = STEP_CONTENT[step]?.subtitle ?? "";
+  const title =
+    REGISTER_COMPANY_STEP_CONTENT[step]?.title ??
+    REGISTER_COMPANY_STEP_CONTENT[1].title;
+  const subtitle = REGISTER_COMPANY_STEP_CONTENT[step]?.subtitle ?? "";
 
   const canGoNext = useMemo(() => {
     if (step === 1) {
