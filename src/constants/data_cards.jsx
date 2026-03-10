@@ -1,4 +1,4 @@
-import paperBrain from '../../assets/workshops/paper-brain.png'
+import paperBrain from '../assets/workshops/paper-brain.png'
 
 const data = [
   {
