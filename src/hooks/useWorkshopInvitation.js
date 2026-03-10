@@ -20,6 +20,7 @@ function useWorkshopInvitation() {
   const [selectedMemberIds, setSelectedMemberIds] = useState([]);
   const [workshopDate, setWorkshopDate] = useState("");
   const [workshopTime, setWorkshopTime] = useState("");
+  const [departmentSearch, setDepartmentSearch] = useState("");
   const [search, setSearch] = useState("");
 
   const departmentsNormalized = useMemo(
@@ -28,6 +29,15 @@ function useWorkshopInvitation() {
   );
 
   const membersNormalized = useMemo(() => normalizeMembers(teamMembers ?? []), []);
+
+  const filteredDepartments = useMemo(() => {
+    const query = departmentSearch.trim().toLowerCase();
+    if (!query) return departmentsNormalized;
+
+    return departmentsNormalized.filter((department) =>
+      department.__label.toLowerCase().includes(query)
+    );
+  }, [departmentSearch, departmentsNormalized]);
 
   const filteredMembers = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -95,9 +105,12 @@ function useWorkshopInvitation() {
     workshopTime,
     setWorkshopDate,
     setWorkshopTime,
+    departmentSearch,
+    setDepartmentSearch,
     search,
     setSearch,
     departmentsNormalized,
+    filteredDepartments,
     membersNormalized,
     filteredMembers,
     selectedDepartmentIds,

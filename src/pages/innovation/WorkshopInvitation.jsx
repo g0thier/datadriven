@@ -15,9 +15,12 @@ function WorkshopInvitation() {
     workshopTime,
     setWorkshopDate,
     setWorkshopTime,
+    departmentSearch,
+    setDepartmentSearch,
     search,
     setSearch,
     departmentsNormalized,
+    filteredDepartments,
     membersNormalized,
     filteredMembers,
     selectedDepartmentIds,
@@ -47,6 +50,9 @@ function WorkshopInvitation() {
         <div className="grid gap-6 lg:grid-cols-2">
           <DepartmentSelectorCard
             items={departmentsNormalized}
+            filteredItems={filteredDepartments}
+            search={departmentSearch}
+            onSearchChange={setDepartmentSearch}
             selectedIds={selectedDepartmentIds}
             onToggle={toggleDepartment}
           />

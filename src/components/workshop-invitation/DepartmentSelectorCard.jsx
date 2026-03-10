@@ -1,6 +1,13 @@
 import SelectableCheckboxList from "./SelectableCheckboxList";
 
-function DepartmentSelectorCard({ items, selectedIds, onToggle }) {
+function DepartmentSelectorCard({
+  items,
+  filteredItems,
+  search,
+  onSearchChange,
+  selectedIds,
+  onToggle,
+}) {
   return (
     <section className="bg-white/80 backdrop-blur rounded-2xl shadow-sm border border-slate-200 p-6">
       <div className="flex items-center justify-between mb-4">
@@ -10,16 +17,31 @@ function DepartmentSelectorCard({ items, selectedIds, onToggle }) {
         </span>
       </div>
 
+      <div className="mb-4">
+        <input
+          value={search}
+          onChange={(event) => onSearchChange(event.target.value)}
+          placeholder="Rechercher une équipe…"
+          className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+        />
+      </div>
+
       {items.length === 0 ? (
         <p className="text-sm text-slate-600">
           Aucun département disponible (departments est vide).
         </p>
       ) : (
-        <SelectableCheckboxList
-          items={items}
-          selectedIds={selectedIds}
-          onToggle={onToggle}
-        />
+        <>
+          <SelectableCheckboxList
+            items={filteredItems}
+            selectedIds={selectedIds}
+            onToggle={onToggle}
+          />
+
+          {filteredItems.length === 0 && (
+            <p className="text-sm text-slate-600 mt-2">Aucun résultat pour “{search}”.</p>
+          )}
+        </>
       )}
     </section>
   );
