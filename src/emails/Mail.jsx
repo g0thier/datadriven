@@ -6,7 +6,7 @@ function Mail() {
   const workshopTitle = "Paper Brain";
   const workshopDate = "13 02 2026 à 14h00";
   const workshopDuration = "50 minutes";
-  const workshopLink = "https://meet.example.com/jyw-qfgi-cjs"; // "{Lien vers l'atelier}"
+  const workshopLink = "https://zzzbre.com/innovation/paper-brain/jyw-qfgi-cjs"; // "{Lien vers l'atelier}"
 
   return (
     <div className="w-full bg-amber-300 min-h-screen relative overflow-hidden">
