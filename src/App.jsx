@@ -7,6 +7,8 @@ import './App.css'
 import ProtectedRoute from "./components/ProtectedRoute";
 import RouteFallback from './components/fallback/RouteFallback.jsx'
 
+import Mail from "./emails/Mail.jsx";
+
 // Authentification
 const Login = lazy(() => import('./pages/auth/Login.jsx'));
 const RegisterCompany = lazy(() => import('./pages/auth/RegisterCompany.jsx'));
@@ -42,6 +44,9 @@ function App() {
         {/* Pages publiques */}
         <Route path="/innovation/:workshopId/:id" element={<WorkshopRunner />} />
         <Route path="*" element={<NotFound />} />
+
+        {/* Email template preview route */}
+        <Route path="/preview-mail" element={<Mail />} />
       </Routes>
       </Suspense>
     </BrowserRouter>
