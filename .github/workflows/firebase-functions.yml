@@ -1,3 +1,18 @@
+# Required GitHub Secrets
+# Add in: Settings → Secrets and variables → Actions
+#
+# FIREBASE_TOKEN
+# Generate with:
+# npm install -g firebase-tools
+# firebase login
+# firebase login:ci
+# Copy the token output into the FIREBASE_TOKEN secret.
+#
+# FIREBASE_PROJECT_ID
+# Your Firebase project ID.
+# Find it in Firebase Console → Project Settings
+# or via: firebase projects:list
+
 name: Deploy Firebase Functions
 
 on:
@@ -5,34 +20,36 @@ on:
     branches:
       - main
     paths:
-      - 'functions/**'
-      - '.github/workflows/firebase-functions.yml'
-
-permissions:
-  contents: read
+      - "functions/**"
+      - ".github/workflows/firebase-functions.yml"
 
 jobs:
   deploy_functions:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Write Firebase service account
-        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_G0THIER_PROJECT_DATADRIVEN }}' > ${{ github.workspace }}/service-account.json
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
 
-      - name: Install root dependencies
-        run: npm ci
+      - name: Install dependencies
+        run: |
+          cd functions
+          npm ci
 
-      - name: Install functions dependencies
-        run: npm ci
-        working-directory: functions
+      - name: Build functions
+        run: |
+          cd functions
+          npm run build
 
-      - name: Deploy Firebase Functions
-        run: npx firebase-tools deploy --only functions --project g0thier-project-datadriven
+      - name: Deploy functions
+        run: firebase deploy --only functions --project ${{ secrets.FIREBASE_PROJECT_ID }}
         env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/service-account.json
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
