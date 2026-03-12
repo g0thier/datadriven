@@ -9,17 +9,7 @@ const MAIL_FROM_NAME = defineSecret("MAIL_FROM_NAME");
 const MAIL_FROM_ADDRESS = defineSecret("MAIL_FROM_ADDRESS");
 
 const { buildInviteEmail } = require("./mailTemplate");
-const {
-  buildWorkshopIcs,
-  buildGoogleCalendarLink,
-  buildOutlookCalendarLink,
-} = require("./calendar");
-
-/* Cas mail classique hors Gmail :
-const smtpHost = process.env.SMTP_HOST;
-const smtpPort = Number(process.env.SMTP_PORT);
-const smtpSecure = String(process.env.SMTP_SECURE || "false").toLowerCase() === "true";
-*/
+const { buildWorkshopIcs } = require("./calendar");
 
 function parseDurationToMinutes(duration) {
   if (typeof duration === "number") return duration;
@@ -101,24 +91,6 @@ exports.sendWorkshopInvite = onRequest(
       const description =
         `Invitation de ${inviterName} pour participer à l’atelier ${workshopTitle}.`;
 
-      const googleCalendarLink = buildGoogleCalendarLink({
-        title,
-        description,
-        location: workshopLocation,
-        startDate,
-        endDate,
-        url: workshopLink,
-      });
-
-      const microsoftCalendarLink = buildOutlookCalendarLink({
-        title,
-        description,
-        location: workshopLocation,
-        startDate,
-        endDate,
-        url: workshopLink,
-      });
-
       const icsContent = buildWorkshopIcs({
         uid: `${Date.now()}-${inviteeEmail}@zzzbre.com`,
         title,
@@ -138,8 +110,6 @@ exports.sendWorkshopInvite = onRequest(
         workshopDate: workshopDateLabel,
         workshopDuration: `${durationMinutes} minutes`,
         workshopLink,
-        microsoftCalendarLink,
-        googleCalendarLink,
       });
 
       const info = await transporter.sendMail({
@@ -157,9 +127,6 @@ exports.sendWorkshopInvite = onRequest(
           `Date : ${workshopDateLabel}`,
           `Durée : ${durationMinutes} minutes`,
           `Lien atelier : ${workshopLink}`,
-          `Google Calendar : ${googleCalendarLink}`,
-          `Microsoft Calendar : ${microsoftCalendarLink}`,
-          `Fichier calendrier Apple/iCloud/Outlook joint au mail.`,
         ].join("\n"),
         icalEvent: {
           filename: "workshop-invitation.ics",
@@ -176,8 +143,6 @@ exports.sendWorkshopInvite = onRequest(
       return res.json({
         success: true,
         messageId: info.messageId,
-        googleCalendarLink,
-        microsoftCalendarLink,
       });
     } catch (error) {
       logger.error("erreur envoi mail", error);

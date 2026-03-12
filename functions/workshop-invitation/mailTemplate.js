@@ -54,8 +54,6 @@ function buildInviteEmail({
   workshopDate,
   workshopDuration,
   workshopLink,
-  microsoftCalendarLink,
-  googleCalendarLink,
 }) {
   return `
   <!DOCTYPE html>
@@ -99,30 +97,6 @@ function buildInviteEmail({
                             <td style="border:1px solid #e5e7eb;border-radius:18px;padding:18px;text-align:center;">
                               <a href="${escapeAttr(workshopLink)}" style="color:#4338ca;font-size:16px;font-weight:700;text-decoration:underline;word-break:break-all;">
                                 ${escapeHtml(workshopLink)}
-                              </a>
-                            </td>
-                          </tr>
-                        </table>
-
-                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-                          <tr>
-                            <td style="padding-bottom:12px;">
-                              <span style="display:block;text-align:center;background:#111827;color:#ffffff;font-weight:700;padding:16px 20px;border-radius:16px;font-size:16px;">
-                                Calendrier Apple / iCloud : pièce jointe .ics
-                              </span>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td style="padding-bottom:12px;">
-                              <a href="${escapeAttr(microsoftCalendarLink)}" style="display:block;text-align:center;background:#1d4ed8;color:#ffffff;text-decoration:none;font-weight:700;padding:16px 20px;border-radius:16px;font-size:16px;">
-                                Calendrier Microsoft / Hotmail
-                              </a>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>
-                              <a href="${escapeAttr(googleCalendarLink)}" style="display:block;text-align:center;background:#ffffff;color:#111827;text-decoration:none;font-weight:700;padding:16px 20px;border-radius:16px;font-size:16px;border:1px solid #e5e7eb;">
-                                Calendrier Google
                               </a>
                             </td>
                           </tr>

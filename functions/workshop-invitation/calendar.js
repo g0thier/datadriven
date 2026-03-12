@@ -12,14 +12,6 @@ function formatDateForIcs(date) {
   return `${yyyy}${mm}${dd}T${hh}${mi}${ss}Z`;
 }
 
-function formatDateForGoogle(date) {
-  return formatDateForIcs(date);
-}
-
-function formatDateForOutlook(date) {
-  return date.toISOString();
-}
-
 function escapeIcsText(value = "") {
   return String(value)
     .replace(/\\/g, "\\\\")
@@ -68,48 +60,4 @@ function buildWorkshopIcs({
   ].join("\r\n");
 }
 
-function buildGoogleCalendarLink({
-  title,
-  description,
-  location,
-  startDate,
-  endDate,
-  url,
-}) {
-  const params = new URLSearchParams({
-    action: "TEMPLATE",
-    text: title,
-    details: `${description}\n\n${url}`,
-    location,
-    dates: `${formatDateForGoogle(startDate)}/${formatDateForGoogle(endDate)}`,
-  });
-
-  return `https://calendar.google.com/calendar/render?${params.toString()}`;
-}
-
-function buildOutlookCalendarLink({
-  title,
-  description,
-  location,
-  startDate,
-  endDate,
-  url,
-}) {
-  const params = new URLSearchParams({
-    path: "/calendar/action/compose",
-    rru: "addevent",
-    subject: title,
-    body: `${description}\n\n${url}`,
-    location,
-    startdt: formatDateForOutlook(startDate),
-    enddt: formatDateForOutlook(endDate),
-  });
-
-  return `https://outlook.live.com/calendar/0/deeplink/compose?${params.toString()}`;
-}
-
-module.exports = {
-  buildWorkshopIcs,
-  buildGoogleCalendarLink,
-  buildOutlookCalendarLink,
-};
+module.exports = { buildWorkshopIcs };
