@@ -18,7 +18,7 @@ function getZebraSvgMarkup() {
     height="190"
     viewBox="0 0 251 190"
     xmlns="http://www.w3.org/2000/svg"
-    style="display:block;width:100%;max-width:251px;height:auto;"
+    style="display:block;width:90%;height:auto;"
     aria-hidden="true"
   >
     <path d="M-3,195L-3.109,80.513C12.32,74.307 29.674,69.76 44,70C81.382,70.627 140.235,120.426 167.7,163.069C178.156,179.303 189,191 189,191L-3,195Z" fill="white"/>
@@ -66,6 +66,9 @@ function buildInviteEmail({
     </head>
     <body style="margin:0;padding:0;background-color:#fcd34d;font-family:Arial,Helvetica,sans-serif;">
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background-color:#fcd34d;">
+        <div style="position:absolute;bottom:0;left:0;width:100%;max-width:100%;">
+          ${getZebraSvgMarkup()}
+        </div>
         <tr>
           <td align="center" style="padding:32px 16px;">
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:720px;">
@@ -114,9 +117,6 @@ function buildInviteEmail({
           </td>
         </tr>
       </table>
-      <div style="position:absolute;bottom:0;left:0;width:251px;max-width:40%;">
-        ${getZebraSvgMarkup()}
-      </div>
     </body>
   </html>
   `;
