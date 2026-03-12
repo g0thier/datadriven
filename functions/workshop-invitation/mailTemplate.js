@@ -107,12 +107,6 @@ function buildInviteEmail({
                         </p>
                       </td>
                     </tr>
-
-                    <tr>
-                      <td align="left" style="padding:0 0 0 0;line-height:0;font-size:0;">
-                        ${getZebraSvgMarkup()}
-                      </td>
-                    </tr>
                   </table>
                 </td>
               </tr>
@@ -120,6 +114,9 @@ function buildInviteEmail({
           </td>
         </tr>
       </table>
+      <div style="position:absolute;bottom:0;left:0;width:251px;max-width:40%;">
+        ${getZebraSvgMarkup()}
+      </div>
     </body>
   </html>
   `;
