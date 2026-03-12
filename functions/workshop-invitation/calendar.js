@@ -75,7 +75,7 @@ function buildWorkshopIcs({
     `DTEND:${dtEnd}`,
     `SUMMARY:${escapeIcsText(title)}`,
     `DESCRIPTION:${escapeIcsText(fullDescription)}`,
-    `LOCATION:${escapeIcsText("En ligne")}`,
+    `LOCATION:${safeUrl}`,
     `URL:${safeUrl}`,
     `ORGANIZER;CN=${escapeIcsText(organizerName)}:MAILTO:${sanitizeIcsUri(organizerEmail)}`,
     "STATUS:CONFIRMED",
