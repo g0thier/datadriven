@@ -34,7 +34,7 @@ function useWorkshopInvitation() {
     [teamMembers]
   );
 
-  const inviterName = useMemo(() => {
+  const inviter = useMemo(() => {
     const currentUser = auth.currentUser;
     const currentUserUid = currentUser?.uid;
     const currentUserEmail = (currentUser?.email || "").toLowerCase();
@@ -48,14 +48,20 @@ function useWorkshopInvitation() {
       [matchingMember?.firstName, matchingMember?.lastName].filter(Boolean).join(" ") ||
       matchingMember?.name ||
       "";
+    const memberEmail = matchingMember?.email || "";
 
-    return (
-      memberName ||
-      currentUser?.displayName ||
-      currentUser?.email ||
-      "Zzzbre.com"
-    );
+    return {
+      name:
+        memberName ||
+        currentUser?.displayName ||
+        currentUser?.email ||
+        "Zzzbre.com",
+      email: memberEmail || currentUser?.email || "",
+    };
   }, [membersNormalized]);
+
+  const inviterName = inviter.name;
+  const inviterEmail = inviter.email;
 
   const filteredDepartments = useMemo(() => {
     const query = departmentSearch.trim().toLowerCase();
@@ -206,6 +212,7 @@ function useWorkshopInvitation() {
               inviteeEmail: guest.email,
               inviteeName: guest.firstName || guest.name || guest.label,
               inviterName,
+              inviterEmail,
               workshopTitle: atelier?.title || "Atelier",
               workshopDateLabel: `${workshopDate} à ${workshopTime}`,
               workshopDuration: atelier?.duration || "50 minutes",
@@ -247,6 +254,7 @@ function useWorkshopInvitation() {
   return {
     atelier,
     inviterName,
+    inviterEmail,
     workshopDate,
     workshopTime,
     setWorkshopDate,

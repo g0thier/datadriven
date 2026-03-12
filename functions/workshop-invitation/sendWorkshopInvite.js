@@ -34,8 +34,6 @@ exports.sendWorkshopInvite = onRequest(
 
       const mailSenderAddress = smtpUser;
       const mailReplyTo = mailFromAddress;
-      const mailOrganizerName = mailFromName;
-      const mailOrganizerEmail = mailFromAddress;
 
       const transporter = nodemailer.createTransport({
         service: "gmail",
@@ -63,12 +61,12 @@ exports.sendWorkshopInvite = onRequest(
         inviteeEmail,
         inviteeName = "Trucmuche",
         inviterName = "Gauthier Rammault",
+        inviterEmail = "",
         workshopTitle = "Paper Brain",
         workshopDateLabel = "13 02 2026 à 14h00",
         workshopDuration = "50 minutes",
         workshopStartIso,
         workshopLink = "https://zzzbre.com/innovation/paper-brain/jyw-qfgi-cjs",
-        workshopLocation = "En ligne",
       } = req.body || {};
 
       if (!inviteeEmail) {
@@ -90,17 +88,18 @@ exports.sendWorkshopInvite = onRequest(
       const title = `Atelier : ${workshopTitle}`;
       const description =
         `Invitation de ${inviterName} pour participer à l’atelier ${workshopTitle}.`;
+      const workshopOrganizerName = inviterName || mailFromName;
+      const workshopOrganizerEmail = inviterEmail || mailFromAddress;
 
       const icsContent = buildWorkshopIcs({
         uid: `${Date.now()}-${inviteeEmail}@zzzbre.com`,
         title,
         description,
-        location: workshopLocation,
         startDate,
         endDate,
         url: workshopLink,
-        organizerName: mailOrganizerName,
-        organizerEmail: mailOrganizerEmail,
+        organizerName: workshopOrganizerName,
+        organizerEmail: workshopOrganizerEmail,
       });
 
       const html = buildInviteEmail({
