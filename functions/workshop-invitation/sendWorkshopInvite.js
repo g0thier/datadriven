@@ -28,9 +28,7 @@ if (!smtpUser || !smtpPass) {
 }
 
 const transporter = nodemailer.createTransport({
-  host: smtpHost,
-  port: smtpPort,
-  secure: smtpSecure,
+  service: "gmail",
   auth: {
     user: smtpUser,
     pass: smtpPass,
