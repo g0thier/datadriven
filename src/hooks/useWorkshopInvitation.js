@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { auth } from "../firebase";
 
 import useCompanyTeam from "./useCompanyTeam";
 import {
@@ -32,6 +33,29 @@ function useWorkshopInvitation() {
     () => normalizeMembers(teamMembers ?? []),
     [teamMembers]
   );
+
+  const inviterName = useMemo(() => {
+    const currentUser = auth.currentUser;
+    const currentUserUid = currentUser?.uid;
+    const currentUserEmail = (currentUser?.email || "").toLowerCase();
+
+    const matchingMember = membersNormalized.find((member) => {
+      if (currentUserUid && String(member.id) === String(currentUserUid)) return true;
+      return (member.email || "").toLowerCase() === currentUserEmail;
+    });
+
+    const memberName =
+      [matchingMember?.firstName, matchingMember?.lastName].filter(Boolean).join(" ") ||
+      matchingMember?.name ||
+      "";
+
+    return (
+      memberName ||
+      currentUser?.displayName ||
+      currentUser?.email ||
+      "Zzzbre.com"
+    );
+  }, [membersNormalized]);
 
   const filteredDepartments = useMemo(() => {
     const query = departmentSearch.trim().toLowerCase();
@@ -181,7 +205,7 @@ function useWorkshopInvitation() {
             body: JSON.stringify({
               inviteeEmail: guest.email,
               inviteeName: guest.firstName || guest.name || guest.label,
-              inviterName: "Nomades Innovation",
+              inviterName,
               workshopTitle: atelier?.title || "Atelier",
               workshopDateLabel: `${workshopDate} à ${workshopTime}`,
               workshopDuration: atelier?.duration || "50 minutes",
@@ -222,6 +246,7 @@ function useWorkshopInvitation() {
 
   return {
     atelier,
+    inviterName,
     workshopDate,
     workshopTime,
     setWorkshopDate,
