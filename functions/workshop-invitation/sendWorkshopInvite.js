@@ -122,7 +122,6 @@ exports.sendWorkshopInvite = onRequest(async (req, res) => {
       workshopDate: workshopDateLabel,
       workshopDuration: `${durationMinutes} minutes`,
       workshopLink,
-      appleCalendarLink: "Pièce jointe .ics",
       microsoftCalendarLink,
       googleCalendarLink,
     });
@@ -146,13 +145,11 @@ exports.sendWorkshopInvite = onRequest(async (req, res) => {
         `Microsoft Calendar : ${microsoftCalendarLink}`,
         `Fichier calendrier Apple/iCloud/Outlook joint au mail.`,
       ].join("\n"),
-      attachments: [
-        {
-          filename: "workshop-invitation.ics",
-          content: icsContent,
-          contentType: "text/calendar; charset=utf-8; method=REQUEST",
-        },
-      ],
+      icalEvent: {
+        filename: "workshop-invitation.ics",
+        method: "REQUEST",
+        content: icsContent,
+      },
     });
 
     logger.info("mail envoyé", {

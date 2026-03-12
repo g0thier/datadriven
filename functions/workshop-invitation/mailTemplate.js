@@ -54,7 +54,6 @@ function buildInviteEmail({
   workshopDate,
   workshopDuration,
   workshopLink,
-  appleCalendarLink,
   microsoftCalendarLink,
   googleCalendarLink,
 }) {
