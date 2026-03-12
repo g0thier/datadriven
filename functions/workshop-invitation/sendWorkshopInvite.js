@@ -128,11 +128,21 @@ exports.sendWorkshopInvite = onRequest(
           `Durée : ${durationMinutes} minutes`,
           `Lien atelier : ${workshopLink}`,
         ].join("\n"),
+        /*
         icalEvent: {
           filename: "workshop-invitation.ics",
           method: "REQUEST",
           content: icsContent,
-        },
+        },*/
+        alternatives: [
+          {
+            contentType: "text/calendar; method=REQUEST; charset=UTF-8",
+            content: icsContent,
+            headers: {
+              "Content-Class": "urn:content-classes:calendarmessage",
+            },
+          },
+        ],
       });
 
       logger.info("mail envoyé", {
