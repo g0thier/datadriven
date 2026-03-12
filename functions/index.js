@@ -35,6 +35,9 @@ exports.helloWorld = onRequest((request, response) => {
   response.send("Hello from Firebase!");
 });
 
+exports.sendWorkshopInvite =
+  require("./workshop-invitation/sendWorkshopInvite").sendWorkshopInvite;
+
 /*
 const Stripe = require("stripe")
 
