@@ -9,9 +9,9 @@ const {
   buildOutlookCalendarLink,
 } = require("./calendar");
 
-const smtpHost = process.env.SMTP_HOST;
-const smtpPort = Number(process.env.SMTP_PORT);
-const smtpSecure = String(process.env.SMTP_SECURE || "false").toLowerCase() === "true";
+//const smtpHost = process.env.SMTP_HOST;
+//const smtpPort = Number(process.env.SMTP_PORT);
+//const smtpSecure = String(process.env.SMTP_SECURE || "false").toLowerCase() === "true";
 
 const smtpUser = process.env.SMTP_USER;
 const smtpPass = process.env.SMTP_PASS;
