@@ -28,11 +28,16 @@ jobs:
         run: npm ci
         working-directory: functions
 
+      - name: Set Firebase secrets
+        run: |
+          echo "${{ secrets.SMTP_USER }}" | firebase functions:secrets:set SMTP_USER --project ${{ secrets.FIREBASE_PROJECT_ID }} --data
+          echo "${{ secrets.SMTP_PASS }}" | firebase functions:secrets:set SMTP_PASS --project ${{ secrets.FIREBASE_PROJECT_ID }} --data
+          echo "${{ secrets.MAIL_FROM_NAME }}" | firebase functions:secrets:set MAIL_FROM_NAME --project ${{ secrets.FIREBASE_PROJECT_ID }} --data
+          echo "${{ secrets.MAIL_FROM_ADDRESS }}" | firebase functions:secrets:set MAIL_FROM_ADDRESS --project ${{ secrets.FIREBASE_PROJECT_ID }} --data
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+
       - name: Deploy functions
         run: firebase deploy --only functions --project ${{ secrets.FIREBASE_PROJECT_ID }}
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-          SMTP_USER: ${{ secrets.SMTP_USER }}
-          SMTP_PASS: ${{ secrets.SMTP_PASS }}
-          MAIL_FROM_NAME: ${{ secrets.MAIL_FROM_NAME }}
-          MAIL_FROM_ADDRESS: ${{ secrets.MAIL_FROM_ADDRESS }}
