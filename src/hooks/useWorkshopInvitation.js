@@ -8,6 +8,8 @@ import {
   toggleInArray,
 } from "../utils/workshopInvitationNormalizers";
 
+const SEND_WORKSHOP_INVITE_URL = import.meta.env.VITE_SEND_WORKSHOP_INVITE_URL;
+
 function useWorkshopInvitation() {
   const location = useLocation();
   const atelier = location.state?.workshop ?? { title: "Atelier" };
@@ -19,6 +21,7 @@ function useWorkshopInvitation() {
   const [workshopTime, setWorkshopTime] = useState("");
   const [departmentSearch, setDepartmentSearch] = useState("");
   const [search, setSearch] = useState("");
+  const [isSending, setIsSending] = useState(false);
 
   const departmentsNormalized = useMemo(
     () => normalizeDepartments(departments ?? []),
@@ -96,9 +99,12 @@ function useWorkshopInvitation() {
   const canSend =
     Boolean(workshopDate) &&
     Boolean(workshopTime) &&
-    (selectedDepartmentIds.length > 0 || selectedMemberIds.length > 0);
+    (selectedDepartmentIds.length > 0 || selectedMemberIds.length > 0) &&
+    !isSending;
 
-  const handleSendInvites = () => {
+  const handleSendInvites = async () => {
+    if (isSending || !canSend) return;
+
     const workshopDateTime =
       workshopDate && workshopTime ? `${workshopDate}T${workshopTime}` : "";
 
@@ -151,10 +157,67 @@ function useWorkshopInvitation() {
       officeLocations: officeLocations ?? [],
     };
 
-    console.log("Invitations payload:", payload);
-    alert(
-      `Invitations prêtes à être envoyées ✅\n\nAtelier: ${atelier?.title}\nDate: ${workshopDateTime}\nÉquipes: ${selectedDepartmentIds.length}\nInvités: ${selectedMemberIds.length}`
-    );
+    const recipientsWithEmail = allGuests.filter((guest) => guest.email);
+
+    if (recipientsWithEmail.length === 0) {
+      alert("Aucun invité sélectionné avec une adresse email valide.");
+      return;
+    }
+
+    setIsSending(true);
+
+    try {
+      const [defaultOffice] = officeLocations ?? [];
+      const workshopLocation = defaultOffice?.name || defaultOffice?.alias || "En ligne";
+      const workshopLink = window.location.origin;
+
+      const results = await Promise.allSettled(
+        recipientsWithEmail.map((guest) =>
+          fetch(SEND_WORKSHOP_INVITE_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              inviteeEmail: guest.email,
+              inviteeName: guest.firstName || guest.name || guest.label,
+              inviterName: "Nomades Innovation",
+              workshopTitle: atelier?.title || "Atelier",
+              workshopDateLabel: `${workshopDate} à ${workshopTime}`,
+              workshopDuration: atelier?.duration || "50 minutes",
+              workshopStartIso: workshopDateTime,
+              workshopLink,
+              workshopLocation,
+            }),
+          }).then(async (response) => {
+            if (!response.ok) {
+              const errorBody = await response.json().catch(() => null);
+              throw new Error(errorBody?.error || `HTTP ${response.status}`);
+            }
+            return response.json();
+          })
+        )
+      );
+
+      const failedCount = results.filter((result) => result.status === "rejected").length;
+      const sentCount = results.length - failedCount;
+
+      console.log("Invitations payload:", payload);
+      console.log("Invitations result:", results);
+
+      if (failedCount === 0) {
+        alert(`Invitations envoyées ✅\n\n${sentCount} email(s) envoyé(s).`);
+      } else {
+        alert(
+          `Envoi terminé avec erreurs ⚠️\n\nSuccès: ${sentCount}\nÉchecs: ${failedCount}`
+        );
+      }
+    } catch (error) {
+      console.error("Erreur lors de l'envoi des invitations:", error);
+      alert("Impossible d'envoyer les invitations. Vérifie la fonction cloud et réessaie.");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return {
@@ -177,6 +240,7 @@ function useWorkshopInvitation() {
     toggleDepartment,
     toggleMember,
     canSend,
+    isSending,
     handleSendInvites,
   };
 }

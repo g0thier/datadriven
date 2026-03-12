@@ -49,6 +49,14 @@ function parseDurationToMinutes(duration) {
 
 exports.sendWorkshopInvite = onRequest(async (req, res) => {
   try {
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.set("Access-Control-Allow-Headers", "Content-Type");
+
+    if (req.method === "OPTIONS") {
+      return res.status(204).send("");
+    }
+
     if (req.method !== "POST") {
       return res.status(405).json({ error: "Méthode non autorisée" });
     }

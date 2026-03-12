@@ -29,6 +29,7 @@ function WorkshopInvitation() {
     toggleDepartment,
     toggleMember,
     canSend,
+    isSending,
     handleSendInvites,
   } = useWorkshopInvitation();
 
@@ -78,7 +79,11 @@ function WorkshopInvitation() {
         />
 
         <div className="mt-6 flex justify-end">
-          <SendInvitesButton canSend={canSend} onClick={handleSendInvites} />
+          <SendInvitesButton
+            canSend={canSend}
+            onClick={handleSendInvites}
+            isSending={isSending}
+          />
         </div>
       </div>
     </div>
