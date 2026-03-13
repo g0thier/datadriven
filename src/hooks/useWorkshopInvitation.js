@@ -10,6 +10,10 @@ import {
   toggleInArray,
 } from "../utils/workshopInvitationNormalizers";
 import slugify from "../utils/string";
+import {
+  resolveDefaultWorkshopTimeZone,
+  toWorkshopStartIso,
+} from "../utils/workshopDateTime";
 
 const SEND_WORKSHOP_INVITE_URL = import.meta.env.VITE_SEND_WORKSHOP_INVITE_URL;
 const DEFAULT_WORKSHOP = Object.values(WORKSHOPS)[0] ?? { title: "Atelier" };
@@ -38,6 +42,9 @@ function useWorkshopInvitation() {
   const [selectedMemberIds, setSelectedMemberIds] = useState([]);
   const [workshopDate, setWorkshopDate] = useState("");
   const [workshopTime, setWorkshopTime] = useState("");
+  const [workshopTimezone, setWorkshopTimezone] = useState(() =>
+    resolveDefaultWorkshopTimeZone()
+  );
   const [departmentSearch, setDepartmentSearch] = useState("");
   const [search, setSearch] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -153,8 +160,22 @@ function useWorkshopInvitation() {
   const handleSendInvites = async () => {
     if (isSending || !canSend) return;
 
-    const workshopDateTime =
-      workshopDate && workshopTime ? `${workshopDate}T${workshopTime}` : "";
+    const workshopSchedule = {
+      date: workshopDate,
+      time: workshopTime,
+      timezone: workshopTimezone,
+    };
+
+    const workshopDateTime = toWorkshopStartIso(
+      workshopSchedule.date,
+      workshopSchedule.time,
+      workshopSchedule.timezone
+    );
+
+    if (!workshopDateTime) {
+      alert("Date, heure ou fuseau horaire invalide.");
+      return;
+    }
 
     const recipientsById = new Map();
     const addRecipient = (member, source) => {
@@ -187,8 +208,7 @@ function useWorkshopInvitation() {
     const payload = {
       workshopId,
       atelierTitle: atelier?.title,
-      date: workshopDate,
-      time: workshopTime,
+      workshopSchedule,
       datetime: workshopDateTime,
       selectedDepartments: selectedDepartments.map((department) => ({
         id: department.__id,
@@ -234,8 +254,7 @@ function useWorkshopInvitation() {
       const { sessionId } = await createWorkshopSession(companyId, {
         workshopId,
         workshopTitle,
-        workshopDate: workshopDate,
-        workshopTime,
+        workshopSchedule,
         workshopDateTime,
         workshopDuration,
         workshopLocation,
@@ -270,7 +289,7 @@ function useWorkshopInvitation() {
               inviterName,
               inviterEmail,
               workshopTitle,
-              workshopDateLabel: `${workshopDate} à ${workshopTime}`,
+              workshopSchedule,
               workshopDuration,
               workshopStartIso: workshopDateTime,
               workshopLink,
@@ -318,8 +337,10 @@ function useWorkshopInvitation() {
     inviterEmail,
     workshopDate,
     workshopTime,
+    workshopTimezone,
     setWorkshopDate,
     setWorkshopTime,
+    setWorkshopTimezone,
     departmentSearch,
     setDepartmentSearch,
     search,

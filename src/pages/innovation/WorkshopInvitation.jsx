@@ -13,8 +13,10 @@ function WorkshopInvitation() {
     atelier,
     workshopDate,
     workshopTime,
+    workshopTimezone,
     setWorkshopDate,
     setWorkshopTime,
+    setWorkshopTimezone,
     departmentSearch,
     setDepartmentSearch,
     search,
@@ -44,8 +46,10 @@ function WorkshopInvitation() {
           <WorkshopDateTimeCard
             date={workshopDate}
             time={workshopTime}
+            timezone={workshopTimezone}
             onDateChange={setWorkshopDate}
             onTimeChange={setWorkshopTime}
+            onTimezoneChange={setWorkshopTimezone}
           />
         </div>
 

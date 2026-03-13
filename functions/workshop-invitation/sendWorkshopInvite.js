@@ -10,6 +10,7 @@ const MAIL_FROM_ADDRESS = defineSecret("MAIL_FROM_ADDRESS");
 
 const { buildInviteEmail } = require("./mailTemplate");
 const { buildWorkshopIcs } = require("./calendar");
+const { toWorkshopStartIso } = require("./dateTime");
 
 function parseDurationToMinutes(duration) {
   if (typeof duration === "number") return duration;
@@ -63,9 +64,13 @@ exports.sendWorkshopInvite = onRequest(
         inviterName = "Gauthier Rammault",
         inviterEmail = "",
         workshopTitle = "Paper Brain",
-        workshopDateLabel = "13 02 2026 à 14h00",
+        workshopDateLabel = "",
         workshopDuration = "50 minutes",
         workshopStartIso,
+        workshopSchedule = {},
+        workshopDate = "",
+        workshopTime = "",
+        workshopTimezone = "UTC+01:00",
         workshopLink = "https://zzzbre.com/innovation/paper-brain/jyw-qfgi-cjs",
       } = req.body || {};
 
@@ -73,11 +78,27 @@ exports.sendWorkshopInvite = onRequest(
         return res.status(400).json({ error: "inviteeEmail requis" });
       }
 
-      if (!workshopStartIso) {
+      let normalizedWorkshopStartIso =
+        typeof workshopStartIso === "string" ? workshopStartIso.trim() : "";
+      const scheduleDate = String(workshopSchedule?.date || workshopDate || "").trim();
+      const scheduleTime = String(workshopSchedule?.time || workshopTime || "").trim();
+      const scheduleTimezone = String(
+        workshopSchedule?.timezone || workshopTimezone || "UTC+01:00"
+      ).trim();
+
+      if (!normalizedWorkshopStartIso && scheduleDate && scheduleTime) {
+        normalizedWorkshopStartIso = toWorkshopStartIso(
+          scheduleDate,
+          scheduleTime,
+          scheduleTimezone
+        );
+      }
+
+      if (!normalizedWorkshopStartIso) {
         return res.status(400).json({ error: "workshopStartIso requis" });
       }
 
-      const startDate = new Date(workshopStartIso);
+      const startDate = new Date(normalizedWorkshopStartIso);
       if (Number.isNaN(startDate.getTime())) {
         return res.status(400).json({ error: "workshopStartIso invalide" });
       }
@@ -90,6 +111,11 @@ exports.sendWorkshopInvite = onRequest(
         `Invitation de ${inviterName} pour participer à l’atelier ${workshopTitle}.`;
       const workshopOrganizerName = inviterName || mailFromName;
       const workshopOrganizerEmail = inviterEmail || mailFromAddress;
+      const resolvedWorkshopDateLabel =
+        workshopDateLabel ||
+        (scheduleDate && scheduleTime
+          ? `${scheduleDate} à ${scheduleTime} (${scheduleTimezone})`
+          : normalizedWorkshopStartIso);
 
       const icsContent = buildWorkshopIcs({
         uid: `${Date.now()}-${inviteeEmail}@zzzbre.com`,
@@ -106,7 +132,7 @@ exports.sendWorkshopInvite = onRequest(
         inviteeName,
         inviterName,
         workshopTitle,
-        workshopDate: workshopDateLabel,
+        workshopDate: resolvedWorkshopDateLabel,
         workshopDuration: `${durationMinutes} minutes`,
         workshopLink,
       });
@@ -123,7 +149,7 @@ exports.sendWorkshopInvite = onRequest(
           ``,
           `Vous avez reçu une invitation de ${inviterName}.`,
           `Atelier : ${workshopTitle}`,
-          `Date : ${workshopDateLabel}`,
+          `Date : ${resolvedWorkshopDateLabel}`,
           `Durée : ${durationMinutes} minutes`,
           `Lien atelier : ${workshopLink}`,
         ].join("\n"),

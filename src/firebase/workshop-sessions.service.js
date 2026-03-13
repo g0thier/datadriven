@@ -13,6 +13,12 @@ const normalizeGuests = (guests = []) =>
     sources: Array.isArray(guest?.sources) ? guest.sources : [],
   }));
 
+const normalizeWorkshopSchedule = (schedule = {}, payload = {}) => ({
+  date: schedule?.date ?? payload?.workshopDate ?? "",
+  time: schedule?.time ?? payload?.workshopTime ?? "",
+  timezone: schedule?.timezone ?? payload?.workshopTimezone ?? "UTC+01:00",
+});
+
 export const createWorkshopSession = async (companyId, payload = {}) => {
   if (!companyId) {
     throw new Error("createWorkshopSession: companyId manquant");
@@ -32,8 +38,7 @@ export const createWorkshopSession = async (companyId, payload = {}) => {
     companyId,
     workshopId: payload.workshopId || "",
     workshopTitle: payload.workshopTitle || "",
-    workshopDate: payload.workshopDate || "",
-    workshopTime: payload.workshopTime || "",
+    workshopSchedule: normalizeWorkshopSchedule(payload.workshopSchedule, payload),
     workshopDateTime: payload.workshopDateTime || "",
     workshopDuration: payload.workshopDuration || "",
     workshopLocation: payload.workshopLocation || "En ligne",
@@ -63,8 +68,7 @@ export const createWorkshopSession = async (companyId, payload = {}) => {
     companyId,
     workshopId: privateSession.workshopId,
     workshopTitle: privateSession.workshopTitle,
-    workshopDate: privateSession.workshopDate,
-    workshopTime: privateSession.workshopTime,
+    workshopSchedule: privateSession.workshopSchedule,
     workshopDateTime: privateSession.workshopDateTime,
     workshopDuration: privateSession.workshopDuration,
     workshopLocation: privateSession.workshopLocation,
