@@ -348,14 +348,14 @@ function useWorkshopInvitation() {
         setInviteResultModal({
           isOpen: true,
           variant: "success",
-          title: "Invitations envoyées ✅",
+          title: "Invitations envoyées",
           lines: [`${sentCount} email(s) envoyé(s).`],
         });
       } else {
         setInviteResultModal({
           isOpen: true,
           variant: "warning",
-          title: "Envoi terminé avec erreurs ⚠️",
+          title: "Envoi terminé avec erreurs",
           lines: [`Succès: ${sentCount}`, `Échecs: ${failedCount}`],
         });
       }
