@@ -63,19 +63,28 @@ function useWorkshopInvitation() {
     const currentUser = auth.currentUser;
     const currentUserUid = currentUser?.uid;
     const currentUserEmail = (currentUser?.email || "").toLowerCase();
+    const displayNameParts = String(currentUser?.displayName || "")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
 
     const matchingMember = membersNormalized.find((member) => {
       if (currentUserUid && String(member.id) === String(currentUserUid)) return true;
       return (member.email || "").toLowerCase() === currentUserEmail;
     });
 
+    const memberFirstName = matchingMember?.firstName || displayNameParts[0] || "";
+    const memberLastName =
+      matchingMember?.lastName || displayNameParts.slice(1).join(" ") || "";
     const memberName =
-      [matchingMember?.firstName, matchingMember?.lastName].filter(Boolean).join(" ") ||
+      [memberFirstName, memberLastName].filter(Boolean).join(" ") ||
       matchingMember?.name ||
       "";
     const memberEmail = matchingMember?.email || "";
 
     return {
+      firstName: memberFirstName,
+      lastName: memberLastName,
       name:
         memberName ||
         currentUser?.displayName ||
@@ -85,7 +94,9 @@ function useWorkshopInvitation() {
     };
   }, [membersNormalized]);
 
-  const inviterName = inviter.name;
+  const inviterFullName = inviter.name;
+  const inviterFirstName = inviter.firstName;
+  const inviterLastName = inviter.lastName;
   const inviterEmail = inviter.email;
 
   const filteredDepartments = useMemo(() => {
@@ -260,7 +271,9 @@ function useWorkshopInvitation() {
         workshopLocation,
         inviter: {
           uid: auth.currentUser?.uid || "",
-          name: inviterName,
+          firstName: inviterFirstName,
+          lastName: inviterLastName,
+          name: inviterFullName,
           email: inviterEmail,
         },
         selectedDepartments: payload.selectedDepartments,
@@ -286,7 +299,8 @@ function useWorkshopInvitation() {
             body: JSON.stringify({
               inviteeEmail: guest.email,
               inviteeName: guest.firstName || guest.name || guest.label,
-              inviterName,
+              inviterFirstName,
+              inviterLastName,
               inviterEmail,
               workshopTitle,
               workshopSchedule,
@@ -335,7 +349,6 @@ function useWorkshopInvitation() {
 
   return {
     atelier,
-    inviterName,
     inviterEmail,
     workshopDate,
     workshopTime,

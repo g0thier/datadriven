@@ -22,6 +22,13 @@ function parseDurationToMinutes(duration) {
   return Number(match[1]);
 }
 
+function mergeName(firstName, lastName) {
+  const merged = [String(firstName || "").trim(), String(lastName || "").trim()]
+    .filter(Boolean)
+    .join(" ");
+  return merged;
+}
+
 exports.sendWorkshopInvite = onRequest(
   {
     secrets: [SMTP_USER, SMTP_PASS, MAIL_FROM_NAME, MAIL_FROM_ADDRESS],
@@ -61,7 +68,8 @@ exports.sendWorkshopInvite = onRequest(
       const {
         inviteeEmail,
         inviteeName = "Trucmuche",
-        inviterName = "Gauthier Rammault",
+        inviterFirstName = "",
+        inviterLastName = "",
         inviterEmail = "",
         workshopTitle = "Paper Brain",
         workshopDateLabel = "",
@@ -107,11 +115,13 @@ exports.sendWorkshopInvite = onRequest(
 
       const durationMinutes = parseDurationToMinutes(workshopDuration);
       const endDate = new Date(startDate.getTime() + durationMinutes * 60 * 1000);
+      const resolvedInviterName =
+        mergeName(inviterFirstName, inviterLastName) || "Organisateur";
 
       const title = `Atelier : ${workshopTitle}`;
       const description =
-        `Invitation de ${inviterName} pour participer à l’atelier ${workshopTitle}.`;
-      const workshopOrganizerName = inviterName || mailFromName;
+        `Invitation de ${resolvedInviterName} pour participer à l’atelier ${workshopTitle}.`;
+      const workshopOrganizerName = resolvedInviterName || mailFromName;
       const workshopOrganizerEmail = inviterEmail || mailFromAddress;
       const resolvedWorkshopDateLabel =
         workshopDateLabel ||
@@ -132,7 +142,8 @@ exports.sendWorkshopInvite = onRequest(
 
       const html = buildInviteEmail({
         inviteeName,
-        inviterName,
+        inviterFirstName,
+        inviterLastName,
         workshopTitle,
         workshopDate: resolvedWorkshopDateLabel,
         workshopDuration: `${durationMinutes} minutes`,
@@ -149,7 +160,7 @@ exports.sendWorkshopInvite = onRequest(
         text: [
           `Bonjour ${inviteeName},`,
           ``,
-          `Vous avez reçu une invitation de ${inviterName}.`,
+          `Vous avez reçu une invitation de ${resolvedInviterName}.`,
           `Atelier : ${workshopTitle}`,
           `Date : ${resolvedWorkshopDateLabel}`,
           `Durée : ${durationMinutes} minutes`,
@@ -186,7 +197,8 @@ exports.sendWorkshopInvite = onRequest(
         } else {
           const inviterHtml = buildInviteEmail({
             inviteeName,
-            inviterName,
+            inviterFirstName,
+            inviterLastName,
             workshopTitle,
             workshopDate: resolvedWorkshopDateLabel,
             workshopDuration: `${durationMinutes} minutes`,
@@ -203,7 +215,7 @@ exports.sendWorkshopInvite = onRequest(
             subject: `Invitation créée : atelier ${workshopTitle}`,
             html: inviterHtml,
             text: [
-              `Bonjour ${inviterName},`,
+              `Bonjour ${inviterFirstName},`,
               ``,
               `Vous avez créé une invitation pour ${invitedCount} personne(s).`,
               `Atelier : ${workshopTitle}`,
@@ -211,6 +223,15 @@ exports.sendWorkshopInvite = onRequest(
               `Durée : ${durationMinutes} minutes`,
               `Lien atelier : ${workshopLink}`,
             ].join("\n"),
+            alternatives: [
+              {
+                contentType: "text/calendar; method=REQUEST; charset=UTF-8",
+                content: icsContent,
+                headers: {
+                  "Content-Class": "urn:content-classes:calendarmessage",
+                },
+              },
+            ],
           });
 
           inviterConfirmationMessageId = inviterInfo.messageId;

@@ -17,9 +17,17 @@ function formatPeopleCount(count) {
   return `${safeCount} personne${safeCount > 1 ? "s" : ""}`;
 }
 
+function mergeName(firstName = "", lastName = "") {
+  const merged = [String(firstName || "").trim(), String(lastName || "").trim()]
+    .filter(Boolean)
+    .join(" ");
+  return merged;
+}
+
 function buildInviteEmail({
   inviteeName,
-  inviterName,
+  inviterFirstName = "",
+  inviterLastName = "",
   workshopTitle,
   workshopDate,
   workshopDuration,
@@ -29,13 +37,13 @@ function buildInviteEmail({
 }) {
   const isInviterConfirmation = emailVariant === "inviterConfirmation";
   const backgroundColor = isInviterConfirmation ? "#f9a8d4" : "#fcd34d";
-  const displayedRecipientName = isInviterConfirmation ? inviterName : inviteeName;
+  const mergedInviterName = mergeName(inviterFirstName, inviterLastName) || "votre organisateur";
+  const displayedRecipientName = isInviterConfirmation
+    ? (String(inviterFirstName || "").trim() || mergedInviterName)
+    : inviteeName;
   const introLine = isInviterConfirmation
     ? `Vous avez créé une invitation pour ${escapeHtml(formatPeopleCount(invitedCount))}.`
-    : `Vous avez reçu une invitation de ${escapeHtml(inviterName)},`;
-  const contextLine = isInviterConfirmation
-    ? `Votre invitation concerne l’atelier :`
-    : `pour participer à un atelier de :`;
+    : `Vous avez reçu une invitation de ${escapeHtml(mergedInviterName)},`;
 
   return `
   <!DOCTYPE html>
@@ -65,7 +73,7 @@ function buildInviteEmail({
                         </p>
 
                         <p style="margin:0 0 14px 0;font-size:20px;line-height:1.6;color:#1f2937;">
-                          ${contextLine}
+                          pour participer à un atelier de :
                           <span style="font-weight:700;">${escapeHtml(workshopTitle)}</span>
                         </p>
 
