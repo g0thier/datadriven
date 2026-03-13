@@ -25,15 +25,14 @@ export const createWorkshopSession = async (companyId, payload = {}) => {
   }
 
   const now = new Date().toISOString();
-  const sessionsRef = ref(database, `companies/${companyId}/workshopSessions`);
-  const sessionRef = push(sessionsRef);
+  const sessionRef = push(ref(database, "workshopSessions"));
   const sessionId = sessionRef.key;
 
   if (!sessionId) {
     throw new Error("Impossible de générer sessionId");
   }
 
-  const privateSession = {
+  const sessionDetails = {
     sessionId,
     companyId,
     workshopId: payload.workshopId || "",
@@ -63,30 +62,23 @@ export const createWorkshopSession = async (companyId, payload = {}) => {
     updatedAt: now,
   };
 
-  const publicSession = {
+  const companySessionSummary = {
     sessionId,
-    companyId,
-    workshopId: privateSession.workshopId,
-    workshopTitle: privateSession.workshopTitle,
-    workshopSchedule: privateSession.workshopSchedule,
-    workshopDateTime: privateSession.workshopDateTime,
-    workshopDuration: privateSession.workshopDuration,
-    workshopLocation: privateSession.workshopLocation,
-    inviterName: privateSession.inviter.name,
-    inviterEmail: privateSession.inviter.email,
-    totalGuestCount: privateSession.totalGuestCount,
-    status: privateSession.status,
+    workshopId: sessionDetails.workshopId,
+    workshopTitle: sessionDetails.workshopTitle,
+    workshopDateTime: sessionDetails.workshopDateTime,
+    status: sessionDetails.status,
     createdAt: now,
     updatedAt: now,
   };
 
   const updates = {};
-  updates[`companies/${companyId}/workshopSessions/${sessionId}`] = privateSession;
-  updates[`workshopSessions/${sessionId}`] = publicSession;
+  updates[`companies/${companyId}/workshopSessions/${sessionId}`] = companySessionSummary;
+  updates[`workshopSessions/${sessionId}`] = sessionDetails;
 
   await update(ref(database), updates);
 
-  return { sessionId, publicSession, privateSession };
+  return { sessionId, companySessionSummary, sessionDetails };
 };
 
 export const getWorkshopSession = async (sessionId) => {
