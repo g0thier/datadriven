@@ -2,6 +2,7 @@ import paperBrain from '../assets/workshops/paper-brain.png'
 
 const workshopCards = [
   {
+    id: "paper-brain",
     title: 'Paper Brain',
     duration: '50 minutes',
     groupSize: 'à partir de 3 personnes',

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { auth } from "../firebase";
+import { auth, createWorkshopSession } from "../firebase";
+import { WORKSHOPS, getWorkshop } from "../workshops";
 
 import useCompanyTeam from "./useCompanyTeam";
 import {
@@ -8,13 +9,30 @@ import {
   normalizeMembers,
   toggleInArray,
 } from "../utils/workshopInvitationNormalizers";
+import slugify from "../utils/string";
 
 const SEND_WORKSHOP_INVITE_URL = import.meta.env.VITE_SEND_WORKSHOP_INVITE_URL;
+const DEFAULT_WORKSHOP = Object.values(WORKSHOPS)[0] ?? { title: "Atelier" };
+
+const resolveWorkshopId = (workshop) => {
+  const candidateIds = [
+    typeof workshop?.id === "string" ? workshop.id.trim() : "",
+    typeof workshop?.slug === "string" ? workshop.slug.trim() : "",
+    typeof workshop?.title === "string" ? slugify(workshop.title) : "",
+  ].filter(Boolean);
+
+  for (const candidate of candidateIds) {
+    if (getWorkshop(candidate)) return candidate;
+  }
+
+  return Object.keys(WORKSHOPS)[0] || "";
+};
 
 function useWorkshopInvitation() {
   const location = useLocation();
-  const atelier = location.state?.workshop ?? { title: "Atelier" };
-  const { officeLocations, departments, teamMembers } = useCompanyTeam();
+  const atelier = location.state?.workshop ?? DEFAULT_WORKSHOP;
+  const { companyId, officeLocations, departments, teamMembers } = useCompanyTeam();
+  const workshopId = useMemo(() => resolveWorkshopId(atelier), [atelier]);
 
   const [selectedDepartmentIds, setSelectedDepartmentIds] = useState([]);
   const [selectedMemberIds, setSelectedMemberIds] = useState([]);
@@ -167,6 +185,7 @@ function useWorkshopInvitation() {
     }));
 
     const payload = {
+      workshopId,
       atelierTitle: atelier?.title,
       date: workshopDate,
       time: workshopTime,
@@ -194,12 +213,49 @@ function useWorkshopInvitation() {
       return;
     }
 
+    if (!companyId) {
+      alert("Impossible de créer la session: companyId introuvable.");
+      return;
+    }
+
+    if (!workshopId) {
+      alert("Impossible de déterminer l'atelier à lancer.");
+      return;
+    }
+
     setIsSending(true);
 
     try {
       const [defaultOffice] = officeLocations ?? [];
       const workshopLocation = defaultOffice?.name || defaultOffice?.alias || "En ligne";
-      const workshopLink = window.location.origin;
+      const workshopTitle = atelier?.title || getWorkshop(workshopId)?.title || "Atelier";
+      const workshopDuration = atelier?.duration || "50 minutes";
+
+      const { sessionId } = await createWorkshopSession(companyId, {
+        workshopId,
+        workshopTitle,
+        workshopDate: workshopDate,
+        workshopTime,
+        workshopDateTime,
+        workshopDuration,
+        workshopLocation,
+        inviter: {
+          uid: auth.currentUser?.uid || "",
+          name: inviterName,
+          email: inviterEmail,
+        },
+        selectedDepartments: payload.selectedDepartments,
+        selectedGuests: payload.selectedGuests,
+        guestsFromSelectedDepartments: payload.guestsFromSelectedDepartments,
+        allGuests,
+        officeLocations: payload.officeLocations,
+        totalGuestCount: totalUniqueGuestCount,
+      });
+
+      const workshopLink = new URL(
+        `/innovation/${encodeURIComponent(workshopId)}/${encodeURIComponent(sessionId)}`,
+        window.location.origin
+      ).toString();
 
       const results = await Promise.allSettled(
         recipientsWithEmail.map((guest) =>
@@ -213,12 +269,13 @@ function useWorkshopInvitation() {
               inviteeName: guest.firstName || guest.name || guest.label,
               inviterName,
               inviterEmail,
-              workshopTitle: atelier?.title || "Atelier",
+              workshopTitle,
               workshopDateLabel: `${workshopDate} à ${workshopTime}`,
-              workshopDuration: atelier?.duration || "50 minutes",
+              workshopDuration,
               workshopStartIso: workshopDateTime,
               workshopLink,
               workshopLocation,
+              workshopSessionId: sessionId,
             }),
           }).then(async (response) => {
             if (!response.ok) {
@@ -233,7 +290,11 @@ function useWorkshopInvitation() {
       const failedCount = results.filter((result) => result.status === "rejected").length;
       const sentCount = results.length - failedCount;
 
-      console.log("Invitations payload:", payload);
+      console.log("Invitations payload:", {
+        ...payload,
+        sessionId,
+        workshopLink,
+      });
       console.log("Invitations result:", results);
 
       if (failedCount === 0) {

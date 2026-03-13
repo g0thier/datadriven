@@ -268,6 +268,7 @@ export default function useCompanyTeam() {
   }
 
   return {
+    companyId,
     officeLocations,
     departments,
     teamMembers,
