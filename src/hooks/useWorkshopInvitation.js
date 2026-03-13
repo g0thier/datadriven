@@ -277,7 +277,7 @@ function useWorkshopInvitation() {
       ).toString();
 
       const results = await Promise.allSettled(
-        recipientsWithEmail.map((guest) =>
+        recipientsWithEmail.map((guest, index) =>
           fetch(SEND_WORKSHOP_INVITE_URL, {
             method: "POST",
             headers: {
@@ -295,6 +295,8 @@ function useWorkshopInvitation() {
               workshopLink,
               workshopLocation,
               workshopSessionId: sessionId,
+              sendInviterConfirmation: index === 0,
+              invitedCount: recipientsWithEmail.length,
             }),
           }).then(async (response) => {
             if (!response.ok) {

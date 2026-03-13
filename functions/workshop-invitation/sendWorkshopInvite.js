@@ -72,6 +72,8 @@ exports.sendWorkshopInvite = onRequest(
         workshopTime = "",
         workshopTimezone = "UTC+01:00",
         workshopLink = "https://zzzbre.com/innovation/paper-brain/jyw-qfgi-cjs",
+        sendInviterConfirmation = false,
+        invitedCount = 0,
       } = req.body || {};
 
       if (!inviteeEmail) {
@@ -175,9 +177,54 @@ exports.sendWorkshopInvite = onRequest(
         inviteeEmail,
       });
 
+      let inviterConfirmationMessageId = null;
+      if (sendInviterConfirmation) {
+        if (!inviterEmail) {
+          logger.warn("mail expéditeur non envoyé: inviterEmail manquant", {
+            inviteeEmail,
+          });
+        } else {
+          const inviterHtml = buildInviteEmail({
+            inviteeName,
+            inviterName,
+            workshopTitle,
+            workshopDate: resolvedWorkshopDateLabel,
+            workshopDuration: `${durationMinutes} minutes`,
+            workshopLink,
+            emailVariant: "inviterConfirmation",
+            invitedCount,
+          });
+
+          const inviterInfo = await transporter.sendMail({
+            from: `${mailFromName} <${mailFromAddress}>`,
+            sender: mailSenderAddress,
+            replyTo: mailReplyTo,
+            to: inviterEmail,
+            subject: `Invitation créée : atelier ${workshopTitle}`,
+            html: inviterHtml,
+            text: [
+              `Bonjour ${inviterName},`,
+              ``,
+              `Vous avez créé une invitation pour ${invitedCount} personne(s).`,
+              `Atelier : ${workshopTitle}`,
+              `Date : ${resolvedWorkshopDateLabel}`,
+              `Durée : ${durationMinutes} minutes`,
+              `Lien atelier : ${workshopLink}`,
+            ].join("\n"),
+          });
+
+          inviterConfirmationMessageId = inviterInfo.messageId;
+          logger.info("mail expéditeur envoyé", {
+            messageId: inviterInfo.messageId,
+            inviterEmail,
+          });
+        }
+      }
+
       return res.json({
         success: true,
         messageId: info.messageId,
+        inviterConfirmationMessageId,
       });
     } catch (error) {
       logger.error("erreur envoi mail", error);

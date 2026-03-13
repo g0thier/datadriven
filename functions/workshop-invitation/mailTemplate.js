@@ -11,6 +11,12 @@ function escapeAttr(str = "") {
   return escapeHtml(str);
 }
 
+function formatPeopleCount(count) {
+  const parsed = Number.parseInt(String(count), 10);
+  const safeCount = Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+  return `${safeCount} personne${safeCount > 1 ? "s" : ""}`;
+}
+
 function buildInviteEmail({
   inviteeName,
   inviterName,
@@ -18,7 +24,19 @@ function buildInviteEmail({
   workshopDate,
   workshopDuration,
   workshopLink,
+  emailVariant = "invitee",
+  invitedCount = 0,
 }) {
+  const isInviterConfirmation = emailVariant === "inviterConfirmation";
+  const backgroundColor = isInviterConfirmation ? "#f9a8d4" : "#fcd34d";
+  const displayedRecipientName = isInviterConfirmation ? inviterName : inviteeName;
+  const introLine = isInviterConfirmation
+    ? `Vous avez créé une invitation pour ${escapeHtml(formatPeopleCount(invitedCount))}.`
+    : `Vous avez reçu une invitation de ${escapeHtml(inviterName)},`;
+  const contextLine = isInviterConfirmation
+    ? `Votre invitation concerne l’atelier :`
+    : `pour participer à un atelier de :`;
+
   return `
   <!DOCTYPE html>
   <html lang="fr">
@@ -28,8 +46,8 @@ function buildInviteEmail({
       <meta name="x-apple-disable-message-reformatting" />
       <title>Invitation atelier</title>
     </head>
-    <body style="margin:0;padding:0;background-color:#fcd34d;font-family:Arial,Helvetica,sans-serif;">
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background-color:#fcd34d;">
+    <body style="margin:0;padding:0;background-color:${backgroundColor};font-family:Arial,Helvetica,sans-serif;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background-color:${backgroundColor};">
         <tr>
           <td align="center" style="padding:32px 16px;">
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:720px;">
@@ -39,15 +57,15 @@ function buildInviteEmail({
                     <tr>
                       <td style="padding:40px 32px 20px 32px;">
                         <h1 style="margin:0 0 24px 0;font-size:40px;line-height:1.1;color:#111827;font-weight:800;">
-                          Bonjour ${escapeHtml(inviteeName)},
+                          Bonjour ${escapeHtml(displayedRecipientName)},
                         </h1>
 
                         <p style="margin:0 0 14px 0;font-size:20px;line-height:1.6;color:#1f2937;">
-                          Vous avez reçu une invitation de ${escapeHtml(inviterName)},
+                          ${introLine}
                         </p>
 
                         <p style="margin:0 0 14px 0;font-size:20px;line-height:1.6;color:#1f2937;">
-                          pour participer à un atelier de :
+                          ${contextLine}
                           <span style="font-weight:700;">${escapeHtml(workshopTitle)}</span>
                         </p>
 
