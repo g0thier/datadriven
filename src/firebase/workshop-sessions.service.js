@@ -37,10 +37,8 @@ export const createWorkshopSession = async (companyId, payload = {}) => {
     companyId,
     workshopId: payload.workshopId || "",
     workshopTitle: payload.workshopTitle || "",
-    workshopSchedule: normalizeWorkshopSchedule(payload.workshopSchedule, payload),
     workshopDateTime: payload.workshopDateTime || "",
     workshopDuration: payload.workshopDuration || "",
-    workshopLocation: payload.workshopLocation || "En ligne",
     inviter: {
       uid: payload.inviter?.uid || "",
       name: payload.inviter?.name || "",
@@ -54,7 +52,6 @@ export const createWorkshopSession = async (companyId, payload = {}) => {
       ? payload.guestsFromSelectedDepartments
       : [],
     allGuests: normalizeGuests(payload.allGuests),
-    officeLocations: Array.isArray(payload.officeLocations) ? payload.officeLocations : [],
     totalGuestCount:
       typeof payload.totalGuestCount === "number" ? payload.totalGuestCount : 0,
     status: payload.status || "scheduled",
