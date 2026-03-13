@@ -126,7 +126,7 @@ exports.sendWorkshopInvite = onRequest(
       const resolvedWorkshopDateLabel =
         workshopDateLabel ||
         (scheduleDate && scheduleTime
-          ? `${scheduleDate} à ${scheduleTime} (${scheduleTimezone})`
+          ? `${scheduleDate} à ${scheduleTime}`
           : normalizedWorkshopStartIso);
 
       const icsContent = buildWorkshopIcs({
