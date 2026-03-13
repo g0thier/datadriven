@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { auth, createWorkshopSession } from "../firebase";
 import { WORKSHOPS, getWorkshop } from "../workshops";
 
@@ -34,6 +34,7 @@ const resolveWorkshopId = (workshop) => {
 
 function useWorkshopInvitation() {
   const location = useLocation();
+  const navigate = useNavigate();
   const atelier = location.state?.workshop ?? DEFAULT_WORKSHOP;
   const { companyId, officeLocations, departments, teamMembers } = useCompanyTeam();
   const workshopId = useMemo(() => resolveWorkshopId(atelier), [atelier]);
@@ -48,6 +49,12 @@ function useWorkshopInvitation() {
   const [departmentSearch, setDepartmentSearch] = useState("");
   const [search, setSearch] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [inviteResultModal, setInviteResultModal] = useState({
+    isOpen: false,
+    variant: "success",
+    title: "",
+    lines: [],
+  });
 
   const departmentsNormalized = useMemo(
     () => normalizeDepartments(departments ?? []),
@@ -167,6 +174,11 @@ function useWorkshopInvitation() {
     Boolean(workshopTime) &&
     (selectedDepartmentIds.length > 0 || selectedMemberIds.length > 0) &&
     !isSending;
+
+  const closeInviteResultModal = () => {
+    setInviteResultModal((previous) => ({ ...previous, isOpen: false }));
+    navigate("/innovation");
+  };
 
   const handleSendInvites = async () => {
     if (isSending || !canSend) return;
@@ -333,11 +345,19 @@ function useWorkshopInvitation() {
       console.log("Invitations result:", results);
 
       if (failedCount === 0) {
-        alert(`Invitations envoyées ✅\n\n${sentCount} email(s) envoyé(s).`);
+        setInviteResultModal({
+          isOpen: true,
+          variant: "success",
+          title: "Invitations envoyées ✅",
+          lines: [`${sentCount} email(s) envoyé(s).`],
+        });
       } else {
-        alert(
-          `Envoi terminé avec erreurs ⚠️\n\nSuccès: ${sentCount}\nÉchecs: ${failedCount}`
-        );
+        setInviteResultModal({
+          isOpen: true,
+          variant: "warning",
+          title: "Envoi terminé avec erreurs ⚠️",
+          lines: [`Succès: ${sentCount}`, `Échecs: ${failedCount}`],
+        });
       }
     } catch (error) {
       console.error("Erreur lors de l'envoi des invitations:", error);
@@ -371,6 +391,8 @@ function useWorkshopInvitation() {
     toggleMember,
     canSend,
     isSending,
+    inviteResultModal,
+    closeInviteResultModal,
     handleSendInvites,
   };
 }

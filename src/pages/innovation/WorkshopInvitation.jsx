@@ -1,6 +1,7 @@
 import {
   DepartmentSelectorCard,
   InvitationSummaryCard,
+  InviteSendResultModal,
   MemberSelectorCard,
   SendInvitesButton,
   WorkshopDateTimeCard,
@@ -32,6 +33,8 @@ function WorkshopInvitation() {
     toggleMember,
     canSend,
     isSending,
+    inviteResultModal,
+    closeInviteResultModal,
     handleSendInvites,
   } = useWorkshopInvitation();
 
@@ -90,6 +93,14 @@ function WorkshopInvitation() {
           />
         </div>
       </div>
+
+      <InviteSendResultModal
+        isOpen={inviteResultModal.isOpen}
+        variant={inviteResultModal.variant}
+        title={inviteResultModal.title}
+        lines={inviteResultModal.lines}
+        onConfirm={closeInviteResultModal}
+      />
     </div>
   );
 }
