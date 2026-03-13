@@ -22,6 +22,7 @@ const Management = lazy(() => import('./pages/management/Management.jsx'));
 const WorkshopInvitation = lazy(() => import('./pages/innovation/WorkshopInvitation.jsx'));
 const Innovation = lazy(() => import('./pages/innovation/Innovation.jsx'));
 const Team = lazy(() => import('./pages/Team.jsx'));
+const Soon = lazy(() => import('./pages/Soon.jsx'));
 
 function App() {
 
@@ -40,7 +41,7 @@ function App() {
         <Route path="/innovation" element={<ProtectedRoute><Innovation /></ProtectedRoute>} />
         <Route path="/innovation/invitation" element={<ProtectedRoute><WorkshopInvitation /></ProtectedRoute>} />
         <Route path="/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
-
+        <Route path="/soon" element={<ProtectedRoute><Soon /></ProtectedRoute>} />
         {/* Pages publiques */}
         <Route path="/innovation/:workshopId/:id" element={<WorkshopRunner />} />
         <Route path="*" element={<NotFound />} />

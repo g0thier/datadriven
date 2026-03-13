@@ -8,11 +8,11 @@ export default function Navbar() {
   const [openProfil, setOpenProfil] = useState(false);
 
   const links = [
-    { label: "À venir", to: "/", icon: "select" },
-    { label: "À venir", to: "/", icon: "select" },
+    { label: "À venir", to: "/soon", icon: "select" },
+    { label: "À venir", to: "/soon", icon: "select" },
     { label: "Innovation & Créativité", to: "/innovation", icon: "emoji_objects" },
     { label: "Gestion des Ressources Humaines", to: "/team", icon: "conversation" },
-    { label: "À venir", to: "/", icon: "select" },
+    { label: "À venir", to: "/soon", icon: "select" },
     { label: "Gestion des accès", to: "/management", icon: "shield_toggle" }
   ];
 
