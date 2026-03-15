@@ -23,17 +23,19 @@ export function TabButton({ active, onClick, children }) {
   );
 }
 
-export function ActionButton({ onClick, children, danger }) {
+export function ActionButton({ onClick, children, danger, disabled = false, type = "button" }) {
   return (
     <button
-      type="button"
+      type={type}
       onClick={onClick}
+      disabled={disabled}
       style={{
         padding: "8px 10px",
         borderRadius: 10,
         border: "1px solid #ddd",
         background: danger ? "#ffecec" : "#fff",
-        cursor: "pointer",
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.6 : 1,
       }}
     >
       {children}
@@ -137,7 +139,7 @@ export function DepartmentsTagsEditor({ value, options, onChange }) {
     <div style={{ display: "grid", gap: 8 }}>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
         {selectedIds.length === 0 ? (
-          <span style={{ color: "#777" }}>Aucun</span>
+          <span className="text-gray-500">Aucune</span>
         ) : (
           selectedIds.map((id) => {
             const label = byId.get(id)?.name ?? `Dept ${id}`;
@@ -184,7 +186,7 @@ export function DepartmentsTagsEditor({ value, options, onChange }) {
         }}
       >
         {opts.length === 0 ? (
-          <div style={{ color: "#777" }}>Aucune option</div>
+          <span className="text-gray-500">Aucune option</span>
         ) : (
           opts.map((d) => (
             <label

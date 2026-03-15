@@ -1,17 +1,50 @@
 import {
   ActionButton,
-  CellInput,
   Th,
   Td,
-  OfficeSelect,
-  DepartmentsTagsEditor,
   TableShell,
 } from "./UITeam.jsx";
+import { useState } from "react";
+import MemberModal from "./MemberModal.jsx";
+
+const EMPTY_MEMBER_FORM = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  office: null,
+  departments: [],
+};
+
+function normalizeMemberForm(member = {}) {
+  return {
+    firstName: member.firstName || "",
+    lastName: member.lastName || "",
+    email: member.email || "",
+    phone: member.phone || "",
+    office: member.office ?? null,
+    departments: Array.isArray(member.departments) ? member.departments : [],
+  };
+}
+
+function toErrorMessage(error) {
+  if (error?.code === "auth/email-already-in-use") {
+    return "Un compte avec cet email existe déjà.";
+  }
+
+  if (error?.code === "auth/invalid-email") {
+    return "L'email saisi est invalide.";
+  }
+
+  if (error?.code === "auth/weak-password") {
+    return "Le mot de passe généré n'est pas accepté. Réessaie.";
+  }
+
+  return error?.message || "Une erreur est survenue.";
+}
 
 export default function MembersView({
   teamMembers,
-  editingMemberId,
-  setEditingMemberId,
   addMember,
   updateMember,
   removeMember,
@@ -20,27 +53,115 @@ export default function MembersView({
   officeById,
   deptById,
 }) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState("create");
+  const [selectedMemberId, setSelectedMemberId] = useState(null);
+  const [form, setForm] = useState(EMPTY_MEMBER_FORM);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+
+  function openCreateModal() {
+    setModalMode("create");
+    setSelectedMemberId(null);
+    setForm(EMPTY_MEMBER_FORM);
+    setSubmitError("");
+    setIsModalOpen(true);
+  }
+
+  function openEditModal(member) {
+    setModalMode("edit");
+    setSelectedMemberId(member.id);
+    setForm(normalizeMemberForm(member));
+    setSubmitError("");
+    setIsModalOpen(true);
+  }
+
+  function closeModal() {
+    if (isSubmitting) return;
+    setIsModalOpen(false);
+    setSubmitError("");
+  }
+
+  function updateField(field, value) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function handleSubmit() {
+    if (isSubmitting) return;
+    setSubmitError("");
+
+    const payload = {
+      firstName: form.firstName.trim(),
+      lastName: form.lastName.trim(),
+      email: form.email.trim(),
+      phone: form.phone.trim(),
+      office: form.office || null,
+      departments: Array.isArray(form.departments) ? form.departments : [],
+    };
+
+    if (!payload.email) {
+      setSubmitError("L'email est requis.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      if (modalMode === "create") {
+        await addMember({
+          ...payload,
+          role: "colab",
+          isActive: true,
+        });
+      } else if (selectedMemberId) {
+        await updateMember(selectedMemberId, payload);
+      }
+
+      setIsModalOpen(false);
+    } catch (error) {
+      setSubmitError(toErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (isSubmitting) return;
+    if (modalMode !== "edit" || !selectedMemberId) {
+      closeModal();
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError("");
+
+    try {
+      await removeMember(selectedMemberId);
+      setIsModalOpen(false);
+    } catch (error) {
+      setSubmitError(toErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
-    <TableShell title="Personnels" onAdd={addMember}>
+    <TableShell title="Personnels" onAdd={openCreateModal}>
       <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1360 }}>
         <thead>
           <tr>
             <Th>Modifier</Th>
             <Th>Prénom</Th>
             <Th>Nom</Th>
-            <Th>Rôle</Th>
             <Th>Email</Th>
             <Th>Téléphone</Th>
-            <Th>Actif</Th>
             <Th>Bureau</Th>
             <Th>Équipes (tags)</Th>
-            <Th>Actions</Th>
           </tr>
         </thead>
 
         <tbody>
           {(teamMembers || []).map((m, index) => {
-            const isEditing = editingMemberId === m.id;
             const officeLabel = m.office
               ? officeById.get(m.office)?.alias || officeById.get(m.office)?.name
               : "";
@@ -51,134 +172,44 @@ export default function MembersView({
             return (
               <tr key={m.id} className={index % 2 === 0 ? "bg-white" : "bg-slate-50"}>
                 <Td>
-                  <ActionButton onClick={() => setEditingMemberId(isEditing ? null : m.id)}>
-                    {isEditing ? "Voir" : "Modifier"}
-                  </ActionButton>
+                  <ActionButton onClick={() => openEditModal(m)}>Modifier</ActionButton>
                 </Td>
 
                 <Td style={{ minWidth: 180 }}>
-                  {isEditing ? (
-                    <CellInput
-                      value={m.firstName ?? ""}
-                      onChange={(v) => updateMember(m.id, { firstName: v })}
-                      placeholder="Prénom"
-                    />
-                  ) : (
-                    <span>{m.firstName || "—"}</span>
-                  )}
+                  <span>{m.firstName || "—"}</span>
                 </Td>
 
                 <Td style={{ minWidth: 180 }}>
-                  {isEditing ? (
-                    <CellInput
-                      value={m.lastName ?? ""}
-                      onChange={(v) => updateMember(m.id, { lastName: v })}
-                      placeholder="Nom"
-                    />
-                  ) : (
-                    <span>{m.lastName || "—"}</span>
-                  )}
-                </Td>
-
-                <Td style={{ minWidth: 180 }}>
-                  {isEditing ? (
-                    <CellInput
-                      value={m.role ?? ""}
-                      onChange={(v) => updateMember(m.id, { role: v })}
-                      placeholder="Rôle"
-                    />
-                  ) : (
-                    <span>{m.role || "—"}</span>
-                  )}
+                  <span>{m.lastName || "—"}</span>
                 </Td>
 
                 <Td style={{ minWidth: 220 }}>
-                  {isEditing ? (
-                    <CellInput
-                      value={m.email ?? ""}
-                      onChange={(v) => updateMember(m.id, { email: v })}
-                      placeholder="Email"
-                    />
-                  ) : (
-                    <span>{m.email || "—"}</span>
-                  )}
+                  <span>{m.email || "—"}</span>
                 </Td>
 
                 <Td style={{ minWidth: 170 }}>
-                  {isEditing ? (
-                    <CellInput
-                      value={m.phone ?? ""}
-                      onChange={(v) => updateMember(m.id, { phone: v })}
-                      placeholder="Téléphone"
-                    />
-                  ) : (
-                    <span>{m.phone || "—"}</span>
-                  )}
-                </Td>
-
-                <Td style={{ minWidth: 120 }}>
-                  {isEditing ? (
-                    <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <input
-                        type="checkbox"
-                        checked={Boolean(m.isActive)}
-                        onChange={(e) => updateMember(m.id, { isActive: e.target.checked })}
-                      />
-                      <span>{m.isActive ? "Oui" : "Non"}</span>
-                    </label>
-                  ) : m.isActive ? (
-                    <span>Oui</span>
-                  ) : (
-                    <span>Non</span>
-                  )}
+                  <span>{m.phone || "—"}</span>
                 </Td>
 
                 <Td style={{ minWidth: 240 }}>
-                  {isEditing ? (
-                    <OfficeSelect
-                      value={m.office ?? null}
-                      officeLocations={officeLocations}
-                      onChange={(v) => updateMember(m.id, { office: v })}
-                    />
-                  ) : (
-                    <span>{officeLabel || "—"}</span>
-                  )}
+                  <span>{officeLabel || "—"}</span>
                 </Td>
 
                 <Td style={{ minWidth: 320 }}>
-                  {isEditing ? (
-                    <DepartmentsTagsEditor
-                      value={m.departments ?? []}
-                      options={departments}
-                      onChange={(ids) => updateMember(m.id, { departments: ids })}
-                    />
-                  ) : (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                      {deptLabels.length === 0 ? (
-                        <span style={{ color: "#777" }}>Aucun</span>
-                      ) : (
-                        deptLabels.map((t) => (
-                          <span
-                            key={t}
-                            style={{
-                              padding: "4px 8px",
-                              borderRadius: 999,
-                              border: "1px solid #ddd",
-                              background: "#f7f7f7",
-                            }}
-                          >
-                            {t}
-                          </span>
-                        ))
-                      )}
-                    </div>
-                  )}
-                </Td>
-
-                <Td>
-                  <ActionButton danger onClick={() => removeMember(m.id)}>
-                    Supprimer
-                  </ActionButton>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {deptLabels.length === 0 ? (
+                      <span className="text-gray-500">Aucun</span>
+                    ) : (
+                      deptLabels.map((t) => (
+                        <span
+                          key={t}
+                          className="px-2 py-1 rounded-full border border-violet-300 bg-violet-100"
+                        >
+                          {t}
+                        </span>
+                      ))
+                    )}
+                  </div>
                 </Td>
               </tr>
             );
@@ -186,13 +217,27 @@ export default function MembersView({
 
           {(!teamMembers || teamMembers.length === 0) && (
             <tr>
-              <Td colSpan={10} style={{ color: "#777" }}>
+              <Td colSpan={9} className="text-gray-500">
                 Aucun personnel
               </Td>
             </tr>
           )}
         </tbody>
       </table>
+
+      <MemberModal
+        isOpen={isModalOpen}
+        mode={modalMode}
+        form={form}
+        onChangeField={updateField}
+        officeLocations={officeLocations}
+        departments={departments}
+        submitError={submitError}
+        isSubmitting={isSubmitting}
+        onDelete={handleDelete}
+        onCancel={closeModal}
+        onSubmit={handleSubmit}
+      />
     </TableShell>
   );
 }

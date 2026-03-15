@@ -4,6 +4,7 @@ import {
   addCompanyMember,
   getUserCompanyId,
   onAuthStateChangedListener,
+  signUpMemberWithEmail,
   removeCompanyMember,
   removeCompanyOffice,
   removeCompanyDepartment,
@@ -70,17 +71,49 @@ export function deleteDepartment(companyId, id) {
 }
 
 // members
-export function createMember(companyId) {
-  return addCompanyMember(companyId, {
-    firstName: "",
-    lastName: "",
-    role: "",
-    email: "",
-    phone: "",
-    isActive: true,
-    departments: [],
-    office: null,
+function generatePassword(length = 16) {
+  const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const lower = "abcdefghijkmnopqrstuvwxyz";
+  const numbers = "23456789";
+  const symbols = "!@#$%*_-";
+
+  const mandatory = [
+    upper[Math.floor(Math.random() * upper.length)],
+    lower[Math.floor(Math.random() * lower.length)],
+    numbers[Math.floor(Math.random() * numbers.length)],
+    symbols[Math.floor(Math.random() * symbols.length)],
+  ];
+
+  const allChars = `${upper}${lower}${numbers}${symbols}`;
+  const remaining = Math.max(length - mandatory.length, 0);
+
+  for (let index = 0; index < remaining; index += 1) {
+    mandatory.push(allChars[Math.floor(Math.random() * allChars.length)]);
+  }
+
+  return mandatory
+    .sort(() => Math.random() - 0.5)
+    .join("");
+}
+
+export async function createMember(companyId, payload = {}) {
+  if (!companyId) throw new Error("createMember: companyId manquant");
+
+  const email = typeof payload.email === "string" ? payload.email.trim() : "";
+  if (!email) throw new Error("L'email du membre est requis.");
+
+  const generatedPassword = generatePassword();
+  const authUser = await signUpMemberWithEmail(email, generatedPassword);
+
+  const memberId = await addCompanyMember(companyId, {
+    ...payload,
+    uid: authUser.uid,
+    email,
+    role: payload.role || "colab",
+    isActive: typeof payload.isActive === "boolean" ? payload.isActive : true,
   });
+
+  return { id: memberId, generatedPassword };
 }
 
 export function editMember(companyId, id, patch) {

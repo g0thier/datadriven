@@ -15,13 +15,14 @@ const toMemberViewModel = (uid, employeeData = {}, userData = {}) => {
   const firstName = userData.firstName || "";
   const lastName = userData.lastName || "";
   const fullName = `${firstName} ${lastName}`.trim() || userData.name || "";
+  const resolvedRole = employeeData.role || userData.role || "colab";
 
   return {
     id: uid,
     firstName,
     lastName,
     name: fullName,
-    role: employeeData.role || userData.role || "",
+    role: resolvedRole,
     email: userData.email || "",
     phone: userData.phone || "",
     departments: userData.departmentIds || employeeData.departmentIds || [],
@@ -71,8 +72,10 @@ export const addCompanyMember = async (companyId, payload = {}) => {
   if (!companyId) throw new Error("addCompanyMember: companyId manquant");
 
   const now = new Date().toISOString();
-  const userRef = push(ref(database, "users"));
-  const memberId = userRef.key;
+  const memberIdFromPayload =
+    typeof payload.uid === "string" && payload.uid.trim().length > 0 ? payload.uid.trim() : null;
+  const userRef = memberIdFromPayload ? null : push(ref(database, "users"));
+  const memberId = memberIdFromPayload || userRef?.key;
 
   if (!memberId) throw new Error("Impossible de générer memberId");
 
@@ -85,7 +88,7 @@ export const addCompanyMember = async (companyId, payload = {}) => {
   const lastName = resolvedLastName || fallbackName.lastName;
   const departments = Array.isArray(payload.departments) ? payload.departments : [];
   const officeId = payload.office || null;
-  const role = payload.role || "";
+  const role = payload.role || "colab";
   const isActive = typeof payload.isActive === "boolean" ? payload.isActive : true;
 
   const updates = {};

@@ -18,8 +18,6 @@ export default function Team() {
     setEditingOfficeId,
     editingDeptId,
     setEditingDeptId,
-    editingMemberId,
-    setEditingMemberId,
     officeById,
     deptById,
     addOffice,
@@ -79,8 +77,6 @@ export default function Team() {
           {activeTab === "PERSONNELS" && (
             <MembersView
               teamMembers={teamMembers}
-              editingMemberId={editingMemberId}
-              setEditingMemberId={setEditingMemberId}
               addMember={addMember}
               updateMember={updateMember}
               removeMember={removeMember}

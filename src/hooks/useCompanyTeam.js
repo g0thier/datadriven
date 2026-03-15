@@ -24,7 +24,6 @@ export default function useCompanyTeam() {
 
   const [editingOfficeId, setEditingOfficeId] = useState(null);
   const [editingDeptId, setEditingDeptId] = useState(null);
-  const [editingMemberId, setEditingMemberId] = useState(null);
 
   const officeById = useMemo(() => {
     const map = new Map();
@@ -80,33 +79,9 @@ export default function useCompanyTeam() {
   }, [companyId]);
 
   useEffect(() => {
-    const unsubscribe = watchCompanyMembers(companyId, (nextMembers) => {
-      setTeamMembers((prev) => {
-        if (!editingMemberId) return nextMembers;
-
-        const localEditingMember = (prev || []).find((member) => member.id === editingMemberId);
-        if (!localEditingMember) return nextMembers;
-
-        return (nextMembers || []).map((member) => {
-          if (member.id !== editingMemberId) return member;
-
-          return {
-            ...member,
-            firstName: localEditingMember.firstName,
-            lastName: localEditingMember.lastName,
-            name: localEditingMember.name,
-            role: localEditingMember.role,
-            email: localEditingMember.email,
-            phone: localEditingMember.phone,
-            isActive: localEditingMember.isActive,
-            office: localEditingMember.office,
-            departments: localEditingMember.departments,
-          };
-        });
-      });
-    });
+    const unsubscribe = watchCompanyMembers(companyId, setTeamMembers);
     return () => unsubscribe();
-  }, [companyId, editingMemberId]);
+  }, [companyId]);
 
   async function addOffice() {
     if (!companyId) return;
@@ -214,14 +189,15 @@ export default function useCompanyTeam() {
     }
   }
 
-  async function addMember() {
+  async function addMember(payload = {}) {
     if (!companyId) return;
 
     try {
-      const id = await createMember(companyId);
-      setEditingMemberId(id);
+      const created = await createMember(companyId, payload);
+      return created;
     } catch (error) {
       console.error("Impossible d'ajouter le membre :", error);
+      throw error;
     }
   }
 
@@ -256,7 +232,6 @@ export default function useCompanyTeam() {
 
   async function removeMember(id) {
     setTeamMembers((prev) => prev.filter((member) => member.id !== id));
-    if (editingMemberId === id) setEditingMemberId(null);
 
     if (!companyId) return;
 
@@ -277,8 +252,6 @@ export default function useCompanyTeam() {
     setEditingOfficeId,
     editingDeptId,
     setEditingDeptId,
-    editingMemberId,
-    setEditingMemberId,
 
     officeById,
     deptById,
