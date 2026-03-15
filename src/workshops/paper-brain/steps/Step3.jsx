@@ -112,11 +112,11 @@ function Step3({ step, sessionTitle, collaboration }) {
 
             {isOwnNotes ? (
               <p className="text-gray-600 text-sm">
-                Vos notes parmi {participantNotes.length} participant(s) avec des notes.
+                Vos notes parmi {participantNotes.length} participants avec des notes.
               </p>
             ) : (
               <p className="text-gray-600 text-sm">
-                Notes de {currentParticipantGroup?.label} ({currentParticipantIndex + 1}/
+                Notes du participant ({currentParticipantIndex + 1}/
                 {participantNotes.length})
               </p>
             )}

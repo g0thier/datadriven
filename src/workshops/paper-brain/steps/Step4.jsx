@@ -125,7 +125,6 @@ function useDragNotes({
 function Step4({ step, sessionTitle, collaboration }) {
   const notes = useMemo(() => collaboration?.notes ?? [], [collaboration?.notes]);
   const commentsByNote = collaboration?.commentsByNote || {};
-  const getParticipantLabel = collaboration?.getParticipantLabel;
   const syncError = collaboration?.syncError || "";
 
   const challenge =
@@ -241,7 +240,7 @@ function Step4({ step, sessionTitle, collaboration }) {
 
             <input
               type="range"
-              min="10"
+              min="20"
               max="100"
               step="5"
               value={zoom}
@@ -280,10 +279,6 @@ function Step4({ step, sessionTitle, collaboration }) {
 
               {notesWithDisplayPosition.map((note) => {
                 const comments = commentsByNote[note.id] || [];
-                const participantLabel =
-                  typeof getParticipantLabel === "function"
-                    ? getParticipantLabel(note.authorId)
-                    : `Participant ${note.authorId}`;
 
                 return (
                   <div
@@ -305,10 +300,6 @@ function Step4({ step, sessionTitle, collaboration }) {
                       data-y={note.displayPosition.y}
                       title="Glisser pour déplacer"
                     >
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <span className="text-[11px] text-gray-500">{participantLabel}</span>
-                      </div>
-
                       <p className="text-gray-700 text-sm whitespace-pre-wrap">
                         {note.text || <span className="text-gray-400">—</span>}
                       </p>

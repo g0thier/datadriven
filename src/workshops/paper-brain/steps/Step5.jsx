@@ -91,10 +91,6 @@ function Step5({ step, sessionTitle, collaboration }) {
                 />
               ))}
             </div>
-
-            <span className="text-xs text-gray-500 ml-2">
-              {remainingVotes}/{maxStickers} restantes
-            </span>
           </div>
 
           <div className="flex items-center gap-3">
@@ -102,7 +98,7 @@ function Step5({ step, sessionTitle, collaboration }) {
 
             <input
               type="range"
-              min="10"
+              min="20"
               max="100"
               step="5"
               value={zoom}
@@ -139,12 +135,6 @@ function Step5({ step, sessionTitle, collaboration }) {
                 const hasMine = stickerSet.has(currentParticipantId);
                 const otherCount = Math.max(0, stickerSet.size - (hasMine ? 1 : 0));
                 const comments = commentsByNote[note.id] || [];
-
-                const participantLabel =
-                  typeof getParticipantLabel === "function"
-                    ? getParticipantLabel(note.authorId)
-                    : `Participant ${note.authorId}`;
-
                 const isDisabled = !hasMine && remainingVotes <= 0;
 
                 return (
@@ -159,8 +149,8 @@ function Step5({ step, sessionTitle, collaboration }) {
                     }}
                   >
                     <div
-                      className={`relative bg-yellow-100 rounded-lg shadow-md p-4 ${
-                        isDisabled ? "opacity-80" : "cursor-pointer"
+                      className={`relative rounded-lg shadow-md p-4 ${
+                        isDisabled ? "bg-yellow-50" : "bg-yellow-100 cursor-pointer"
                       }`}
                       role="button"
                       tabIndex={0}
@@ -174,7 +164,7 @@ function Step5({ step, sessionTitle, collaboration }) {
                       }}
                     >
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <span className="text-[11px] text-gray-500">{participantLabel}</span>
+                        <span className="text-xs text-gray-500"></span>
 
                         <div className="flex items-center gap-1">
                           <div
