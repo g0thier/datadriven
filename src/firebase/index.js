@@ -5,3 +5,4 @@ export * from "./departments.service";
 export * from "./offices.service";
 export * from "./members.service";
 export * from "./workshop-sessions.service";
+export * from "./paper-brain.service";

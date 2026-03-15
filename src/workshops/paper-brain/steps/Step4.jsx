@@ -1,16 +1,37 @@
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import WorkshopStepLayout from "../../WorkshopStepLayout.jsx";
 
-function clamp(v, min, max) {
-  return Math.max(min, Math.min(max, v));
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
 }
 
-/**
- * Petit hook pour gérer le drag en pointer events (sans libs).
- * - drag uniquement dans le canvas
- * - positions en state via setPositions
- */
-function useDragNotes({ canvasRef, setPositions, getScale }) {
+function buildGridPosition(index = 0) {
+  const col = index % 5;
+  const row = Math.floor(index / 5);
+
+  return {
+    x: 40 + col * 290,
+    y: 40 + row * 220,
+  };
+}
+
+function normalizePosition(position = {}, fallback = buildGridPosition(0)) {
+  const x = Number(position?.x);
+  const y = Number(position?.y);
+
+  return {
+    x: Number.isFinite(x) ? x : fallback.x,
+    y: Number.isFinite(y) ? y : fallback.y,
+  };
+}
+
+function useDragNotes({
+  canvasRef,
+  getScale,
+  onMove,
+  onMoveEnd,
+  onDragStart,
+}) {
   const dragRef = useRef({
     draggingId: null,
     pointerId: null,
@@ -18,70 +39,69 @@ function useDragNotes({ canvasRef, setPositions, getScale }) {
     startPointerY: 0,
     startX: 0,
     startY: 0,
-    canvasRect: null,
     noteRect: null,
+    latestPosition: null,
   });
 
-  const onPointerDown = (e, noteId) => {
-    const canvasEl = canvasRef.current;
-    if (!canvasEl) return;
+  const onPointerDown = (event, noteId) => {
+    const canvasElement = canvasRef.current;
+    if (!canvasElement) return;
 
-    const noteEl = e.currentTarget;
+    const noteElement = event.currentTarget;
+    noteElement.setPointerCapture?.(event.pointerId);
 
-    // Capture pointer (important pour garder le drag même si on sort du post-it)
-    noteEl.setPointerCapture?.(e.pointerId);
+    const noteRect = noteElement.getBoundingClientRect();
 
-    const canvasRect = canvasEl.getBoundingClientRect();
-    const noteRect = noteEl.getBoundingClientRect();
+    const startX = parseFloat(noteElement.dataset.x || "0");
+    const startY = parseFloat(noteElement.dataset.y || "0");
 
     dragRef.current = {
       draggingId: noteId,
-      pointerId: e.pointerId,
-      startPointerX: e.clientX,
-      startPointerY: e.clientY,
-      startX: parseFloat(noteEl.dataset.x || "0"),
-      startY: parseFloat(noteEl.dataset.y || "0"),
-      canvasRect,
+      pointerId: event.pointerId,
+      startPointerX: event.clientX,
+      startPointerY: event.clientY,
+      startX,
+      startY,
       noteRect,
+      latestPosition: { x: startX, y: startY },
     };
+
+    onDragStart?.(noteId);
   };
 
-  const onPointerMove = (e) => {
-    const st = dragRef.current;
-    if (!st.draggingId || st.pointerId !== e.pointerId) return;
+  const onPointerMove = (event) => {
+    const dragState = dragRef.current;
+    if (!dragState.draggingId || dragState.pointerId !== event.pointerId) return;
 
-    const canvasEl = canvasRef.current;
-    if (!canvasEl) return;
+    const canvasElement = canvasRef.current;
+    if (!canvasElement) return;
 
-    const s = getScale?.() ?? 1;
+    const scale = getScale?.() ?? 1;
 
-    // delta pointer -> delta "logique"
-    const dx = (e.clientX - st.startPointerX) / s;
-    const dy = (e.clientY - st.startPointerY) / s;
+    const deltaX = (event.clientX - dragState.startPointerX) / scale;
+    const deltaY = (event.clientY - dragState.startPointerY) / scale;
 
-    let nextX = st.startX + dx;
-    let nextY = st.startY + dy;
+    const canvasWidth = canvasElement.scrollWidth / scale;
+    const canvasHeight = canvasElement.scrollHeight / scale;
 
-    // scrollWidth est désormais "scalé", donc on revient en logique
-    const canvasW = canvasEl.scrollWidth / s;
-    const canvasH = canvasEl.scrollHeight / s;
+    const noteWidth = (dragState.noteRect?.width ?? 260) / scale;
+    const noteHeight = (dragState.noteRect?.height ?? 180) / scale;
 
-    // noteRect est "scalé" visuellement -> revenir en logique
-    const noteW = (st.noteRect?.width ?? 260) / s;
-    const noteH = (st.noteRect?.height ?? 180) / s;
+    const nextPosition = {
+      x: clamp(dragState.startX + deltaX, 0, canvasWidth - noteWidth),
+      y: clamp(dragState.startY + deltaY, 0, canvasHeight - noteHeight),
+    };
 
-    nextX = clamp(nextX, 0, canvasW - noteW);
-    nextY = clamp(nextY, 0, canvasH - noteH);
-
-    setPositions((prev) => ({
-      ...prev,
-      [st.draggingId]: { x: nextX, y: nextY },
-    }));
+    dragState.latestPosition = nextPosition;
+    onMove?.(dragState.draggingId, nextPosition);
   };
 
-  const onPointerUp = (e) => {
-    const st = dragRef.current;
-    if (!st.draggingId || st.pointerId !== e.pointerId) return;
+  const onPointerUp = (event) => {
+    const dragState = dragRef.current;
+    if (!dragState.draggingId || dragState.pointerId !== event.pointerId) return;
+
+    const draggedNoteId = dragState.draggingId;
+    const latestPosition = dragState.latestPosition;
 
     dragRef.current = {
       draggingId: null,
@@ -90,130 +110,109 @@ function useDragNotes({ canvasRef, setPositions, getScale }) {
       startPointerY: 0,
       startX: 0,
       startY: 0,
-      canvasRect: null,
       noteRect: null,
+      latestPosition: null,
     };
+
+    if (latestPosition) {
+      onMoveEnd?.(draggedNoteId, latestPosition);
+    }
   };
 
   return { onPointerDown, onPointerMove, onPointerUp };
 }
 
-function Step4({ step, sessionTitle }) {
+function Step4({ step, sessionTitle, collaboration }) {
+  const notes = useMemo(() => collaboration?.notes ?? [], [collaboration?.notes]);
+  const commentsByNote = collaboration?.commentsByNote || {};
+  const getParticipantLabel = collaboration?.getParticipantLabel;
+  const syncError = collaboration?.syncError || "";
+
   const challenge =
-    "Comment pourrions-nous inventer un produit antistress pour cadres en burn-out ?";
+    String(collaboration?.step1Description || "").trim() ||
+    "Le défi sera visible ici dès qu'il est défini à l'étape 1.";
 
-  // --- Tu peux récupérer EXACTEMENT le même state que Step3 ---
-  const [participants] = useState([
-    {
-      id: 1,
-      notes: [
-        {
-          note: "Une app de micro-pauses guidées de 3 minutes, intégrée au calendrier pro.",
-          commentaires: [
-            {
-              id: crypto.randomUUID(),
-              idUser: 2,
-              text: "Ajouter des rappels pour encourager à prendre ces pauses régulièrement.",
-            },
-            {
-              id: crypto.randomUUID(),
-              idUser: 3,
-              text: "Ajouter des exercices de respiration ou de méditation pour maximiser les bénéfices.",
-            },
-          ],
-        },
-        {
-          note: "Un bracelet connecté qui mesure le stress et suggère des pauses personnalisées.",
-          commentaires: [],
-        },
-        {
-          note: "Un service de coaching court format (15 min/semaine) dédié aux cadres surchargés.",
-          commentaires: [],
-        },
-      ],
-    },
-    {
-      id: 2,
-      notes: [
-        {
-          note: "Une cabine de sieste express au bureau.",
-          commentaires: [
-            {
-              id: crypto.randomUUID(),
-              idUser: 1,
-              text: "Option musique relaxante / bruit blanc pour s'endormir vite ?",
-            },
-          ],
-        },
-        { note: "Un plugin Slack qui propose des breaks intelligents.", commentaires: [] },
-        { note: "Des cartes 'reset mental' à tirer au hasard.", commentaires: [] },
-      ],
-    },
-    {
-      id: 3,
-      notes: [
-        { note: "Un mini-programme de respiration en réalité augmentée.", commentaires: [] },
-        { note: "Un service d'accompagnement nutrition + sommeil.", commentaires: [] },
-        { note: "Un tracker de surcharge cognitive (réunions, mails, etc.).", commentaires: [] },
-      ],
-    },
-  ]);
+  const [zoom, setZoom] = useState(100);
+  const scale = zoom / 100;
 
-  // 1) On aplatit toutes les notes en une seule liste
-  //    Chaque note doit avoir un id stable pour stocker sa position.
-  const allNotes = useMemo(() => {
-    const out = [];
-    for (const p of participants) {
-      for (let i = 0; i < (p.notes?.length ?? 0); i++) {
-        const n = p.notes[i];
-        // id stable: participantId + index (simple et stable tant que l'ordre ne change pas)
-        const id = `p${p.id}-n${i}`;
-        out.push({
-          id,
-          participantId: p.id,
-          note: n.note,
-          commentaires: n.commentaires ?? [],
-        });
-      }
-    }
-    return out;
-  }, [participants]);
-
-  // 2) Positions des post-it (x,y)
-  //    On init les notes automatiquement si pas de position.
-  const [positions, setPositions] = useState({});
+  const [localPositions, setLocalPositions] = useState({});
+  const draggingNoteIdsRef = useRef(new Set());
 
   useEffect(() => {
-    setPositions((prev) => {
-      const next = { ...prev };
-      let k = 0;
-      for (const n of allNotes) {
-        if (!next[n.id]) {
-          // placement initial en "grille" mais sur canvas
-          const col = k % 5;
-          const row = Math.floor(k / 5);
-          next[n.id] = { x: 40 + col * 290, y: 40 + row * 220 };
-          k++;
-        }
-      }
-      return next;
-    });
-  }, [allNotes]);
+    setLocalPositions((previousPositions) => {
+      const nextPositions = { ...previousPositions };
+      const activeNoteIds = new Set();
 
-  // 3) Canvas
+      notes.forEach((note, index) => {
+        activeNoteIds.add(note.id);
+
+        const normalizedPosition = normalizePosition(note.position, buildGridPosition(index));
+
+        if (!draggingNoteIdsRef.current.has(note.id)) {
+          nextPositions[note.id] = normalizedPosition;
+        }
+      });
+
+      Object.keys(nextPositions).forEach((noteId) => {
+        if (!activeNoteIds.has(noteId)) {
+          delete nextPositions[noteId];
+        }
+      });
+
+      return nextPositions;
+    });
+  }, [notes]);
+
+  const setNotePositionAction = collaboration?.actions?.setNotePosition;
+
+  const handleMove = useCallback(
+    (noteId, position) => {
+      setLocalPositions((previousPositions) => ({
+        ...previousPositions,
+        [noteId]: position,
+      }));
+    },
+    []
+  );
+
+  const handleMoveEnd = useCallback(
+    (noteId, position) => {
+      draggingNoteIdsRef.current.delete(noteId);
+
+      setLocalPositions((previousPositions) => ({
+        ...previousPositions,
+        [noteId]: position,
+      }));
+
+      // Une seule écriture Firebase par drag: au relâché uniquement.
+      setNotePositionAction?.(noteId, position);
+    },
+    [setNotePositionAction]
+  );
+
+  const handleDragStart = useCallback((noteId) => {
+    draggingNoteIdsRef.current.add(noteId);
+  }, []);
+
   const canvasRef = useRef(null);
   const { onPointerDown, onPointerMove, onPointerUp } = useDragNotes({
     canvasRef,
-    setPositions,
     getScale: () => scale,
+    onMove: handleMove,
+    onMoveEnd: handleMoveEnd,
+    onDragStart: handleDragStart,
   });
 
-  // Taille "espace" : tu peux augmenter sans problème
-  const CANVAS_W = 2800;
-  const CANVAS_H = 1600;
+  const notesWithDisplayPosition = useMemo(() => {
+    return notes.map((note, index) => ({
+      ...note,
+      displayPosition:
+        localPositions[note.id] || normalizePosition(note.position, buildGridPosition(index)),
+    }));
+  }, [localPositions, notes]);
 
-  const [zoom, setZoom] = useState(100); // en %
-  const scale = zoom / 100;
+  const CANVAS_WIDTH = 2800;
+  const CANVAS_HEIGHT = 1600;
 
   return (
     <WorkshopStepLayout
@@ -221,50 +220,55 @@ function Step4({ step, sessionTitle }) {
       stepLabel={step.label}
       description={step.description}
     >
+      <div className="bg-white rounded-2xl shadow-md p-6 mb-4">
+        <p className="text-gray-600 mb-1 text-sm">{challenge}</p>
+      </div>
 
-        <div className="bg-white rounded-2xl shadow-md p-6 mb-4">
-          <p className="text-gray-600 mb-1 text-sm">{challenge}</p>
+      {!!syncError && (
+        <p className="mb-3 text-sm text-red-600" role="alert">
+          {syncError}
+        </p>
+      )}
+
+      <div className="bg-white rounded-2xl shadow-md p-4">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm text-gray-600">
+            {notes.length} notes • Glissez-déposez pour organiser
+          </p>
+
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-gray-500 w-12 text-right">{zoom}%</span>
+
+            <input
+              type="range"
+              min="10"
+              max="100"
+              step="5"
+              value={zoom}
+              onChange={(event) => setZoom(Number(event.target.value))}
+              className="w-40 accent-slate-600"
+            />
+          </div>
         </div>
 
-        {/* Canvas scrollable */}
-        <div className="bg-white rounded-2xl shadow-md p-4">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm text-gray-600">
-              {allNotes.length} notes • Glissez-déposez pour organiser
-            </p>
-
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-gray-500 w-12 text-right">
-                {zoom}%
-              </span>
-
-              <input
-                type="range"
-                min="10"
-                max="100"
-                step="5"
-                value={zoom}
-                onChange={(e) => setZoom(Number(e.target.value))}
-                className="w-40 accent-slate-600"
-              />
-            </div>
+        {notes.length === 0 ? (
+          <div className="rounded-xl border border-slate-200 p-8 text-center text-gray-500">
+            Les notes apparaîtront ici dès qu'elles seront créées en étape 2.
           </div>
-
+        ) : (
           <div className="w-full overflow-auto rounded-xl border border-slate-200">
-            {/* Zone réelle du canvas */}
             <div
-                ref={canvasRef}
-                className="relative origin-top-left"
-                style={{
-                  width: CANVAS_W * scale,
-                  height: CANVAS_H * scale,
-                }}
+              ref={canvasRef}
+              className="relative origin-top-left"
+              style={{
+                width: CANVAS_WIDTH * scale,
+                height: CANVAS_HEIGHT * scale,
+              }}
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
               onPointerCancel={onPointerUp}
               onPointerLeave={onPointerUp}
             >
-              {/* grille légère */}
               <div
                 className="absolute inset-0 pointer-events-none opacity-30"
                 style={{
@@ -274,15 +278,20 @@ function Step4({ step, sessionTitle }) {
                 }}
               />
 
-              {/* Notes en position absolue */}
-              {allNotes.map((n) => {
-                const pos = positions[n.id] ?? { x: 40, y: 40 };
+              {notesWithDisplayPosition.map((note) => {
+                const comments = commentsByNote[note.id] || [];
+                const participantLabel =
+                  typeof getParticipantLabel === "function"
+                    ? getParticipantLabel(note.authorId)
+                    : `Participant ${note.authorId}`;
+
                 return (
                   <div
-                    key={n.id}
+                    key={note.id}
                     className="absolute select-none touch-none"
                     style={{
-                      transform: `translate(${pos.x * scale}px, ${pos.y * scale}px) scale(${scale})`,
+                      transform: `translate(${note.displayPosition.x * scale}px, ${note.displayPosition.y *
+                        scale}px) scale(${scale})`,
                       transformOrigin: "top left",
                       width: 260,
                     }}
@@ -291,36 +300,28 @@ function Step4({ step, sessionTitle }) {
                       className="relative bg-yellow-100 rounded-lg shadow-md p-4"
                       role="button"
                       tabIndex={0}
-                      onPointerDown={(e) => onPointerDown(e, n.id)}
-                      data-x={pos.x}
-                      data-y={pos.y}
+                      onPointerDown={(event) => onPointerDown(event, note.id)}
+                      data-x={note.displayPosition.x}
+                      data-y={note.displayPosition.y}
                       title="Glisser pour déplacer"
                     >
-                      {/* header */}
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <span className="text-[11px] text-gray-500">
-                          Participant {n.participantId}
-                        </span>
+                        <span className="text-[11px] text-gray-500">{participantLabel}</span>
                       </div>
 
-                      {/* note text */}
                       <p className="text-gray-700 text-sm whitespace-pre-wrap">
-                        {n.note || <span className="text-gray-400">—</span>}
+                        {note.text || <span className="text-gray-400">—</span>}
                       </p>
 
-                      {/* commentaires: lecture seule */}
-                      {!!n.commentaires?.length && (
+                      {!!comments.length && (
                         <div className="mt-3 space-y-2">
-                          {n.commentaires.map((c) => (
+                          {comments.map((comment) => (
                             <div
-                              key={c.id}
+                              key={comment.id}
                               className="bg-violet-50 border border-violet-100 rounded-lg p-2"
                             >
                               <p className="text-violet-700 text-xs whitespace-pre-wrap">
-                                {c.text}
-                              </p>
-                              <p className="mt-1 text-[10px] text-violet-400">
-                                User {c.idUser}
+                                {comment.text}
                               </p>
                             </div>
                           ))}
@@ -332,8 +333,8 @@ function Step4({ step, sessionTitle }) {
               })}
             </div>
           </div>
-
-        </div>
+        )}
+      </div>
     </WorkshopStepLayout>
   );
 }

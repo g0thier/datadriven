@@ -4,6 +4,7 @@ import { getWorkshopSession } from "../firebase";
 import StepTime from "./StepTime.jsx";
 import { useStepTimeline } from "./useStepTimeline.js";
 import { getWorkshop } from "./index.js";
+import { usePaperBrainCollaboration } from "./paper-brain/usePaperBrainCollaboration.js";
 
 export default function WorkshopRunner() {
   const { workshopId: routeWorkshopId, id: sessionId } = useParams();
@@ -53,6 +54,11 @@ export default function WorkshopRunner() {
 
   const resolvedWorkshopId = session?.workshopId || routeWorkshopId;
   const sessionData = getWorkshop(resolvedWorkshopId);
+  const collaboration = usePaperBrainCollaboration({
+    sessionId,
+    session,
+    workshopId: resolvedWorkshopId,
+  });
 
   const startAt = useMemo(() => {
     const sessionDate = session?.workshopDateTime ? new Date(session.workshopDateTime) : null;
@@ -85,7 +91,12 @@ export default function WorkshopRunner() {
       {isFinished ? (
         <div className="pr-88 p-10">Atelier terminé</div>
       ) : StepComponent && currentStep ? (
-        <StepComponent sessionTitle={sessionData.title} step={currentStep} />
+        <StepComponent
+          sessionTitle={sessionData.title}
+          step={currentStep}
+          session={session}
+          collaboration={collaboration}
+        />
       ) : (
         <div className="pr-88 p-10">Démarrage…</div>
       )}

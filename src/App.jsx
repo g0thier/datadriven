@@ -42,8 +42,9 @@ function App() {
         <Route path="/innovation/invitation" element={<ProtectedRoute><WorkshopInvitation /></ProtectedRoute>} />
         <Route path="/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
         <Route path="/soon" element={<ProtectedRoute><Soon /></ProtectedRoute>} />
+        <Route path="/innovation/:workshopId/:id" element={<ProtectedRoute><WorkshopRunner /></ProtectedRoute>} />
+
         {/* Pages publiques */}
-        <Route path="/innovation/:workshopId/:id" element={<WorkshopRunner />} />
         <Route path="*" element={<NotFound />} />
 
         {/* Email template preview route */}

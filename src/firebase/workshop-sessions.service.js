@@ -37,6 +37,7 @@ export const createWorkshopSession = async (companyId, payload = {}) => {
     companyId,
     workshopId: payload.workshopId || "",
     workshopTitle: payload.workshopTitle || "",
+    workshopSchedule: normalizeWorkshopSchedule(payload.workshopSchedule, payload),
     workshopDateTime: payload.workshopDateTime || "",
     workshopDuration: payload.workshopDuration || "",
     inviter: {

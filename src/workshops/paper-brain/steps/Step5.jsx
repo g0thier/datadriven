@@ -1,159 +1,63 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import WorkshopStepLayout from "../../WorkshopStepLayout.jsx";
 
-function Step5({ step, sessionTitle }) {
+function buildGridPosition(index = 0) {
+  const col = index % 5;
+  const row = Math.floor(index / 5);
+
+  return {
+    x: 40 + col * 290,
+    y: 40 + row * 220,
+  };
+}
+
+function normalizePosition(position = {}, fallback = buildGridPosition(0)) {
+  const x = Number(position?.x);
+  const y = Number(position?.y);
+
+  return {
+    x: Number.isFinite(x) ? x : fallback.x,
+    y: Number.isFinite(y) ? y : fallback.y,
+  };
+}
+
+function Step5({ step, sessionTitle, collaboration }) {
+  const notes = useMemo(() => collaboration?.notes ?? [], [collaboration?.notes]);
+  const commentsByNote = collaboration?.commentsByNote || {};
+  const votesByNote = collaboration?.votesByNote || {};
+  const getParticipantLabel = collaboration?.getParticipantLabel;
+
+  const currentParticipantId = collaboration?.participant?.id || "";
+  const remainingVotes = Number.isFinite(collaboration?.remainingVotes)
+    ? collaboration.remainingVotes
+    : 0;
+  const maxStickers = Number.isFinite(collaboration?.maxStickers)
+    ? collaboration.maxStickers
+    : 3;
+
+  const syncError = collaboration?.syncError || "";
+
   const challenge =
-    "Comment pourrions-nous inventer un produit antistress pour cadres en burn-out ?";
+    String(collaboration?.step1Description || "").trim() ||
+    "Le défi sera visible ici dès qu'il est défini à l'étape 1.";
 
-  const [participants] = useState([
-    {
-      id: 1,
-      notes: [
-        {
-          note: "Une app de micro-pauses guidées de 3 minutes, intégrée au calendrier pro.",
-          commentaires: [
-            {
-              id: crypto.randomUUID(),
-              idUser: 2,
-              text: "Ajouter des rappels pour encourager à prendre ces pauses régulièrement.",
-            },
-            {
-              id: crypto.randomUUID(),
-              idUser: 3,
-              text: "Ajouter des exercices de respiration ou de méditation pour maximiser les bénéfices.",
-            },
-          ],
-        },
-        {
-          note: "Un bracelet connecté qui mesure le stress et suggère des pauses personnalisées.",
-          commentaires: [],
-        },
-        {
-          note: "Un service de coaching court format (15 min/semaine) dédié aux cadres surchargés.",
-          commentaires: [],
-        },
-      ],
-    },
-    {
-      id: 2,
-      notes: [
-        {
-          note: "Une cabine de sieste express au bureau.",
-          commentaires: [
-            {
-              id: crypto.randomUUID(),
-              idUser: 1,
-              text: "Option musique relaxante / bruit blanc pour s'endormir vite ?",
-            },
-          ],
-        },
-        { note: "Un plugin Slack qui propose des breaks intelligents.", commentaires: [] },
-        { note: "Des cartes 'reset mental' à tirer au hasard.", commentaires: [] },
-      ],
-    },
-    {
-      id: 3,
-      notes: [
-        { note: "Un mini-programme de respiration en réalité augmentée.", commentaires: [] },
-        { note: "Un service d'accompagnement nutrition + sommeil.", commentaires: [] },
-        { note: "Un tracker de surcharge cognitive (réunions, mails, etc.).", commentaires: [] },
-      ],
-    },
-  ]);
-
-  const allNotes = useMemo(() => {
-    const out = [];
-    for (const p of participants) {
-      for (let i = 0; i < (p.notes?.length ?? 0); i++) {
-        const n = p.notes[i];
-        // id stable: participantId + index (simple et stable tant que l'ordre ne change pas)
-        const id = `p${p.id}-n${i}`;
-        out.push({
-          id,
-          participantId: p.id,
-          note: n.note,
-          commentaires: n.commentaires ?? [],
-        });
-      }
-    }
-    return out;
-  }, [participants]);
-
-  const [positions, setPositions] = useState({});
-
-  useEffect(() => {
-    setPositions((prev) => {
-      const next = { ...prev };
-      let k = 0;
-      for (const n of allNotes) {
-        if (!next[n.id]) {
-          // placement initial en "grille" mais sur canvas
-          const col = k % 5;
-          const row = Math.floor(k / 5);
-          next[n.id] = { x: 40 + col * 290, y: 40 + row * 220 };
-          k++;
-        }
-      }
-      return next;
-    });
-
-    // seed local: user 2 et 3 ont voté un peu
-    setStickersByNote((prev) => {
-      if (Object.keys(prev).length) return prev; // évite de reseed
-      const next = {};
-      // Exemple: 2 gommettes sur la 1ère note, 1 sur la 2ème, etc.
-      if (allNotes[0]) next[allNotes[0].id] = new Set([2, 3]);
-      if (allNotes[1]) next[allNotes[1].id] = new Set([2]);
-      if (allNotes[3]) next[allNotes[3].id] = new Set([3]);
-      return next;
-    });
-
-  }, [allNotes]);
-
-  const CANVAS_W = 2800;
-  const CANVAS_H = 1600;
-
-  const [zoom, setZoom] = useState(100); // en %
+  const [zoom, setZoom] = useState(100);
   const scale = zoom / 100;
 
-  const currentUserId = 1; // <- ton user courant (local)
+  const notesWithPosition = useMemo(() => {
+    return notes.map((note, index) => ({
+      ...note,
+      displayPosition: normalizePosition(note.position, buildGridPosition(index)),
+    }));
+  }, [notes]);
 
-  const MAX_STICKERS = 3;
-
-  // Map noteId -> Set(userId)
-  const [stickersByNote, setStickersByNote] = useState(() => ({}));
-
-  // Combien de gommettes le user courant a posées (toutes notes confondues)
-  const myStickerCount = useMemo(() => {
-    let count = 0;
-    for (const noteId of Object.keys(stickersByNote)) {
-      if (stickersByNote[noteId]?.has(currentUserId)) count++;
-    }
-    return count;
-  }, [stickersByNote, currentUserId]);
-
-  const remainingStickers = MAX_STICKERS - myStickerCount;
-
-  const toggleSticker = (noteId) => {
-    setStickersByNote((prev) => {
-      const next = { ...prev };
-      const set = new Set(next[noteId] ?? []);
-
-      // Retire si déjà présent
-      if (set.has(currentUserId)) {
-        set.delete(currentUserId);
-        next[noteId] = set;
-        return next;
-      }
-
-      // Sinon ajoute, si quota OK
-      if (myStickerCount >= MAX_STICKERS) return prev;
-
-      set.add(currentUserId);
-      next[noteId] = set;
-      return next;
-    });
+  const toggleSticker = (noteId, hasMine) => {
+    if (!hasMine && remainingVotes <= 0) return;
+    collaboration?.actions?.toggleVote?.(noteId);
   };
+
+  const CANVAS_WIDTH = 2800;
+  const CANVAS_HEIGHT = 1600;
 
   return (
     <WorkshopStepLayout
@@ -161,63 +65,66 @@ function Step5({ step, sessionTitle }) {
       stepLabel={step.label}
       description={step.description}
     >
+      <div className="bg-white rounded-2xl shadow-md p-6 mb-4">
+        <p className="text-gray-600 mb-1 text-sm">{challenge}</p>
+      </div>
 
-        <div className="bg-white rounded-2xl shadow-md p-6 mb-4">
-          <p className="text-gray-600 mb-1 text-sm">{challenge}</p>
-        </div>
+      {!!syncError && (
+        <p className="mb-3 text-sm text-red-600" role="alert">
+          {syncError}
+        </p>
+      )}
 
-        {/* Canvas scrollable */}
-        <div className="bg-white rounded-2xl shadow-md p-4">
-          <div className="flex items-center justify-between mb-3">
-            {/* Gommettes à distribuer */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500">Gommettes à distribuer :</span>
+      <div className="bg-white rounded-2xl shadow-md p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500">Gommettes à distribuer :</span>
 
-              <div className="flex items-center gap-1">
-                {Array.from({ length: MAX_STICKERS }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={`w-6 h-6 rounded-full ${
-                      i < remainingStickers ? "bg-green-400" : "bg-green-200"
-                    }`}
-                    title={i < remainingStickers ? "Disponible" : "Déjà utilisée"}
-                  />
-                ))}
-              </div>
-
-              <span className="text-xs text-gray-500 ml-2">
-                {remainingStickers}/{MAX_STICKERS} restantes
-              </span>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: maxStickers }).map((_, index) => (
+                <div
+                  key={index}
+                  className={`w-6 h-6 rounded-full ${
+                    index < remainingVotes ? "bg-green-400" : "bg-green-200"
+                  }`}
+                  title={index < remainingVotes ? "Disponible" : "Déjà utilisée"}
+                />
+              ))}
             </div>
-            
-            {/* Zoom control */}
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-gray-500 w-12 text-right">
-                {zoom}%
-              </span>
 
-              <input
-                type="range"
-                min="10"
-                max="100"
-                step="5"
-                value={zoom}
-                onChange={(e) => setZoom(Number(e.target.value))}
-                className="w-40 accent-slate-600"
-              />
-            </div>
+            <span className="text-xs text-gray-500 ml-2">
+              {remainingVotes}/{maxStickers} restantes
+            </span>
           </div>
 
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-gray-500 w-12 text-right">{zoom}%</span>
+
+            <input
+              type="range"
+              min="10"
+              max="100"
+              step="5"
+              value={zoom}
+              onChange={(event) => setZoom(Number(event.target.value))}
+              className="w-40 accent-slate-600"
+            />
+          </div>
+        </div>
+
+        {notes.length === 0 ? (
+          <div className="rounded-xl border border-slate-200 p-8 text-center text-gray-500">
+            Les notes apparaîtront ici dès qu'elles seront créées en étape 2.
+          </div>
+        ) : (
           <div className="w-full overflow-auto rounded-xl border border-slate-200">
-            {/* Zone réelle du canvas */}
             <div
-                className="relative origin-top-left"
-                style={{
-                  width: CANVAS_W * scale,
-                  height: CANVAS_H * scale,
-                }}
+              className="relative origin-top-left"
+              style={{
+                width: CANVAS_WIDTH * scale,
+                height: CANVAS_HEIGHT * scale,
+              }}
             >
-              {/* grille légère */}
               <div
                 className="absolute inset-0 pointer-events-none opacity-30"
                 style={{
@@ -227,84 +134,81 @@ function Step5({ step, sessionTitle }) {
                 }}
               />
 
-              {/* Notes en position absolue */}
-              {allNotes.map((n) => {
-                const pos = positions[n.id] ?? { x: 40, y: 40 };
-
-                const stickerSet = stickersByNote[n.id] ?? new Set();
-                const hasMine = stickerSet.has(currentUserId);
+              {notesWithPosition.map((note) => {
+                const stickerSet = votesByNote[note.id] || new Set();
+                const hasMine = stickerSet.has(currentParticipantId);
                 const otherCount = Math.max(0, stickerSet.size - (hasMine ? 1 : 0));
+                const comments = commentsByNote[note.id] || [];
+
+                const participantLabel =
+                  typeof getParticipantLabel === "function"
+                    ? getParticipantLabel(note.authorId)
+                    : `Participant ${note.authorId}`;
+
+                const isDisabled = !hasMine && remainingVotes <= 0;
 
                 return (
                   <div
-                    key={n.id}
+                    key={note.id}
                     className="absolute select-none touch-none"
                     style={{
-                      transform: `translate(${pos.x * scale}px, ${pos.y * scale}px) scale(${scale})`,
+                      transform: `translate(${note.displayPosition.x * scale}px, ${note.displayPosition.y *
+                        scale}px) scale(${scale})`,
                       transformOrigin: "top left",
                       width: 260,
                     }}
                   >
                     <div
-                      className="relative bg-yellow-100 rounded-lg shadow-md p-4"
+                      className={`relative bg-yellow-100 rounded-lg shadow-md p-4 ${
+                        isDisabled ? "opacity-80" : "cursor-pointer"
+                      }`}
                       role="button"
                       tabIndex={0}
-                      data-x={pos.x}
-                      data-y={pos.y}
                       title="Cliquer pour ajouter/retirer une gommette"
-                      onClick={() => toggleSticker(n.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          toggleSticker(n.id);
+                      onClick={() => toggleSticker(note.id, hasMine)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          toggleSticker(note.id, hasMine);
                         }
                       }}
                     >
-                      {/* header */}
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <span className="text-[11px] text-gray-500">
-                          Participant {n.participantId}
-                        </span>
-                        {/* gommettes distribuées */}
+                        <span className="text-[11px] text-gray-500">{participantLabel}</span>
+
                         <div className="flex items-center gap-1">
-                          {/* gommette du user courant (vert) */}
                           <div
                             className={`w-3 h-3 rounded-full ${
-                              hasMine ? "bg-green-500" : "bg-transparent border border-green-300"
+                              hasMine
+                                ? "bg-green-500"
+                                : "bg-transparent border border-green-300"
                             }`}
                             title={hasMine ? "Ta gommette" : "Pas de gommette"}
                           />
 
-                          {/* gommettes des autres (bleu) */}
-                          {Array.from({ length: otherCount }).map((_, i) => (
+                          {Array.from({ length: otherCount }).map((_, index) => (
                             <div
-                              key={i}
+                              key={index}
                               className="w-3 h-3 rounded-full bg-blue-500"
-                              title="Gommette d'un autre utilisateur"
+                              title="Gommette d'un autre participant"
                             />
                           ))}
                         </div>
-
                       </div>
 
-                      {/* note text */}
                       <p className="text-gray-700 text-sm whitespace-pre-wrap">
-                        {n.note || <span className="text-gray-400">—</span>}
+                        {note.text || <span className="text-gray-400">—</span>}
                       </p>
 
-                      {/* commentaires: lecture seule */}
-                      {!!n.commentaires?.length && (
+                      {!!comments.length && (
                         <div className="mt-3 space-y-2">
-                          {n.commentaires.map((c) => (
+                          {comments.map((comment) => (
                             <div
-                              key={c.id}
+                              key={comment.id}
                               className="bg-violet-50 border border-violet-100 rounded-lg p-2"
                             >
                               <p className="text-violet-700 text-xs whitespace-pre-wrap">
-                                {c.text}
-                              </p>
-                              <p className="mt-1 text-[10px] text-violet-400">
-                                User {c.idUser}
+                                {comment.text}
                               </p>
                             </div>
                           ))}
@@ -316,8 +220,8 @@ function Step5({ step, sessionTitle }) {
               })}
             </div>
           </div>
-
-        </div>
+        )}
+      </div>
     </WorkshopStepLayout>
   );
 }
