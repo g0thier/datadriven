@@ -30,11 +30,11 @@ const description3 = [
 ];
 
 const description4 = [
-    "Le groupe :",
-    "- Affiche les idées au mur",
-    "- Regroupe par thèmes",
-    "- Clarifie si besoin",
-    "Pas de critique à ce stade, juste clarification."
+    "Le groupe met les idées en commun :",
+    "- Les post-it sont affichés au mur",
+    "- Les idées similaires sont regroupées",
+    "- Les participants peuvent clarifier certaines propositions",
+    "👉 L’objectif est d’organiser et comprendre les idées, sans les juger."
 ];
 
 const description5 = [
