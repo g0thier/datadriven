@@ -5,6 +5,7 @@ import StepTime from "./StepTime.jsx";
 import { useStepTimeline } from "./useStepTimeline.js";
 import { getWorkshop } from "./index.js";
 import { usePaperBrainCollaboration } from "./paper-brain/usePaperBrainCollaboration.js";
+import WorkshopWaitingPage from "./WorkshopWaitingPage.jsx";
 
 export default function WorkshopRunner() {
   const { workshopId: routeWorkshopId, id: sessionId } = useParams();
@@ -68,6 +69,19 @@ export default function WorkshopRunner() {
     return new Date();
   }, [session?.workshopDateTime]);
 
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNowMs(Date.now());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const isWaiting = startAt.getTime() > nowMs;
+  const remainingMs = Math.max(0, startAt.getTime() - nowMs);
+
   const { currentStep, isFinished } = useStepTimeline(sessionData ?? { steps: [] }, startAt);
 
   const StepComponent = currentStep?.component ?? null;
@@ -82,6 +96,16 @@ export default function WorkshopRunner() {
 
   if (!sessionData) {
     return <div className="p-10">Atelier introuvable : {resolvedWorkshopId}</div>;
+  }
+
+  if (isWaiting) {
+    return (
+      <WorkshopWaitingPage
+        sessionTitle={sessionData.title}
+        startAt={startAt}
+        remainingMs={remainingMs}
+      />
+    );
   }
 
   return (
