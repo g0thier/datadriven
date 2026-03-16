@@ -9,6 +9,7 @@ export default function MemberModal({
   isOpen,
   mode,
   form,
+  hideDeleteButton = false,
   onChangeField,
   officeLocations,
   departments,
@@ -131,14 +132,22 @@ export default function MemberModal({
           </div>
         )}
 
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-          <ActionButton
-            danger
-            onClick={onDelete}
-            disabled={isSubmitting}
-          >
-            Supprimer
-          </ActionButton>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: hideDeleteButton ? "flex-end" : "space-between",
+            gap: 10,
+          }}
+        >
+          {!hideDeleteButton ? (
+            <ActionButton
+              danger
+              onClick={onDelete}
+              disabled={isSubmitting}
+            >
+              Supprimer
+            </ActionButton>
+          ) : null}
 
           <div style={{ display: "flex", gap: 10 }}>
             <ActionButton onClick={onCancel} disabled={isSubmitting}>

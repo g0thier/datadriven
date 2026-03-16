@@ -1,11 +1,7 @@
-import {
-  ActionButton,
-  Th,
-  Td,
-  TableShell,
-} from "./UITeam.jsx";
+import { ActionButton, Th, Td, TableShell } from "./UITeam.jsx";
 import { useState } from "react";
 import MemberModal from "./MemberModal.jsx";
+import MaterialIcon from "../MaterialIcon.jsx";
 
 const EMPTY_MEMBER_FORM = {
   firstName: "",
@@ -59,6 +55,15 @@ export default function MembersView({
   const [form, setForm] = useState(EMPTY_MEMBER_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+
+  const selectedMember = (teamMembers || []).find(
+    (member) => String(member.id) === String(selectedMemberId)
+  );
+  const shouldHideDeleteButton =
+    modalMode === "edit" &&
+    String(selectedMember?.role || "")
+      .trim()
+      .toLowerCase() === "owner";
 
   function openCreateModal() {
     setModalMode("create");
@@ -151,6 +156,7 @@ export default function MembersView({
         <thead>
           <tr>
             <Th>Modifier</Th>
+            <Th>Role</Th>
             <Th>Prénom</Th>
             <Th>Nom</Th>
             <Th>Email</Th>
@@ -168,11 +174,35 @@ export default function MembersView({
             const deptLabels = (m.departments || [])
               .map((id) => deptById.get(id)?.name)
               .filter(Boolean);
+            const normalizedRole = String(m.role || "").trim().toLowerCase();
+            const isOwner = normalizedRole === "owner";
+            const isLeader = normalizedRole === "leader";
 
             return (
               <tr key={m.id} className={index % 2 === 0 ? "bg-white" : "bg-slate-50"}>
                 <Td>
                   <ActionButton onClick={() => openEditModal(m)}>Modifier</ActionButton>
+                </Td>
+                <Td>
+                  <div style={{ display: "flex", justifyContent: "center" }}>
+                    {isOwner ? (
+                      <MaterialIcon
+                        name="shield_person"
+                        size={20}
+                        weight={500}
+                        fill={1}
+                        className="text-violet-700"
+                      />
+                    ) : isLeader ? (
+                      <MaterialIcon
+                        name="person_play"
+                        size={20}
+                        weight={500}
+                        fill={1}
+                        className="text-violet-500"
+                      />
+                    ) : null}
+                  </div>
                 </Td>
 
                 <Td style={{ minWidth: 180 }}>
@@ -217,7 +247,7 @@ export default function MembersView({
 
           {(!teamMembers || teamMembers.length === 0) && (
             <tr>
-              <Td colSpan={9} className="text-gray-500">
+              <Td colSpan={8} className="text-gray-500">
                 Aucun personnel
               </Td>
             </tr>
@@ -229,6 +259,7 @@ export default function MembersView({
         isOpen={isModalOpen}
         mode={modalMode}
         form={form}
+        hideDeleteButton={shouldHideDeleteButton}
         onChangeField={updateField}
         officeLocations={officeLocations}
         departments={departments}
