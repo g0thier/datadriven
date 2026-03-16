@@ -86,11 +86,11 @@ export default function PaperBrainSummary({ sessionTitle, collaboration }) {
               Aucune note n'a reçu de gommette pendant la priorisation.
             </p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 items-start">
               {rankedNotes.map((note, index) => (
                 <article
                   key={note.id}
-                  className="relative bg-yellow-100 rounded-lg shadow-md p-4 min-h-37.5"
+                  className="relative bg-yellow-100 rounded-lg shadow-md p-4 min-h-37.5 flex flex-col"
                 >
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <span className="text-sm font-semibold text-gray-600">#{index + 1}</span>
