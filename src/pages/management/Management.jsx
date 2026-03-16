@@ -225,8 +225,8 @@ export default function Management() {
     <>
       <Navbar />
 
-      <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-200 px-6 py-10">
-        <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-200 px-6 py-12">
+        <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
           <Card className="p-5 h-fit">
             <div className="mb-4">
               <p className="text-sm font-medium text-slate-500">Management</p>

@@ -35,57 +35,59 @@ export default function Team() {
     <>
       <Navbar />
       <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-200 py-12 px-6">
-        <h1 className="text-4xl font-bold text-gray-800 mb-8">Équipe</h1>
+        <div className="mx-auto max-w-5xl">
+          <h1 className="text-4xl font-bold text-gray-800 mb-8">Équipe</h1>
 
-        <div style={{ display: "grid", gap: 16 }}>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <TabButton active={activeTab === "BUREAUX"} onClick={() => setActiveTab("BUREAUX")}>
-              Bureaux
-            </TabButton>
+          <div style={{ display: "grid", gap: 16 }}>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <TabButton active={activeTab === "BUREAUX"} onClick={() => setActiveTab("BUREAUX")}>
+                Bureaux
+              </TabButton>
 
-            <TabButton active={activeTab === "EQUIPES"} onClick={() => setActiveTab("EQUIPES")}>
-              Équipes
-            </TabButton>
+              <TabButton active={activeTab === "EQUIPES"} onClick={() => setActiveTab("EQUIPES")}>
+                Équipes
+              </TabButton>
 
-            <TabButton active={activeTab === "PERSONNELS"} onClick={() => setActiveTab("PERSONNELS")}>
-              Personnels
-            </TabButton>
+              <TabButton active={activeTab === "PERSONNELS"} onClick={() => setActiveTab("PERSONNELS")}>
+                Personnels
+              </TabButton>
+            </div>
+
+            {activeTab === "BUREAUX" && (
+              <OfficesView
+                officeLocations={officeLocations}
+                editingOfficeId={editingOfficeId}
+                setEditingOfficeId={setEditingOfficeId}
+                addOffice={addOffice}
+                updateOffice={updateOffice}
+                removeOffice={removeOffice}
+              />
+            )}
+
+            {activeTab === "EQUIPES" && (
+              <DepartmentsView
+                departments={departments}
+                editingDeptId={editingDeptId}
+                setEditingDeptId={setEditingDeptId}
+                addDepartment={addDepartment}
+                updateDepartment={updateDepartment}
+                removeDepartment={removeDepartment}
+              />
+            )}
+
+            {activeTab === "PERSONNELS" && (
+              <MembersView
+                teamMembers={teamMembers}
+                addMember={addMember}
+                updateMember={updateMember}
+                removeMember={removeMember}
+                officeLocations={officeLocations}
+                departments={departments}
+                officeById={officeById}
+                deptById={deptById}
+              />
+            )}
           </div>
-
-          {activeTab === "BUREAUX" && (
-            <OfficesView
-              officeLocations={officeLocations}
-              editingOfficeId={editingOfficeId}
-              setEditingOfficeId={setEditingOfficeId}
-              addOffice={addOffice}
-              updateOffice={updateOffice}
-              removeOffice={removeOffice}
-            />
-          )}
-
-          {activeTab === "EQUIPES" && (
-            <DepartmentsView
-              departments={departments}
-              editingDeptId={editingDeptId}
-              setEditingDeptId={setEditingDeptId}
-              addDepartment={addDepartment}
-              updateDepartment={updateDepartment}
-              removeDepartment={removeDepartment}
-            />
-          )}
-
-          {activeTab === "PERSONNELS" && (
-            <MembersView
-              teamMembers={teamMembers}
-              addMember={addMember}
-              updateMember={updateMember}
-              removeMember={removeMember}
-              officeLocations={officeLocations}
-              departments={departments}
-              officeById={officeById}
-              deptById={deptById}
-            />
-          )}
         </div>
       </div>
     </>
