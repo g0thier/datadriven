@@ -6,9 +6,11 @@ const initialNoteCreationByParticipant = new Set();
 function Step2({ step, sessionTitle, collaboration, session }) {
   const myNotes = collaboration?.myNotes || [];
   const isLoading = Boolean(collaboration?.isLoading);
+  const syncError = collaboration?.syncError || "";
   const participantId = collaboration?.participant?.id || "";
   const sessionId = session?.sessionId || session?.id || "";
   const initialNoteKey = `${sessionId}:${participantId}`;
+  const step1Description = String(collaboration?.step1Description || "").trim() || "...";
 
   const addNote = collaboration?.actions?.addNote;
   const updateNoteText = collaboration?.actions?.updateNoteText;
@@ -61,6 +63,16 @@ function Step2({ step, sessionTitle, collaboration, session }) {
       stepLabel={step.label}
       description={step.description}
     >
+      <div className="bg-white rounded-2xl shadow-md p-6 mb-4">
+        <p className="text-gray-600 mb-1 text-sm">{step1Description}</p>
+      </div>
+
+      {!!syncError && (
+        <p className="mb-3 text-sm text-red-600" role="alert">
+          {syncError}
+        </p>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {myNotes.map((note, index) => {
           const isLast = index === myNotes.length - 1;
