@@ -3,10 +3,6 @@ import { useMemo } from "react";
 const EMPTY_OBJECT = Object.freeze({});
 const EMPTY_ARRAY = Object.freeze([]);
 
-function formatCount(value, singular, plural) {
-  return `${value} ${value > 1 ? plural : singular}`;
-}
-
 export default function PaperBrainSummary({ sessionTitle, collaboration }) {
   const notes = Array.isArray(collaboration?.notes) ? collaboration.notes : EMPTY_ARRAY;
   const commentsByNote =
@@ -18,6 +14,7 @@ export default function PaperBrainSummary({ sessionTitle, collaboration }) {
       ? collaboration.votesByNote
       : EMPTY_OBJECT;
   const syncError = collaboration?.syncError || "";
+  const currentParticipantId = collaboration?.participant?.id || "";
 
   const challenge =
     String(collaboration?.step1Description || "").trim() ||
@@ -26,13 +23,20 @@ export default function PaperBrainSummary({ sessionTitle, collaboration }) {
   const rankedNotes = useMemo(() => {
     return notes
       .map((note) => {
-        const stickers = votesByNote[note.id];
-        const stickerCount = stickers instanceof Set ? stickers.size : 0;
+        const stickerSet = votesByNote[note.id];
+        const stickerCount = stickerSet instanceof Set ? stickerSet.size : 0;
+        const hasMine =
+          stickerSet instanceof Set && currentParticipantId
+            ? stickerSet.has(currentParticipantId)
+            : false;
+        const otherCount = Math.max(0, stickerCount - (hasMine ? 1 : 0));
         const comments = commentsByNote[note.id] || [];
 
         return {
           ...note,
           stickerCount,
+          hasMine,
+          otherCount,
           comments,
           commentCount: comments.length,
         };
@@ -53,7 +57,7 @@ export default function PaperBrainSummary({ sessionTitle, collaboration }) {
 
         return String(a.id || "").localeCompare(String(b.id || ""));
       });
-  }, [commentsByNote, notes, votesByNote]);
+  }, [commentsByNote, currentParticipantId, notes, votesByNote]);
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-200 py-12 px-6">
@@ -92,12 +96,22 @@ export default function PaperBrainSummary({ sessionTitle, collaboration }) {
                     <span className="text-sm font-semibold text-gray-600">#{index + 1}</span>
 
                     <div className="flex items-center gap-2 text-xs">
-                      <span className="px-2 py-1 rounded-full bg-green-100 text-green-700">
-                        {formatCount(note.stickerCount, "gommette", "gommettes")}
-                      </span>
-                      <span className="px-2 py-1 rounded-full bg-violet-100 text-violet-700">
-                        {formatCount(note.commentCount, "commentaire", "commentaires")}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <div
+                          className={`w-3 h-3 rounded-full ${
+                            note.hasMine ? "bg-green-500" : "bg-transparent border border-green-300"
+                          }`}
+                          title={note.hasMine ? "Ta gommette" : "Pas de gommette"}
+                        />
+
+                        {Array.from({ length: note.otherCount }).map((_, stickerIndex) => (
+                          <div
+                            key={stickerIndex}
+                            className="w-3 h-3 rounded-full bg-blue-500"
+                            title="Gommette d'un autre participant"
+                          />
+                        ))}
+                      </div>
                     </div>
                   </div>
 
