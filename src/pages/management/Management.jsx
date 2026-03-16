@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Navbar from "../../components/Navbar.jsx";
 import SectionNavButtons from "../../components/SectionNavButtons.jsx";
-import ManagersAccessCard from "../../components/management/ManagersAccessCard.jsx";
+import ManagersAccess from "../../components/management/ManagersAccess.jsx";
 import { managementLinks } from "../../constants/navigationLinks.js";
 import { getUserCompanyId, onAuthStateChangedListener, subscribeCompanyManagers } from "../../firebase";
 import { buildManagerList } from "../../utils/managers.utils.js";
@@ -218,7 +218,7 @@ export default function Management() {
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
-            <ManagersAccessCard
+            <ManagersAccess
               managers={managers}
               selectedManagerId={effectiveSelectedManagerId}
               permissionsByManager={normalizedPermissionsByManager}

@@ -3,7 +3,7 @@ const EMPTY_MANAGER_PERMISSIONS = {
   teamPage: false,
 };
 
-export default function ManagersAccessCard({
+export default function ManagersAccess({
   managers,
   selectedManagerId,
   permissionsByManager,
