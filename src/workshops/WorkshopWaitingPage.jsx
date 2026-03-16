@@ -51,7 +51,7 @@ export default function WorkshopWaitingPage({
           <strong>{startLabel}</strong>.
         </p>
 
-        <div className="mt-8 bg-white p-6 rounded-2xl shadow-md min-w-[260px]">
+        <div className="mt-8 bg-white p-6 rounded-2xl shadow-md min-w-65">
           <div className="flex items-center justify-center gap-2 text-gray-500 mb-2">
             <MaterialIcon name="timer" size={22} />
             <span className="font-medium">Début dans</span>
