@@ -7,6 +7,7 @@ import { getWorkshop } from "./index.js";
 import { usePaperBrainCollaboration } from "./paper-brain/usePaperBrainCollaboration.js";
 import WorkshopWaitingPage from "./WorkshopWaitingPage.jsx";
 import RouteFallback from "../components/fallback/RouteFallback.jsx";
+import WorkshopSummaryPage from "./WorkshopSummaryPage.jsx";
 
 export default function WorkshopRunner() {
   const { workshopId: routeWorkshopId, id: sessionId } = useParams();
@@ -119,7 +120,11 @@ export default function WorkshopRunner() {
       <StepTime sessionData={sessionData} startAt={startAt} />
 
       {isFinished ? (
-        <div className="pr-88 p-10">Atelier terminé</div>
+        <WorkshopSummaryPage
+          workshopId={resolvedWorkshopId}
+          sessionTitle={sessionData.title}
+          collaboration={collaboration}
+        />
       ) : StepComponent && currentStep ? (
         <StepComponent
           sessionTitle={sessionData.title}
