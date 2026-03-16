@@ -4,7 +4,7 @@ export const navbarLinks = [
   { label: "Innovation & Créativité", to: "/innovation", icon: "emoji_objects", end: false },
   { label: "Gestion des Ressources Humaines", to: "/team", icon: "conversation", end: true },
   { label: "À venir", to: "/soon", icon: "select", end: true },
-  { label: "Gestion des accès", to: "/management", icon: "shield_toggle", end: true },
+  { label: "Gestion des accès", to: "/management", icon: "shield_toggle", end: false },
 ];
 
 export const innovationLinks = [
@@ -16,4 +16,9 @@ export const innovationLinks = [
     excludeActiveStartsWith: ["/innovation/scheduled"],
   },
   { label: "Mes événements", to: "/innovation/scheduled", icon: "event", end: true },
+];
+
+export const managementLinks = [
+  { label: "Management", to: "/management", icon: "shield_person", end: true },
+  { label: "Abonnement", to: "/management/abonnement", icon: "credit_card", end: true},
 ];

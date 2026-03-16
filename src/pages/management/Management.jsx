@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from "react";
 import Navbar from "../../components/Navbar.jsx";
+import SectionNavButtons from "../../components/SectionNavButtons.jsx";
+import { managementLinks } from "../../constants/navigationLinks.js";
 import { teamMembers as teamMembersSeed } from "./data_corp.jsx";
 
 const TEAM_SECTIONS = [
@@ -226,11 +228,21 @@ export default function Management() {
       <Navbar />
 
       <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-200 px-6 py-12">
-        <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
+        <div className="mx-auto max-w-5xl">
+          <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+            <h1 className="text-4xl font-bold text-gray-800">Management</h1>
+            <SectionNavButtons
+              links={managementLinks}
+              ariaLabel="Navigation management"
+              variant="page"
+            />
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
           <Card className="p-5 h-fit">
             <div className="mb-4">
-              <p className="text-sm font-medium text-slate-500">Management</p>
-              <h1 className="text-2xl font-bold text-slate-900">Droits d'accès managers</h1>
+              <p className="text-sm font-medium text-slate-500">Gestion des accès</p>
+              <h2 className="text-2xl font-bold text-slate-900">Droits d'accès managers</h2>
               <p className="mt-2 text-sm text-slate-600">
                 Sélectionne un utilisateur avec un compte manager puis active les pages et sections autorisées.
               </p>
@@ -374,6 +386,7 @@ export default function Management() {
               </pre>
             </Card>
           </div>
+        </div>
         </div>
       </div>
     </>

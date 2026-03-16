@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { lazy } from 'react';
 import { Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -22,6 +21,7 @@ const MyEvents = lazy(() => import("./pages/innovation/MyEvents.jsx"));
 
 // Management et pages authorisées.
 const Management = lazy(() => import('./pages/management/Management.jsx'));
+const Abonnement = lazy(() => import('./pages/management/Abonnement.jsx'));
 const WorkshopInvitation = lazy(() => import('./pages/innovation/WorkshopInvitation.jsx'));
 const Innovation = lazy(() => import('./pages/innovation/Innovation.jsx'));
 const Team = lazy(() => import('./pages/Team.jsx'));
@@ -44,6 +44,7 @@ function App() {
         
         {/* Pages managers authentifiés */}
         <Route path="/management" element={<ProtectedRoute><Management /></ProtectedRoute>} />
+        <Route path="/management/abonnement" element={<ProtectedRoute><Abonnement /></ProtectedRoute>} />
         <Route path="/innovation" element={<ProtectedRoute><Innovation /></ProtectedRoute>} />
         <Route path="/innovation/invitation" element={<ProtectedRoute><WorkshopInvitation /></ProtectedRoute>} />
         <Route path="/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
