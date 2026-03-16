@@ -1,4 +1,4 @@
-import { get, push, ref, update } from "firebase/database";
+import { get, onValue, push, ref, update } from "firebase/database";
 import { database } from "./app";
 
 const normalizeGuests = (guests = []) =>
@@ -18,6 +18,13 @@ const normalizeWorkshopSchedule = (schedule = {}, payload = {}) => ({
   time: schedule?.time ?? payload?.workshopTime ?? "",
   timezone: schedule?.timezone ?? payload?.workshopTimezone ?? "UTC+01:00",
 });
+
+const normalizeUserId = (value) => String(value || "").trim();
+
+const toTimestamp = (value) => {
+  const time = new Date(String(value || "")).getTime();
+  return Number.isFinite(time) ? time : 0;
+};
 
 export const createWorkshopSession = async (companyId, payload = {}) => {
   if (!companyId) {
@@ -74,6 +81,27 @@ export const createWorkshopSession = async (companyId, payload = {}) => {
   updates[`companies/${companyId}/workshopSessions/${sessionId}`] = companySessionSummary;
   updates[`workshopSessions/${sessionId}`] = sessionDetails;
 
+  const participantUserIds = new Set();
+  const inviterUid = normalizeUserId(sessionDetails?.inviter?.uid);
+  if (inviterUid) {
+    participantUserIds.add(inviterUid);
+  }
+
+  [sessionDetails.allGuests, sessionDetails.selectedGuests, sessionDetails.guestsFromSelectedDepartments]
+    .filter(Array.isArray)
+    .forEach((guests) => {
+      guests.forEach((guest) => {
+        const guestUserId = normalizeUserId(guest?.id || guest?.uid);
+        if (guestUserId) {
+          participantUserIds.add(guestUserId);
+        }
+      });
+    });
+
+  participantUserIds.forEach((userId) => {
+    updates[`users/${userId}/workshopSessions/${sessionId}`] = companySessionSummary;
+  });
+
   await update(ref(database), updates);
 
   return { sessionId, companySessionSummary, sessionDetails };
@@ -86,4 +114,34 @@ export const getWorkshopSession = async (sessionId) => {
   if (!snapshot.exists()) return null;
 
   return { id: sessionId, ...snapshot.val() };
+};
+
+export const subscribeUserWorkshopSessions = (userId, callback) => {
+  if (!userId) {
+    callback([]);
+    return () => {};
+  }
+
+  const userSessionsRef = ref(database, `users/${userId}/workshopSessions`);
+  return onValue(userSessionsRef, (snapshot) => {
+    const sessionsRaw = snapshot.val() || {};
+    const sessions = Object.entries(sessionsRaw)
+      .map(([id, data]) => ({
+        id,
+        sessionId: data?.sessionId || id,
+        workshopId: data?.workshopId || "",
+        workshopTitle: data?.workshopTitle || "",
+        workshopDateTime: data?.workshopDateTime || "",
+        status: data?.status || "",
+        createdAt: data?.createdAt || "",
+        updatedAt: data?.updatedAt || "",
+      }))
+      .sort(
+        (a, b) =>
+          toTimestamp(b.workshopDateTime || b.createdAt) -
+          toTimestamp(a.workshopDateTime || a.createdAt)
+      );
+
+    callback(sessions);
+  });
 };

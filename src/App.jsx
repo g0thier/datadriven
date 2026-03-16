@@ -15,7 +15,10 @@ const RegisterCompany = lazy(() => import('./pages/auth/RegisterCompany.jsx'));
 const ResetPassword = lazy(() => import('./pages/auth/ResetPassword.jsx'));
 
 const NotFound = lazy(() => import('./pages/NotFound.jsx'));
+
+// Page utilisateur authentifié.
 const WorkshopRunner = lazy(() => import('./workshops/WorkshopRunner.jsx'));
+const MyEvents = lazy(() => import("./pages/innovation/MyEvents.jsx"));
 
 // Management et pages authorisées.
 const Management = lazy(() => import('./pages/management/Management.jsx'));
@@ -35,8 +38,11 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<RegisterCompany />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+
+        {/* Pages utilisateurs authentifiés */}
+        <Route path="/innovation/scheduled" element={<ProtectedRoute><MyEvents /></ProtectedRoute>} />
         
-        {/* Dashboard et pages protégées */}
+        {/* Pages managers authentifiés */}
         <Route path="/management" element={<ProtectedRoute><Management /></ProtectedRoute>} />
         <Route path="/innovation" element={<ProtectedRoute><Innovation /></ProtectedRoute>} />
         <Route path="/innovation/invitation" element={<ProtectedRoute><WorkshopInvitation /></ProtectedRoute>} />
