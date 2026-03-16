@@ -8,13 +8,7 @@ export const navbarLinks = [
 ];
 
 export const innovationLinks = [
-  {
-    label: "Innovation",
-    to: "/innovation",
-    icon: "emoji_objects",
-    end: false,
-    excludeActiveStartsWith: ["/innovation/scheduled"],
-  },
+  { label: "Innovation", to: "/innovation", icon: "emoji_objects", end: false, excludeActiveStartsWith: ["/innovation/scheduled"] },
   { label: "Mes événements", to: "/innovation/scheduled", icon: "event", end: true },
 ];
 
