@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import MaterialIcon from "../../components/MaterialIcon.jsx";
 import Navbar from "../../components/Navbar.jsx";
+import SectionNavButtons from "../../components/SectionNavButtons.jsx";
+import { innovationLinks } from "../../constants/navigationLinks.js";
 import { auth, onAuthStateChangedListener, subscribeUserWorkshopSessions } from "../../firebase";
 
 const STATUS_LABELS = {
@@ -152,7 +154,14 @@ export default function MyEvents() {
       <Navbar />
       <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-200 px-6 py-12">
         <div className="mx-auto max-w-5xl">
-          <h1 className="mb-3 text-4xl font-bold text-gray-800">Mes événements</h1>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-4">
+            <h1 className="text-4xl font-bold text-gray-800">Mes événements</h1>
+            <SectionNavButtons
+              links={innovationLinks}
+              ariaLabel="Navigation innovation"
+              variant="page"
+            />
+          </div>
           <p className="mb-8 text-sm text-slate-600">
             Retrouve ici tes ateliers passés et à venir.
           </p>
