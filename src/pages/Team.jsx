@@ -1,11 +1,13 @@
 import Navbar from "../components/Navbar.jsx";
 import { useState } from "react";
+import SectionNavButtons from "../components/SectionNavButtons.jsx";
 
 import { TabButton } from "../components/team/UITeam.jsx";
 import OfficesView from "../components/team/OfficesView.jsx";
 import DepartmentsView from "../components/team/DepartmentsView.jsx";
 import MembersView from "../components/team/MembersView.jsx";
 import useCompanyTeam from "../hooks/useCompanyTeam.js";
+import { teamLinks } from "../constants/navigationLinks.js";
 
 export default function Team() {
   const [activeTab, setActiveTab] = useState("BUREAUX");
@@ -36,7 +38,14 @@ export default function Team() {
       <Navbar />
       <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-200 py-12 px-6">
         <div className="mx-auto max-w-5xl">
-          <h1 className="text-4xl font-bold text-gray-800 mb-8">Équipe</h1>
+          <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+            <h1 className="text-4xl font-bold text-gray-800">Annuaire</h1>
+            <SectionNavButtons
+              links={teamLinks}
+              ariaLabel="Navigation annuaire"
+              variant="page"
+            />
+          </div>
 
           <div style={{ display: "grid", gap: 16 }}>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
