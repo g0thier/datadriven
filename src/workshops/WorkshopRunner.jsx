@@ -6,6 +6,7 @@ import { useStepTimeline } from "./useStepTimeline.js";
 import { getWorkshop } from "./index.js";
 import { usePaperBrainCollaboration } from "./paper-brain/usePaperBrainCollaboration.js";
 import WorkshopWaitingPage from "./WorkshopWaitingPage.jsx";
+import RouteFallback from "../components/fallback/RouteFallback.jsx";
 
 export default function WorkshopRunner() {
   const { workshopId: routeWorkshopId, id: sessionId } = useParams();
@@ -87,7 +88,12 @@ export default function WorkshopRunner() {
   const StepComponent = currentStep?.component ?? null;
 
   if (isLoadingSession) {
-    return <div className="p-10">Chargement de la session…</div>;
+    // Chargement de la session…
+    return (
+      <>
+        <RouteFallback /> 
+      </>
+    );
   }
 
   if (sessionLoadError) {
@@ -122,7 +128,7 @@ export default function WorkshopRunner() {
           collaboration={collaboration}
         />
       ) : (
-        <div className="pr-88 p-10">Démarrage…</div>
+        <RouteFallback />
       )}
     </div>
   );
