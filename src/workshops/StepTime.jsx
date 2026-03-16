@@ -1,4 +1,3 @@
-import { useEffect, useMemo, useState } from "react";
 import { useStepTimeline } from "./useStepTimeline";
 
 // Formate un nombre de secondes en MM:SS
@@ -12,18 +11,12 @@ function formatMMSS(totalSeconds) {
 // Composant principal pour afficher le timer et les étapes
 function StepTime({ sessionData, startAt }) {
   const {
-    elapsedSeconds,
     elapsedMinutes,
     computedSteps,
     totalDuration,
     remainingSeconds,
+    isFinished,
   } = useStepTimeline(sessionData, startAt);
-
-  // Normalise startAt -> Date
-  const startDate = useMemo(() => {
-    const d = startAt instanceof Date ? startAt : new Date(startAt);
-    return Number.isNaN(d.getTime()) ? new Date() : d;
-  }, [startAt]);
 
   return (
     <>
@@ -122,13 +115,17 @@ function StepTime({ sessionData, startAt }) {
             <div className="flex -mt-0.5">
               {/* Colonne timeline */}
               <div className="flex flex-col items-center w-6">
-                <div className="w-3 h-3 rounded-sm bg-gray-300"/>
+                <div
+                  className={`w-3 h-3 rounded-sm ${
+                    isFinished ? "bg-violet-500" : "bg-gray-300"
+                  }`}
+                />
               </div>
 
               {/* Contenu */}
               <div className="flex-1 pb-4 -mt-1.5">
                 <div className="font-medium">
-                  Fin dans {formatMMSS(remainingSeconds)}
+                  {isFinished ? "Atelier terminé" : `Fin dans ${formatMMSS(remainingSeconds)}`}
                 </div>
               </div>
             </div>
