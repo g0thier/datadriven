@@ -2,14 +2,22 @@ import Navbar from "../../components/Navbar.jsx";
 import SectionNavButtons from "../../components/SectionNavButtons.jsx";
 import ManagerSummary from "../../components/management/ManagerSummary.jsx";
 import ManagersAccess from "../../components/management/ManagersAccess.jsx";
+import CollaboratorSearchPanel from "../../components/management/CollaboratorSearchPanel.jsx";
 import PagesSelection from "../../components/management/PagesSelection.jsx";
 import { managementLinks } from "../../constants/navigationLinks.js";
 import useCompanyManagers from "../../hooks/management/useCompanyManagers.js";
+import useCompanyCollaborators from "../../hooks/management/useCompanyCollaborators.js";
 import useManagementPageTree from "../../hooks/management/useManagementPageTree.js";
 import useManagerPermissions from "../../hooks/management/useManagerPermissions.js";
 
 export default function Management() {
   const { managers } = useCompanyManagers();
+  const {
+    collaborators,
+    promoteCollaborator,
+    promotingCollaboratorId,
+    promotionError,
+  } = useCompanyCollaborators();
   const { pageTree, pageLeafPaths, getPathDisplayMeta } = useManagementPageTree();
 
   const {
@@ -47,13 +55,22 @@ export default function Management() {
             />
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
-            <ManagersAccess
-              managers={managers}
-              selectedManagerId={selectedManagerId}
-              permissionsByManager={permissionsByManager}
-              onSelectManager={onSelectManager}
-            />
+          <div className="grid items-start gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
+            <div className="grid gap-6">
+              <ManagersAccess
+                managers={managers}
+                selectedManagerId={selectedManagerId}
+                permissionsByManager={permissionsByManager}
+                onSelectManager={onSelectManager}
+              />
+
+              <CollaboratorSearchPanel
+                collaborators={collaborators}
+                onPromoteCollaborator={promoteCollaborator}
+                promotingCollaboratorId={promotingCollaboratorId}
+                promotionError={promotionError}
+              />
+            </div>
 
             <div className="grid gap-6">
               <ManagerSummary
