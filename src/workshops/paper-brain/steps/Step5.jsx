@@ -25,7 +25,6 @@ function Step5({ step, sessionTitle, collaboration }) {
   const notes = useMemo(() => collaboration?.notes ?? [], [collaboration?.notes]);
   const commentsByNote = collaboration?.commentsByNote || {};
   const votesByNote = collaboration?.votesByNote || {};
-  const getParticipantLabel = collaboration?.getParticipantLabel;
 
   const currentParticipantId = collaboration?.participant?.id || "";
   const remainingVotes = Number.isFinite(collaboration?.remainingVotes)

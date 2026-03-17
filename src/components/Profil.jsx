@@ -1,8 +1,10 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { logout } from "../firebase";
 import MaterialIcon from "../components/MaterialIcon";
 
 function Profil() {
+  const navigate = useNavigate();
   const [profilPicture] = useState(
     "https://media.licdn.com/dms/image/v2/D4E03AQF95-ys7n70rA/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1693258502282?e=1773878400&v=beta&t=-IGqDI9I-2-te4Ifl8BqHllje898kfqJP5UtMoeKEHU"
   );
@@ -18,17 +20,14 @@ function Profil() {
 
   const fullName = `${firstName} ${lastName}`;
 
-  const fields = useMemo(
-    () => [
-      { label: "Prénom :", value: firstName, setter: setFirstName, id: "firstName" },
-      { label: "Nom :", value: lastName, setter: setLastName, id: "lastName" },
-      { label: "Profession :", value: jobTitle, setter: setJobTitle, id: "jobTitle" },
-      { label: "Bureau :", value: officeLocation, setter: setOfficeLocation, id: "officeLocation" },
-      { label: "Email :", value: emailAddress, setter: setEmailAddress, id: "emailAddress" },
-      { label: "Téléphone :", value: phoneNumber, setter: setPhoneNumber, id: "phoneNumber" },
-    ],
-    [firstName, lastName, jobTitle, officeLocation]
-  );
+  const fields = [
+    { label: "Prénom :", value: firstName, setter: setFirstName, id: "firstName" },
+    { label: "Nom :", value: lastName, setter: setLastName, id: "lastName" },
+    { label: "Profession :", value: jobTitle, setter: setJobTitle, id: "jobTitle" },
+    { label: "Bureau :", value: officeLocation, setter: setOfficeLocation, id: "officeLocation" },
+    { label: "Email :", value: emailAddress, setter: setEmailAddress, id: "emailAddress" },
+    { label: "Téléphone :", value: phoneNumber, setter: setPhoneNumber, id: "phoneNumber" },
+  ];
 
   const handleLogout = async () => {
     await logout();

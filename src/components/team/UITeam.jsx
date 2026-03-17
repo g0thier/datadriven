@@ -1,9 +1,4 @@
-import React, { useMemo } from "react";
-
-export function nextId(list) {
-  const max = (list || []).reduce((m, x) => Math.max(m, Number(x?.id ?? 0)), 0);
-  return max + 1; // on reste en number comme tes data
-}
+import { useMemo } from "react";
 
 export function TabButton({ active, onClick, children }) {
   return (
@@ -119,13 +114,13 @@ export function OfficeSelect({ value, officeLocations, onChange }) {
 /** Departments tags editor: value = number[] (ids), options = [{id,name}] */
 export function DepartmentsTagsEditor({ value, options, onChange }) {
   const selectedIds = Array.isArray(value) ? value : [];
-  const opts = options || [];
+  const opts = options ?? [];
 
   const byId = useMemo(() => {
     const m = new Map();
-    opts.forEach((d) => m.set(d.id, d));
+    (options ?? []).forEach((d) => m.set(d.id, d));
     return m;
-  }, [opts]);
+  }, [options]);
 
   function toggle(id) {
     if (selectedIds.includes(id)) {
