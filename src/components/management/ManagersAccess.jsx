@@ -1,6 +1,5 @@
 const EMPTY_MANAGER_PERMISSIONS = {
-  innovationBundle: false,
-  teamPage: false,
+  pageAccess: {},
 };
 
 export default function ManagersAccess({
@@ -30,10 +29,8 @@ export default function ManagersAccess({
             const isActive = manager.permissionId === selectedManagerId;
             const managerPermissions =
               permissionsByManager[manager.permissionId] ?? EMPTY_MANAGER_PERMISSIONS;
-            const enabledPages = [
-              managerPermissions.innovationBundle ? 2 : 0,
-              managerPermissions.teamPage ? 1 : 0,
-            ].reduce((sum, value) => sum + value, 0);
+            const enabledPages = Object.values(managerPermissions.pageAccess ?? {}).filter(Boolean)
+              .length;
 
             return (
               <button

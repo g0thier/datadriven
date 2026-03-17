@@ -2,19 +2,27 @@ import { useEffect, useMemo, useState } from "react";
 import Navbar from "../../components/Navbar.jsx";
 import SectionNavButtons from "../../components/SectionNavButtons.jsx";
 import ManagersAccess from "../../components/management/ManagersAccess.jsx";
-import { managementLinks } from "../../constants/navigationLinks.js";
+import {
+  innovationLinks,
+  managementLinks,
+  navbarLinks,
+  teamLinks,
+} from "../../constants/navigationLinks.js";
 import { getUserCompanyId, onAuthStateChangedListener, subscribeCompanyManagers } from "../../firebase";
 import { buildManagerList } from "../../utils/managers.utils.js";
+import { buildUniquePageTree, flattenPageTreePaths } from "../../utils/navigationTree.utils.js";
 
-const TEAM_SECTIONS = [
-  { key: "offices", label: "Bureaux" },
-  { key: "departments", label: "Équipes" },
-  { key: "members", label: "Personnels" },
-];
+const MANAGEMENT_LINK_GROUPS = [navbarLinks, innovationLinks, teamLinks, managementLinks];
+const MANAGEMENT_PAGE_EXCEPTIONS = ["/soon"];
+const MANAGEMENT_PAGE_TREE = buildUniquePageTree(MANAGEMENT_LINK_GROUPS, MANAGEMENT_PAGE_EXCEPTIONS);
+const MANAGEMENT_PAGE_PATHS = flattenPageTreePaths(MANAGEMENT_PAGE_TREE);
+
+function buildDefaultPageAccess() {
+  return Object.fromEntries(MANAGEMENT_PAGE_PATHS.map((path) => [path, false]));
+}
 
 const DEFAULT_PERMISSIONS = {
-  innovationBundle: false,
-  teamPage: false,
+  pageAccess: buildDefaultPageAccess(),
   teamSections: {
     offices: false,
     departments: false,
@@ -31,7 +39,21 @@ function normalizePermissions(permissionMap, managers) {
   const next = {};
 
   managers.forEach((manager) => {
-    next[manager.permissionId] = source[manager.permissionId] ?? cloneDefaultPermissions();
+    const rawPermissions = source[manager.permissionId] ?? {};
+    const defaults = cloneDefaultPermissions();
+
+    next[manager.permissionId] = {
+      ...defaults,
+      ...rawPermissions,
+      pageAccess: {
+        ...buildDefaultPageAccess(),
+        ...(rawPermissions.pageAccess ?? {}),
+      },
+      teamSections: {
+        ...defaults.teamSections,
+        ...(rawPermissions.teamSections ?? {}),
+      },
+    };
   });
 
   return next;
@@ -142,46 +164,18 @@ export default function Management() {
     });
   }
 
-  function toggleInnovationBundle() {
+  function togglePagePath(path) {
     updateManagerPermissions((current) => ({
       ...current,
-      innovationBundle: !current.innovationBundle,
+      pageAccess: {
+        ...buildDefaultPageAccess(),
+        ...(current.pageAccess ?? {}),
+        [path]: !(current.pageAccess?.[path] ?? false),
+      },
     }));
   }
 
-  function toggleTeamPage() {
-    updateManagerPermissions((current) => {
-      const nextValue = !current.teamPage;
-      return {
-        ...current,
-        teamPage: nextValue,
-        teamSections: nextValue
-          ? current.teamSections
-          : {
-              offices: false,
-              departments: false,
-              members: false,
-            },
-      };
-    });
-  }
-
-  function toggleTeamSection(sectionKey) {
-    updateManagerPermissions((current) => {
-      const nextSections = {
-        ...current.teamSections,
-        [sectionKey]: !current.teamSections[sectionKey],
-      };
-
-      const hasAtLeastOneSection = Object.values(nextSections).some(Boolean);
-
-      return {
-        ...current,
-        teamPage: hasAtLeastOneSection ? true : current.teamPage,
-        teamSections: nextSections,
-      };
-    });
-  }
+  const selectedPageCount = Object.values(permissions.pageAccess ?? {}).filter(Boolean).length;
 
   const payloadPreview = useMemo(() => {
     if (!selectedManager) return null;
@@ -190,11 +184,7 @@ export default function Management() {
       managerId: selectedManager.permissionId,
       managerName: selectedManager.label.title,
       permissions: {
-        pages: {
-          innovation: permissions.innovationBundle,
-          workshopInvitation: permissions.innovationBundle,
-          team: permissions.teamPage,
-        },
+        pages: permissions.pageAccess,
         sections: {
           team: permissions.teamSections,
         },
@@ -242,7 +232,7 @@ export default function Management() {
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                       <p className="text-xs text-slate-500">Pages actives</p>
                       <p className="mt-1 text-2xl font-bold text-slate-900">
-                        {(permissions.innovationBundle ? 2 : 0) + (permissions.teamPage ? 1 : 0)}
+                        {selectedPageCount}
                       </p>
                     </div>
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
@@ -259,53 +249,37 @@ export default function Management() {
                 <div className="mb-5">
                   <h3 className="text-xl font-bold text-slate-900">Pages</h3>
                   <p className="mt-1 text-sm text-slate-600">
-                    Une case peut piloter plusieurs routes ou une seule page selon ton besoin métier.
+                    Les routes sont construites automatiquement depuis navigationLinks (niveau 1 et
+                    niveau 2), hors exceptions.
                   </p>
                 </div>
 
-                <div className="grid gap-4 xl:grid-cols-2">
-                  <PermissionCheckbox
-                    checked={permissions.innovationBundle}
-                    onChange={toggleInnovationBundle}
-                    disabled={!effectiveSelectedManagerId}
-                    label="Innovation + WorkshopInvitation"
-                    description="Active ou désactive en même temps /innovation et /innovation/invitation."
-                  />
+                <div className="space-y-4">
+                  {MANAGEMENT_PAGE_TREE.map((level1) => (
+                    <div key={level1.path} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <PermissionCheckbox
+                        checked={Boolean(permissions.pageAccess?.[level1.path])}
+                        onChange={() => togglePagePath(level1.path)}
+                        disabled={!effectiveSelectedManagerId}
+                        label={level1.path}
+                        description="Niveau 1"
+                      />
 
-                  <PermissionCheckbox
-                    checked={permissions.teamPage}
-                    onChange={toggleTeamPage}
-                    disabled={!effectiveSelectedManagerId}
-                    label="Team"
-                    description="Active ou désactive la page /team. Si tu désactives Team, toutes les sous-sections sont retirées."
-                  />
-                </div>
-              </div>
-
-              <div className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur">
-                <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <h3 className="text-xl font-bold text-slate-900">Sections de Team</h3>
-                    <p className="mt-1 text-sm text-slate-600">
-                      Gestion plus granulaire des 3 onglets présents dans la page Team.
-                    </p>
-                  </div>
-
-                  <span className="inline-flex h-fit items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
-                    {permissions.teamPage ? "Page Team activée" : "Page Team désactivée"}
-                  </span>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-3">
-                  {TEAM_SECTIONS.map((section) => (
-                    <PermissionCheckbox
-                      key={section.key}
-                      checked={permissions.teamSections[section.key]}
-                      onChange={() => toggleTeamSection(section.key)}
-                      disabled={!effectiveSelectedManagerId || !permissions.teamPage}
-                      label={section.label}
-                      description={`Autorise l'onglet ${section.label} dans Team.`}
-                    />
+                      {level1.children.length > 0 ? (
+                        <div className="mt-3 grid gap-3 pl-4">
+                          {level1.children.map((level2) => (
+                            <PermissionCheckbox
+                              key={level2.path}
+                              checked={Boolean(permissions.pageAccess?.[level2.path])}
+                              onChange={() => togglePagePath(level2.path)}
+                              disabled={!effectiveSelectedManagerId}
+                              label={level2.path}
+                              description={`Niveau 2 de ${level1.path}`}
+                            />
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
                   ))}
                 </div>
               </div>
