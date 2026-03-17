@@ -1,24 +1,141 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { onValue, ref } from "firebase/database";
 import { useNavigate } from "react-router-dom";
-import { logout } from "../firebase";
+import { database, logout, onAuthStateChangedListener } from "../firebase";
 import MaterialIcon from "../components/MaterialIcon";
+
+const ROLE_LABELS = {
+  owner: "Propriétaire",
+  leader: "Manager",
+  colab: "Collaborateur",
+};
+
+const parseDisplayName = (displayName = "") => {
+  const parts = String(displayName || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (parts.length === 0) return { firstName: "", lastName: "" };
+
+  return {
+    firstName: parts[0] || "",
+    lastName: parts.slice(1).join(" "),
+  };
+};
+
+const normalizeRoleLabel = (role = "") => {
+  const normalizedRole = String(role || "").trim().toLowerCase();
+  if (!normalizedRole) return "";
+  return ROLE_LABELS[normalizedRole] || normalizedRole;
+};
+
+const resolveOfficeLocation = (officeData = {}) => {
+  const alias = String(officeData?.alias || "").trim();
+  if (alias) return alias;
+
+  const city = String(officeData?.city || "").trim();
+  if (city) return city;
+
+  return String(officeData?.address || "").trim();
+};
 
 function Profil() {
   const navigate = useNavigate();
-  const [profilPicture] = useState(
-    "https://media.licdn.com/dms/image/v2/D4E03AQF95-ys7n70rA/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1693258502282?e=1773878400&v=beta&t=-IGqDI9I-2-te4Ifl8BqHllje898kfqJP5UtMoeKEHU"
-  );
+  const [profilPicture, setProfilPicture] = useState("");
 
-  const [firstName, setFirstName] = useState("Gauthier");
-  const [lastName, setLastName] = useState("Rammault");
-  const [jobTitle, setJobTitle] = useState("Data Scientist");
-  const [emailAddress, setEmailAddress] = useState("rammault.gauthier@example.com");
-  const [phoneNumber, setPhoneNumber] = useState("123-456-7890");
-  const [officeLocation, setOfficeLocation] = useState("Genève");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
+  const [emailAddress, setEmailAddress] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [officeLocation, setOfficeLocation] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   const [isEditing, setIsEditing] = useState(false);
 
-  const fullName = `${firstName} ${lastName}`;
+  const fullName = `${firstName} ${lastName}`.trim() || "Utilisateur";
+
+  useEffect(() => {
+    let unsubscribeUser = () => {};
+    let unsubscribeOffice = () => {};
+
+    const resetProfile = () => {
+      setProfilPicture("");
+      setFirstName("");
+      setLastName("");
+      setJobTitle("");
+      setEmailAddress("");
+      setPhoneNumber("");
+      setOfficeLocation("");
+      setLoadError("");
+      setIsLoading(false);
+      setIsEditing(false);
+    };
+
+    const unsubscribeAuth = onAuthStateChangedListener((currentUser) => {
+      unsubscribeUser();
+      unsubscribeUser = () => {};
+      unsubscribeOffice();
+      unsubscribeOffice = () => {};
+
+      if (!currentUser) {
+        resetProfile();
+        return;
+      }
+
+      setIsLoading(true);
+      setLoadError("");
+      setProfilPicture(String(currentUser.photoURL || "").trim());
+
+      const userRef = ref(database, `users/${currentUser.uid}`);
+      unsubscribeUser = onValue(
+        userRef,
+        (snapshot) => {
+          const userData = snapshot.exists() ? snapshot.val() || {} : {};
+          const fallbackName = parseDisplayName(currentUser.displayName);
+
+          setFirstName(String(userData?.firstName || fallbackName.firstName || "").trim());
+          setLastName(String(userData?.lastName || fallbackName.lastName || "").trim());
+          setJobTitle(normalizeRoleLabel(userData?.role));
+          setEmailAddress(String(userData?.email || currentUser.email || "").trim());
+          setPhoneNumber(String(userData?.phone || "").trim());
+
+          const picture = String(userData?.photoURL || currentUser.photoURL || "").trim();
+          setProfilPicture(picture);
+
+          unsubscribeOffice();
+          unsubscribeOffice = () => {};
+          setOfficeLocation("");
+
+          const companyId = String(userData?.companyId || "").trim();
+          const officeId = String(userData?.officeId || "").trim();
+
+          if (companyId && officeId) {
+            const officeRef = ref(database, `companies/${companyId}/addresses/${officeId}`);
+            unsubscribeOffice = onValue(officeRef, (officeSnapshot) => {
+              const officeData = officeSnapshot.exists() ? officeSnapshot.val() || {} : {};
+              setOfficeLocation(resolveOfficeLocation(officeData));
+            });
+          }
+
+          setIsLoading(false);
+        },
+        (error) => {
+          console.error("Impossible de charger le profil utilisateur :", error);
+          setLoadError("Impossible de charger le profil.");
+          setIsLoading(false);
+        }
+      );
+    });
+
+    return () => {
+      unsubscribeUser();
+      unsubscribeOffice();
+      unsubscribeAuth();
+    };
+  }, []);
 
   const fields = [
     { label: "Prénom :", value: firstName, setter: setFirstName, id: "firstName" },
@@ -50,15 +167,23 @@ function Profil() {
         {/* 1er cadre arrondi */}
         <div className="rounded-2xl border border-gray-100 p-4 mb-4">
           <div className="flex items-center gap-3">
-            <img
-              src={profilPicture}
-              alt="Profil"
-              className="w-14 h-14 rounded-full object-cover"
-            />
+            {profilPicture ? (
+              <img
+                src={profilPicture}
+                alt="Profil"
+                className="w-14 h-14 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-14 h-14 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center">
+                <MaterialIcon name="account_circle" size={34} />
+              </div>
+            )}
             <div className="min-w-0">
               <div className="font-semibold truncate">{fullName}</div>
-              <div className="text-sm text-gray-600 truncate">{jobTitle}</div>
-              <div className="text-sm text-gray-500 truncate">{officeLocation}</div>
+              <div className="text-sm text-gray-600 truncate">{jobTitle || "Rôle non renseigné"}</div>
+              <div className="text-sm text-gray-500 truncate">
+                {officeLocation || "Bureau non renseigné"}
+              </div>
             </div>
           </div>
         </div>
@@ -76,6 +201,9 @@ function Profil() {
             </button>
           </div>
 
+          {isLoading && <div className="text-xs text-gray-500 mb-2">Chargement du profil...</div>}
+          {loadError && <div className="text-xs text-rose-600 mb-2">{loadError}</div>}
+
           <div className="space-y-3 overflow-y-auto flex-1 pr-2 pb-4 min-h-0">
             {fields.map((f) => (
               <div key={f.id} className="flex flex-col">
@@ -90,7 +218,7 @@ function Profil() {
                   />
                 ) : (
                   <div className="text-sm text-gray-900 wrap-break-word">
-                    {f.value}
+                    {f.value || "Non renseigné"}
                   </div>
                 )}
               </div>
