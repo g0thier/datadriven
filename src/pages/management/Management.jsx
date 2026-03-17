@@ -322,30 +322,34 @@ export default function Management() {
               <div className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur">
                 <p className="text-sm font-medium text-slate-500">Pages sélectionnées</p>
 
-                <div className="space-y-4 mt-3">
+                <div className="space-y-4 mt-1">
                   {MANAGEMENT_PAGE_TREE.map((level1) => {
                     const level1Meta = getPathDisplayMeta(level1.path);
                     const level1State = getLevel1SelectionState(level1, permissions.pageAccess);
 
                     return (
-                      <div
-                        key={level1.path}
-                        className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
-                      >
-                        <PermissionCheckbox
-                          checked={level1State.hasAny}
-                          onChange={() => toggleLevel1Group(level1)}
+                      <div key={level1.path} >
+                        <button
+                          type="button"
+                          onClick={() => toggleLevel1Group(level1)}
                           disabled={!effectiveSelectedManagerId}
-                          label={
-                            <span className="inline-flex items-center gap-2">
-                              <MaterialIcon name={level1Meta.icon} size={18} className="text-slate-600" />
-                              <span>{level1Meta.label}</span>
-                            </span>
-                          }
-                        />
+                          className={[
+                            "flex w-full items-center justify-start gap-2 text-left text-xl font-bold text-slate-900",
+                            !effectiveSelectedManagerId
+                              ? "cursor-not-allowed opacity-60"
+                              : "cursor-pointer",
+                          ].join(" ")}
+                        >
+                          <span>{level1Meta.label}</span>
+                          <MaterialIcon
+                            name={level1Meta.icon}
+                            size={24}
+                            className={level1State.hasAny ? "text-amber-400" : "text-slate-400"}
+                          />
+                        </button>
 
                         {level1.children.length > 0 ? (
-                          <div className="mt-3 grid gap-3 pl-4">
+                          <div className="mt-3 grid gap-3 pl-4 mb-9">
                             {level1.children.map((level2) => {
                               const level2Meta = getPathDisplayMeta(level2.path);
                               return (
@@ -375,6 +379,7 @@ export default function Management() {
                 </div>
               </div>
 
+              {/* Payload de sortie */}
               <div className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur">
                 <div className="mb-4">
                   <h3 className="text-xl font-bold text-slate-900">Payload de sortie</h3>
@@ -387,6 +392,8 @@ export default function Management() {
 {JSON.stringify(payloadPreview, null, 2)}
                 </pre>
               </div>
+
+
             </div>
           </div>
         </div>
