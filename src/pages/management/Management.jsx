@@ -148,8 +148,6 @@ export default function Management() {
     (manager) => manager.permissionId === effectiveSelectedManagerId
   );
 
-  const selectedTeamSectionsCount = Object.values(permissions.teamSections).filter(Boolean).length;
-
   function updateManagerPermissions(updater) {
     if (!effectiveSelectedManagerId) return;
 
@@ -175,7 +173,19 @@ export default function Management() {
     }));
   }
 
-  const selectedPageCount = Object.values(permissions.pageAccess ?? {}).filter(Boolean).length;
+  const totalDepartmentsCount = MANAGEMENT_PAGE_TREE.length;
+  const totalLevel2PagesCount = MANAGEMENT_PAGE_TREE.reduce(
+    (sum, level1) => sum + level1.children.length,
+    0
+  );
+  const selectedDepartmentsCount = MANAGEMENT_PAGE_TREE.filter((level1) =>
+    Boolean(permissions.pageAccess?.[level1.path])
+  ).length;
+  const selectedLevel2PagesCount = MANAGEMENT_PAGE_TREE.reduce(
+    (sum, level1) =>
+      sum + level1.children.filter((level2) => Boolean(permissions.pageAccess?.[level2.path])).length,
+    0
+  );
 
   const payloadPreview = useMemo(() => {
     if (!selectedManager) return null;
@@ -230,15 +240,15 @@ export default function Management() {
 
                   <div className="grid grid-cols-2 gap-3 md:min-w-72">
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <p className="text-xs text-slate-500">Pages actives</p>
+                      <p className="text-xs text-slate-500">Départements</p>
                       <p className="mt-1 text-2xl font-bold text-slate-900">
-                        {selectedPageCount}
+                        {selectedDepartmentsCount}/{totalDepartmentsCount}
                       </p>
                     </div>
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <p className="text-xs text-slate-500">Sections Team</p>
+                      <p className="text-xs text-slate-500">Pages</p>
                       <p className="mt-1 text-2xl font-bold text-slate-900">
-                        {selectedTeamSectionsCount}/3
+                        {selectedLevel2PagesCount}/{totalLevel2PagesCount}
                       </p>
                     </div>
                   </div>
