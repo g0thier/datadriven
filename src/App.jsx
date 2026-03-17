@@ -1,6 +1,6 @@
 import { lazy } from 'react';
 import { Suspense } from "react";
-import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Outlet, Routes, Route } from "react-router-dom";
 import './App.css'
 
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -32,36 +32,41 @@ function App() {
   return (
     <BrowserRouter>
       <Suspense fallback={<RouteFallback />}>
-      <Routes>
-        {/* Authentification routes */}
-        <Route path="/" element={<Login />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<RegisterCompany />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
+        <Routes>
+          {/* Authentification routes */}
+          <Route path="/" element={<Login />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<RegisterCompany />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
-        {/* Innovation routes */}
-        <Route path="/innovation" element={<ProtectedRoute><Navigate to="/innovation/accueil" replace /></ProtectedRoute>} />
-        <Route path="/innovation/accueil" element={<ProtectedRoute><Innovation /></ProtectedRoute>} />
-        <Route path="/innovation/scheduled" element={<ProtectedRoute><MyEvents /></ProtectedRoute>} />
-        <Route path="/innovation/invitation" element={<ProtectedRoute><WorkshopInvitation /></ProtectedRoute>} />
-        <Route path="/innovation/:workshopId/:id" element={<ProtectedRoute><WorkshopRunner /></ProtectedRoute>} />
+          {/* Routes protégées */}
+          <Route element={( <ProtectedRoute> <Outlet /> </ProtectedRoute> )}>
 
-        {/* Team routes */}
-        <Route path="/team" element={<ProtectedRoute><Navigate to="/team/annuaire" replace /></ProtectedRoute>} />
-        <Route path="/team/annuaire" element={<ProtectedRoute><Team /></ProtectedRoute>} />
-        <Route path="/soon" element={<ProtectedRoute><Soon /></ProtectedRoute>} />
+            {/* Innovation routes */}
+            <Route path="/innovation" element={<Navigate to="/innovation/accueil" replace />} />
+            <Route path="/innovation/accueil" element={<Innovation />} />
+            <Route path="/innovation/scheduled" element={<MyEvents />} />
+            <Route path="/innovation/invitation" element={<WorkshopInvitation />} />
+            <Route path="/innovation/:workshopId/:id" element={<WorkshopRunner />} />
 
-        {/* Management routes */}
-        <Route path="/management" element={<ProtectedRoute><Navigate to="/management/comptes" replace /></ProtectedRoute>} />
-        <Route path="/management/comptes" element={<ProtectedRoute><Management /></ProtectedRoute>} />
-        <Route path="/management/abonnement" element={<ProtectedRoute><Abonnement /></ProtectedRoute>} />
+            {/* Team routes */}
+            <Route path="/team" element={<Navigate to="/team/annuaire" replace />} />
+            <Route path="/team/annuaire" element={<Team />} />
+            <Route path="/soon" element={<Soon />} />
 
-        {/* Pages publiques */}
-        <Route path="*" element={<NotFound />} />
+            {/* Management routes */}
+            <Route path="/management" element={<Navigate to="/management/comptes" replace />} />
+            <Route path="/management/comptes" element={<Management />} />
+            <Route path="/management/abonnement" element={<Abonnement />} />
+            
+          </Route>
 
-        {/* Email template preview route */}
-        <Route path="/preview-mail" element={<Mail />} />
-      </Routes>
+          {/* Email template preview route */}
+          <Route path="/preview-mail" element={<Mail />} />
+
+          {/* Pages publiques */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </Suspense>
     </BrowserRouter>
   )
