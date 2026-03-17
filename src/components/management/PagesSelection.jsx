@@ -1,4 +1,5 @@
 import MaterialIcon from "../MaterialIcon.jsx";
+import { getLevel1SelectionState } from "../../utils/management/permissions.selectors.js";
 
 function PermissionCheckbox({ checked, onChange, label, description, disabled = false }) {
   return (
@@ -35,7 +36,6 @@ export default function PagesSelection({
   onToggleLevel1,
   onToggleLevel2,
   getPathDisplayMeta,
-  getLevel1SelectionState,
 }) {
   return (
     <div className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur">
