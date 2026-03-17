@@ -256,15 +256,9 @@ export default function Management() {
               </div>
 
               <div className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur">
-                <div className="mb-5">
-                  <h3 className="text-xl font-bold text-slate-900">Pages</h3>
-                  <p className="mt-1 text-sm text-slate-600">
-                    Les routes sont construites automatiquement depuis navigationLinks (niveau 1 et
-                    niveau 2), hors exceptions.
-                  </p>
-                </div>
+                <p className="text-sm font-medium text-slate-500">Pages sélectionnées</p>
 
-                <div className="space-y-4">
+                <div className="space-y-4 mt-3">
                   {MANAGEMENT_PAGE_TREE.map((level1) => (
                     <div key={level1.path} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                       <PermissionCheckbox
