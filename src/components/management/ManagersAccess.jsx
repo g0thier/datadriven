@@ -13,10 +13,6 @@ export default function ManagersAccess({
       <div className="mb-4">
         <p className="text-sm font-medium text-slate-500">Gestion des accès</p>
         <h2 className="text-2xl font-bold text-slate-900">Droits d'accès managers</h2>
-        <p className="mt-2 text-sm text-slate-600">
-          Sélectionne un utilisateur avec un compte manager puis active les pages et sections
-          autorisées.
-        </p>
       </div>
 
       <div className="space-y-3">
