@@ -1,4 +1,5 @@
 import Navbar from "../../components/Navbar.jsx";
+import SectionNavButtons from "../../components/SectionNavButtons.jsx";
 import {
   DepartmentSelectorCard,
   InvitationSummaryCard,
@@ -8,6 +9,7 @@ import {
   WorkshopDateTimeCard,
   WorkshopHeroCard,
 } from "../../components/workshop-invitation";
+import { innovationLinks } from "../../constants/navigationLinks.js";
 import useWorkshopInvitation from "../../hooks/useWorkshopInvitation";
 
 function WorkshopInvitation() {
@@ -44,7 +46,14 @@ function WorkshopInvitation() {
       <Navbar />
       <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-200 py-12 px-6">
         <div className="mx-auto max-w-5xl">
-          <h1 className="text-4xl font-bold text-gray-800 mb-8">Atelier</h1>
+          <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+            <h1 className="text-4xl font-bold text-gray-800">Atelier</h1>
+            <SectionNavButtons
+              links={innovationLinks}
+              ariaLabel="Navigation innovation"
+              variant="page"
+            />
+          </div>
 
           <div className="grid gap-6 lg:grid-cols-2">
             <WorkshopHeroCard atelier={atelier} />

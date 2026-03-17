@@ -1,6 +1,6 @@
 import { lazy } from 'react';
 import { Suspense } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import './App.css'
 
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -39,17 +39,22 @@ function App() {
         <Route path="/register" element={<RegisterCompany />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 
-        {/* Pages utilisateurs authentifiés */}
+        {/* Innovation routes */}
+        <Route path="/innovation" element={<ProtectedRoute><Navigate to="/innovation/accueil" replace /></ProtectedRoute>} />
+        <Route path="/innovation/accueil" element={<ProtectedRoute><Innovation /></ProtectedRoute>} />
         <Route path="/innovation/scheduled" element={<ProtectedRoute><MyEvents /></ProtectedRoute>} />
-        
-        {/* Pages managers authentifiés */}
-        <Route path="/management" element={<ProtectedRoute><Management /></ProtectedRoute>} />
-        <Route path="/management/abonnement" element={<ProtectedRoute><Abonnement /></ProtectedRoute>} />
-        <Route path="/innovation" element={<ProtectedRoute><Innovation /></ProtectedRoute>} />
         <Route path="/innovation/invitation" element={<ProtectedRoute><WorkshopInvitation /></ProtectedRoute>} />
-        <Route path="/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
-        <Route path="/soon" element={<ProtectedRoute><Soon /></ProtectedRoute>} />
         <Route path="/innovation/:workshopId/:id" element={<ProtectedRoute><WorkshopRunner /></ProtectedRoute>} />
+
+        {/* Team routes */}
+        <Route path="/team" element={<ProtectedRoute><Navigate to="/team/annuaire" replace /></ProtectedRoute>} />
+        <Route path="/team/annuaire" element={<ProtectedRoute><Team /></ProtectedRoute>} />
+        <Route path="/soon" element={<ProtectedRoute><Soon /></ProtectedRoute>} />
+
+        {/* Management routes */}
+        <Route path="/management" element={<ProtectedRoute><Navigate to="/management/comptes" replace /></ProtectedRoute>} />
+        <Route path="/management/comptes" element={<ProtectedRoute><Management /></ProtectedRoute>} />
+        <Route path="/management/abonnement" element={<ProtectedRoute><Abonnement /></ProtectedRoute>} />
 
         {/* Pages publiques */}
         <Route path="*" element={<NotFound />} />
