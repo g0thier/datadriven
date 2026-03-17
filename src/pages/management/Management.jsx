@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import MaterialIcon from "../../components/MaterialIcon.jsx";
 import Navbar from "../../components/Navbar.jsx";
 import SectionNavButtons from "../../components/SectionNavButtons.jsx";
 import ManagerSummary from "../../components/management/ManagerSummary.jsx";
 import ManagersAccess from "../../components/management/ManagersAccess.jsx";
+import PagesSelection from "../../components/management/PagesSelection.jsx";
 import {
   innovationLinks,
   managementLinks,
@@ -74,33 +74,6 @@ function normalizePermissions(permissionMap, managers) {
   });
 
   return next;
-}
-
-function PermissionCheckbox({ checked, onChange, label, description, disabled = false }) {
-  return (
-    <label
-      className={[
-        "flex items-start gap-3 rounded-2xl border px-4 py-4 transition",
-        disabled
-          ? "cursor-not-allowed border-slate-200 bg-slate-50 opacity-60"
-          : checked
-          ? "cursor-pointer border-slate-900 bg-slate-50"
-          : "cursor-pointer border-slate-200 bg-white hover:bg-slate-50",
-      ].join(" ")}
-    >
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={onChange}
-        disabled={disabled}
-        className="mt-1 h-4 w-4"
-      />
-      <div className="min-w-0">
-        <p className="text-sm font-semibold text-slate-900">{label}</p>
-        {description ? <p className="mt-1 text-sm text-slate-600">{description}</p> : null}
-      </div>
-    </label>
-  );
 }
 
 function getLevel1TargetPaths(level1) {
@@ -254,37 +227,8 @@ export default function Management() {
       }),
     [permissions.pageAccess]
   );
-  const pagePermissionsTree = useMemo(
-    () =>
-      MANAGEMENT_PAGE_TREE.map((level1) => {
-        const state = getLevel1SelectionState(level1, permissions.pageAccess);
-        return {
-          path: level1.path,
-          enabled: state.hasAny,
-          pages: level1.children.map((level2) => ({
-            path: level2.path,
-            enabled: Boolean(permissions.pageAccess?.[level2.path]),
-          })),
-        };
-      }),
-    [permissions.pageAccess]
-  );
   const selectedDepartmentsCount = selectedDepartments.length;
   const selectedLevel2PagesCount = selectedLevel2Pages.length;
-
-  const payloadPreview = useMemo(() => {
-    if (!selectedManager) return null;
-
-    return {
-      managerId: selectedManager.permissionId,
-      managerName: selectedManager.label.title,
-      permissions: {
-        departments: selectedDepartments,
-        pages: selectedLevel2Pages,
-        tree: pagePermissionsTree,
-      },
-    };
-  }, [pagePermissionsTree, selectedDepartments, selectedLevel2Pages, selectedManager]);
 
   return (
     <>
@@ -317,82 +261,15 @@ export default function Management() {
                 selectedLevel2PagesCount={selectedLevel2PagesCount}
                 totalLevel2PagesCount={totalLevel2PagesCount}
               />
-              
-              {/* Pages sélectionnées */}
-              <div className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur">
-                <p className="text-sm font-medium text-slate-500">Pages sélectionnées</p>
-
-                <div className="space-y-4 mt-1">
-                  {MANAGEMENT_PAGE_TREE.map((level1) => {
-                    const level1Meta = getPathDisplayMeta(level1.path);
-                    const level1State = getLevel1SelectionState(level1, permissions.pageAccess);
-
-                    return (
-                      <div key={level1.path} >
-                        <button
-                          type="button"
-                          onClick={() => toggleLevel1Group(level1)}
-                          disabled={!effectiveSelectedManagerId}
-                          className={[
-                            "flex w-full items-center justify-start gap-2 text-left text-xl font-bold text-slate-900",
-                            !effectiveSelectedManagerId
-                              ? "cursor-not-allowed opacity-60"
-                              : "cursor-pointer",
-                          ].join(" ")}
-                        >
-                          <span>{level1Meta.label}</span>
-                          <MaterialIcon
-                            name={level1Meta.icon}
-                            size={24}
-                            className={level1State.hasAny ? "text-amber-400" : "text-slate-400"}
-                          />
-                        </button>
-
-                        {level1.children.length > 0 ? (
-                          <div className="mt-3 grid gap-3 pl-4 mb-9">
-                            {level1.children.map((level2) => {
-                              const level2Meta = getPathDisplayMeta(level2.path);
-                              return (
-                                <PermissionCheckbox
-                                  key={level2.path}
-                                  checked={Boolean(permissions.pageAccess?.[level2.path])}
-                                  onChange={() => togglePagePath(level2.path)}
-                                  disabled={!effectiveSelectedManagerId}
-                                  label={
-                                    <span className="inline-flex items-center gap-2">
-                                      <MaterialIcon
-                                        name={level2Meta.icon}
-                                        size={18}
-                                        className="text-slate-600"
-                                      />
-                                      <span>{level2Meta.label}</span>
-                                    </span>
-                                  }
-                                />
-                              );
-                            })}
-                          </div>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Payload de sortie */}
-              <div className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur">
-                <div className="mb-4">
-                  <h3 className="text-xl font-bold text-slate-900">Payload de sortie</h3>
-                  <p className="mt-1 text-sm text-slate-600">
-                    Exemple de structure prête à envoyer à ton backend ou à stocker dans Firestore / API.
-                  </p>
-                </div>
-
-                <pre className="overflow-auto rounded-2xl bg-slate-950 p-4 text-sm text-slate-100">
-{JSON.stringify(payloadPreview, null, 2)}
-                </pre>
-              </div>
-
+              <PagesSelection
+                pageTree={MANAGEMENT_PAGE_TREE}
+                pageAccess={permissions.pageAccess}
+                isDisabled={!effectiveSelectedManagerId}
+                onToggleLevel1={toggleLevel1Group}
+                onToggleLevel2={togglePagePath}
+                getPathDisplayMeta={getPathDisplayMeta}
+                getLevel1SelectionState={getLevel1SelectionState}
+              />
 
             </div>
           </div>
