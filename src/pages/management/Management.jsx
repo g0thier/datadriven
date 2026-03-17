@@ -11,12 +11,16 @@ import {
 } from "../../constants/navigationLinks.js";
 import { getUserCompanyId, onAuthStateChangedListener, subscribeCompanyManagers } from "../../firebase";
 import { buildManagerList } from "../../utils/managers.utils.js";
-import { buildUniquePageTree, flattenPageTreePaths } from "../../utils/navigationTree.utils.js";
+import { buildUniquePageTree } from "../../utils/navigationTree.utils.js";
 
 const MANAGEMENT_LINK_GROUPS = [navbarLinks, innovationLinks, teamLinks, managementLinks];
 const MANAGEMENT_PAGE_EXCEPTIONS = ["/soon"];
 const MANAGEMENT_PAGE_TREE = buildUniquePageTree(MANAGEMENT_LINK_GROUPS, MANAGEMENT_PAGE_EXCEPTIONS);
-const MANAGEMENT_PAGE_PATHS = flattenPageTreePaths(MANAGEMENT_PAGE_TREE);
+const MANAGEMENT_PAGE_LEAF_PATHS = MANAGEMENT_PAGE_TREE.flatMap((level1) =>
+  level1.children.length > 0
+    ? level1.children.map((level2) => level2.path)
+    : [level1.path]
+);
 const MANAGEMENT_LINK_META_BY_PATH = MANAGEMENT_LINK_GROUPS.flat().reduce((map, link) => {
   if (!link?.to || map.has(link.to)) return map;
   map.set(link.to, { label: link.label, icon: link.icon });
@@ -30,7 +34,7 @@ function getPathDisplayMeta(path) {
 }
 
 function buildDefaultPageAccess() {
-  return Object.fromEntries(MANAGEMENT_PAGE_PATHS.map((path) => [path, false]));
+  return Object.fromEntries(MANAGEMENT_PAGE_LEAF_PATHS.map((path) => [path, false]));
 }
 
 const DEFAULT_PERMISSIONS = {
@@ -96,6 +100,24 @@ function PermissionCheckbox({ checked, onChange, label, description, disabled = 
       </div>
     </label>
   );
+}
+
+function getLevel1TargetPaths(level1) {
+  return level1.children.length > 0
+    ? level1.children.map((level2) => level2.path)
+    : [level1.path];
+}
+
+function getLevel1SelectionState(level1, pageAccess) {
+  const targetPaths = getLevel1TargetPaths(level1);
+  const selectedCount = targetPaths.filter((path) => Boolean(pageAccess?.[path])).length;
+
+  return {
+    hasAny: selectedCount > 0,
+    allSelected: selectedCount === targetPaths.length,
+    selectedCount,
+    totalCount: targetPaths.length,
+  };
 }
 
 export default function Management() {
@@ -185,6 +207,27 @@ export default function Management() {
     }));
   }
 
+  function toggleLevel1Group(level1) {
+    updateManagerPermissions((current) => {
+      const nextPageAccess = {
+        ...buildDefaultPageAccess(),
+        ...(current.pageAccess ?? {}),
+      };
+      const targetPaths = getLevel1TargetPaths(level1);
+      const hasAnySelected = targetPaths.some((path) => Boolean(nextPageAccess[path]));
+      const nextValue = !hasAnySelected;
+
+      targetPaths.forEach((path) => {
+        nextPageAccess[path] = nextValue;
+      });
+
+      return {
+        ...current,
+        pageAccess: nextPageAccess,
+      };
+    });
+  }
+
   const totalDepartmentsCount = MANAGEMENT_PAGE_TREE.length;
   const totalLevel2PagesCount = MANAGEMENT_PAGE_TREE.reduce(
     (sum, level1) => sum + level1.children.length,
@@ -192,30 +235,37 @@ export default function Management() {
   );
   const selectedDepartments = useMemo(
     () =>
-      MANAGEMENT_PAGE_TREE.filter((level1) => Boolean(permissions.pageAccess?.[level1.path])).map(
-        (level1) => level1.path
-      ),
+      MANAGEMENT_PAGE_TREE.filter((level1) =>
+        getLevel1SelectionState(level1, permissions.pageAccess).hasAny
+      ).map((level1) => level1.path),
     [permissions.pageAccess]
   );
   const selectedLevel2Pages = useMemo(
     () =>
-      MANAGEMENT_PAGE_TREE.flatMap((level1) =>
-        level1.children
+      MANAGEMENT_PAGE_TREE.flatMap((level1) => {
+        if (level1.children.length === 0) {
+          return permissions.pageAccess?.[level1.path] ? [level1.path] : [];
+        }
+
+        return level1.children
           .filter((level2) => Boolean(permissions.pageAccess?.[level2.path]))
-          .map((level2) => level2.path)
-      ),
+          .map((level2) => level2.path);
+      }),
     [permissions.pageAccess]
   );
   const pagePermissionsTree = useMemo(
     () =>
-      MANAGEMENT_PAGE_TREE.map((level1) => ({
-        path: level1.path,
-        enabled: Boolean(permissions.pageAccess?.[level1.path]),
-        pages: level1.children.map((level2) => ({
-          path: level2.path,
-          enabled: Boolean(permissions.pageAccess?.[level2.path]),
-        })),
-      })),
+      MANAGEMENT_PAGE_TREE.map((level1) => {
+        const state = getLevel1SelectionState(level1, permissions.pageAccess);
+        return {
+          path: level1.path,
+          enabled: state.hasAny,
+          pages: level1.children.map((level2) => ({
+            path: level2.path,
+            enabled: Boolean(permissions.pageAccess?.[level2.path]),
+          })),
+        };
+      }),
     [permissions.pageAccess]
   );
   const selectedDepartmentsCount = selectedDepartments.length;
@@ -273,7 +323,7 @@ export default function Management() {
 
                   <div className="grid grid-cols-2 gap-3 md:min-w-72">
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <p className="text-xs text-slate-500">Départements</p>
+                      <p className="text-xs text-slate-500">Secteur</p>
                       <p className="mt-1 text-2xl font-bold text-slate-900">
                         {selectedDepartmentsCount}/{totalDepartmentsCount}
                       </p>
@@ -294,6 +344,7 @@ export default function Management() {
                 <div className="space-y-4 mt-3">
                   {MANAGEMENT_PAGE_TREE.map((level1) => {
                     const level1Meta = getPathDisplayMeta(level1.path);
+                    const level1State = getLevel1SelectionState(level1, permissions.pageAccess);
 
                     return (
                       <div
@@ -301,8 +352,8 @@ export default function Management() {
                         className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
                       >
                         <PermissionCheckbox
-                          checked={Boolean(permissions.pageAccess?.[level1.path])}
-                          onChange={() => togglePagePath(level1.path)}
+                          checked={level1State.hasAny}
+                          onChange={() => toggleLevel1Group(level1)}
                           disabled={!effectiveSelectedManagerId}
                           label={
                             <span className="inline-flex items-center gap-2">
