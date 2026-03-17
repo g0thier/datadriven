@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import MaterialIcon from "../../components/MaterialIcon.jsx";
 import Navbar from "../../components/Navbar.jsx";
 import SectionNavButtons from "../../components/SectionNavButtons.jsx";
 import ManagersAccess from "../../components/management/ManagersAccess.jsx";
@@ -16,6 +17,17 @@ const MANAGEMENT_LINK_GROUPS = [navbarLinks, innovationLinks, teamLinks, managem
 const MANAGEMENT_PAGE_EXCEPTIONS = ["/soon"];
 const MANAGEMENT_PAGE_TREE = buildUniquePageTree(MANAGEMENT_LINK_GROUPS, MANAGEMENT_PAGE_EXCEPTIONS);
 const MANAGEMENT_PAGE_PATHS = flattenPageTreePaths(MANAGEMENT_PAGE_TREE);
+const MANAGEMENT_LINK_META_BY_PATH = MANAGEMENT_LINK_GROUPS.flat().reduce((map, link) => {
+  if (!link?.to || map.has(link.to)) return map;
+  map.set(link.to, { label: link.label, icon: link.icon });
+  return map;
+}, new Map());
+
+function getPathDisplayMeta(path) {
+  const meta = MANAGEMENT_LINK_META_BY_PATH.get(path);
+  if (meta) return meta;
+  return { label: path, icon: "route" };
+}
 
 function buildDefaultPageAccess() {
   return Object.fromEntries(MANAGEMENT_PAGE_PATHS.map((path) => [path, false]));
@@ -280,32 +292,54 @@ export default function Management() {
                 <p className="text-sm font-medium text-slate-500">Pages sélectionnées</p>
 
                 <div className="space-y-4 mt-3">
-                  {MANAGEMENT_PAGE_TREE.map((level1) => (
-                    <div key={level1.path} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <PermissionCheckbox
-                        checked={Boolean(permissions.pageAccess?.[level1.path])}
-                        onChange={() => togglePagePath(level1.path)}
-                        disabled={!effectiveSelectedManagerId}
-                        label={level1.path}
-                        description="Niveau 1"
-                      />
+                  {MANAGEMENT_PAGE_TREE.map((level1) => {
+                    const level1Meta = getPathDisplayMeta(level1.path);
 
-                      {level1.children.length > 0 ? (
-                        <div className="mt-3 grid gap-3 pl-4">
-                          {level1.children.map((level2) => (
-                            <PermissionCheckbox
-                              key={level2.path}
-                              checked={Boolean(permissions.pageAccess?.[level2.path])}
-                              onChange={() => togglePagePath(level2.path)}
-                              disabled={!effectiveSelectedManagerId}
-                              label={level2.path}
-                              description={`Niveau 2 de ${level1.path}`}
-                            />
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
-                  ))}
+                    return (
+                      <div
+                        key={level1.path}
+                        className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                      >
+                        <PermissionCheckbox
+                          checked={Boolean(permissions.pageAccess?.[level1.path])}
+                          onChange={() => togglePagePath(level1.path)}
+                          disabled={!effectiveSelectedManagerId}
+                          label={
+                            <span className="inline-flex items-center gap-2">
+                              <MaterialIcon name={level1Meta.icon} size={18} className="text-slate-600" />
+                              <span>{level1Meta.label}</span>
+                            </span>
+                          }
+                        />
+
+                        {level1.children.length > 0 ? (
+                          <div className="mt-3 grid gap-3 pl-4">
+                            {level1.children.map((level2) => {
+                              const level2Meta = getPathDisplayMeta(level2.path);
+                              return (
+                                <PermissionCheckbox
+                                  key={level2.path}
+                                  checked={Boolean(permissions.pageAccess?.[level2.path])}
+                                  onChange={() => togglePagePath(level2.path)}
+                                  disabled={!effectiveSelectedManagerId}
+                                  label={
+                                    <span className="inline-flex items-center gap-2">
+                                      <MaterialIcon
+                                        name={level2Meta.icon}
+                                        size={18}
+                                        className="text-slate-600"
+                                      />
+                                      <span>{level2Meta.label}</span>
+                                    </span>
+                                  }
+                                />
+                              );
+                            })}
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
