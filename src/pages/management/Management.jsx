@@ -155,6 +155,7 @@ export default function Management() {
   const selectedManager = managers.find(
     (manager) => manager.permissionId === effectiveSelectedManagerId
   );
+  const isOwnerProfile = String(selectedManager?.role || "").trim().toLowerCase() === "owner";
 
   function updateManagerPermissions(updater) {
     if (!effectiveSelectedManagerId) return;
@@ -229,6 +230,12 @@ export default function Management() {
   );
   const selectedDepartmentsCount = selectedDepartments.length;
   const selectedLevel2PagesCount = selectedLevel2Pages.length;
+  const effectiveSelectedDepartmentsCount = isOwnerProfile
+    ? totalDepartmentsCount
+    : selectedDepartmentsCount;
+  const effectiveSelectedLevel2PagesCount = isOwnerProfile
+    ? totalLevel2PagesCount
+    : selectedLevel2PagesCount;
 
   return (
     <>
@@ -256,15 +263,16 @@ export default function Management() {
             <div className="grid gap-6">
               <ManagerSummary
                 selectedManager={selectedManager}
-                selectedDepartmentsCount={selectedDepartmentsCount}
+                selectedDepartmentsCount={effectiveSelectedDepartmentsCount}
                 totalDepartmentsCount={totalDepartmentsCount}
-                selectedLevel2PagesCount={selectedLevel2PagesCount}
+                selectedLevel2PagesCount={effectiveSelectedLevel2PagesCount}
                 totalLevel2PagesCount={totalLevel2PagesCount}
               />
               <PagesSelection
                 pageTree={MANAGEMENT_PAGE_TREE}
                 pageAccess={permissions.pageAccess}
                 isDisabled={!effectiveSelectedManagerId}
+                isOwnerProfile={isOwnerProfile}
                 onToggleLevel1={toggleLevel1Group}
                 onToggleLevel2={togglePagePath}
                 getPathDisplayMeta={getPathDisplayMeta}

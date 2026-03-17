@@ -27,10 +27,13 @@ export default function ManagersAccess({
         ) : (
           managers.map((manager) => {
             const isActive = manager.permissionId === selectedManagerId;
+            const isOwnerProfile = String(manager?.role || "").trim().toLowerCase() === "owner";
             const managerPermissions =
               permissionsByManager[manager.permissionId] ?? EMPTY_MANAGER_PERMISSIONS;
             const enabledPages = Object.values(managerPermissions.pageAccess ?? {}).filter(Boolean)
               .length;
+            const leaderAccessLabel =
+              enabledPages >= 2 ? `${enabledPages} pages actives` : `${enabledPages} page active`;
 
             return (
               <button
@@ -60,7 +63,7 @@ export default function ManagersAccess({
                       isActive ? "bg-white/15 text-white" : "bg-slate-100 text-slate-700",
                     ].join(" ")}
                   >
-                    {enabledPages} page(s) active(s)
+                    {isOwnerProfile ? "Full access" : leaderAccessLabel}
                   </span>
                 </div>
               </button>
