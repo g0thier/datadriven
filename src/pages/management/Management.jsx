@@ -178,14 +178,36 @@ export default function Management() {
     (sum, level1) => sum + level1.children.length,
     0
   );
-  const selectedDepartmentsCount = MANAGEMENT_PAGE_TREE.filter((level1) =>
-    Boolean(permissions.pageAccess?.[level1.path])
-  ).length;
-  const selectedLevel2PagesCount = MANAGEMENT_PAGE_TREE.reduce(
-    (sum, level1) =>
-      sum + level1.children.filter((level2) => Boolean(permissions.pageAccess?.[level2.path])).length,
-    0
+  const selectedDepartments = useMemo(
+    () =>
+      MANAGEMENT_PAGE_TREE.filter((level1) => Boolean(permissions.pageAccess?.[level1.path])).map(
+        (level1) => level1.path
+      ),
+    [permissions.pageAccess]
   );
+  const selectedLevel2Pages = useMemo(
+    () =>
+      MANAGEMENT_PAGE_TREE.flatMap((level1) =>
+        level1.children
+          .filter((level2) => Boolean(permissions.pageAccess?.[level2.path]))
+          .map((level2) => level2.path)
+      ),
+    [permissions.pageAccess]
+  );
+  const pagePermissionsTree = useMemo(
+    () =>
+      MANAGEMENT_PAGE_TREE.map((level1) => ({
+        path: level1.path,
+        enabled: Boolean(permissions.pageAccess?.[level1.path]),
+        pages: level1.children.map((level2) => ({
+          path: level2.path,
+          enabled: Boolean(permissions.pageAccess?.[level2.path]),
+        })),
+      })),
+    [permissions.pageAccess]
+  );
+  const selectedDepartmentsCount = selectedDepartments.length;
+  const selectedLevel2PagesCount = selectedLevel2Pages.length;
 
   const payloadPreview = useMemo(() => {
     if (!selectedManager) return null;
@@ -194,13 +216,12 @@ export default function Management() {
       managerId: selectedManager.permissionId,
       managerName: selectedManager.label.title,
       permissions: {
-        pages: permissions.pageAccess,
-        sections: {
-          team: permissions.teamSections,
-        },
+        departments: selectedDepartments,
+        pages: selectedLevel2Pages,
+        tree: pagePermissionsTree,
       },
     };
-  }, [permissions, selectedManager]);
+  }, [pagePermissionsTree, selectedDepartments, selectedLevel2Pages, selectedManager]);
 
   return (
     <>
