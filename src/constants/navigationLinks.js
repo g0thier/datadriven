@@ -8,7 +8,7 @@ export const navbarLinks = [
 ];
 
 export const innovationLinks = [
-  { label: "Innovation", to: "/innovation/accueil", icon: "emoji_objects", end: true },
+  { label: "Innovation", to: "/innovation/ateliers", icon: "emoji_objects", end: true },
   { label: "Mes événements", to: "/innovation/scheduled", icon: "event", end: true },
 ];
 

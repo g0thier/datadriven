@@ -43,8 +43,8 @@ function App() {
           <Route element={( <ProtectedRoute> <Outlet /> </ProtectedRoute> )}>
 
             {/* Innovation routes */}
-            <Route path="/innovation" element={<Navigate to="/innovation/accueil" replace />} />
-            <Route path="/innovation/accueil" element={<Innovation />} />
+            <Route path="/innovation" element={<Navigate to="/innovation/ateliers" replace />} />
+            <Route path="/innovation/ateliers" element={<Innovation />} />
             <Route path="/innovation/scheduled" element={<MyEvents />} />
             <Route path="/innovation/invitation" element={<WorkshopInvitation />} />
             <Route path="/innovation/:workshopId/:id" element={<WorkshopRunner />} />
