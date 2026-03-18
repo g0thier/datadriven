@@ -1,0 +1,156 @@
+import { useEffect, useMemo, useState } from "react";
+import { onValue, ref } from "firebase/database";
+import { database, onAuthStateChangedListener } from "../firebase";
+import { APP_ROLES, COLAB_DEFAULT_REDIRECT_PATH } from "../constants/routeAccess.js";
+import {
+  isRouteAllowedForRole,
+  normalizeLeaderPageAccess,
+  resolveAuthorizedTargetPath,
+  resolveFirstAllowedPath,
+} from "../utils/routeAccess.utils.js";
+
+const ROLE_SET = new Set([APP_ROLES.OWNER, APP_ROLES.LEADER, APP_ROLES.COLAB]);
+
+function normalizeRole(role = "") {
+  const normalizedRole = String(role || "").trim().toLowerCase();
+  return ROLE_SET.has(normalizedRole) ? normalizedRole : APP_ROLES.COLAB;
+}
+
+export default function useRouteAuthorization() {
+  const [user, setUser] = useState(undefined);
+  const [role, setRole] = useState(APP_ROLES.COLAB);
+  const [companyId, setCompanyId] = useState("");
+  const [leaderPageAccess, setLeaderPageAccess] = useState([]);
+  const [isProfileLoading, setIsProfileLoading] = useState(false);
+  const [isLeaderPermissionsLoading, setIsLeaderPermissionsLoading] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChangedListener((currentUser) => {
+      if (!currentUser) {
+        setUser(null);
+        setRole(APP_ROLES.COLAB);
+        setCompanyId("");
+        setLeaderPageAccess([]);
+        setIsProfileLoading(false);
+        setIsLeaderPermissionsLoading(false);
+        return;
+      }
+
+      setUser(currentUser);
+      setIsProfileLoading(true);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!user?.uid) {
+      return () => {};
+    }
+
+    const userRef = ref(database, `users/${user.uid}`);
+    const unsubscribe = onValue(
+      userRef,
+      (snapshot) => {
+        const userData = snapshot.exists() ? snapshot.val() || {} : {};
+        const normalizedRole = normalizeRole(userData?.role);
+        const nextCompanyId = String(userData?.companyId || "").trim();
+
+        setRole(normalizedRole);
+        setCompanyId(nextCompanyId);
+        if (normalizedRole === APP_ROLES.LEADER && nextCompanyId) {
+          setIsLeaderPermissionsLoading(true);
+        } else {
+          setLeaderPageAccess([]);
+          setIsLeaderPermissionsLoading(false);
+        }
+        setIsProfileLoading(false);
+      },
+      (error) => {
+        console.error("Impossible de charger le profil utilisateur pour les droits :", error);
+        setRole(APP_ROLES.COLAB);
+        setCompanyId("");
+        setLeaderPageAccess([]);
+        setIsLeaderPermissionsLoading(false);
+        setIsProfileLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user?.uid]);
+
+  useEffect(() => {
+    if (!user?.uid || role !== APP_ROLES.LEADER || !companyId) {
+      return () => {};
+    }
+
+    const permissionsRef = ref(
+      database,
+      `companies/${companyId}/managerPermissions/${user.uid}/pageAccess`
+    );
+    const unsubscribe = onValue(
+      permissionsRef,
+      (snapshot) => {
+        const value = snapshot.exists() ? snapshot.val() : [];
+        setLeaderPageAccess(normalizeLeaderPageAccess(value));
+        setIsLeaderPermissionsLoading(false);
+      },
+      (error) => {
+        console.error("Impossible de charger les permissions du leader :", error);
+        setLeaderPageAccess([]);
+        setIsLeaderPermissionsLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [companyId, role, user?.uid]);
+
+  const isLoading =
+    user === undefined ||
+    (Boolean(user) && isProfileLoading) ||
+    (Boolean(user) && role === APP_ROLES.LEADER && isLeaderPermissionsLoading);
+
+  const canAccessPath = useMemo(
+    () => (path) => isRouteAllowedForRole({ role, path, leaderPageAccess }),
+    [leaderPageAccess, role]
+  );
+
+  const resolveBestPath = useMemo(
+    () => (candidatePaths, fallbackPath = COLAB_DEFAULT_REDIRECT_PATH) =>
+      resolveFirstAllowedPath({
+        candidatePaths,
+        role,
+        leaderPageAccess,
+        fallbackPath,
+      }),
+    [leaderPageAccess, role]
+  );
+
+  const resolveTargetPath = useMemo(
+    () => (
+      targetPath,
+      candidatePaths = [],
+      fallbackPath = COLAB_DEFAULT_REDIRECT_PATH
+    ) =>
+      resolveAuthorizedTargetPath({
+        targetPath,
+        candidatePaths,
+        role,
+        leaderPageAccess,
+        fallbackPath,
+      }),
+    [leaderPageAccess, role]
+  );
+
+  return {
+    user,
+    role,
+    companyId,
+    leaderPageAccess,
+    isLoading,
+    isAuthenticated: Boolean(user),
+    canAccessPath,
+    resolveBestPath,
+    resolveTargetPath,
+  };
+}

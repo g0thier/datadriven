@@ -1,10 +1,16 @@
 import { lazy } from 'react';
 import { Suspense } from "react";
-import { BrowserRouter, Navigate, Outlet, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Outlet, Routes, Route } from "react-router-dom";
 import './App.css'
 
 import ProtectedRoute from "./components/ProtectedRoute";
+import SectionRouteRedirect from "./components/SectionRouteRedirect.jsx";
 import RouteFallback from './components/fallback/RouteFallback.jsx'
+import {
+  innovationLinks,
+  managementLinks,
+  teamLinks,
+} from "./constants/navigationLinks.js";
 
 import Mail from "./emails/Mail.jsx";
 
@@ -43,19 +49,19 @@ function App() {
           <Route element={( <ProtectedRoute> <Outlet /> </ProtectedRoute> )}>
 
             {/* Innovation routes */}
-            <Route path="/innovation" element={<Navigate to="/innovation/ateliers" replace />} />
+            <Route path="/innovation" element={<SectionRouteRedirect links={innovationLinks} />} />
             <Route path="/innovation/ateliers" element={<Innovation />} />
             <Route path="/innovation/scheduled" element={<MyEvents />} />
             <Route path="/innovation/invitation" element={<WorkshopInvitation />} />
             <Route path="/innovation/:workshopId/:id" element={<WorkshopRunner />} />
 
             {/* Team routes */}
-            <Route path="/team" element={<Navigate to="/team/annuaire" replace />} />
+            <Route path="/team" element={<SectionRouteRedirect links={teamLinks} />} />
             <Route path="/team/annuaire" element={<Team />} />
             <Route path="/soon" element={<Soon />} />
 
             {/* Management routes */}
-            <Route path="/management" element={<Navigate to="/management/comptes" replace />} />
+            <Route path="/management" element={<SectionRouteRedirect links={managementLinks} />} />
             <Route path="/management/comptes" element={<Management />} />
             <Route path="/management/abonnement" element={<Abonnement />} />
             
