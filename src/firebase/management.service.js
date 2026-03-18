@@ -1,9 +1,25 @@
-import { get, onValue, ref } from "firebase/database";
+import { get, onValue, ref, update } from "firebase/database";
 import { database } from "./app";
 
 const MANAGEMENT_ROLES = new Set(["owner", "leader"]);
 
 const normalizeRole = (role) => String(role || "").trim().toLowerCase();
+const normalizePageAccessList = (value) => {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => String(item || "").trim())
+      .filter(Boolean);
+  }
+
+  if (value && typeof value === "object") {
+    return Object.entries(value)
+      .filter(([, isEnabled]) => Boolean(isEnabled))
+      .map(([path]) => String(path || "").trim())
+      .filter(Boolean);
+  }
+
+  return [];
+};
 
 const toManagerViewModel = (uid, employeeData = {}, userData = {}) => {
   const firstName = userData.firstName || "";
@@ -59,4 +75,42 @@ export const subscribeCompanyManagers = (companyId, callback) => {
 
     callback(sortedManagers);
   });
+};
+
+export const getCompanyManagerPermissions = async (companyId) => {
+  if (!companyId) return {};
+
+  const snapshot = await get(ref(database, `companies/${companyId}/managerPermissions`));
+  if (!snapshot.exists()) return {};
+
+  const source = snapshot.val() || {};
+  const next = {};
+
+  Object.entries(source).forEach(([userId, value]) => {
+    if (!userId) return;
+    next[String(userId)] = {
+      role: normalizeRole(value?.role),
+      pageAccess: normalizePageAccessList(value?.pageAccess),
+    };
+  });
+
+  return next;
+};
+
+export const upsertCompanyManagerPermissions = async (companyId, userId, patch = {}) => {
+  if (!companyId || !userId) return;
+
+  const payload = {
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (Object.prototype.hasOwnProperty.call(patch, "role")) {
+    payload.role = normalizeRole(patch.role);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(patch, "pageAccess")) {
+    payload.pageAccess = normalizePageAccessList(patch.pageAccess);
+  }
+
+  await update(ref(database, `companies/${companyId}/managerPermissions/${userId}`), payload);
 };

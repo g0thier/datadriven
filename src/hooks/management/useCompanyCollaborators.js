@@ -3,6 +3,7 @@ import {
   getUserCompanyId,
   onAuthStateChangedListener,
   subscribeCompanyMembers,
+  upsertCompanyManagerPermissions,
   updateCompanyMember,
 } from "../../firebase";
 
@@ -52,6 +53,7 @@ export default function useCompanyCollaborators() {
 
     try {
       await updateCompanyMember(companyId, nextId, { role: "leader" });
+      await upsertCompanyManagerPermissions(companyId, nextId, { role: "leader" });
     } catch (error) {
       console.error("Impossible de promouvoir le collaborateur en leader :", error);
       setPromotionError("Impossible de passer ce collaborateur en leader.");

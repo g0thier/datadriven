@@ -1,5 +1,9 @@
-import { useMemo, useState } from "react";
-import { buildDefaultPageAccess, cloneDefaultPermissions } from "../../utils/management/permissions.defaults.js";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { getCompanyManagerPermissions, upsertCompanyManagerPermissions } from "../../firebase";
+import {
+  buildDefaultPageAccess,
+  cloneDefaultPermissions,
+} from "../../utils/management/permissions.defaults.js";
 import { normalizePermissions } from "../../utils/management/permissions.normalizers.js";
 import {
   getLevel1TargetPaths,
@@ -9,9 +13,66 @@ import {
   isOwnerProfile,
 } from "../../utils/management/permissions.selectors.js";
 
-export default function useManagerPermissions({ managers, pageTree, pageLeafPaths }) {
+const normalizeRole = (role) => String(role || "").trim().toLowerCase();
+
+const listEnabledPagePaths = (pageAccess = {}) =>
+  Object.entries(pageAccess)
+    .filter(([, isEnabled]) => Boolean(isEnabled))
+    .map(([path]) => path);
+
+function mapPersistedPermissionsToState(persistedPermissions = {}, pageLeafPaths = []) {
+  const source = persistedPermissions ?? {};
+  const next = {};
+
+  Object.entries(source).forEach(([managerId, managerPermission]) => {
+    if (!managerId) return;
+
+    const nextPageAccess = {
+      ...buildDefaultPageAccess(pageLeafPaths),
+    };
+
+    const persistedPaths = Array.isArray(managerPermission?.pageAccess)
+      ? managerPermission.pageAccess
+      : [];
+
+    persistedPaths.forEach((path) => {
+      const normalizedPath = String(path || "").trim();
+      if (!normalizedPath) return;
+      nextPageAccess[normalizedPath] = true;
+    });
+
+    next[String(managerId)] = {
+      pageAccess: nextPageAccess,
+    };
+  });
+
+  return next;
+}
+
+function buildPersistedPayload(manager, managerPermissions, pageLeafPaths) {
+  const role = normalizeRole(manager?.role);
+  const pageAccess =
+    role === "owner"
+      ? [...pageLeafPaths]
+      : listEnabledPagePaths(managerPermissions?.pageAccess ?? {});
+
+  return { role, pageAccess };
+}
+
+export default function useManagerPermissions({
+  companyId,
+  managers,
+  pageTree,
+  pageLeafPaths,
+}) {
   const [selectedManagerId, setSelectedManagerId] = useState("");
   const [permissionsByManager, setPermissionsByManager] = useState({});
+  const [isHydrated, setIsHydrated] = useState(false);
+  const lastPersistedSignaturesRef = useRef({});
+
+  useEffect(() => {
+    lastPersistedSignaturesRef.current = {};
+  }, [companyId]);
 
   const normalizedPermissionsByManager = useMemo(
     () => normalizePermissions(permissionsByManager, managers, pageLeafPaths),
@@ -37,6 +98,78 @@ export default function useManagerPermissions({ managers, pageTree, pageLeafPath
     [effectiveSelectedManagerId, managers]
   );
   const ownerProfile = isOwnerProfile(selectedManager);
+
+  useEffect(() => {
+    let isSubscribed = true;
+
+    if (!companyId) {
+      setPermissionsByManager({});
+      setIsHydrated(false);
+      return () => {
+        isSubscribed = false;
+      };
+    }
+
+    setIsHydrated(false);
+
+    const loadPersistedPermissions = async () => {
+      try {
+        const persistedPermissions = await getCompanyManagerPermissions(companyId);
+        if (!isSubscribed) return;
+
+        setPermissionsByManager(
+          mapPersistedPermissionsToState(persistedPermissions, pageLeafPaths)
+        );
+      } catch (error) {
+        console.error("Impossible de charger les permissions des managers :", error);
+        if (!isSubscribed) return;
+        setPermissionsByManager({});
+      } finally {
+        if (isSubscribed) {
+          setIsHydrated(true);
+        }
+      }
+    };
+
+    loadPersistedPermissions();
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [companyId, pageLeafPaths]);
+
+  useEffect(() => {
+    if (!companyId || !isHydrated) return;
+
+    const managerIds = new Set(managers.map((manager) => String(manager.permissionId)));
+    Object.keys(lastPersistedSignaturesRef.current).forEach((managerId) => {
+      if (!managerIds.has(managerId)) {
+        delete lastPersistedSignaturesRef.current[managerId];
+      }
+    });
+
+    managers.forEach((manager) => {
+      const managerId = String(manager.permissionId || "").trim();
+      if (!managerId) return;
+
+      const managerPermissions =
+        normalizedPermissionsByManager[managerId] ?? cloneDefaultPermissions(pageLeafPaths);
+      const payload = buildPersistedPayload(manager, managerPermissions, pageLeafPaths);
+      const signature = JSON.stringify(payload);
+
+      if (lastPersistedSignaturesRef.current[managerId] === signature) return;
+
+      lastPersistedSignaturesRef.current[managerId] = signature;
+
+      upsertCompanyManagerPermissions(companyId, managerId, payload).catch((error) => {
+        console.error(
+          `Impossible d'enregistrer les permissions du manager ${managerId} :`,
+          error
+        );
+        delete lastPersistedSignaturesRef.current[managerId];
+      });
+    });
+  }, [companyId, isHydrated, managers, normalizedPermissionsByManager, pageLeafPaths]);
 
   function updateManagerPermissions(updater) {
     if (!effectiveSelectedManagerId) return;
@@ -110,7 +243,7 @@ export default function useManagerPermissions({ managers, pageTree, pageLeafPath
     pageAccess: permissions.pageAccess,
     selectedManager,
     isOwnerProfile: ownerProfile,
-    isPagesSelectionDisabled: !effectiveSelectedManagerId,
+    isPagesSelectionDisabled: !effectiveSelectedManagerId || !isHydrated,
     toggleLevel1Group,
     togglePagePath,
     totalDepartmentsCount,

@@ -3,6 +3,7 @@ import {
   getUserCompanyId,
   onAuthStateChangedListener,
   subscribeCompanyManagers,
+  upsertCompanyManagerPermissions,
   updateCompanyMember,
 } from "../../firebase";
 import { buildManagerList } from "../../utils/managers.utils.js";
@@ -23,6 +24,7 @@ export default function useCompanyManagers() {
 
     try {
       await updateCompanyMember(companyId, nextId, { role: "colab" });
+      await upsertCompanyManagerPermissions(companyId, nextId, { role: "colab" });
     } catch (error) {
       console.error("Impossible de passer ce leader en collaborateur :", error);
       setDemotionError("Impossible de retirer ce leader pour le moment.");
@@ -62,6 +64,7 @@ export default function useCompanyManagers() {
   }, [companyId]);
 
   return {
+    companyId,
     managers,
     demoteManager,
     demotingManagerId,

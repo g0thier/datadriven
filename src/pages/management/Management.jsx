@@ -11,7 +11,8 @@ import useManagementPageTree from "../../hooks/management/useManagementPageTree.
 import useManagerPermissions from "../../hooks/management/useManagerPermissions.js";
 
 export default function Management() {
-  const { managers, demoteManager, demotingManagerId, demotionError } = useCompanyManagers();
+  const { companyId, managers, demoteManager, demotingManagerId, demotionError } =
+    useCompanyManagers();
   const {
     collaborators,
     promoteCollaborator,
@@ -35,6 +36,7 @@ export default function Management() {
     selectedDepartmentsCount,
     selectedLevel2PagesCount,
   } = useManagerPermissions({
+    companyId,
     managers,
     pageTree,
     pageLeafPaths,
