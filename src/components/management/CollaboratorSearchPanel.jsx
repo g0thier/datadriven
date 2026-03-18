@@ -62,7 +62,7 @@ export default function CollaboratorSearchPanel({
                 className={[
                   "w-full rounded-xl border px-4 py-3 text-left transition",
                   promotingCollaboratorId === collaborator.collaboratorId
-                    ? "cursor-wait border-slate-300 bg-slate-100"
+                    ? "border-slate-300 bg-slate-100"
                     : "cursor-pointer border-slate-200 bg-white hover:bg-slate-50",
                 ].join(" ")}
               >

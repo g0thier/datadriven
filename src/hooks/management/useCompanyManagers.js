@@ -1,11 +1,35 @@
 import { useEffect, useMemo, useState } from "react";
-import { getUserCompanyId, onAuthStateChangedListener, subscribeCompanyManagers } from "../../firebase";
+import {
+  getUserCompanyId,
+  onAuthStateChangedListener,
+  subscribeCompanyManagers,
+  updateCompanyMember,
+} from "../../firebase";
 import { buildManagerList } from "../../utils/managers.utils.js";
 
 export default function useCompanyManagers() {
   const [companyId, setCompanyId] = useState(null);
   const [managerRecords, setManagerRecords] = useState([]);
+  const [demotingManagerId, setDemotingManagerId] = useState("");
+  const [demotionError, setDemotionError] = useState("");
   const managers = useMemo(() => buildManagerList(managerRecords), [managerRecords]);
+
+  async function demoteManager(managerId) {
+    const nextId = String(managerId || "").trim();
+    if (!companyId || !nextId) return;
+
+    setDemotingManagerId(nextId);
+    setDemotionError("");
+
+    try {
+      await updateCompanyMember(companyId, nextId, { role: "colab" });
+    } catch (error) {
+      console.error("Impossible de passer ce leader en collaborateur :", error);
+      setDemotionError("Impossible de retirer ce leader pour le moment.");
+    } finally {
+      setDemotingManagerId("");
+    }
+  }
 
   useEffect(() => {
     const unsubscribe = onAuthStateChangedListener(async (currentUser) => {
@@ -37,5 +61,10 @@ export default function useCompanyManagers() {
     return () => unsubscribe();
   }, [companyId]);
 
-  return { managers };
+  return {
+    managers,
+    demoteManager,
+    demotingManagerId,
+    demotionError,
+  };
 }

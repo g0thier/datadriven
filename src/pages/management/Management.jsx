@@ -11,7 +11,7 @@ import useManagementPageTree from "../../hooks/management/useManagementPageTree.
 import useManagerPermissions from "../../hooks/management/useManagerPermissions.js";
 
 export default function Management() {
-  const { managers } = useCompanyManagers();
+  const { managers, demoteManager, demotingManagerId, demotionError } = useCompanyManagers();
   const {
     collaborators,
     promoteCollaborator,
@@ -62,6 +62,9 @@ export default function Management() {
                 selectedManagerId={selectedManagerId}
                 permissionsByManager={permissionsByManager}
                 onSelectManager={onSelectManager}
+                onDemoteManager={demoteManager}
+                demotingManagerId={demotingManagerId}
+                demotionError={demotionError}
               />
 
               <CollaboratorSearchPanel
