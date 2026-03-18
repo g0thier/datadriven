@@ -50,36 +50,40 @@ export default function Abonnement() {
             />
           </div>
 
-          <div className="grid grid-cols-5 gap-3">
+          <div className="mx-auto grid max-w-7xl gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {PLANS.map((plan) => (
               <article
                 key={plan.name}
                 className={[
-                  "group overflow-hidden rounded-xl bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
+                  "group h-full overflow-hidden rounded-2xl bg-white shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl",
                   plan.isRecommended ? "ring-2 ring-indigo-200" : "",
                 ].join(" ")}
               >
                 <div
-                  className={`relative bg-linear-to-r ${plan.accent} px-3 pb-3 pt-3 text-white`}
+                  className={`relative h-48 overflow-hidden bg-linear-to-r ${plan.accent} p-4 text-white`}
                 >
+                  <div className="absolute inset-0 bg-linear-to-t from-black/25 to-transparent" />
+
                   {plan.isRecommended ? (
-                    <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-indigo-500/35 px-1.5 py-0.5 text-[10px] font-semibold">
+                    <span className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-indigo-500/35 px-2 py-1 text-xs font-semibold">
                       <span>⭐</span>
                       Recommandé
                     </span>
                   ) : null}
 
-                  <p className="pr-12 text-xs font-medium text-white/85">{plan.name}</p>
-                  <p className="mt-1 text-xl font-bold leading-none">
-                    {formatMonthlyPriceLabel(plan.monthlyPrice)}
-                  </p>
-                  <p className="mt-1 text-[10px] text-white/80">Prix mensuel</p>
+                  <div className="relative z-10 flex h-full flex-col justify-end">
+                    <p className="pr-20 text-sm font-medium text-white/85">{plan.name}</p>
+                    <p className="mt-2 text-4xl font-bold leading-none">
+                      {formatMonthlyPriceLabel(plan.monthlyPrice)}
+                    </p>
+                    <p className="mt-1 text-sm text-white/80">Prix mensuel</p>
+                  </div>
                 </div>
 
-                <div className="space-y-2 p-3">
-                  <p className="text-xs leading-snug text-slate-700">{plan.description}</p>
+                <div className="space-y-4 p-6">
+                  <p className="text-sm leading-snug text-gray-700">{plan.description}</p>
 
-                  <ul className="space-y-1 text-xs text-slate-700">
+                  <ul className="space-y-1 text-sm text-gray-600">
                     {[
                       formatManagersLabel(plan.managers),
                       formatCollaboratorsLabel(plan.collaborators),
@@ -94,10 +98,19 @@ export default function Abonnement() {
               </article>
             ))}
 
-            <article className="flex items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-100/80 p-3 shadow-sm">
-              <p className="inline-flex flex-col items-center gap-1 text-xs font-semibold text-slate-500">
-                À venir
-              </p>
+            <article className="group h-full overflow-hidden rounded-2xl border border-dashed border-slate-300 bg-white shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
+              <div className="relative flex h-48 items-center justify-center bg-slate-100">
+                <p className="text-sm font-semibold text-slate-500">À venir</p>
+              </div>
+              <div className="space-y-4 p-6">
+                <p className="text-sm text-gray-700">Un nouveau plan sera disponible bientôt.</p>
+                <ul className="space-y-1 text-sm text-gray-600">
+                  <li className="flex items-start gap-1.5">
+                    <span className="mt-1 text-indigo-500">✔</span>
+                    <span>Fonctionnalités en préparation</span>
+                  </li>
+                </ul>
+              </div>
             </article>
           </div>
         </div>
