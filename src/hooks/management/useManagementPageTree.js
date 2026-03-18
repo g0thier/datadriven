@@ -5,15 +5,29 @@ import {
   navbarLinks,
   teamLinks,
 } from "../../constants/navigationLinks.js";
+import { COLAB_RESTRICTED_LINKS } from "../../constants/routeAccess.js";
 import { buildUniquePageTree } from "../../utils/navigationTree.utils.js";
 
 const MANAGEMENT_LINK_GROUPS = [navbarLinks, innovationLinks, teamLinks, managementLinks];
 const MANAGEMENT_PAGE_EXCEPTIONS = ["/soon"];
+const RESTRICTED_PATHS = new Set(
+  (COLAB_RESTRICTED_LINKS || [])
+    .map((path) => String(path || "").trim())
+    .filter(Boolean)
+);
 
 export default function useManagementPageTree() {
-  const pageTree = useMemo(
-    () => buildUniquePageTree(MANAGEMENT_LINK_GROUPS, MANAGEMENT_PAGE_EXCEPTIONS),
+  const restrictedLinkGroups = useMemo(
+    () =>
+      MANAGEMENT_LINK_GROUPS.map((group) =>
+        group.filter((link) => RESTRICTED_PATHS.has(String(link?.to || "").trim()))
+      ),
     []
+  );
+
+  const pageTree = useMemo(
+    () => buildUniquePageTree(restrictedLinkGroups, MANAGEMENT_PAGE_EXCEPTIONS),
+    [restrictedLinkGroups]
   );
 
   const pageLeafPaths = useMemo(
