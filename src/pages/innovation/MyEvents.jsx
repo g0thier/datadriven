@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import MaterialIcon from "../../components/MaterialIcon.jsx";
 import Navbar from "../../components/Navbar.jsx";
@@ -92,20 +92,32 @@ export default function MyEvents() {
   const [uid, setUid] = useState(() => auth.currentUser?.uid || "");
   const [sessions, setSessions] = useState([]);
   const [isLoading, setIsLoading] = useState(() => Boolean(auth.currentUser?.uid));
+  const [loadError, setLoadError] = useState("");
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const uidRef = useRef(uid);
+
+  useEffect(() => {
+    uidRef.current = uid;
+  }, [uid]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChangedListener((currentUser) => {
       const nextUid = currentUser?.uid || "";
+      const hasUidChanged = uidRef.current !== nextUid;
+      uidRef.current = nextUid;
       setUid(nextUid);
 
       if (!nextUid) {
         setSessions([]);
+        setLoadError("");
         setIsLoading(false);
         return;
       }
 
-      setIsLoading(true);
+      if (hasUidChanged) {
+        setLoadError("");
+        setIsLoading(true);
+      }
     });
 
     return () => unsubscribe();
@@ -114,10 +126,19 @@ export default function MyEvents() {
   useEffect(() => {
     if (!uid) return () => {};
 
-    const unsubscribe = subscribeUserWorkshopSessions(uid, (nextSessions) => {
-      setSessions(nextSessions);
-      setIsLoading(false);
-    });
+    const unsubscribe = subscribeUserWorkshopSessions(
+      uid,
+      (nextSessions) => {
+        setSessions(nextSessions);
+        setLoadError("");
+        setIsLoading(false);
+      },
+      () => {
+        setSessions([]);
+        setLoadError("Impossible de charger les événements pour le moment.");
+        setIsLoading(false);
+      }
+    );
 
     return () => unsubscribe();
   }, [uid]);
@@ -169,6 +190,10 @@ export default function MyEvents() {
           {isLoading ? (
             <p className="rounded-xl bg-white p-4 text-sm text-slate-600 shadow-sm">
               Chargement des événements...
+            </p>
+          ) : loadError ? (
+            <p className="rounded-xl bg-white p-4 text-sm text-red-600 shadow-sm">
+              {loadError}
             </p>
           ) : (
             <div className="space-y-10">

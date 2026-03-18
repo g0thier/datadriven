@@ -116,32 +116,46 @@ export const getWorkshopSession = async (sessionId) => {
   return { id: sessionId, ...snapshot.val() };
 };
 
-export const subscribeUserWorkshopSessions = (userId, callback) => {
+export const subscribeUserWorkshopSessions = (userId, callback, onError) => {
+  const safeCallback = typeof callback === "function" ? callback : () => {};
+  const safeOnError = typeof onError === "function" ? onError : null;
+
   if (!userId) {
-    callback([]);
+    safeCallback([]);
     return () => {};
   }
 
   const userSessionsRef = ref(database, `users/${userId}/workshopSessions`);
-  return onValue(userSessionsRef, (snapshot) => {
-    const sessionsRaw = snapshot.val() || {};
-    const sessions = Object.entries(sessionsRaw)
-      .map(([id, data]) => ({
-        id,
-        sessionId: data?.sessionId || id,
-        workshopId: data?.workshopId || "",
-        workshopTitle: data?.workshopTitle || "",
-        workshopDateTime: data?.workshopDateTime || "",
-        status: data?.status || "",
-        createdAt: data?.createdAt || "",
-        updatedAt: data?.updatedAt || "",
-      }))
-      .sort(
-        (a, b) =>
-          toTimestamp(b.workshopDateTime || b.createdAt) -
-          toTimestamp(a.workshopDateTime || a.createdAt)
-      );
+  return onValue(
+    userSessionsRef,
+    (snapshot) => {
+      const sessionsRaw = snapshot.val() || {};
+      const sessions = Object.entries(sessionsRaw)
+        .map(([id, data]) => ({
+          id,
+          sessionId: data?.sessionId || id,
+          workshopId: data?.workshopId || "",
+          workshopTitle: data?.workshopTitle || "",
+          workshopDateTime: data?.workshopDateTime || "",
+          status: data?.status || "",
+          createdAt: data?.createdAt || "",
+          updatedAt: data?.updatedAt || "",
+        }))
+        .sort(
+          (a, b) =>
+            toTimestamp(b.workshopDateTime || b.createdAt) -
+            toTimestamp(a.workshopDateTime || a.createdAt)
+        );
 
-    callback(sessions);
-  });
+      safeCallback(sessions);
+    },
+    (error) => {
+      console.error("Impossible de charger les sessions utilisateur :", error);
+      if (safeOnError) {
+        safeOnError(error);
+        return;
+      }
+      safeCallback([]);
+    }
+  );
 };
