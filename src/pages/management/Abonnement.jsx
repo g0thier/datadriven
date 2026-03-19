@@ -8,6 +8,8 @@ const PLANS = [
     managers: 1,
     collaborators: 3,
     monthlyPrice: 0,
+    previousMonthlyPrice: 24.99,
+    launchLabel: "Offre de lancement",
     description: "Pack découverte",
     accent: "from-indigo-700 to-indigo-600",
   },
@@ -32,7 +34,14 @@ const PLANS = [
 
 const formatManagersLabel = (count) => `${count} manager${count > 1 ? "s" : ""}`;
 const formatCollaboratorsLabel = (count) => `${count} collaborateur${count > 1 ? "s" : ""}`;
-const formatMonthlyPriceLabel = (amount) => `${amount}€`;
+const formatMonthlyPriceLabel = (amount) => {
+  const hasDecimals = !Number.isInteger(amount);
+  const value = new Intl.NumberFormat("fr-FR", {
+    minimumFractionDigits: hasDecimals ? 2 : 0,
+    maximumFractionDigits: 2,
+  }).format(amount);
+  return `${value}€`;
+};
 
 export default function Abonnement() {
   return (
@@ -64,8 +73,19 @@ export default function Abonnement() {
                 >
                   <div className="absolute inset-0 bg-linear-to-t from-black/25 to-transparent" />
 
+                  {plan.launchLabel ? (
+                    <span className="absolute right-3 top-3 z-10 inline-flex rounded-full bg-amber-300 px-2.5 py-1 text-xs font-semibold text-slate-900">
+                      {plan.launchLabel}
+                    </span>
+                  ) : null}
+
                   {plan.isRecommended ? (
-                    <span className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-indigo-500/35 px-2 py-1 text-xs font-semibold">
+                    <span
+                      className={[
+                        "absolute right-3 z-10 inline-flex items-center gap-1 rounded-full bg-indigo-500/35 px-2 py-1 text-xs font-semibold",
+                        plan.launchLabel ? "top-12" : "top-3",
+                      ].join(" ")}
+                    >
                       <span>⭐</span>
                       Recommandé
                     </span>
@@ -76,7 +96,17 @@ export default function Abonnement() {
                     <p className="mt-2 text-4xl font-bold leading-none">
                       {formatMonthlyPriceLabel(plan.monthlyPrice)}
                     </p>
-                    <p className="mt-1 text-sm text-white/80">Prix mensuel</p>
+                    <p className="mt-1 text-sm text-white/80">
+                      Prix mensuel
+                      {Number.isFinite(plan.previousMonthlyPrice) ? (
+                        <>
+                          <span className="mx-1.5">•</span>
+                          <span className="font-semibold text-white/70 line-through">
+                            {formatMonthlyPriceLabel(plan.previousMonthlyPrice)}
+                          </span>
+                        </>
+                      ) : null}
+                    </p>
                   </div>
                 </div>
 
