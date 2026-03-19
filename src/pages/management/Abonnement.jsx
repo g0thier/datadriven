@@ -25,7 +25,7 @@ const PLANS = [
     managers: 3,
     collaborators: 30,
     monthlyPrice: 299,
-    description: "PME structurée",
+    description: "Le pilotage indispensable",
     accent: "from-indigo-800 to-indigo-600",
   },
 ];
@@ -80,20 +80,30 @@ export default function Abonnement() {
                   </div>
                 </div>
 
+                {/* Description et fonctionnalités */}
                 <div className="space-y-4 p-6">
-                  <p className="text-sm leading-snug text-gray-700">{plan.description}</p>
 
-                  <ul className="space-y-1 text-sm text-gray-600">
-                    {[
-                      formatManagersLabel(plan.managers),
-                      formatCollaboratorsLabel(plan.collaborators),
-                    ].map((feature, index) => (
-                      <li key={`${plan.name}-feature-${index}`} className="flex items-start gap-1.5">
-                        <span className="mt-0.5 text-indigo-500">✔</span>
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="flex justify-between text-sm text-gray-500">
+                    <span>{plan.description}</span>
+                  </div>
+
+                  <div>
+                    <p className="font-semibold text-gray-700 mb-2">
+                      Notre offre :
+                    </p>
+
+                    <ul className="space-y-1 text-sm text-gray-600">
+                      {[
+                        formatManagersLabel(plan.managers),
+                        formatCollaboratorsLabel(plan.collaborators),
+                      ].map((feature, index) => (
+                        <li key={`${plan.name}-feature-${index}`} className="flex items-start gap-1.5">
+                          <span className="mt-0.5 text-indigo-500">✔</span>
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               </article>
             ))}
@@ -101,15 +111,6 @@ export default function Abonnement() {
             <article className="group h-full overflow-hidden rounded-2xl border border-dashed border-slate-300 bg-white shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
               <div className="relative flex h-48 items-center justify-center bg-slate-100">
                 <p className="text-sm font-semibold text-slate-500">À venir</p>
-              </div>
-              <div className="space-y-4 p-6">
-                <p className="text-sm text-gray-700">Un nouveau plan sera disponible bientôt.</p>
-                <ul className="space-y-1 text-sm text-gray-600">
-                  <li className="flex items-start gap-1.5">
-                    <span className="mt-1 text-indigo-500">✔</span>
-                    <span>Fonctionnalités en préparation</span>
-                  </li>
-                </ul>
               </div>
             </article>
           </div>
