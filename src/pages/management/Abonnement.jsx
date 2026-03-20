@@ -1,6 +1,9 @@
 import Navbar from "../../components/Navbar.jsx";
 import SectionNavButtons from "../../components/SectionNavButtons.jsx";
 import { managementLinks } from "../../constants/navigationLinks.js";
+import helloImage from "../../assets/paywall/hello.jpg";
+import freelanceImage from "../../assets/paywall/freelance.jpg";
+import startupImage from "../../assets/paywall/startup.jpg";
 
 const PLANS = [
   {
@@ -11,7 +14,7 @@ const PLANS = [
     previousMonthlyPrice: 24.99,
     launchLabel: "Offre de lancement",
     description: "Pack découverte",
-    accent: "from-indigo-700 to-indigo-600",
+    image: helloImage,
   },
   {
     name: "Freelance",
@@ -20,7 +23,7 @@ const PLANS = [
     monthlyPrice: 99,
     description: "Le début du succès",
     isRecommended: true,
-    accent: "from-indigo-700 to-indigo-600",
+    image: freelanceImage,
   },
   {
     name: "Startup",
@@ -28,7 +31,7 @@ const PLANS = [
     collaborators: 30,
     monthlyPrice: 299,
     description: "Le pilotage indispensable",
-    accent: "from-indigo-800 to-indigo-600",
+    image: startupImage,
   },
 ];
 
@@ -69,12 +72,17 @@ export default function Abonnement() {
                 ].join(" ")}
               >
                 <div
-                  className={`relative h-48 overflow-hidden bg-linear-to-r ${plan.accent} p-4 text-white`}
+                  className="relative h-48 overflow-hidden text-white"
                 >
-                  <div className="absolute inset-0 bg-linear-to-t from-black/25 to-transparent" />
+                  <img
+                    src={plan.image}
+                    alt={plan.name}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
 
                   {plan.launchLabel ? (
-                    <span className="absolute right-3 top-3 z-10 inline-flex rounded-full bg-amber-300 px-2.5 py-1 text-xs font-semibold text-slate-900">
+                    <span className="absolute right-3 top-3 z-20 inline-flex rounded-full bg-amber-300 px-2.5 py-1 text-xs font-semibold text-slate-900">
                       {plan.launchLabel}
                     </span>
                   ) : null}
@@ -82,7 +90,7 @@ export default function Abonnement() {
                   {plan.isRecommended ? (
                     <span
                       className={[
-                        "absolute right-3 z-10 inline-flex items-center gap-1 rounded-full bg-indigo-500/35 px-2 py-1 text-xs font-semibold",
+                        "absolute right-3 z-20 inline-flex items-center gap-1 rounded-full bg-indigo-500 px-2 py-1 text-xs font-semibold",
                         plan.launchLabel ? "top-12" : "top-3",
                       ].join(" ")}
                     >
@@ -91,7 +99,7 @@ export default function Abonnement() {
                     </span>
                   ) : null}
 
-                  <div className="relative z-10 flex h-full flex-col justify-end">
+                  <div className="absolute inset-0 z-10 flex flex-col justify-end p-4">
                     <p className="pr-20 text-sm font-medium text-white/85">{plan.name}</p>
                     <p className="mt-2 text-4xl font-bold leading-none">
                       {formatMonthlyPriceLabel(plan.monthlyPrice)}
