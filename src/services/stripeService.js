@@ -1,3 +1,5 @@
+import { auth } from "../firebase";
+
 const DEFAULT_FUNCTION_REGION = "europe-west1";
 const ABONNEMENT_PATH = "/management/abonnement";
 
@@ -19,15 +21,35 @@ const resolveFunctionUrl = (envUrl, functionName) => {
   return buildDefaultFunctionUrl(functionName);
 };
 
+const resolveAuthHeaders = async () => {
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error("auth_required");
+  }
+
+  const idToken = await currentUser.getIdToken();
+  const normalizedToken = String(idToken || "").trim();
+  if (!normalizedToken) {
+    throw new Error("auth_required");
+  }
+
+  return {
+    Authorization: `Bearer ${normalizedToken}`,
+  };
+};
+
 const postJson = async (url, payload) => {
   if (!url) {
     throw new Error("URL de fonction Stripe manquante.");
   }
 
+  const authHeaders = await resolveAuthHeaders();
+
   const response = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...authHeaders,
     },
     body: JSON.stringify(payload),
   });

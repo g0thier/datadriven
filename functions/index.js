@@ -41,6 +41,7 @@ exports.sendWorkshopInvite =
   require("./workshop-invitation/sendWorkshopInvite").sendWorkshopInvite;
 exports.createCheckoutSession = stripeHandlers.createCheckoutSession;
 exports.createPortalSession = stripeHandlers.createPortalSession;
+exports.stripeWebhook = stripeHandlers.stripeWebhook;
 
 // Check secrets in GCP for functions 
 // https://console.cloud.google.com/security/secret-manager

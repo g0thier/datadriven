@@ -85,8 +85,6 @@ export const createCompany = async (uid, payload) => {
     siret: payload.company.siret || "",
     vatNumber: payload.company.vatNumber || "",
     ownerUid: uid,
-    plan: "free",
-    status: "active",
     acceptTerms: payload.acceptTerms,
     createdAt: now,
     addresses,

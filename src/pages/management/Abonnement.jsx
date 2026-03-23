@@ -13,7 +13,6 @@ export default function Abonnement() {
     loadingPlanName,
     isPortalLoading,
     actionError,
-    sessionId,
     statusMessage,
     handleStartCheckout,
     handleOpenBillingPortal,
@@ -41,7 +40,7 @@ export default function Abonnement() {
           <ManageSubscriptionButton
             onClick={handleOpenBillingPortal}
             isLoading={isPortalLoading}
-            isDisabled={!sessionId}
+            isDisabled={false}
           />
 
           <Cards

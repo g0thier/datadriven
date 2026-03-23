@@ -10,6 +10,8 @@ const {
   buildRedirectUrl,
   getPlanConfig,
 } = require("./config");
+const { verifyRequestIdentity } = require("./auth");
+const { writeCompanyBilling } = require("./billingStore");
 
 const STRIPE_SECRET_KEY = defineSecret("STRIPE_SECRET_KEY");
 
@@ -52,12 +54,29 @@ exports.createCheckoutSession = onRequest({
   }
 
   try {
+    const identity = await verifyRequestIdentity(req);
     const stripe = getStripeClient();
+    const customerEmail = String(identity?.userData?.email || "").trim();
+    const checkoutMetadata = {
+      companyId: identity.companyId,
+      uid: identity.uid,
+      planKey: plan.key,
+    };
 
     if (plan.key === "hello") {
       const helloPrice = await stripe.prices.retrieve(plan.priceId);
 
       if (isPricePaid(helloPrice)) {
+        await writeCompanyBilling(identity.companyId, {
+          planKey: plan.key,
+          stripePriceId: plan.priceId,
+          statusSource: "direct_activation",
+          directActivationAt: new Date().toISOString(),
+        }, {
+          planKey: plan.key,
+          status: "active",
+        });
+
         const activationUrl = buildRedirectUrl(successBaseUrl, {
           success: "true",
           plan: plan.key,
@@ -93,6 +112,12 @@ exports.createCheckoutSession = onRequest({
       success_url: successUrl,
       cancel_url: cancelUrl,
       allow_promotion_codes: true,
+      client_reference_id: identity.companyId,
+      metadata: checkoutMetadata,
+      subscription_data: {
+        metadata: checkoutMetadata,
+      },
+      ...(customerEmail ? { customer_email: customerEmail } : {}),
     });
 
     return res.json({
@@ -104,8 +129,13 @@ exports.createCheckoutSession = onRequest({
   } catch (error) {
     logger.error("createCheckoutSession failed", {
       error: error?.message || String(error),
+      code: error?.code || "",
       plan: plan.key,
     });
+
+    if (error?.status && error?.code) {
+      return res.status(error.status).json({ error: error.code });
+    }
 
     const errorCode = error?.message === "missing_stripe_secret"
       ? "missing_stripe_secret"

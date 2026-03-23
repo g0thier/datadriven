@@ -18,7 +18,7 @@ const PLAN_CONFIG_BY_KEY = Object.freeze({
 const CORS_HEADERS = Object.freeze({
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
 });
 
 function setCorsHeaders(res) {
@@ -35,7 +35,7 @@ function sanitizeUrl(candidate, fallback = DEFAULT_ABONNEMENT_URL) {
     const url = new URL(input);
     if (url.protocol !== "http:" && url.protocol !== "https:") return fallback;
     return url.toString();
-  } catch (error) {
+  } catch {
     return fallback;
   }
 }
@@ -66,6 +66,17 @@ function getPlanConfig(planName) {
   };
 }
 
+function getPlanKeyByPriceId(priceId) {
+  const normalizedPriceId = String(priceId || "").trim();
+  if (!normalizedPriceId) return "";
+
+  const matchedEntry = Object.entries(PLAN_CONFIG_BY_KEY).find(([, value]) =>
+    String(value?.priceId || "").trim() === normalizedPriceId
+  );
+
+  return matchedEntry ? matchedEntry[0] : "";
+}
+
 module.exports = {
   DEFAULT_ABONNEMENT_URL,
   PLAN_CONFIG_BY_KEY,
@@ -74,4 +85,5 @@ module.exports = {
   buildRedirectUrl,
   normalizePlanKey,
   getPlanConfig,
+  getPlanKeyByPriceId,
 };

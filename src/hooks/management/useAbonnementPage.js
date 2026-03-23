@@ -61,11 +61,6 @@ export default function useAbonnementPage() {
   const handleOpenBillingPortal = useCallback(async () => {
     setActionError("");
 
-    if (!sessionId) {
-      setActionError(SUBSCRIPTION_ERRORS.MISSING_SESSION);
-      return;
-    }
-
     setIsPortalLoading(true);
 
     try {

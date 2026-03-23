@@ -8,6 +8,12 @@ const {
   setCorsHeaders,
   sanitizeUrl,
 } = require("./config");
+const { verifyRequestIdentity } = require("./auth");
+const {
+  getCompanyBillingSnapshot,
+  linkStripeCustomerToCompany,
+  writeCompanyBilling,
+} = require("./billingStore");
 
 const STRIPE_SECRET_KEY = defineSecret("STRIPE_SECRET_KEY");
 
@@ -38,14 +44,16 @@ exports.createPortalSession = onRequest({
   const sessionId = String(req.body?.sessionId || "").trim();
   const returnUrl = sanitizeUrl(req.body?.returnUrl, DEFAULT_ABONNEMENT_URL);
 
-  if (!sessionId) {
-    return res.status(400).json({ error: "missing_session_id" });
-  }
-
   try {
+    const identity = await verifyRequestIdentity(req);
     const stripe = getStripeClient();
-    const checkoutSession = await stripe.checkout.sessions.retrieve(sessionId);
-    const customerId = String(checkoutSession?.customer || "").trim();
+    const companyBilling = await getCompanyBillingSnapshot(identity.companyId);
+    let customerId = String(companyBilling?.stripeCustomerId || "").trim();
+
+    if (!customerId && sessionId) {
+      const checkoutSession = await stripe.checkout.sessions.retrieve(sessionId);
+      customerId = String(checkoutSession?.customer || "").trim();
+    }
 
     if (!customerId) {
       return res.status(400).json({ error: "missing_customer" });
@@ -56,12 +64,24 @@ exports.createPortalSession = onRequest({
       return_url: returnUrl,
     });
 
+    await Promise.all([
+      linkStripeCustomerToCompany(customerId, identity.companyId),
+      writeCompanyBilling(identity.companyId, {
+        stripeCustomerId: customerId,
+      }),
+    ]);
+
     return res.json({ url: portalSession.url });
   } catch (error) {
     logger.error("createPortalSession failed", {
       error: error?.message || String(error),
+      code: error?.code || "",
       sessionId,
     });
+
+    if (error?.status && error?.code) {
+      return res.status(error.status).json({ error: error.code });
+    }
 
     const errorCode = error?.message === "missing_stripe_secret"
       ? "missing_stripe_secret"
