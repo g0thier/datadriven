@@ -97,6 +97,45 @@ function resolvePlanKeyFromPriceAndMetadata(priceId, metadata = {}) {
   return normalizeLowerText(getPlanKeyByPriceId(priceId));
 }
 
+function pickFirstPositiveUnixTimestamp(...candidates) {
+  for (const candidate of candidates) {
+    const numericCandidate = Number(candidate || 0);
+    if (Number.isFinite(numericCandidate) && numericCandidate > 0) {
+      return numericCandidate;
+    }
+  }
+
+  return 0;
+}
+
+function resolveSubscriptionPeriodStartTimestamp(subscription = {}) {
+  return pickFirstPositiveUnixTimestamp(
+      subscription?.current_period_start,
+      subscription?.items?.data?.[0]?.current_period_start
+  );
+}
+
+function resolveSubscriptionPeriodEndTimestamp(subscription = {}) {
+  return pickFirstPositiveUnixTimestamp(
+      subscription?.current_period_end,
+      subscription?.items?.data?.[0]?.current_period_end
+  );
+}
+
+function resolveInvoicePeriodStartTimestamp(invoice = {}) {
+  return pickFirstPositiveUnixTimestamp(
+      invoice?.lines?.data?.[0]?.period?.start,
+      invoice?.period_start
+  );
+}
+
+function resolveInvoicePeriodEndTimestamp(invoice = {}) {
+  return pickFirstPositiveUnixTimestamp(
+      invoice?.lines?.data?.[0]?.period?.end,
+      invoice?.period_end
+  );
+}
+
 async function handleCheckoutSessionCompleted(event, stripe) {
   const session = event?.data?.object || {};
   if (session?.mode !== "subscription") return;
@@ -132,24 +171,41 @@ async function handleCheckoutSessionCompleted(event, stripe) {
   const status = normalizeLowerText(
       subscription?.status || (session?.payment_status === "paid" ? "active" : "incomplete")
   );
+  const currentPeriodStart = toIsoFromUnixSeconds(
+      resolveSubscriptionPeriodStartTimestamp(subscription)
+  );
+  const currentPeriodEnd = toIsoFromUnixSeconds(
+      resolveSubscriptionPeriodEndTimestamp(subscription)
+  );
+  const canceledAt = toIsoFromUnixSeconds(subscription?.canceled_at);
+  const billingPatch = {
+    planKey,
+    stripeCustomerId: customerId,
+    stripeSubscriptionId: subscriptionId,
+    stripePriceId: priceId,
+    latestCheckoutSessionId: sessionId,
+    cancelAtPeriodEnd: Boolean(subscription?.cancel_at_period_end),
+    statusSource: "stripe_webhook",
+  };
+
+  if (currentPeriodStart) {
+    billingPatch.currentPeriodStart = currentPeriodStart;
+  }
+
+  if (currentPeriodEnd) {
+    billingPatch.currentPeriodEnd = currentPeriodEnd;
+  }
+
+  if (canceledAt) {
+    billingPatch.canceledAt = canceledAt;
+  }
 
   await Promise.all([
     linkStripeCustomerToCompany(customerId, companyId),
     linkStripeSubscriptionToCompany(subscriptionId, companyId),
     writeCompanyBilling(
         companyId,
-        {
-          planKey,
-          stripeCustomerId: customerId,
-          stripeSubscriptionId: subscriptionId,
-          stripePriceId: priceId,
-          latestCheckoutSessionId: sessionId,
-          currentPeriodStart: toIsoFromUnixSeconds(subscription?.current_period_start),
-          currentPeriodEnd: toIsoFromUnixSeconds(subscription?.current_period_end),
-          cancelAtPeriodEnd: Boolean(subscription?.cancel_at_period_end),
-          canceledAt: toIsoFromUnixSeconds(subscription?.canceled_at),
-          statusSource: "stripe_webhook",
-        },
+        billingPatch,
         {
           planKey,
           status,
@@ -166,6 +222,34 @@ async function handleSubscriptionEvent(event) {
   const priceId = normalizeText(subscription?.items?.data?.[0]?.price?.id);
   const planKey = resolvePlanKeyFromPriceAndMetadata(priceId, metadata);
   const status = normalizeLowerText(subscription?.status);
+  const currentPeriodStart = toIsoFromUnixSeconds(
+      resolveSubscriptionPeriodStartTimestamp(subscription)
+  );
+  const currentPeriodEnd = toIsoFromUnixSeconds(
+      resolveSubscriptionPeriodEndTimestamp(subscription)
+  );
+  const canceledAt = toIsoFromUnixSeconds(subscription?.canceled_at);
+  const billingPatch = {
+    planKey,
+    stripeCustomerId: customerId,
+    stripeSubscriptionId: subscriptionId,
+    stripePriceId: priceId,
+    cancelAtPeriodEnd: Boolean(subscription?.cancel_at_period_end),
+    statusSource: "stripe_webhook",
+  };
+
+  if (currentPeriodStart) {
+    billingPatch.currentPeriodStart = currentPeriodStart;
+  }
+
+  if (currentPeriodEnd) {
+    billingPatch.currentPeriodEnd = currentPeriodEnd;
+  }
+
+  if (canceledAt) {
+    billingPatch.canceledAt = canceledAt;
+  }
+
   const companyId = await resolveCompanyId({
     metadata,
     customerId,
@@ -187,17 +271,7 @@ async function handleSubscriptionEvent(event) {
     linkStripeSubscriptionToCompany(subscriptionId, companyId),
     writeCompanyBilling(
         companyId,
-        {
-          planKey,
-          stripeCustomerId: customerId,
-          stripeSubscriptionId: subscriptionId,
-          stripePriceId: priceId,
-          currentPeriodStart: toIsoFromUnixSeconds(subscription?.current_period_start),
-          currentPeriodEnd: toIsoFromUnixSeconds(subscription?.current_period_end),
-          cancelAtPeriodEnd: Boolean(subscription?.cancel_at_period_end),
-          canceledAt: toIsoFromUnixSeconds(subscription?.canceled_at),
-          statusSource: "stripe_webhook",
-        },
+        billingPatch,
         {
           planKey,
           status,
@@ -231,9 +305,10 @@ async function handleInvoiceEvent(event) {
     return;
   }
 
-  const invoiceStatus = normalizeLowerText(invoice?.status);
   const paymentStatus =
     event?.type === "invoice.payment_failed" ? "failed" : normalizeLowerText(invoice?.status);
+  const currentPeriodStart = toIsoFromUnixSeconds(resolveInvoicePeriodStartTimestamp(invoice));
+  const currentPeriodEnd = toIsoFromUnixSeconds(resolveInvoicePeriodEndTimestamp(invoice));
 
   const patch = {
     planKey,
@@ -251,7 +326,15 @@ async function handleInvoiceEvent(event) {
     },
   };
 
-  const nextStatus = event?.type === "invoice.payment_failed" ? "past_due" : invoiceStatus;
+  if (currentPeriodStart) {
+    patch.currentPeriodStart = currentPeriodStart;
+  }
+
+  if (currentPeriodEnd) {
+    patch.currentPeriodEnd = currentPeriodEnd;
+  }
+
+  const nextStatus = event?.type === "invoice.payment_failed" ? "past_due" : "active";
 
   await Promise.all([
     linkStripeCustomerToCompany(customerId, companyId),

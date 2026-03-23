@@ -82,6 +82,8 @@ const toSubscriptionViewModel = (companyData = {}) => {
     companyData?.billing && typeof companyData.billing === "object"
       ? companyData.billing
       : {};
+  const rawCurrentPeriodEnd =
+    billingData?.currentPeriodEnd ?? billingData?.current_period_end ?? "";
   const planKey = String(companyData?.plan || billingData?.planKey || "")
     .trim()
     .toLowerCase();
@@ -92,7 +94,7 @@ const toSubscriptionViewModel = (companyData = {}) => {
     status: String(companyData?.status || billingData?.status || "")
       .trim()
       .toLowerCase(),
-    currentPeriodEnd: String(billingData?.currentPeriodEnd || "").trim(),
+    currentPeriodEnd: String(rawCurrentPeriodEnd || "").trim(),
     cancelAtPeriodEnd: Boolean(billingData?.cancelAtPeriodEnd),
     lastPaymentStatus: String(billingData?.lastPayment?.status || "")
       .trim()

@@ -36,10 +36,15 @@ const formatPaymentStatusLabel = (status) => {
 };
 
 const formatDateLabel = (isoDate) => {
-  const normalizedValue = String(isoDate || "").trim();
+  if (isoDate === null || isoDate === undefined || isoDate === "") return "Non renseigné";
+  const normalizedValue = String(isoDate).trim();
   if (!normalizedValue) return "Non renseigné";
 
-  const parsedDate = new Date(normalizedValue);
+  const numericValue = Number(isoDate);
+  const parsedDate = Number.isFinite(numericValue) && numericValue > 0
+    ? new Date(numericValue > 1_000_000_000_000 ? numericValue : numericValue * 1000)
+    : new Date(normalizedValue);
+
   if (Number.isNaN(parsedDate.getTime())) return normalizedValue;
 
   return new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" }).format(parsedDate);
