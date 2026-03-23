@@ -1,10 +1,24 @@
 import Navbar from "../../components/Navbar.jsx";
 import SectionNavButtons from "../../components/SectionNavButtons.jsx";
-import { managementLinks } from "../../constants/navigationLinks.js";
 import Cards from "../../components/management/Cards.jsx";
+import ManageSubscriptionButton from "../../components/management/ManageSubscriptionButton.jsx";
+import SubscriptionActionError from "../../components/management/SubscriptionActionError.jsx";
+import SubscriptionStatusMessage from "../../components/management/SubscriptionStatusMessage.jsx";
+import { managementLinks } from "../../constants/navigationLinks.js";
 import { PLANS } from "../../constants/managementPlans.js";
+import useAbonnementPage from "../../hooks/management/useAbonnementPage.js";
 
 export default function Abonnement() {
+  const {
+    loadingPlanName,
+    isPortalLoading,
+    actionError,
+    sessionId,
+    statusMessage,
+    handleStartCheckout,
+    handleOpenBillingPortal,
+  } = useAbonnementPage();
+
   return (
     <>
       <Navbar />
@@ -20,7 +34,21 @@ export default function Abonnement() {
             />
           </div>
 
-          <Cards plans={PLANS} />
+          <SubscriptionStatusMessage statusMessage={statusMessage} />
+
+          <SubscriptionActionError message={actionError} />
+
+          <ManageSubscriptionButton
+            onClick={handleOpenBillingPortal}
+            isLoading={isPortalLoading}
+            isDisabled={!sessionId}
+          />
+
+          <Cards
+            plans={PLANS}
+            onSelectPlan={handleStartCheckout}
+            loadingPlanName={loadingPlanName}
+          />
         </div>
       </div>
     </>
