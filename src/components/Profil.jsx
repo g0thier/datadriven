@@ -3,15 +3,80 @@ import { logout } from "../firebase";
 import MaterialIcon from "../components/MaterialIcon";
 import useCurrentUserProfile, { PROFILE_FIELDS } from "../hooks/useCurrentUserProfile";
 
+const SUBSCRIPTION_STATUS_LABELS = {
+  active: "Actif",
+  trialing: "Période d'essai",
+  past_due: "Paiement en retard",
+  canceled: "Annulé",
+  unpaid: "Impayé",
+  incomplete: "Incomplet",
+  incomplete_expired: "Expiré",
+  paused: "En pause",
+};
+
+const PAYMENT_STATUS_LABELS = {
+  paid: "Paiement validé",
+  failed: "Paiement échoué",
+  open: "Paiement en attente",
+  uncollectible: "Non recouvrable",
+  void: "Annulé",
+  draft: "Brouillon",
+};
+
+const formatStatusLabel = (status) => {
+  const normalizedStatus = String(status || "").trim().toLowerCase();
+  if (!normalizedStatus) return "Non renseigné";
+  return SUBSCRIPTION_STATUS_LABELS[normalizedStatus] || normalizedStatus;
+};
+
+const formatPaymentStatusLabel = (status) => {
+  const normalizedStatus = String(status || "").trim().toLowerCase();
+  if (!normalizedStatus) return "Non renseigné";
+  return PAYMENT_STATUS_LABELS[normalizedStatus] || normalizedStatus;
+};
+
+const formatDateLabel = (isoDate) => {
+  const normalizedValue = String(isoDate || "").trim();
+  if (!normalizedValue) return "Non renseigné";
+
+  const parsedDate = new Date(normalizedValue);
+  if (Number.isNaN(parsedDate.getTime())) return normalizedValue;
+
+  return new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" }).format(parsedDate);
+};
+
 function Profil() {
   const navigate = useNavigate();
-  const { profile, isLoading, loadError } = useCurrentUserProfile();
+  const { profile, subscription, isLoading, loadError } = useCurrentUserProfile();
   const fullName = `${profile.firstName} ${profile.lastName}`.trim() || "Utilisateur";
 
   const fields = PROFILE_FIELDS.map((field) => ({
     ...field,
     value: profile[field.key] || "",
   }));
+
+  const subscriptionFields = [
+    {
+      id: "plan",
+      label: "Plan :",
+      value: subscription.planLabel || "Non renseigné",
+    },
+    {
+      id: "status",
+      label: "Statut :",
+      value: formatStatusLabel(subscription.status),
+    },
+    {
+      id: "renewal",
+      label: subscription.cancelAtPeriodEnd ? "Fin d'accès :" : "Prochain renouvellement :",
+      value: formatDateLabel(subscription.currentPeriodEnd),
+    },
+    {
+      id: "payment",
+      label: "Dernier paiement :",
+      value: formatPaymentStatusLabel(subscription.lastPaymentStatus),
+    },
+  ];
 
   const handleLogout = async () => {
     await logout();
@@ -20,7 +85,7 @@ function Profil() {
 
   return (
     <>
-      <aside className="fixed right-6 top-6 bottom-6 w-80 bg-white rounded-2xl shadow-md p-5 z-9999 flex flex-col">
+      <aside className="fixed right-6 top-6 bottom-6 w-80 bg-white rounded-2xl shadow-md p-5 z-9999 flex flex-col overflow-hidden min-h-0">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Mon Profil</h2>
 
@@ -56,19 +121,33 @@ function Profil() {
         </div>
 
         {/* 2e cadre arrondi */}
-        <div className="rounded-2xl border border-gray-100 p-4 flex flex-col flex-1 min-h-0">
+        <div className="rounded-2xl border border-gray-100 p-4 mb-4">
           <div className="font-semibold mb-3">Informations</div>
 
           {isLoading && <div className="text-xs text-gray-500 mb-2">Chargement du profil...</div>}
           {loadError && <div className="text-xs text-rose-600 mb-2">{loadError}</div>}
 
-          <div className="space-y-3 overflow-y-auto flex-1 pr-2 pb-4 min-h-0">
+          <div className="space-y-3">
             {fields.map((f) => (
               <div key={f.id} className="flex flex-col">
                 <div className="text-sm text-gray-600">{f.label}</div>
                 <div className="text-sm text-gray-900 wrap-break-word">
                   {f.value || "Non renseigné"}
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 3e cadre arrondi */}
+        <div className="rounded-2xl border border-gray-100 p-4 mb-4 flex flex-col flex-1 min-h-0">
+          <div className="font-semibold mb-3">Abonnement en cours</div>
+
+          <div className="space-y-3 overflow-y-auto flex-1 pr-2 pb-4 min-h-0">
+            {subscriptionFields.map((field) => (
+              <div key={field.id} className="flex flex-col">
+                <div className="text-sm text-gray-600">{field.label}</div>
+                <div className="text-sm text-gray-900 wrap-break-word">{field.value}</div>
               </div>
             ))}
           </div>

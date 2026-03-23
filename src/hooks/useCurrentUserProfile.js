@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { onValue, ref } from "firebase/database";
 import { database, onAuthStateChangedListener } from "../firebase";
+import { resolvePlanLabel } from "../utils/subscription.utils";
 
 const EMPTY_PROFILE = {
   profilePicture: "",
@@ -10,6 +11,15 @@ const EMPTY_PROFILE = {
   emailAddress: "",
   phoneNumber: "",
   officeLocation: "",
+};
+
+const EMPTY_SUBSCRIPTION = {
+  planKey: "",
+  planLabel: "",
+  status: "",
+  currentPeriodEnd: "",
+  cancelAtPeriodEnd: false,
+  lastPaymentStatus: "",
 };
 
 export const PROFILE_FIELDS = [
@@ -67,21 +77,49 @@ const toProfileViewModel = (userData = {}, currentUser = null) => {
   };
 };
 
+const toSubscriptionViewModel = (companyData = {}) => {
+  const billingData =
+    companyData?.billing && typeof companyData.billing === "object"
+      ? companyData.billing
+      : {};
+  const planKey = String(companyData?.plan || billingData?.planKey || "")
+    .trim()
+    .toLowerCase();
+
+  return {
+    planKey,
+    planLabel: resolvePlanLabel(planKey),
+    status: String(companyData?.status || billingData?.status || "")
+      .trim()
+      .toLowerCase(),
+    currentPeriodEnd: String(billingData?.currentPeriodEnd || "").trim(),
+    cancelAtPeriodEnd: Boolean(billingData?.cancelAtPeriodEnd),
+    lastPaymentStatus: String(billingData?.lastPayment?.status || "")
+      .trim()
+      .toLowerCase(),
+  };
+};
+
 export default function useCurrentUserProfile() {
   const [profile, setProfile] = useState(EMPTY_PROFILE);
+  const [subscription, setSubscription] = useState(EMPTY_SUBSCRIPTION);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const officeSubscriptionKeyRef = useRef("");
+  const companySubscriptionKeyRef = useRef("");
 
   useEffect(() => {
     let unsubscribeUser = () => {};
     let unsubscribeOffice = () => {};
+    let unsubscribeCompany = () => {};
 
     const resetProfile = () => {
       setProfile(EMPTY_PROFILE);
+      setSubscription(EMPTY_SUBSCRIPTION);
       setLoadError("");
       setIsLoading(false);
       officeSubscriptionKeyRef.current = "";
+      companySubscriptionKeyRef.current = "";
     };
 
     const unsubscribeAuth = onAuthStateChangedListener((currentUser) => {
@@ -89,6 +127,8 @@ export default function useCurrentUserProfile() {
       unsubscribeUser = () => {};
       unsubscribeOffice();
       unsubscribeOffice = () => {};
+      unsubscribeCompany();
+      unsubscribeCompany = () => {};
 
       if (!currentUser) {
         resetProfile();
@@ -107,6 +147,8 @@ export default function useCurrentUserProfile() {
           const officeId = String(userData?.officeId || "").trim();
           const nextOfficeSubscriptionKey =
             companyId && officeId ? `${companyId}/${officeId}` : "";
+          const hasSameCompanySubscription =
+            companyId && companyId === companySubscriptionKeyRef.current;
           const hasSameOfficeSubscription =
             nextOfficeSubscriptionKey &&
             nextOfficeSubscriptionKey === officeSubscriptionKeyRef.current;
@@ -125,11 +167,9 @@ export default function useCurrentUserProfile() {
             unsubscribeOffice();
             unsubscribeOffice = () => {};
             officeSubscriptionKeyRef.current = "";
-            setIsLoading(false);
-            return;
           }
 
-          if (!hasSameOfficeSubscription) {
+          if (nextOfficeSubscriptionKey && !hasSameOfficeSubscription) {
             unsubscribeOffice();
             unsubscribeOffice = () => {};
             officeSubscriptionKeyRef.current = nextOfficeSubscriptionKey;
@@ -150,6 +190,31 @@ export default function useCurrentUserProfile() {
             );
           }
 
+          if (!companyId) {
+            unsubscribeCompany();
+            unsubscribeCompany = () => {};
+            companySubscriptionKeyRef.current = "";
+            setSubscription(EMPTY_SUBSCRIPTION);
+          }
+
+          if (companyId && !hasSameCompanySubscription) {
+            unsubscribeCompany();
+            unsubscribeCompany = () => {};
+            companySubscriptionKeyRef.current = companyId;
+
+            const companyRef = ref(database, `companies/${companyId}`);
+            unsubscribeCompany = onValue(
+              companyRef,
+              (companySnapshot) => {
+                const companyData = companySnapshot.exists() ? companySnapshot.val() || {} : {};
+                setSubscription(toSubscriptionViewModel(companyData));
+              },
+              (error) => {
+                console.error("Impossible de charger l'abonnement entreprise :", error);
+              }
+            );
+          }
+
           setIsLoading(false);
         },
         (error) => {
@@ -163,9 +228,10 @@ export default function useCurrentUserProfile() {
     return () => {
       unsubscribeUser();
       unsubscribeOffice();
+      unsubscribeCompany();
       unsubscribeAuth();
     };
   }, []);
 
-  return { profile, isLoading, loadError };
+  return { profile, subscription, isLoading, loadError };
 }
