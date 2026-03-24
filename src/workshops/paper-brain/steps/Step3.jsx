@@ -112,7 +112,7 @@ function Step3({ step, sessionTitle, collaboration }) {
 
             {isOwnNotes ? (
               <p className="text-gray-600 text-sm">
-                Vos notes parmi {participantNotes.length} participants avec des notes.
+                Vos notes parmi {participantNotes.length} participants.
               </p>
             ) : (
               <p className="text-gray-600 text-sm">

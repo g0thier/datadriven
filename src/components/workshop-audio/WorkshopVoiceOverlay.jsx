@@ -1,27 +1,6 @@
 import MaterialIcon from "../MaterialIcon.jsx";
 import useWorkshopVoiceRoom from "../../hooks/useWorkshopVoiceRoom.js";
 
-const getLocalIndicatorUi = (localIndicatorState) => {
-  if (localIndicatorState === "talking") {
-    return {
-      dotClassName: "bg-emerald-500",
-      label: "Vous parlez",
-    };
-  }
-
-  if (localIndicatorState === "captured_not_sent") {
-    return {
-      dotClassName: "bg-gray-400",
-      label: "Micro actif (non transmis)",
-    };
-  }
-
-  return {
-    dotClassName: "bg-gray-300",
-    label: "Silence",
-  };
-};
-
 export default function WorkshopVoiceOverlay({
   roomId,
   workshopActive,
@@ -57,13 +36,15 @@ export default function WorkshopVoiceOverlay({
     return null;
   }
 
-  const localIndicatorUi = getLocalIndicatorUi(localIndicatorState);
   const othersAreSpeaking = remoteSpeakingCount > 0;
-  const remoteIndicatorClassName = othersAreSpeaking
-    ? isOthersMutedLocally
-      ? "bg-gray-400"
-      : "bg-blue-500"
-    : "bg-gray-300";
+  const isLocalTransmissionActive = localIndicatorState === "talking";
+  const localButtonBorderClassName = isLocalTransmissionActive
+    ? "border-emerald-500"
+    : "border-gray-200";
+  const isRemoteReceptionActive = othersAreSpeaking && !isOthersMutedLocally;
+  const remoteButtonBorderClassName = isRemoteReceptionActive
+    ? "border-blue-500"
+    : "border-gray-200";
 
   const handlePressToTalkKeyDown = (event) => {
     if (event.repeat) return;
@@ -118,7 +99,7 @@ export default function WorkshopVoiceOverlay({
               onClick={() => {
                 void joinRoom();
               }}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-violet-500 px-4 py-3 text-white font-semibold shadow-sm transition hover:bg-violet-600 disabled:opacity-65 disabled:cursor-not-allowed"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-violet-500 px-4 py-3 text-white font-semibold transition hover:bg-violet-600 disabled:opacity-65 disabled:cursor-not-allowed"
             >
               <MaterialIcon name={isJoining ? "hourglass_top" : "phone_in_talk"} size={18} />
               {isJoining ? "Connexion..." : "Rejoindre l'appel"}
@@ -133,9 +114,9 @@ export default function WorkshopVoiceOverlay({
                 onPointerCancel={stopTalking}
                 onKeyDown={handlePressToTalkKeyDown}
                 onKeyUp={handlePressToTalkKeyUp}
-                className={`w-full inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold text-white shadow-sm transition ${
+                className={`w-full inline-flex items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 font-semibold text-white transition ${
                   isTalkPressed ? "bg-emerald-600 hover:bg-emerald-700" : "bg-indigo-500 hover:bg-indigo-600"
-                }`}
+                } ${localButtonBorderClassName}`}
                 aria-pressed={isTalkPressed}
               >
                 <MaterialIcon name={isTalkPressed ? "mic" : "mic_none"} size={18} />
@@ -145,11 +126,11 @@ export default function WorkshopVoiceOverlay({
               <button
                 type="button"
                 onClick={toggleOthersMutedLocally}
-                className={`w-full inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition ${
+                className={`w-full inline-flex items-center justify-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-semibold transition ${
                   isOthersMutedLocally
                     ? "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
-                    : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
-                }`}
+                    : "bg-white text-gray-700 hover:bg-gray-50"
+                } ${isOthersMutedLocally ? "border-amber-200" : remoteButtonBorderClassName}`}
               >
                 <MaterialIcon
                   name={isOthersMutedLocally ? "volume_off" : "volume_up"}
@@ -157,28 +138,6 @@ export default function WorkshopVoiceOverlay({
                 />
                 {isOthersMutedLocally ? "Rétablir le son des autres" : "Couper le son des autres"}
               </button>
-
-              <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 text-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-gray-600">Vous</span>
-                  <span className="inline-flex items-center gap-2 text-gray-700">
-                    <span className={`w-2.5 h-2.5 rounded-full ${localIndicatorUi.dotClassName}`} />
-                    {localIndicatorUi.label}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between gap-3 mt-2">
-                  <span className="text-gray-600">Autres</span>
-                  <span className="inline-flex items-center gap-2 text-gray-700">
-                    <span className={`w-2.5 h-2.5 rounded-full ${remoteIndicatorClassName}`} />
-                    {othersAreSpeaking
-                      ? `${remoteSpeakingCount} parlent`
-                      : isOthersMutedLocally
-                      ? "Son coupé localement"
-                      : "Silence"}
-                  </span>
-                </div>
-              </div>
             </div>
           )}
         </>
