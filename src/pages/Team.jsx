@@ -6,6 +6,7 @@ import { TabButton } from "../components/team/UITeam.jsx";
 import OfficesView from "../components/team/OfficesView.jsx";
 import DepartmentsView from "../components/team/DepartmentsView.jsx";
 import MembersView from "../components/team/MembersView.jsx";
+import SubscriptionCapacityInline from "../components/management/SubscriptionCapacityInline.jsx";
 import useCompanyTeam from "../hooks/useCompanyTeam.js";
 import { teamLinks } from "../constants/navigationLinks.js";
 
@@ -45,6 +46,10 @@ export default function Team() {
               ariaLabel="Navigation annuaire"
               variant="page"
             />
+          </div>
+
+          <div className="mb-6">
+            <SubscriptionCapacityInline />
           </div>
 
           <div style={{ display: "grid", gap: 16 }}>
