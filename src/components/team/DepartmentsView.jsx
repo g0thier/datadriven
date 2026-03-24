@@ -26,13 +26,13 @@ export default function DepartmentsView({
 
             return (
               <tr key={d.id} className={index % 2 === 0 ? "bg-white" : "bg-slate-50"}>
-                <Td>
+                <Td verticalAlign="middle">
                   <ActionButton onClick={() => setEditingDeptId(isEditing ? null : d.id)}>
                     {isEditing ? "Voir" : "Modifier"}
                   </ActionButton>
                 </Td>
 
-                <Td>
+                <Td verticalAlign="middle">
                   {isEditing ? (
                     <CellInput
                       value={d.name ?? ""}
@@ -44,7 +44,7 @@ export default function DepartmentsView({
                   )}
                 </Td>
 
-                <Td>
+                <Td verticalAlign="middle">
                   {isEditing ? (
                     <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <input
@@ -61,7 +61,7 @@ export default function DepartmentsView({
                   )}
                 </Td>
 
-                <Td>
+                <Td verticalAlign="middle">
                   <ActionButton danger onClick={() => removeDepartment(d.id)}>
                     Supprimer
                   </ActionButton>
@@ -72,7 +72,7 @@ export default function DepartmentsView({
 
           {(!departments || departments.length === 0) && (
             <tr>
-              <Td colSpan={4} style={{ color: "#777" }}>
+              <Td colSpan={4} verticalAlign="middle" style={{ color: "#777" }}>
                 Aucune équipe
               </Td>
             </tr>

@@ -70,14 +70,14 @@ export function Th({ children }) {
   );
 }
 
-export function Td({ children, colSpan }) {
+export function Td({ children, colSpan, verticalAlign = "top" }) {
   return (
     <td
       colSpan={colSpan}
       style={{
         padding: 12,
         borderBottom: "1px solid #f0f0f0",
-        verticalAlign: "top",
+        verticalAlign,
       }}
     >
       {children}

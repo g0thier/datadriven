@@ -30,7 +30,7 @@ export default function OfficesView({
 
             return (
               <tr key={o.id} className={index % 2 === 0 ? "bg-white" : "bg-slate-50"}>
-                <Td>
+                <Td verticalAlign="middle">
                   <ActionButton
                     onClick={() => setEditingOfficeId(isEditing ? null : o.id)}
                   >
@@ -38,7 +38,7 @@ export default function OfficesView({
                   </ActionButton>
                 </Td>
 
-                <Td>
+                <Td verticalAlign="middle">
                   {isEditing ? (
                     <CellInput
                       value={o.alias ?? o.name ?? ""}
@@ -49,7 +49,7 @@ export default function OfficesView({
                   )}
                 </Td>
 
-                <Td>
+                <Td verticalAlign="middle">
                   {isEditing ? (
                     <CellInput
                       value={o.address ?? ""}
@@ -60,7 +60,7 @@ export default function OfficesView({
                   )}
                 </Td>
 
-                <Td>
+                <Td verticalAlign="middle">
                   {isEditing ? (
                     <CellInput
                       value={o.city ?? ""}
@@ -71,7 +71,7 @@ export default function OfficesView({
                   )}
                 </Td>
 
-                <Td>
+                <Td verticalAlign="middle">
                   {isEditing ? (
                     <CellInput
                       value={o.zip ?? ""}
@@ -82,7 +82,7 @@ export default function OfficesView({
                   )}
                 </Td>
 
-                <Td>
+                <Td verticalAlign="middle">
                   {isEditing ? (
                     <CellInput
                       value={o.country ?? ""}
@@ -93,7 +93,7 @@ export default function OfficesView({
                   )}
                 </Td>
 
-                <Td>
+                <Td verticalAlign="middle">
                   {isEditing ? (
                     <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <input
@@ -114,7 +114,7 @@ export default function OfficesView({
                   )}
                 </Td>
 
-                <Td>
+                <Td verticalAlign="middle">
                   <ActionButton danger onClick={() => removeOffice(o.id)}>
                     Supprimer
                   </ActionButton>

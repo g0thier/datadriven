@@ -3,6 +3,12 @@ import { useState } from "react";
 import MemberModal from "./MemberModal.jsx";
 import MaterialIcon from "../MaterialIcon.jsx";
 
+const ROLE_ICON_BY_KEY = {
+  owner: "workspace_premium",
+  leader: "badge",
+  colab: "groups",
+};
+
 const EMPTY_MEMBER_FORM = {
   firstName: "",
   lastName: "",
@@ -156,7 +162,9 @@ export default function MembersView({
         <thead>
           <tr>
             <Th>Modifier</Th>
-            <Th>Role</Th>
+            <Th>
+              <span style={{ display: "block", textAlign: "center" }}>Role</span>
+            </Th>
             <Th>Prénom</Th>
             <Th>Nom</Th>
             <Th>Email</Th>
@@ -175,58 +183,55 @@ export default function MembersView({
               .map((id) => deptById.get(id)?.name)
               .filter(Boolean);
             const normalizedRole = String(m.role || "").trim().toLowerCase();
-            const isOwner = normalizedRole === "owner";
-            const isLeader = normalizedRole === "leader";
+            const roleIconName = ROLE_ICON_BY_KEY[normalizedRole];
 
             return (
               <tr key={m.id} className={index % 2 === 0 ? "bg-white" : "bg-slate-50"}>
-                <Td>
+                <Td verticalAlign="middle">
                   <ActionButton onClick={() => openEditModal(m)}>Modifier</ActionButton>
                 </Td>
-                <Td>
-                  <div style={{ display: "flex", justifyContent: "center" }}>
-                    {isOwner ? (
+                <Td verticalAlign="middle">
+                  <div style={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100%" }}>
+                    {roleIconName ? (
                       <MaterialIcon
-                        name="shield_person"
+                        name={roleIconName}
                         size={20}
                         weight={500}
                         fill={1}
-                        className="text-violet-700"
-                      />
-                    ) : isLeader ? (
-                      <MaterialIcon
-                        name="person_play"
-                        size={20}
-                        weight={500}
-                        fill={1}
-                        className="text-violet-500"
+                        className={[
+                          normalizedRole === "owner"
+                            ? "text-violet-700"
+                            : normalizedRole === "leader"
+                              ? "text-violet-500"
+                              : "text-slate-500",
+                        ].join(" ")}
                       />
                     ) : null}
                   </div>
                 </Td>
 
-                <Td style={{ minWidth: 180 }}>
+                <Td verticalAlign="middle" style={{ minWidth: 180 }}>
                   <span>{m.firstName || "—"}</span>
                 </Td>
 
-                <Td style={{ minWidth: 180 }}>
+                <Td verticalAlign="middle" style={{ minWidth: 180 }}>
                   <span>{m.lastName || "—"}</span>
                 </Td>
 
-                <Td style={{ minWidth: 220 }}>
+                <Td verticalAlign="middle" style={{ minWidth: 220 }}>
                   <span>{m.email || "—"}</span>
                 </Td>
 
-                <Td style={{ minWidth: 170 }}>
+                <Td verticalAlign="middle" style={{ minWidth: 170 }}>
                   <span>{m.phone || "—"}</span>
                 </Td>
 
-                <Td style={{ minWidth: 240 }}>
+                <Td verticalAlign="middle" style={{ minWidth: 240 }}>
                   <span>{officeLabel || "—"}</span>
                 </Td>
 
-                <Td style={{ minWidth: 320 }}>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                <Td verticalAlign="middle" style={{ minWidth: 320 }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
                     {deptLabels.length === 0 ? (
                       <span className="text-gray-500">Aucun</span>
                     ) : (
