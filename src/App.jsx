@@ -12,7 +12,6 @@ import {
   teamLinks,
 } from "./constants/navigationLinks.js";
 
-import Mail from "./emails/Mail.jsx";
 
 // Authentification
 const Login = lazy(() => import('./pages/auth/Login.jsx'));
@@ -67,8 +66,7 @@ function App() {
             
           </Route>
 
-          {/* Email template preview route */}
-          <Route path="/preview-mail" element={<Mail />} />
+          {/* Template preview route */}
 
           {/* Pages publiques */}
           <Route path="*" element={<NotFound />} />
