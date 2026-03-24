@@ -7,6 +7,11 @@ function toLimitLabel(value) {
   return numericValue > 0 ? numericValue : "-";
 }
 
+function isOverCapacity(currentValue, limitValue) {
+  const numericLimit = Number(limitValue || 0);
+  return Number(currentValue || 0) > numericLimit;
+}
+
 export default function SubscriptionCapacityInline() {
   const { companyRoleCounts, ownerLimit, leaderLimit, colabLimit } = useAbonnementPage();
   const [layoutMode, setLayoutMode] = useState("full");
@@ -18,20 +23,23 @@ export default function SubscriptionCapacityInline() {
     {
       id: "owner",
       icon: "workspace_premium",
-      label: "Owner",
+      label: "Administrateur",
       value: `${Number(companyRoleCounts?.owner || 0)} / ${toLimitLabel(ownerLimit)}`,
+      isOverCapacity: isOverCapacity(companyRoleCounts?.owner, ownerLimit),
     },
     {
       id: "leader",
       icon: "badge",
       label: "Leader",
       value: `${Number(companyRoleCounts?.leader || 0)} / ${toLimitLabel(leaderLimit)}`,
+      isOverCapacity: isOverCapacity(companyRoleCounts?.leader, leaderLimit),
     },
     {
       id: "colab",
       icon: "groups",
       label: "Colaborateurs",
       value: `${Number(companyRoleCounts?.colab || 0)} / ${toLimitLabel(colabLimit)}`,
+      isOverCapacity: isOverCapacity(companyRoleCounts?.colab, colabLimit),
     },
   ];
 
@@ -90,9 +98,16 @@ export default function SubscriptionCapacityInline() {
             {items.map((item) => (
               <span
                 key={item.id}
-                className="inline-flex whitespace-nowrap items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1 text-sm text-slate-700"
+                className={[
+                  "inline-flex whitespace-nowrap items-center gap-1.5 rounded-lg px-2.5 py-1 text-sm",
+                  item.isOverCapacity ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-700",
+                ].join(" ")}
               >
-                <MaterialIcon name={item.icon} size={16} className="text-slate-500" />
+                <MaterialIcon
+                  name={item.icon}
+                  size={16}
+                  className={item.isOverCapacity ? "text-red-700" : "text-slate-500"}
+                />
                 {layoutMode === "full" && <span className="font-medium">{item.label}</span>}
                 <span className="font-semibold">{item.value}</span>
               </span>
