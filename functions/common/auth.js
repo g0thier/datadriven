@@ -1,4 +1,4 @@
-const { getAdminAuth, getAdminDatabase } = require("./firebaseAdmin");
+const {getAdminAuth, getAdminDatabase} = require("./firebaseAdmin");
 
 function buildHttpError(status, code) {
   const error = new Error(code);

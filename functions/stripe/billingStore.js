@@ -1,4 +1,4 @@
-const { getAdminDatabase } = require("./firebaseAdmin");
+const { getAdminDatabase } = require("../common/firebaseAdmin");
 
 function toIsoFromUnixSeconds(value) {
   const numericValue = Number(value || 0);

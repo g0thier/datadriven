@@ -43,7 +43,11 @@ function toErrorMessage(error) {
   }
 
   if (error?.code === "insufficient_role") {
-    return "Tu n'as pas les droits nécessaires pour supprimer ce membre.";
+    return "Tu n'as pas les droits nécessaires pour effectuer cette action.";
+  }
+
+  if (error?.code === "cannot_create_owner") {
+    return "La création d'un propriétaire n'est pas autorisée ici.";
   }
 
   if (error?.code === "cannot_delete_owner") {

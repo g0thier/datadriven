@@ -4,7 +4,7 @@ const logger = require("firebase-functions/logger");
 const Stripe = require("stripe");
 
 const { getPlanKeyByPriceId } = require("./config");
-const { buildHttpError } = require("./auth");
+const { buildHttpError } = require("../common/auth");
 const {
   toIsoFromUnixSeconds,
   normalizeText,

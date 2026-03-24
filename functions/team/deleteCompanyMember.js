@@ -1,8 +1,8 @@
 const {onRequest} = require("firebase-functions/v2/https");
 const logger = require("firebase-functions/logger");
 
-const {verifyRequestIdentity, buildHttpError} = require("../stripe/auth");
-const {getAdminAuth, getAdminDatabase} = require("../stripe/firebaseAdmin");
+const {verifyRequestIdentity, buildHttpError} = require("../common/auth");
+const {getAdminAuth, getAdminDatabase} = require("../common/firebaseAdmin");
 
 function setCorsHeaders(res) {
   res.set("Access-Control-Allow-Origin", "*");

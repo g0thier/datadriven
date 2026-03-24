@@ -10,7 +10,7 @@ const {
   buildRedirectUrl,
   getPlanConfig,
 } = require("./config");
-const { verifyRequestIdentity } = require("./auth");
+const { verifyRequestIdentity } = require("../common/auth");
 const { writeCompanyBilling } = require("./billingStore");
 
 const STRIPE_SECRET_KEY = defineSecret("STRIPE_SECRET_KEY");

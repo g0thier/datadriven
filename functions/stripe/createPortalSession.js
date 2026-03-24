@@ -8,7 +8,7 @@ const {
   setCorsHeaders,
   sanitizeUrl,
 } = require("./config");
-const { verifyRequestIdentity } = require("./auth");
+const { verifyRequestIdentity } = require("../common/auth");
 const {
   getCompanyBillingSnapshot,
   linkStripeCustomerToCompany,
