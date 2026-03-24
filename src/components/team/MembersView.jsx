@@ -42,6 +42,22 @@ function toErrorMessage(error) {
     return "Le mot de passe généré n'est pas accepté. Réessaie.";
   }
 
+  if (error?.code === "insufficient_role") {
+    return "Tu n'as pas les droits nécessaires pour supprimer ce membre.";
+  }
+
+  if (error?.code === "cannot_delete_owner") {
+    return "Le membre propriétaire ne peut pas être supprimé.";
+  }
+
+  if (error?.code === "member_not_found") {
+    return "Ce membre n'existe plus.";
+  }
+
+  if (error?.code === "member_auth_deletion_failed") {
+    return "Le membre a été supprimé, mais la suppression du compte d'authentification a échoué.";
+  }
+
   return error?.message || "Une erreur est survenue.";
 }
 

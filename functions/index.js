@@ -28,6 +28,8 @@ setGlobalOptions({
 });
 
 const stripeHandlers = require("./stripe");
+const deleteCompanyMemberHandler =
+  require("./team/deleteCompanyMember").deleteCompanyMember;
 
 // Create and deploy your first functions
 // https://firebase.google.com/docs/functions/get-started
@@ -42,6 +44,7 @@ exports.sendWorkshopInvite =
 exports.createCheckoutSession = stripeHandlers.createCheckoutSession;
 exports.createPortalSession = stripeHandlers.createPortalSession;
 exports.stripeWebhook = stripeHandlers.stripeWebhook;
+exports.deleteCompanyMember = deleteCompanyMemberHandler;
 
 // Check secrets in GCP for functions 
 // https://console.cloud.google.com/security/secret-manager

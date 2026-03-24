@@ -1,11 +1,11 @@
 import {
+  auth,
   addCompanyOffice,
   addCompanyDepartment,
   addCompanyMember,
   getUserCompanyId,
   onAuthStateChangedListener,
   signUpMemberWithEmail,
-  removeCompanyMember,
   removeCompanyOffice,
   removeCompanyDepartment,
   subscribeCompanyDepartments,
@@ -15,6 +15,75 @@ import {
   updateCompanyDepartment,
   updateCompanyOffice,
 } from "../firebase";
+
+const FIREBASE_PROJECT_ID = import.meta.env.VITE_FIREBASE_PROJECT_ID;
+const FIREBASE_FUNCTION_REGION = import.meta.env.VITE_FIREBASE_FUNCTION_REGION;
+const DELETE_MEMBER_URL = import.meta.env.VITE_DELETE_COMPANY_MEMBER_URL;
+
+function buildDefaultFunctionUrl(functionName) {
+  const projectId = String(FIREBASE_PROJECT_ID || "").trim();
+  const region = String(FIREBASE_FUNCTION_REGION || "").trim();
+  if (!projectId || !region) return "";
+  return `https://${region}-${projectId}.cloudfunctions.net/${functionName}`;
+}
+
+function resolveFunctionUrl(envUrl, functionName) {
+  const candidateUrl = String(envUrl || "").trim();
+  if (candidateUrl) return candidateUrl;
+  return buildDefaultFunctionUrl(functionName);
+}
+
+async function resolveAuthHeaders() {
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error("auth_required");
+  }
+
+  const idToken = await currentUser.getIdToken();
+  const normalizedToken = String(idToken || "").trim();
+
+  if (!normalizedToken) {
+    throw new Error("auth_required");
+  }
+
+  return {
+    Authorization: `Bearer ${normalizedToken}`,
+  };
+}
+
+async function requestMemberDeletion(companyId, memberId) {
+  const endpoint = resolveFunctionUrl(DELETE_MEMBER_URL, "deleteCompanyMember");
+  if (!endpoint) {
+    throw new Error("missing_delete_member_url");
+  }
+
+  const authHeaders = await resolveAuthHeaders();
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders,
+    },
+    body: JSON.stringify({
+      companyId,
+      memberId,
+    }),
+  });
+
+  const body = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const errorCode = String(body?.error || "").trim();
+    const error = new Error(errorCode || `HTTP ${response.status}`);
+    if (errorCode) {
+      error.code = errorCode;
+    }
+    throw error;
+  }
+
+  return body || {};
+}
 
 // auth
 export {
@@ -120,6 +189,7 @@ export function editMember(companyId, id, patch) {
   return updateCompanyMember(companyId, id, patch);
 }
 
-export function deleteMember(companyId, id) {
-  return removeCompanyMember(companyId, id);
+export async function deleteMember(companyId, id) {
+  if (!companyId || !id) return;
+  await requestMemberDeletion(companyId, id);
 }

@@ -231,14 +231,14 @@ export default function useCompanyTeam() {
   }
 
   async function removeMember(id) {
-    setTeamMembers((prev) => prev.filter((member) => member.id !== id));
-
     if (!companyId) return;
 
     try {
       await deleteMember(companyId, id);
+      setTeamMembers((prev) => prev.filter((member) => member.id !== id));
     } catch (error) {
       console.error("Impossible de supprimer le membre :", error);
+      throw error;
     }
   }
 
