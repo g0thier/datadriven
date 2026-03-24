@@ -5,7 +5,7 @@ export default function ManageSubscriptionButton({
   leftContent = null,
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+    <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
       {leftContent ? <div className="min-w-[280px] flex-1">{leftContent}</div> : null}
 
       <button
