@@ -1,6 +1,6 @@
-const formatOwnerLabel = (count) => `${count} owner${count > 1 ? "s" : ""}`;
+const formatOwnerLabel = (count) => `${count} administrateur${count > 1 ? "s" : ""}`;
 const formatLeaderLabel = (count) => `${count} leader${count > 1 ? "s" : ""}`;
-const formatColabLabel = (count) => `${count} colab${count > 1 ? "s" : ""}`;
+const formatColabLabel = (count) => `${count} collaborateur${count > 1 ? "s" : ""}`;
 
 const formatMonthlyPriceLabel = (amount) => {
   const hasDecimals = !Number.isInteger(amount);
