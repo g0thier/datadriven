@@ -1,5 +1,6 @@
-const formatManagersLabel = (count) => `${count} manager${count > 1 ? "s" : ""}`;
-const formatCollaboratorsLabel = (count) => `${count} collaborateur${count > 1 ? "s" : ""}`;
+const formatOwnerLabel = (count) => `${count} owner${count > 1 ? "s" : ""}`;
+const formatLeaderLabel = (count) => `${count} leader${count > 1 ? "s" : ""}`;
+const formatColabLabel = (count) => `${count} colab${count > 1 ? "s" : ""}`;
 
 const formatMonthlyPriceLabel = (amount) => {
   const hasDecimals = !Number.isInteger(amount);
@@ -104,8 +105,9 @@ export default function Cards({ plans, onSelectPlan, loadingPlanName = "" }) {
 
                 <ul className="space-y-1 text-sm text-gray-600">
                   {[
-                    formatManagersLabel(plan.managers),
-                    formatCollaboratorsLabel(plan.collaborators),
+                    formatOwnerLabel(plan.owner),
+                    formatLeaderLabel(plan.leader),
+                    formatColabLabel(plan.colab),
                   ].map((feature, index) => (
                     <li key={`${plan.name}-feature-${index}`} className="flex items-start gap-1.5">
                       <span className="mt-0.5 text-indigo-500">✔</span>

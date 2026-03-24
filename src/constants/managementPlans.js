@@ -5,8 +5,9 @@ import startupImage from "../assets/paywall/startup.jpg";
 export const PLANS = [
   {
     name: "Hello",
-    managers: 1,
-    collaborators: 3,
+    owner: 1,
+    leader: 0,
+    colab: 3,
     monthlyPrice: 0,
     previousMonthlyPrice: 24.99,
     launchLabel: "Offre de lancement",
@@ -15,8 +16,9 @@ export const PLANS = [
   },
   {
     name: "Freelance",
-    managers: 1,
-    collaborators: 8,
+    owner: 1,
+    leader: 0,
+    colab: 8,
     monthlyPrice: 99,
     description: "Le début du succès",
     isRecommended: true,
@@ -24,8 +26,9 @@ export const PLANS = [
   },
   {
     name: "Startup",
-    managers: 3,
-    collaborators: 30,
+    owner: 1,
+    leader: 2,
+    colab: 30,
     monthlyPrice: 299,
     description: "Le pilotage indispensable",
     image: startupImage,

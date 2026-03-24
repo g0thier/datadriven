@@ -15,14 +15,16 @@ export default function Abonnement() {
     actionError,
     statusMessage,
     companyRoleCounts,
-    managerLimit,
-    collaboratorLimit,
+    ownerLimit,
+    leaderLimit,
+    colabLimit,
     handleStartCheckout,
     handleOpenBillingPortal,
   } = useAbonnementPage();
 
-  const managerLimitLabel = managerLimit > 0 ? managerLimit : "-";
-  const collaboratorLimitLabel = collaboratorLimit > 0 ? collaboratorLimit : "-";
+  const ownerLimitLabel = ownerLimit > 0 ? ownerLimit : "-";
+  const leaderLimitLabel = leaderLimit > 0 ? leaderLimit : "-";
+  const colabLimitLabel = colabLimit > 0 ? colabLimit : "-";
 
   return (
     <>
@@ -55,23 +57,23 @@ export default function Abonnement() {
 
                 <div className="space-y-1.5 text-sm text-slate-700">
                   <p className="flex items-center justify-between gap-3">
-                    <span>Owner / managers</span>
+                    <span>Owner / owner</span>
                     <span className="font-semibold">
-                      {companyRoleCounts.owner} / {managerLimitLabel}
+                      {companyRoleCounts.owner} / {ownerLimitLabel}
                     </span>
                   </p>
 
                   <p className="flex items-center justify-between gap-3">
-                    <span>Leader / managers</span>
+                    <span>Leader / leader</span>
                     <span className="font-semibold">
-                      {companyRoleCounts.leader} / {managerLimitLabel}
+                      {companyRoleCounts.leader} / {leaderLimitLabel}
                     </span>
                   </p>
 
                   <p className="flex items-center justify-between gap-3">
-                    <span>Colab / collaborateurs</span>
+                    <span>Colab / colab</span>
                     <span className="font-semibold">
-                      {companyRoleCounts.colab} / {collaboratorLimitLabel}
+                      {companyRoleCounts.colab} / {colabLimitLabel}
                     </span>
                   </p>
                 </div>

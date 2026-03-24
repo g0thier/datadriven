@@ -22,8 +22,9 @@ const DEFAULT_ROLE_COUNTS = Object.freeze({
 });
 
 const DEFAULT_PLAN_LIMITS = Object.freeze({
-  managerLimit: 0,
-  collaboratorLimit: 0,
+  ownerLimit: 0,
+  leaderLimit: 0,
+  colabLimit: 0,
 });
 
 const PLAN_LIMITS_BY_KEY = Object.freeze(
@@ -32,8 +33,9 @@ const PLAN_LIMITS_BY_KEY = Object.freeze(
     if (!key) return accumulator;
 
     accumulator[key] = {
-      managerLimit: Number(plan?.managers || 0),
-      collaboratorLimit: Number(plan?.collaborators || 0),
+      ownerLimit: Number(plan?.owner || 0),
+      leaderLimit: Number(plan?.leader || 0),
+      colabLimit: Number(plan?.colab || 0),
     };
 
     return accumulator;
@@ -104,7 +106,7 @@ export default function useAbonnementPage() {
     [subscriptionSearch]
   );
 
-  const { managerLimit, collaboratorLimit } = useMemo(() => {
+  const { ownerLimit, leaderLimit, colabLimit } = useMemo(() => {
     const normalizedPlanKey = String(activePlanKey || "").trim().toLowerCase();
     if (!normalizedPlanKey) return DEFAULT_PLAN_LIMITS;
     return PLAN_LIMITS_BY_KEY[normalizedPlanKey] || DEFAULT_PLAN_LIMITS;
@@ -227,8 +229,9 @@ export default function useAbonnementPage() {
     sessionId,
     statusMessage,
     companyRoleCounts,
-    managerLimit,
-    collaboratorLimit,
+    ownerLimit,
+    leaderLimit,
+    colabLimit,
     handleStartCheckout,
     handleOpenBillingPortal,
   };
