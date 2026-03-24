@@ -8,3 +8,4 @@ export * from "./members.service";
 export * from "./management.service";
 export * from "./workshop-sessions.service";
 export * from "./paper-brain.service";
+export * from "./workshop-voice.service";

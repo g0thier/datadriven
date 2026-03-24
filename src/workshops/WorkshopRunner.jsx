@@ -8,6 +8,7 @@ import { usePaperBrainCollaboration } from "./paper-brain/usePaperBrainCollabora
 import WorkshopWaitingPage from "./WorkshopWaitingPage.jsx";
 import RouteFallback from "../components/fallback/RouteFallback.jsx";
 import WorkshopSummaryPage from "./WorkshopSummaryPage.jsx";
+import WorkshopVoiceOverlay from "../components/workshop-audio/WorkshopVoiceOverlay.jsx";
 
 export default function WorkshopRunner() {
   const { workshopId: routeWorkshopId, id: sessionId } = useParams();
@@ -87,6 +88,8 @@ export default function WorkshopRunner() {
   const { currentStep, isFinished } = useStepTimeline(sessionData ?? { steps: [] }, startAt);
 
   const StepComponent = currentStep?.component ?? null;
+  const isWorkshopActive = !isWaiting && !isFinished;
+  const stepAudioEnabled = Boolean(currentStep?.audioEnabled);
 
   if (isLoadingSession) {
     // Chargement de la session…
@@ -135,6 +138,13 @@ export default function WorkshopRunner() {
       ) : (
         <RouteFallback />
       )}
+
+      <WorkshopVoiceOverlay
+        roomId={sessionId}
+        workshopActive={isWorkshopActive}
+        stepAudioEnabled={stepAudioEnabled}
+        maxParticipants={8}
+      />
     </div>
   );
 }
