@@ -86,11 +86,11 @@ export default function SubscriptionCapacityInline() {
 
   return (
     <div className="min-w-70 flex-1">
-      <div className="rounded-xl border border-slate-200 bg-white/80 px-4 py-1.5">
+      <div className="rounded-xl border border-slate-200 bg-white/80 px-4 py-1.5 shadow-xs">
         <div ref={rowContainerRef} className="relative">
           <div className="flex flex-wrap items-center gap-2.5 sm:flex-nowrap sm:justify-between">
             {layoutMode !== "ultra" && (
-              <p className="shrink-0 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <p className="shrink-0 normal-case text-sm font-medium text-slate-500">
                 Capacité de votre abonnement :
               </p>
             )}
@@ -116,7 +116,7 @@ export default function SubscriptionCapacityInline() {
 
           <div className="pointer-events-none absolute left-0 top-0 h-0 overflow-hidden opacity-0" aria-hidden="true">
             <div ref={fullWidthProbeRef} className="inline-flex items-center gap-2.5 whitespace-nowrap">
-              <p className="shrink-0 text-xs font-semibold uppercase tracking-wide">
+              <p className="shrink-0 normal-case text-sm font-medium">
                 Capacité de votre abonnement :
               </p>
               {items.map((item) => (
@@ -131,7 +131,7 @@ export default function SubscriptionCapacityInline() {
               ))}
             </div>
             <div ref={compactWidthProbeRef} className="inline-flex items-center gap-2.5 whitespace-nowrap">
-              <p className="shrink-0 text-xs font-semibold uppercase tracking-wide">
+              <p className="shrink-0 normal-case text-sm font-medium">
                 Capacité de votre abonnement :
               </p>
               {items.map((item) => (

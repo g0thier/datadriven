@@ -4,6 +4,7 @@ import ManagerSummary from "../../components/management/ManagerSummary.jsx";
 import ManagersAccess from "../../components/management/ManagersAccess.jsx";
 import CollaboratorSearchPanel from "../../components/management/CollaboratorSearchPanel.jsx";
 import PagesSelection from "../../components/management/PagesSelection.jsx";
+import SubscriptionCapacityInline from "../../components/management/SubscriptionCapacityInline.jsx";
 import { managementLinks } from "../../constants/navigationLinks.js";
 import useCompanyManagers from "../../hooks/management/useCompanyManagers.js";
 import useCompanyCollaborators from "../../hooks/management/useCompanyCollaborators.js";
@@ -55,6 +56,10 @@ export default function Management() {
               ariaLabel="Navigation management"
               variant="page"
             />
+          </div>
+
+          <div className="mb-6">
+            <SubscriptionCapacityInline />
           </div>
 
           <div className="grid items-start gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
