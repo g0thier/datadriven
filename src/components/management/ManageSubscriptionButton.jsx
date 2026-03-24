@@ -2,9 +2,12 @@ export default function ManageSubscriptionButton({
   onClick,
   isLoading = false,
   isDisabled = false,
+  leftContent = null,
 }) {
   return (
-    <div className="mb-6 flex justify-end">
+    <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+      {leftContent ? <div className="min-w-[280px] flex-1">{leftContent}</div> : null}
+
       <button
         type="button"
         onClick={onClick}

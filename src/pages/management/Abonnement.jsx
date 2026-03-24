@@ -14,9 +14,15 @@ export default function Abonnement() {
     isPortalLoading,
     actionError,
     statusMessage,
+    companyRoleCounts,
+    managerLimit,
+    collaboratorLimit,
     handleStartCheckout,
     handleOpenBillingPortal,
   } = useAbonnementPage();
+
+  const managerLimitLabel = managerLimit > 0 ? managerLimit : "-";
+  const collaboratorLimitLabel = collaboratorLimit > 0 ? collaboratorLimit : "-";
 
   return (
     <>
@@ -41,6 +47,36 @@ export default function Abonnement() {
             onClick={handleOpenBillingPortal}
             isLoading={isPortalLoading}
             isDisabled={false}
+            leftContent={
+              <div className="rounded-xl border border-slate-200 bg-white/80 px-4 py-3">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Capacité de l&apos;abonnement
+                </p>
+
+                <div className="space-y-1.5 text-sm text-slate-700">
+                  <p className="flex items-center justify-between gap-3">
+                    <span>Owner / managers</span>
+                    <span className="font-semibold">
+                      {companyRoleCounts.owner} / {managerLimitLabel}
+                    </span>
+                  </p>
+
+                  <p className="flex items-center justify-between gap-3">
+                    <span>Leader / managers</span>
+                    <span className="font-semibold">
+                      {companyRoleCounts.leader} / {managerLimitLabel}
+                    </span>
+                  </p>
+
+                  <p className="flex items-center justify-between gap-3">
+                    <span>Colab / collaborateurs</span>
+                    <span className="font-semibold">
+                      {companyRoleCounts.colab} / {collaboratorLimitLabel}
+                    </span>
+                  </p>
+                </div>
+              </div>
+            }
           />
 
           <Cards
