@@ -2,10 +2,17 @@ import {
   APP_ROLES,
   COLAB_DEFAULT_REDIRECT_PATH,
   COLAB_RESTRICTED_LINKS,
+  OVER_CAPACITY_ALLOWED_LINKS,
 } from "../constants/routeAccess.js";
 
 const COLAB_RESTRICTED_SET = new Set(
   (COLAB_RESTRICTED_LINKS || [])
+    .map((path) => normalizePath(path))
+    .filter(Boolean)
+);
+
+const OVER_CAPACITY_ALLOWED_SET = new Set(
+  (OVER_CAPACITY_ALLOWED_LINKS || [])
     .map((path) => normalizePath(path))
     .filter(Boolean)
 );
@@ -69,39 +76,62 @@ export function normalizeLeaderPageAccess(value) {
   return [];
 }
 
+function canLeaderAccessPath(path, leaderPageAccess = []) {
+  const leaderAccessSet = new Set(normalizeLeaderPageAccess(leaderPageAccess));
+  return leaderAccessSet.has(path);
+}
+
 export function isRouteAllowedForRole({
   role,
   path,
   leaderPageAccess = [],
+  isSubscriptionOverCapacity = false,
 }) {
   const normalizedPath = normalizePath(path);
   if (!normalizedPath) return false;
 
   const normalizedRole = normalizeRole(role);
-  if (normalizedRole === APP_ROLES.OWNER) return true;
-
   const isAllowedForColab = !COLAB_RESTRICTED_SET.has(normalizedPath);
-  if (normalizedRole !== APP_ROLES.LEADER) {
-    return isAllowedForColab;
+
+  if (!isSubscriptionOverCapacity) {
+    if (normalizedRole === APP_ROLES.OWNER) return true;
+
+    if (normalizedRole !== APP_ROLES.LEADER) {
+      return isAllowedForColab;
+    }
+
+    if (isAllowedForColab) return true;
+
+    return canLeaderAccessPath(normalizedPath, leaderPageAccess);
   }
 
+  if (normalizedRole === APP_ROLES.COLAB) return isAllowedForColab;
   if (isAllowedForColab) return true;
+  if (!OVER_CAPACITY_ALLOWED_SET.has(normalizedPath)) return false;
+  if (normalizedRole === APP_ROLES.OWNER) return true;
 
-  const leaderAccessSet = new Set(normalizeLeaderPageAccess(leaderPageAccess));
-  return leaderAccessSet.has(normalizedPath);
+  return canLeaderAccessPath(normalizedPath, leaderPageAccess);
 }
 
 export function resolveFirstAllowedPath({
   candidatePaths = [],
   role,
   leaderPageAccess = [],
+  isSubscriptionOverCapacity = false,
   fallbackPath = COLAB_DEFAULT_REDIRECT_PATH,
 }) {
   const normalizedFallback = normalizePath(fallbackPath) || COLAB_DEFAULT_REDIRECT_PATH;
   const normalizedCandidates = normalizePathList(candidatePaths);
 
   for (const candidatePath of normalizedCandidates) {
-    if (isRouteAllowedForRole({ role, path: candidatePath, leaderPageAccess })) {
+    if (
+      isRouteAllowedForRole({
+        role,
+        path: candidatePath,
+        leaderPageAccess,
+        isSubscriptionOverCapacity,
+      })
+    ) {
       return candidatePath;
     }
   }
@@ -113,6 +143,7 @@ export function resolveAuthorizedTargetPath({
   targetPath,
   role,
   leaderPageAccess = [],
+  isSubscriptionOverCapacity = false,
   candidatePaths = [],
   fallbackPath = COLAB_DEFAULT_REDIRECT_PATH,
 }) {
@@ -123,6 +154,7 @@ export function resolveAuthorizedTargetPath({
       role,
       path: normalizedTargetPath,
       leaderPageAccess,
+      isSubscriptionOverCapacity,
     })
   ) {
     return normalizedTargetPath;
@@ -132,6 +164,7 @@ export function resolveAuthorizedTargetPath({
     candidatePaths,
     role,
     leaderPageAccess,
+    isSubscriptionOverCapacity,
     fallbackPath,
   });
 }

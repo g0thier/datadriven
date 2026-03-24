@@ -8,6 +8,7 @@ import {
   resolveAuthorizedTargetPath,
   resolveFirstAllowedPath,
 } from "../utils/routeAccess.utils.js";
+import { getCompanySubscriptionCapacity } from "../utils/subscriptionCapacity.utils.js";
 
 const ROLE_SET = new Set([APP_ROLES.OWNER, APP_ROLES.LEADER, APP_ROLES.COLAB]);
 
@@ -23,6 +24,8 @@ export default function useRouteAuthorization() {
   const [leaderPageAccess, setLeaderPageAccess] = useState([]);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
   const [isLeaderPermissionsLoading, setIsLeaderPermissionsLoading] = useState(false);
+  const [isSubscriptionCapacityLoading, setIsSubscriptionCapacityLoading] = useState(false);
+  const [isSubscriptionOverCapacity, setIsSubscriptionOverCapacity] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChangedListener((currentUser) => {
@@ -33,6 +36,8 @@ export default function useRouteAuthorization() {
         setLeaderPageAccess([]);
         setIsProfileLoading(false);
         setIsLeaderPermissionsLoading(false);
+        setIsSubscriptionCapacityLoading(false);
+        setIsSubscriptionOverCapacity(false);
         return;
       }
 
@@ -58,6 +63,12 @@ export default function useRouteAuthorization() {
 
         setRole(normalizedRole);
         setCompanyId(nextCompanyId);
+        if (nextCompanyId) {
+          setIsSubscriptionCapacityLoading(true);
+        } else {
+          setIsSubscriptionCapacityLoading(false);
+          setIsSubscriptionOverCapacity(false);
+        }
         if (normalizedRole === APP_ROLES.LEADER && nextCompanyId) {
           setIsLeaderPermissionsLoading(true);
         } else {
@@ -72,6 +83,8 @@ export default function useRouteAuthorization() {
         setCompanyId("");
         setLeaderPageAccess([]);
         setIsLeaderPermissionsLoading(false);
+        setIsSubscriptionCapacityLoading(false);
+        setIsSubscriptionOverCapacity(false);
         setIsProfileLoading(false);
       }
     );
@@ -105,14 +118,46 @@ export default function useRouteAuthorization() {
     return () => unsubscribe();
   }, [companyId, role, user?.uid]);
 
+  useEffect(() => {
+    if (!user?.uid || !companyId) {
+      return () => {};
+    }
+
+    const companyRef = ref(database, `companies/${companyId}`);
+    const unsubscribe = onValue(
+      companyRef,
+      (snapshot) => {
+        const companyData = snapshot.exists() ? snapshot.val() || {} : {};
+        const { isOverCapacity } = getCompanySubscriptionCapacity(companyData);
+        setIsSubscriptionOverCapacity(isOverCapacity);
+        setIsSubscriptionCapacityLoading(false);
+      },
+      (error) => {
+        console.error("Impossible de charger la capacite d'abonnement :", error);
+        setIsSubscriptionOverCapacity(false);
+        setIsSubscriptionCapacityLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [companyId, user?.uid]);
+
   const isLoading =
     user === undefined ||
     (Boolean(user) && isProfileLoading) ||
-    (Boolean(user) && role === APP_ROLES.LEADER && isLeaderPermissionsLoading);
+    (Boolean(user) && role === APP_ROLES.LEADER && isLeaderPermissionsLoading) ||
+    (Boolean(user) && isSubscriptionCapacityLoading);
 
   const canAccessPath = useMemo(
-    () => (path) => isRouteAllowedForRole({ role, path, leaderPageAccess }),
-    [leaderPageAccess, role]
+    () =>
+      (path) =>
+        isRouteAllowedForRole({
+          role,
+          path,
+          leaderPageAccess,
+          isSubscriptionOverCapacity,
+        }),
+    [isSubscriptionOverCapacity, leaderPageAccess, role]
   );
 
   const resolveBestPath = useMemo(
@@ -121,9 +166,10 @@ export default function useRouteAuthorization() {
         candidatePaths,
         role,
         leaderPageAccess,
+        isSubscriptionOverCapacity,
         fallbackPath,
       }),
-    [leaderPageAccess, role]
+    [isSubscriptionOverCapacity, leaderPageAccess, role]
   );
 
   const resolveTargetPath = useMemo(
@@ -137,9 +183,10 @@ export default function useRouteAuthorization() {
         candidatePaths,
         role,
         leaderPageAccess,
+        isSubscriptionOverCapacity,
         fallbackPath,
       }),
-    [leaderPageAccess, role]
+    [isSubscriptionOverCapacity, leaderPageAccess, role]
   );
 
   return {
@@ -147,6 +194,7 @@ export default function useRouteAuthorization() {
     role,
     companyId,
     leaderPageAccess,
+    isSubscriptionOverCapacity,
     isLoading,
     isAuthenticated: Boolean(user),
     canAccessPath,

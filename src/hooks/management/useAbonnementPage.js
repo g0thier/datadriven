@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { onValue, ref } from "firebase/database";
-import { PLANS } from "../../constants/managementPlans.js";
 import { SUBSCRIPTION_ERRORS } from "../../constants/subscription.js";
 import { database, onAuthStateChangedListener } from "../../firebase";
 import {
@@ -14,67 +13,17 @@ import {
   buildSubscriptionStatusMessage,
   parseSubscriptionSearch,
 } from "../../utils/subscription.utils.js";
+import {
+  buildCompanyRoleCounts,
+  resolveCompanyPlanKey,
+  resolvePlanRoleLimits,
+} from "../../utils/subscriptionCapacity.utils.js";
 
 const DEFAULT_ROLE_COUNTS = Object.freeze({
   owner: 0,
   leader: 0,
   colab: 0,
 });
-
-const DEFAULT_PLAN_LIMITS = Object.freeze({
-  ownerLimit: 0,
-  leaderLimit: 0,
-  colabLimit: 0,
-});
-
-const PLAN_LIMITS_BY_KEY = Object.freeze(
-  (PLANS || []).reduce((accumulator, plan) => {
-    const key = String(plan?.name || "").trim().toLowerCase();
-    if (!key) return accumulator;
-
-    accumulator[key] = {
-      ownerLimit: Number(plan?.owner || 0),
-      leaderLimit: Number(plan?.leader || 0),
-      colabLimit: Number(plan?.colab || 0),
-    };
-
-    return accumulator;
-  }, {})
-);
-
-function buildCompanyRoleCounts(companyEmployees = {}) {
-  if (!companyEmployees || typeof companyEmployees !== "object") {
-    return { ...DEFAULT_ROLE_COUNTS };
-  }
-
-  const counts = {
-    owner: 0,
-    leader: 0,
-    colab: 0,
-  };
-
-  Object.values(companyEmployees).forEach((employeeData) => {
-    if (!employeeData || typeof employeeData !== "object") return;
-    if (employeeData.isActive === false) return;
-
-    const role = String(employeeData.role || "").trim().toLowerCase();
-    if (role === "owner") {
-      counts.owner += 1;
-      return;
-    }
-
-    if (role === "leader") {
-      counts.leader += 1;
-      return;
-    }
-
-    if (role === "colab") {
-      counts.colab += 1;
-    }
-  });
-
-  return counts;
-}
 
 export default function useAbonnementPage() {
   const location = useLocation();
@@ -107,9 +56,7 @@ export default function useAbonnementPage() {
   );
 
   const { ownerLimit, leaderLimit, colabLimit } = useMemo(() => {
-    const normalizedPlanKey = String(activePlanKey || "").trim().toLowerCase();
-    if (!normalizedPlanKey) return DEFAULT_PLAN_LIMITS;
-    return PLAN_LIMITS_BY_KEY[normalizedPlanKey] || DEFAULT_PLAN_LIMITS;
+    return resolvePlanRoleLimits(activePlanKey);
   }, [activePlanKey]);
 
   useEffect(() => {
@@ -152,11 +99,7 @@ export default function useAbonnementPage() {
             companyRef,
             (companySnapshot) => {
               const companyData = companySnapshot.exists() ? companySnapshot.val() || {} : {};
-              const nextPlanKey = String(
-                companyData?.plan || companyData?.billing?.planKey || ""
-              )
-                .trim()
-                .toLowerCase();
+              const nextPlanKey = resolveCompanyPlanKey(companyData);
 
               setActivePlanKey(nextPlanKey);
               setCompanyRoleCounts(buildCompanyRoleCounts(companyData?.employees || {}));
