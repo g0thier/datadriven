@@ -82,14 +82,39 @@ export function isRoleCountOverLimit(currentValue, limitValue) {
   return Number(currentValue || 0) > numericLimit;
 }
 
+export function isOwnerOnlyCompany(companyRoleCounts = {}) {
+  const ownerCount = Number(companyRoleCounts?.owner || 0);
+  const leaderCount = Number(companyRoleCounts?.leader || 0);
+  const colabCount = Number(companyRoleCounts?.colab || 0);
+
+  return ownerCount === 1 && leaderCount === 0 && colabCount === 0;
+}
+
 export function getCompanySubscriptionCapacity(companyData = {}) {
   const planKey = resolveCompanyPlanKey(companyData);
   const companyRoleCounts = buildCompanyRoleCounts(companyData?.employees || {});
   const { ownerLimit, leaderLimit, colabLimit } = resolvePlanRoleLimits(planKey);
 
-  const isOwnerOverCapacity = isRoleCountOverLimit(companyRoleCounts.owner, ownerLimit);
-  const isLeaderOverCapacity = isRoleCountOverLimit(companyRoleCounts.leader, leaderLimit);
-  const isColabOverCapacity = isRoleCountOverLimit(companyRoleCounts.colab, colabLimit);
+  const isOwnerOnly = isOwnerOnlyCompany(companyRoleCounts);
+
+  const rawOwnerOverCapacity = isRoleCountOverLimit(
+    companyRoleCounts.owner,
+    ownerLimit
+  );
+  const rawLeaderOverCapacity = isRoleCountOverLimit(
+    companyRoleCounts.leader,
+    leaderLimit
+  );
+  const rawColabOverCapacity = isRoleCountOverLimit(
+    companyRoleCounts.colab,
+    colabLimit
+  );
+
+  const isOwnerOverCapacity = isOwnerOnly ? false : rawOwnerOverCapacity;
+  const isLeaderOverCapacity = isOwnerOnly ? false : rawLeaderOverCapacity;
+  const isColabOverCapacity = isOwnerOnly ? false : rawColabOverCapacity;
+  const isOverCapacity =
+    isOwnerOverCapacity || isLeaderOverCapacity || isColabOverCapacity;
 
   return {
     planKey,
@@ -97,10 +122,10 @@ export function getCompanySubscriptionCapacity(companyData = {}) {
     ownerLimit,
     leaderLimit,
     colabLimit,
+    isOwnerOnlyCompany: isOwnerOnly,
     isOwnerOverCapacity,
     isLeaderOverCapacity,
     isColabOverCapacity,
-    isOverCapacity:
-      isOwnerOverCapacity || isLeaderOverCapacity || isColabOverCapacity,
+    isOverCapacity,
   };
 }

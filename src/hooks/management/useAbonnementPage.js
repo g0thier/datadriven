@@ -13,17 +13,7 @@ import {
   buildSubscriptionStatusMessage,
   parseSubscriptionSearch,
 } from "../../utils/subscription.utils.js";
-import {
-  buildCompanyRoleCounts,
-  resolveCompanyPlanKey,
-  resolvePlanRoleLimits,
-} from "../../utils/subscriptionCapacity.utils.js";
-
-const DEFAULT_ROLE_COUNTS = Object.freeze({
-  owner: 0,
-  leader: 0,
-  colab: 0,
-});
+import { getCompanySubscriptionCapacity } from "../../utils/subscriptionCapacity.utils.js";
 
 export default function useAbonnementPage() {
   const location = useLocation();
@@ -32,10 +22,9 @@ export default function useAbonnementPage() {
   const [isPortalLoading, setIsPortalLoading] = useState(false);
   const [actionError, setActionError] = useState("");
   const [sessionId, setSessionId] = useState(() => readStripeLastSessionId());
-  const [activePlanKey, setActivePlanKey] = useState("");
-  const [companyRoleCounts, setCompanyRoleCounts] = useState(() => ({
-    ...DEFAULT_ROLE_COUNTS,
-  }));
+  const [subscriptionCapacity, setSubscriptionCapacity] = useState(() =>
+    getCompanySubscriptionCapacity({})
+  );
 
   const subscriptionSearch = useMemo(
     () => parseSubscriptionSearch(location.search),
@@ -55,17 +44,12 @@ export default function useAbonnementPage() {
     [subscriptionSearch]
   );
 
-  const { ownerLimit, leaderLimit, colabLimit } = useMemo(() => {
-    return resolvePlanRoleLimits(activePlanKey);
-  }, [activePlanKey]);
-
   useEffect(() => {
     let unsubscribeUser = () => {};
     let unsubscribeCompany = () => {};
 
     const resetCompanyMetrics = () => {
-      setActivePlanKey("");
-      setCompanyRoleCounts({ ...DEFAULT_ROLE_COUNTS });
+      setSubscriptionCapacity(getCompanySubscriptionCapacity({}));
     };
 
     const unsubscribeAuth = onAuthStateChangedListener((currentUser) => {
@@ -99,10 +83,7 @@ export default function useAbonnementPage() {
             companyRef,
             (companySnapshot) => {
               const companyData = companySnapshot.exists() ? companySnapshot.val() || {} : {};
-              const nextPlanKey = resolveCompanyPlanKey(companyData);
-
-              setActivePlanKey(nextPlanKey);
-              setCompanyRoleCounts(buildCompanyRoleCounts(companyData?.employees || {}));
+              setSubscriptionCapacity(getCompanySubscriptionCapacity(companyData));
             },
             (error) => {
               console.error("Impossible de charger les données company pour l'abonnement :", error);
@@ -166,15 +147,12 @@ export default function useAbonnementPage() {
   }, [sessionId]);
 
   return {
+    ...subscriptionCapacity,
     loadingPlanName,
     isPortalLoading,
     actionError,
     sessionId,
     statusMessage,
-    companyRoleCounts,
-    ownerLimit,
-    leaderLimit,
-    colabLimit,
     handleStartCheckout,
     handleOpenBillingPortal,
   };

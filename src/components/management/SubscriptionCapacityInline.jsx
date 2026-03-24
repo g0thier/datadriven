@@ -7,13 +7,16 @@ function toLimitLabel(value) {
   return numericValue > 0 ? numericValue : "-";
 }
 
-function isOverCapacity(currentValue, limitValue) {
-  const numericLimit = Number(limitValue || 0);
-  return Number(currentValue || 0) > numericLimit;
-}
-
 export default function SubscriptionCapacityInline() {
-  const { companyRoleCounts, ownerLimit, leaderLimit, colabLimit } = useAbonnementPage();
+  const {
+    companyRoleCounts,
+    ownerLimit,
+    leaderLimit,
+    colabLimit,
+    isOwnerOverCapacity,
+    isLeaderOverCapacity,
+    isColabOverCapacity,
+  } = useAbonnementPage();
   const [layoutMode, setLayoutMode] = useState("full");
   const rowContainerRef = useRef(null);
   const fullWidthProbeRef = useRef(null);
@@ -25,21 +28,21 @@ export default function SubscriptionCapacityInline() {
       icon: "workspace_premium",
       label: "Administrateur",
       value: `${Number(companyRoleCounts?.owner || 0)} / ${toLimitLabel(ownerLimit)}`,
-      isOverCapacity: isOverCapacity(companyRoleCounts?.owner, ownerLimit),
+      isOverCapacity: isOwnerOverCapacity,
     },
     {
       id: "leader",
       icon: "badge",
       label: "Leader",
       value: `${Number(companyRoleCounts?.leader || 0)} / ${toLimitLabel(leaderLimit)}`,
-      isOverCapacity: isOverCapacity(companyRoleCounts?.leader, leaderLimit),
+      isOverCapacity: isLeaderOverCapacity,
     },
     {
       id: "colab",
       icon: "groups",
       label: "Colaborateurs",
       value: `${Number(companyRoleCounts?.colab || 0)} / ${toLimitLabel(colabLimit)}`,
-      isOverCapacity: isOverCapacity(companyRoleCounts?.colab, colabLimit),
+      isOverCapacity: isColabOverCapacity,
     },
   ];
 
