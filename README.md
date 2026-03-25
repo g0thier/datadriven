@@ -9,7 +9,7 @@ This project represents the first building block of a **SaaS (Software as a Serv
 
 This initial version includes a module entitled **“Innovation & Creativity”**, designed as a suite of collaborative tools aimed at structuring and facilitating innovation processes based on recognized methodologies.
 
-![Capture](/docs/images/Capture.png)
+![Page Index](docs/images/index.png)
 
 ## Table of Contents
 
@@ -23,6 +23,7 @@ This initial version includes a module entitled **“Innovation & Creativity”*
   - [🚀 Quick start](#-quick-start)
   - [🐳 Install \& execute](#-install--execute)
   - [🥽 Security](#-security)
+  - [📸 Page screenshots](#-page-screenshots)
   - [📰 Changelog](#-changelog)
   - [🩷 Acknowledgements](#-acknowledgements)
     - [Environnement](#environnement)
@@ -105,6 +106,37 @@ npm run dev
 ## 🥽 Security
 
 - See [SECURITY.md](/SECURITY.md) for vulnerability reporting guidelines.
+
+## 📸 Page screenshots
+
+Generate screenshots automatically for all routes declared with `<Route path="...">` in `src/`:
+
+```bash
+npm run screenshots
+```
+
+The script:
+- discovers routes automatically in `src/**/*.js(x)/ts(x)`
+- skips dynamic routes by default (with `:`), unless `SCREENSHOT_INCLUDE_DYNAMIC=true`
+- starts the Vite server automatically (`npm run dev -- --host 127.0.0.1 --port 4173`)
+- saves images into `docs/images/`
+
+If protected routes require login, set these keys in `.env.local`:
+
+```bash
+SCREENSHOT_AUTH_EMAIL=you@example.com
+SCREENSHOT_AUTH_PASSWORD=your-password
+```
+
+Optional overrides:
+
+```bash
+SCREENSHOT_BASE_URL=http://127.0.0.1:4173
+SCREENSHOT_LOGIN_PATH=/login
+SCREENSHOT_EXTRA_ROUTES=/foo,/bar
+SCREENSHOT_AUTO_START=false
+SCREENSHOT_DEV_COMMAND="npm run dev -- --host 127.0.0.1 --port 4173"
+```
 
 ## 📰 Changelog
 

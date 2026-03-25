@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "doc": "jsdoc ./src -r -t ./docs-theme --debug",
-    "test": "vitest"
+    "test": "vitest",
+    "screenshots": "node scripts/capture-pages.mjs"
   },
   "dependencies": {
     "@react-oauth/google": "^0.13.4",
@@ -36,6 +37,7 @@
     "globals": "^16.5.0",
     "jsdoc": "^4.0.5",
     "jsdom": "^29.0.1",
+    "playwright": "^1.58.2",
     "vite": "^7.3.1",
     "vitest": "^4.0.18"
   }
