@@ -1,15 +1,33 @@
 import { useNavigate } from "react-router-dom";
 
-import workshopCards from "../../constants/workshopCards.jsx";
+import { WORKSHOPS } from "../../workshops/index.js";
+
+function getWorkshopTotalDurationMinutes(workshop) {
+  const steps = Array.isArray(workshop?.steps) ? workshop.steps : [];
+
+  return steps.reduce((total, step) => {
+    const duration = Number(step?.duration);
+    return Number.isFinite(duration) ? total + duration : total;
+  }, 0);
+}
+
+function formatWorkshopDuration(workshop) {
+  const totalMinutes = getWorkshopTotalDurationMinutes(workshop);
+  if (totalMinutes > 0) return `${totalMinutes} minutes`;
+
+  const fallbackDuration = String(workshop?.duration || "").trim();
+  return fallbackDuration || "Durée non définie";
+}
 
 function Cards() {
   const navigate = useNavigate();
+  const workshopCards = Object.values(WORKSHOPS || {});
 
   return (
     <div className="max-w-7xl mx-auto grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-      {workshopCards.map((card, index) => (
+      {workshopCards.map((card) => (
         <div
-          key={index}
+          key={card.id}
           onClick={() =>
             navigate("/innovation/invitation", { state: { workshop: card } })
           }
@@ -29,7 +47,7 @@ function Cards() {
 
           <div className="p-6 space-y-4">
             <div className="flex justify-between text-sm text-gray-500">
-              <span>⏱ {card.duration}</span>
+              <span>⏱ {formatWorkshopDuration(card)}</span>
               <span>👥 {card.groupSize}</span>
             </div>
 
