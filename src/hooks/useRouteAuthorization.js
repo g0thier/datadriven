@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { onValue, ref } from "firebase/database";
 import { database, onAuthStateChangedListener } from "../firebase";
 import { APP_ROLES, COLAB_DEFAULT_REDIRECT_PATH } from "../constants/routeAccess.js";
@@ -26,10 +26,14 @@ export default function useRouteAuthorization() {
   const [isLeaderPermissionsLoading, setIsLeaderPermissionsLoading] = useState(false);
   const [isSubscriptionCapacityLoading, setIsSubscriptionCapacityLoading] = useState(false);
   const [isSubscriptionOverCapacity, setIsSubscriptionOverCapacity] = useState(false);
+  const previousRoleRef = useRef(APP_ROLES.COLAB);
+  const previousCompanyIdRef = useRef("");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChangedListener((currentUser) => {
       if (!currentUser) {
+        previousRoleRef.current = APP_ROLES.COLAB;
+        previousCompanyIdRef.current = "";
         setUser(null);
         setRole(APP_ROLES.COLAB);
         setCompanyId("");
@@ -41,6 +45,8 @@ export default function useRouteAuthorization() {
         return;
       }
 
+      previousRoleRef.current = APP_ROLES.COLAB;
+      previousCompanyIdRef.current = "";
       setUser(currentUser);
       setIsProfileLoading(true);
     });
@@ -60,25 +66,40 @@ export default function useRouteAuthorization() {
         const userData = snapshot.exists() ? snapshot.val() || {} : {};
         const normalizedRole = normalizeRole(userData?.role);
         const nextCompanyId = String(userData?.companyId || "").trim();
+        const previousRole = previousRoleRef.current;
+        const previousCompanyId = previousCompanyIdRef.current;
+        const hasCompanyChanged = previousCompanyId !== nextCompanyId;
+        const wasLeaderWithCompany =
+          previousRole === APP_ROLES.LEADER && Boolean(previousCompanyId);
+        const isLeaderWithCompany =
+          normalizedRole === APP_ROLES.LEADER && Boolean(nextCompanyId);
 
         setRole(normalizedRole);
         setCompanyId(nextCompanyId);
         if (nextCompanyId) {
-          setIsSubscriptionCapacityLoading(true);
+          if (hasCompanyChanged) {
+            setIsSubscriptionCapacityLoading(true);
+          }
         } else {
           setIsSubscriptionCapacityLoading(false);
           setIsSubscriptionOverCapacity(false);
         }
-        if (normalizedRole === APP_ROLES.LEADER && nextCompanyId) {
-          setIsLeaderPermissionsLoading(true);
+        if (isLeaderWithCompany) {
+          if (!wasLeaderWithCompany || hasCompanyChanged) {
+            setIsLeaderPermissionsLoading(true);
+          }
         } else {
           setLeaderPageAccess([]);
           setIsLeaderPermissionsLoading(false);
         }
+        previousRoleRef.current = normalizedRole;
+        previousCompanyIdRef.current = nextCompanyId;
         setIsProfileLoading(false);
       },
       (error) => {
         console.error("Impossible de charger le profil utilisateur pour les droits :", error);
+        previousRoleRef.current = APP_ROLES.COLAB;
+        previousCompanyIdRef.current = "";
         setRole(APP_ROLES.COLAB);
         setCompanyId("");
         setLeaderPageAccess([]);
