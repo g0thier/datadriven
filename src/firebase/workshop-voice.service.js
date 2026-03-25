@@ -11,9 +11,32 @@ import {
 } from "firebase/database";
 import { database } from "./app";
 
+/**
+ * @module firebase/workshop-voice.service
+ * @description Realtime voice-room presence and signaling helpers for workshops.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
+/**
+ * Builds the base voice path for a room id.
+ * @param {string} roomId - Voice room id.
+ * @returns {string} Voice root path.
+ */
 const toVoicePath = (roomId) => `workshopSessions/${roomId}/voice`;
+
+/**
+ * Returns current time in ISO format.
+ * @returns {string} ISO datetime.
+ */
 const nowIso = () => new Date().toISOString();
 
+/**
+ * Normalizes participant payload for persistence.
+ * @param {Object} [participant={}] - Participant payload.
+ * @returns {{id:string, name:string, joinedAt:string, lastSeenAt:string}} Normalized participant.
+ */
 const toParticipantPayload = (participant = {}) => ({
   id: String(participant.id || "").trim(),
   name: String(participant.name || "").trim(),
@@ -21,6 +44,11 @@ const toParticipantPayload = (participant = {}) => ({
   lastSeenAt: nowIso(),
 });
 
+/**
+ * Returns the number of voice participants currently in a room.
+ * @param {string} roomId - Voice room id.
+ * @returns {Promise<number>} Participant count.
+ */
 export const getWorkshopVoiceParticipantCount = async (roomId) => {
   if (!roomId) return 0;
 
@@ -31,6 +59,12 @@ export const getWorkshopVoiceParticipantCount = async (roomId) => {
   return Object.keys(participants).length;
 };
 
+/**
+ * Upserts a voice participant in a room.
+ * @param {string} roomId - Voice room id.
+ * @param {Object} [participant={}] - Participant payload.
+ * @returns {Promise<void>} Upsert completion.
+ */
 export const setWorkshopVoiceParticipant = async (roomId, participant = {}) => {
   const payload = toParticipantPayload(participant);
   if (!roomId || !payload.id) return;
@@ -43,6 +77,12 @@ export const setWorkshopVoiceParticipant = async (roomId, participant = {}) => {
   });
 };
 
+/**
+ * Updates a participant heartbeat timestamp.
+ * @param {string} roomId - Voice room id.
+ * @param {string} participantId - Participant id.
+ * @returns {Promise<void>} Touch completion.
+ */
 export const touchWorkshopVoiceParticipant = async (roomId, participantId) => {
   const cleanedParticipantId = String(participantId || "").trim();
   if (!roomId || !cleanedParticipantId) return;
@@ -52,6 +92,12 @@ export const touchWorkshopVoiceParticipant = async (roomId, participantId) => {
   });
 };
 
+/**
+ * Registers participant auto-removal on disconnect and returns cancel handler.
+ * @param {string} roomId - Voice room id.
+ * @param {string} participantId - Participant id.
+ * @returns {Promise<Function>} Cancel cleanup handler.
+ */
 export const registerWorkshopVoiceDisconnectCleanup = async (roomId, participantId) => {
   const cleanedParticipantId = String(participantId || "").trim();
   if (!roomId || !cleanedParticipantId) return () => {};
@@ -69,6 +115,12 @@ export const registerWorkshopVoiceDisconnectCleanup = async (roomId, participant
   };
 };
 
+/**
+ * Removes a participant and its pending signals.
+ * @param {string} roomId - Voice room id.
+ * @param {string} participantId - Participant id.
+ * @returns {Promise<void>} Removal completion.
+ */
 export const removeWorkshopVoiceParticipant = async (roomId, participantId) => {
   const cleanedParticipantId = String(participantId || "").trim();
   if (!roomId || !cleanedParticipantId) return;
@@ -77,6 +129,13 @@ export const removeWorkshopVoiceParticipant = async (roomId, participantId) => {
   await remove(ref(database, `${toVoicePath(roomId)}/signals/${cleanedParticipantId}`));
 };
 
+/**
+ * Subscribes to room voice participants.
+ * @param {string} roomId - Voice room id.
+ * @param {Function} callback - Listener receiving participants list.
+ * @param {Function} [onError=() => {}] - Error callback.
+ * @returns {Function} Unsubscribe callback.
+ */
 export const subscribeWorkshopVoiceParticipants = (roomId, callback, onError = () => {}) => {
   const safeCallback = typeof callback === "function" ? callback : () => {};
   const safeOnError = typeof onError === "function" ? onError : () => {};
@@ -108,6 +167,13 @@ export const subscribeWorkshopVoiceParticipants = (roomId, callback, onError = (
   );
 };
 
+/**
+ * Sends a WebRTC signal to a target participant queue.
+ * @param {string} roomId - Voice room id.
+ * @param {string} targetParticipantId - Target participant id.
+ * @param {{from:string, type:string, payload?:Object}} [signal={}] - Signal payload.
+ * @returns {Promise<string|null>} Created signal id or `null`.
+ */
 export const sendWorkshopVoiceSignal = async (
   roomId,
   targetParticipantId,
@@ -138,6 +204,14 @@ export const sendWorkshopVoiceSignal = async (
   return signalId;
 };
 
+/**
+ * Subscribes to incoming WebRTC signals for one participant.
+ * @param {string} roomId - Voice room id.
+ * @param {string} participantId - Local participant id.
+ * @param {Function} callback - Listener receiving signal payload.
+ * @param {Function} [onError=() => {}] - Error callback.
+ * @returns {Function} Unsubscribe callback.
+ */
 export const subscribeWorkshopVoiceSignals = (
   roomId,
   participantId,
@@ -167,6 +241,13 @@ export const subscribeWorkshopVoiceSignals = (
   );
 };
 
+/**
+ * Acknowledges and removes a consumed WebRTC signal.
+ * @param {string} roomId - Voice room id.
+ * @param {string} participantId - Local participant id.
+ * @param {string} signalId - Signal id.
+ * @returns {Promise<void>} Acknowledgement completion.
+ */
 export const ackWorkshopVoiceSignal = async (roomId, participantId, signalId) => {
   const cleanedParticipantId = String(participantId || "").trim();
   const cleanedSignalId = String(signalId || "").trim();

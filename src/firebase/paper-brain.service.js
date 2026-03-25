@@ -10,12 +10,35 @@ import {
 } from "firebase/database";
 import { database } from "./app";
 
+/**
+ * @module firebase/paper-brain.service
+ * @description Realtime persistence helpers for the Paper Brain workshop board.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
 const PAPER_BRAIN_MAX_STICKERS = 3;
 
+/**
+ * Returns current time in ISO format.
+ * @returns {string} ISO datetime.
+ */
 const nowIso = () => new Date().toISOString();
 
+/**
+ * Builds the paper-brain root path for a session.
+ * @param {string} sessionId - Workshop session id.
+ * @returns {string} Paper Brain root path.
+ */
 const toPaperBrainPath = (sessionId) => `workshopSessions/${sessionId}/paperBrain`;
 
+/**
+ * Normalizes note position with numeric fallback coordinates.
+ * @param {{x?:number, y?:number}} [position={}] - Raw position.
+ * @param {{x:number, y:number}} [fallback={x:40,y:40}] - Fallback coordinates.
+ * @returns {{x:number, y:number}} Normalized position.
+ */
 const normalizePosition = (position = {}, fallback = { x: 40, y: 40 }) => {
   const x = Number(position?.x);
   const y = Number(position?.y);
@@ -26,6 +49,13 @@ const normalizePosition = (position = {}, fallback = { x: 40, y: 40 }) => {
   };
 };
 
+/**
+ * Subscribes to a Paper Brain session payload.
+ * @param {string} sessionId - Workshop session id.
+ * @param {Function} callback - Listener receiving session board data.
+ * @param {Function} [onError=() => {}] - Error callback.
+ * @returns {Function} Unsubscribe callback.
+ */
 export const subscribePaperBrainSession = (
   sessionId,
   callback,
@@ -46,6 +76,12 @@ export const subscribePaperBrainSession = (
   );
 };
 
+/**
+ * Upserts a Paper Brain participant with presence timestamps.
+ * @param {string} sessionId - Workshop session id.
+ * @param {{id:string, name?:string, email?:string, isAuthenticated?:boolean}} [participant={}] - Participant payload.
+ * @returns {Promise<void>} Upsert completion.
+ */
 export const upsertPaperBrainParticipant = async (
   sessionId,
   participant = {}
@@ -74,6 +110,13 @@ export const upsertPaperBrainParticipant = async (
   });
 };
 
+/**
+ * Sets step-1 challenge description for the session board.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} participantId - Editor participant id.
+ * @param {string} description - Step description text.
+ * @returns {Promise<void>} Update completion.
+ */
 export const setPaperBrainStep1Description = async (
   sessionId,
   participantId,
@@ -89,6 +132,12 @@ export const setPaperBrainStep1Description = async (
   });
 };
 
+/**
+ * Creates a Paper Brain note.
+ * @param {string} sessionId - Workshop session id.
+ * @param {{authorId:string, text?:string, position?:{x?:number,y?:number}}} [payload={}] - Note payload.
+ * @returns {Promise<string>} Created note id.
+ */
 export const createPaperBrainNote = async (sessionId, payload = {}) => {
   if (!sessionId || !payload?.authorId) {
     throw new Error("createPaperBrainNote: sessionId ou authorId manquant");
@@ -114,6 +163,13 @@ export const createPaperBrainNote = async (sessionId, payload = {}) => {
   return noteId;
 };
 
+/**
+ * Updates a Paper Brain note content or position.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Note id.
+ * @param {{text?:string, position?:{x?:number,y?:number}}} [patch={}] - Note patch.
+ * @returns {Promise<void>} Update completion.
+ */
 export const updatePaperBrainNote = async (sessionId, noteId, patch = {}) => {
   if (!sessionId || !noteId) return;
 
@@ -131,6 +187,12 @@ export const updatePaperBrainNote = async (sessionId, noteId, patch = {}) => {
   await update(ref(database, `${toPaperBrainPath(sessionId)}/notes/${noteId}`), payload);
 };
 
+/**
+ * Removes a note and associated comments/votes.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Note id.
+ * @returns {Promise<void>} Delete completion.
+ */
 export const removePaperBrainNote = async (sessionId, noteId) => {
   if (!sessionId || !noteId) return;
 
@@ -153,6 +215,13 @@ export const removePaperBrainNote = async (sessionId, noteId) => {
   await update(ref(database), updates);
 };
 
+/**
+ * Adds a comment to a note.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Note id.
+ * @param {{authorId:string, text?:string}} [payload={}] - Comment payload.
+ * @returns {Promise<string>} Created comment id.
+ */
 export const addPaperBrainComment = async (sessionId, noteId, payload = {}) => {
   if (!sessionId || !noteId || !payload?.authorId) {
     throw new Error("addPaperBrainComment: paramètres manquants");
@@ -179,6 +248,14 @@ export const addPaperBrainComment = async (sessionId, noteId, payload = {}) => {
   return commentId;
 };
 
+/**
+ * Updates a note comment.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Note id.
+ * @param {string} commentId - Comment id.
+ * @param {{text?:string}} [patch={}] - Comment patch.
+ * @returns {Promise<void>} Update completion.
+ */
 export const updatePaperBrainComment = async (
   sessionId,
   noteId,
@@ -204,6 +281,13 @@ export const updatePaperBrainComment = async (
   );
 };
 
+/**
+ * Removes a note comment.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Note id.
+ * @param {string} commentId - Comment id.
+ * @returns {Promise<void>} Delete completion.
+ */
 export const removePaperBrainComment = async (sessionId, noteId, commentId) => {
   if (!sessionId || !noteId || !commentId) return;
 
@@ -215,6 +299,13 @@ export const removePaperBrainComment = async (sessionId, noteId, commentId) => {
   );
 };
 
+/**
+ * Updates only a note position.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Note id.
+ * @param {{x?:number, y?:number}} position - Target position.
+ * @returns {Promise<void>} Update completion.
+ */
 export const setPaperBrainNotePosition = async (sessionId, noteId, position) => {
   if (!sessionId || !noteId) return;
 
@@ -224,6 +315,14 @@ export const setPaperBrainNotePosition = async (sessionId, noteId, position) => 
   });
 };
 
+/**
+ * Toggles a participant vote on a note with optional max-votes guard.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} participantId - Participant id.
+ * @param {string} noteId - Note id.
+ * @param {{maxVotes?:number, validNoteIds?:Set<string>}} [options={}] - Voting options.
+ * @returns {Promise<{committed:boolean, votes:Object}>} Transaction result and resulting votes.
+ */
 export const togglePaperBrainVote = async (
   sessionId,
   participantId,

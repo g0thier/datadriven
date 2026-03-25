@@ -1,6 +1,19 @@
 import { get, onValue, push, ref, update } from "firebase/database";
 import { database } from "./app";
 
+/**
+ * @module firebase/workshop-sessions.service
+ * @description Workshop session creation, lookup and user-session subscriptions.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
+/**
+ * Normalizes guests payload for session persistence.
+ * @param {Object[]} [guests=[]] - Guests list.
+ * @returns {Object[]} Normalized guests list.
+ */
 const normalizeGuests = (guests = []) =>
   guests.map((guest) => ({
     id: guest?.id ?? "",
@@ -13,19 +26,41 @@ const normalizeGuests = (guests = []) =>
     sources: Array.isArray(guest?.sources) ? guest.sources : [],
   }));
 
+/**
+ * Normalizes workshop schedule payload.
+ * @param {Object} [schedule={}] - Structured schedule object.
+ * @param {Object} [payload={}] - Flat payload fallback.
+ * @returns {{date:string, time:string, timezone:string}} Normalized schedule.
+ */
 const normalizeWorkshopSchedule = (schedule = {}, payload = {}) => ({
   date: schedule?.date ?? payload?.workshopDate ?? "",
   time: schedule?.time ?? payload?.workshopTime ?? "",
   timezone: schedule?.timezone ?? payload?.workshopTimezone ?? "UTC+01:00",
 });
 
+/**
+ * Normalizes a potential user id.
+ * @param {string} value - Raw id value.
+ * @returns {string} Trimmed id.
+ */
 const normalizeUserId = (value) => String(value || "").trim();
 
+/**
+ * Converts a date value to timestamp for sorting.
+ * @param {string} value - Date-like value.
+ * @returns {number} Unix timestamp or `0` when invalid.
+ */
 const toTimestamp = (value) => {
   const time = new Date(String(value || "")).getTime();
   return Number.isFinite(time) ? time : 0;
 };
 
+/**
+ * Creates a workshop session and links it to company and participant users.
+ * @param {string} companyId - Company id.
+ * @param {Object} [payload={}] - Session creation payload.
+ * @returns {Promise<{sessionId:string, companySessionSummary:Object, sessionDetails:Object}>} Persisted session payload.
+ */
 export const createWorkshopSession = async (companyId, payload = {}) => {
   if (!companyId) {
     throw new Error("createWorkshopSession: companyId manquant");
@@ -107,6 +142,11 @@ export const createWorkshopSession = async (companyId, payload = {}) => {
   return { sessionId, companySessionSummary, sessionDetails };
 };
 
+/**
+ * Fetches a workshop session by id.
+ * @param {string} sessionId - Session id.
+ * @returns {Promise<Object|null>} Session payload or `null`.
+ */
 export const getWorkshopSession = async (sessionId) => {
   if (!sessionId) return null;
 
@@ -116,6 +156,13 @@ export const getWorkshopSession = async (sessionId) => {
   return { id: sessionId, ...snapshot.val() };
 };
 
+/**
+ * Subscribes to sessions linked to a user.
+ * @param {string} userId - User id.
+ * @param {Function} callback - Listener receiving session summaries.
+ * @param {Function} [onError] - Optional error callback.
+ * @returns {Function} Unsubscribe callback.
+ */
 export const subscribeUserWorkshopSessions = (userId, callback, onError) => {
   const safeCallback = typeof callback === "function" ? callback : () => {};
   const safeOnError = typeof onError === "function" ? onError : null;

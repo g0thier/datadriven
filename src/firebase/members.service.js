@@ -1,6 +1,19 @@
 import { get, onValue, push, ref, update } from "firebase/database";
 import { database } from "./app";
 
+/**
+ * @module firebase/members.service
+ * @description Realtime and CRUD helpers for company members.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
+/**
+ * Splits a full name into first and last name.
+ * @param {string} [name=""] - Full name string.
+ * @returns {{firstName:string, lastName:string}} Name parts.
+ */
 const splitFullName = (name = "") => {
   const value = String(name || "").trim();
   if (!value) return { firstName: "", lastName: "" };
@@ -11,6 +24,13 @@ const splitFullName = (name = "") => {
   return { firstName, lastName };
 };
 
+/**
+ * Maps employee/user records to a normalized member view model.
+ * @param {string} uid - Member user id.
+ * @param {Object} [employeeData={}] - Employee data from company node.
+ * @param {Object} [userData={}] - User profile data.
+ * @returns {Object} Normalized member.
+ */
 const toMemberViewModel = (uid, employeeData = {}, userData = {}) => {
   const firstName = userData.firstName || "";
   const lastName = userData.lastName || "";
@@ -36,6 +56,12 @@ const toMemberViewModel = (uid, employeeData = {}, userData = {}) => {
   };
 };
 
+/**
+ * Subscribes to a company's members list.
+ * @param {string} companyId - Company id.
+ * @param {Function} callback - Listener receiving normalized members list.
+ * @returns {Function} Unsubscribe callback.
+ */
 export const subscribeCompanyMembers = (companyId, callback) => {
   if (!companyId) {
     callback([]);
@@ -68,6 +94,12 @@ export const subscribeCompanyMembers = (companyId, callback) => {
   });
 };
 
+/**
+ * Creates a company member in both `users` and `companies/{id}/employees`.
+ * @param {string} companyId - Company id.
+ * @param {Object} [payload={}] - Member creation payload.
+ * @returns {Promise<string>} Created member id.
+ */
 export const addCompanyMember = async (companyId, payload = {}) => {
   if (!companyId) throw new Error("addCompanyMember: companyId manquant");
 
@@ -119,6 +151,13 @@ export const addCompanyMember = async (companyId, payload = {}) => {
   return memberId;
 };
 
+/**
+ * Updates a company member in both `users` and `employees`.
+ * @param {string} companyId - Company id.
+ * @param {string} memberId - Member id.
+ * @param {Object} [patch={}] - Partial update payload.
+ * @returns {Promise<void>} Update completion.
+ */
 export const updateCompanyMember = async (companyId, memberId, patch = {}) => {
   if (!companyId || !memberId) return;
 
@@ -164,6 +203,12 @@ export const updateCompanyMember = async (companyId, memberId, patch = {}) => {
   ]);
 };
 
+/**
+ * Removes a company member from both `users` and `employees`.
+ * @param {string} companyId - Company id.
+ * @param {string} memberId - Member id.
+ * @returns {Promise<void>} Delete completion.
+ */
 export const removeCompanyMember = async (companyId, memberId) => {
   if (!companyId || !memberId) return;
 

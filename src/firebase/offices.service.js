@@ -1,6 +1,20 @@
 import { get, onValue, push, ref, remove, set, update } from "firebase/database";
 import { database } from "./app";
 
+/**
+ * @module firebase/offices.service
+ * @description Realtime and CRUD helpers for company office addresses.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
+/**
+ * Subscribes to a company's offices list.
+ * @param {string} companyId - Company id.
+ * @param {Function} callback - Listener receiving normalized office list.
+ * @returns {Function} Unsubscribe callback.
+ */
 export const subscribeCompanyOffices = (companyId, callback) => {
   if (!companyId) {
     callback([]);
@@ -33,6 +47,12 @@ export const subscribeCompanyOffices = (companyId, callback) => {
   });
 };
 
+/**
+ * Creates an office for a company.
+ * @param {string} companyId - Company id.
+ * @param {{alias?:string, name?:string, address?:string, city?:string, zip?:string, country?:string}} [payload={}] - Office creation payload.
+ * @returns {Promise<string>} Created office id.
+ */
 export const addCompanyOffice = async (companyId, payload = {}) => {
   if (!companyId) throw new Error("addCompanyOffice: companyId manquant");
 
@@ -59,6 +79,13 @@ export const addCompanyOffice = async (companyId, payload = {}) => {
   return officeId;
 };
 
+/**
+ * Updates an office and handles unique default-office logic.
+ * @param {string} companyId - Company id.
+ * @param {string} officeId - Office id.
+ * @param {Object} [patch={}] - Partial office update payload.
+ * @returns {Promise<void>} Update completion.
+ */
 export const updateCompanyOffice = async (companyId, officeId, patch = {}) => {
   if (!companyId || !officeId) return;
 
@@ -110,6 +137,12 @@ export const updateCompanyOffice = async (companyId, officeId, patch = {}) => {
   await update(ref(database, `companies/${companyId}/addresses/${officeId}`), payload);
 };
 
+/**
+ * Removes an office and reassigns default office if needed.
+ * @param {string} companyId - Company id.
+ * @param {string} officeId - Office id.
+ * @returns {Promise<void>} Delete completion.
+ */
 export const removeCompanyOffice = async (companyId, officeId) => {
   if (!companyId || !officeId) return;
 

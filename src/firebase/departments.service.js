@@ -1,6 +1,20 @@
 import { onValue, push, ref, remove, set, update } from "firebase/database";
 import { database } from "./app";
 
+/**
+ * @module firebase/departments.service
+ * @description Realtime and CRUD helpers for company departments.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
+/**
+ * Subscribes to a company's departments list.
+ * @param {string} companyId - Company id.
+ * @param {Function} callback - Listener receiving normalized department list.
+ * @returns {Function} Unsubscribe callback.
+ */
 export const subscribeCompanyDepartments = (companyId, callback) => {
   if (!companyId) {
     callback([]);
@@ -28,6 +42,12 @@ export const subscribeCompanyDepartments = (companyId, callback) => {
   });
 };
 
+/**
+ * Creates a department for a company.
+ * @param {string} companyId - Company id.
+ * @param {{name?:string, isActive?:boolean}} [payload={}] - Department creation payload.
+ * @returns {Promise<string>} Created department id.
+ */
 export const addCompanyDepartment = async (companyId, payload = {}) => {
   if (!companyId) throw new Error("addCompanyDepartment: companyId manquant");
 
@@ -47,6 +67,13 @@ export const addCompanyDepartment = async (companyId, payload = {}) => {
   return departmentId;
 };
 
+/**
+ * Updates a department.
+ * @param {string} companyId - Company id.
+ * @param {string} departmentId - Department id.
+ * @param {{name?:string, isActive?:boolean}} [patch={}] - Partial update payload.
+ * @returns {Promise<void>} Update completion.
+ */
 export const updateCompanyDepartment = async (companyId, departmentId, patch = {}) => {
   if (!companyId || !departmentId) return;
 
@@ -64,6 +91,12 @@ export const updateCompanyDepartment = async (companyId, departmentId, patch = {
   await update(ref(database, `companies/${companyId}/departments/${departmentId}`), payload);
 };
 
+/**
+ * Removes a department.
+ * @param {string} companyId - Company id.
+ * @param {string} departmentId - Department id.
+ * @returns {Promise<void>} Delete completion.
+ */
 export const removeCompanyDepartment = async (companyId, departmentId) => {
   if (!companyId || !departmentId) return;
   await remove(ref(database, `companies/${companyId}/departments/${departmentId}`));

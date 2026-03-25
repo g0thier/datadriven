@@ -1,3 +1,11 @@
+/**
+ * @module firebase/index
+ * @description Barrel exports for Firebase app instances and service helpers.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
 export { auth, database } from "./app";
 export * from "./auth.service";
 export * from "./member-auth.service";

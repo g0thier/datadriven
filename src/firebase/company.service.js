@@ -3,6 +3,20 @@ import DEFAULT_DEPARTMENTS from "../constants/defaults";
 import slugify from "../utils/string";
 import { database } from "./app";
 
+/**
+ * @module firebase/company.service
+ * @description Company bootstrap helpers (company creation and company lookup by user).
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
+/**
+ * Creates a company structure and links it to the provided owner user id.
+ * @param {string} uid - Owner user id.
+ * @param {Object} payload - Company/account creation payload.
+ * @returns {Promise<{companyId:string, slug:string}>} Created company identifiers.
+ */
 export const createCompany = async (uid, payload) => {
   if (!uid) {
     throw new Error("createCompany: uid manquant");
@@ -103,6 +117,11 @@ export const createCompany = async (uid, payload) => {
   return { companyId, slug };
 };
 
+/**
+ * Reads the company id associated with a user.
+ * @param {string} uid - User id.
+ * @returns {Promise<string|null>} User company id or `null`.
+ */
 export const getUserCompanyId = async (uid) => {
   if (!uid) return null;
   const snapshot = await get(ref(database, `users/${uid}/companyId`));

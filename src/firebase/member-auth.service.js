@@ -5,6 +5,20 @@ import {
 } from "firebase/auth";
 import { auth } from "./app";
 
+/**
+ * @module firebase/member-auth.service
+ * @description Auth helper to create member accounts while restoring previous session.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
+/**
+ * Creates a member auth account and restores the previously authenticated user.
+ * @param {string} email - Member email.
+ * @param {string} password - Member password.
+ * @returns {Promise<Object>} Created Firebase user.
+ */
 export const signUpMemberWithEmail = async (email, password) => {
   const normalizedEmail = typeof email === "string" ? email.trim() : "";
 

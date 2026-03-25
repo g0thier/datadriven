@@ -7,6 +7,20 @@ import {
 } from "firebase/auth";
 import { auth } from "./app";
 
+/**
+ * @module firebase/auth.service
+ * @description Authentication helpers for signup, signin, signout and password reset.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
+/**
+ * Creates a Firebase auth account with email/password.
+ * @param {string} email - User email.
+ * @param {string} password - User password.
+ * @returns {Promise<Object>} Created Firebase user.
+ */
 export const signUpWithEmail = async (email, password) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -19,6 +33,12 @@ export const signUpWithEmail = async (email, password) => {
   }
 };
 
+/**
+ * Signs in an existing Firebase auth user with email/password.
+ * @param {string} email - User email.
+ * @param {string} password - User password.
+ * @returns {Promise<Object>} Authenticated Firebase user.
+ */
 export const signInWithEmail = async (email, password) => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -31,6 +51,10 @@ export const signInWithEmail = async (email, password) => {
   }
 };
 
+/**
+ * Signs out the currently authenticated Firebase user.
+ * @returns {Promise<void>} Logout completion.
+ */
 export const logout = async () => {
   try {
     await signOut(auth);
@@ -41,6 +65,11 @@ export const logout = async () => {
   }
 };
 
+/**
+ * Sends a password-reset email.
+ * @param {string} email - Target user email.
+ * @returns {Promise<void>} Reset request completion.
+ */
 export const resetPassword = async (email) => {
   await sendPasswordResetEmail(auth, email)
     .then(() => {
@@ -53,6 +82,11 @@ export const resetPassword = async (email) => {
     });
 };
 
+/**
+ * Subscribes to Firebase auth state changes.
+ * @param {Function} callback - Listener called with current user or `null`.
+ * @returns {Function} Unsubscribe callback.
+ */
 export const onAuthStateChangedListener = (callback) => {
   return onAuthStateChanged(auth, callback);
 };

@@ -1,9 +1,28 @@
 import { get, onValue, ref, update } from "firebase/database";
 import { database } from "./app";
 
+/**
+ * @module firebase/management.service
+ * @description Management helpers for leaders/owners and manager permissions.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
 const MANAGEMENT_ROLES = new Set(["owner", "leader"]);
 
+/**
+ * Normalizes a role string.
+ * @param {string} role - Raw role.
+ * @returns {string} Normalized role.
+ */
 const normalizeRole = (role) => String(role || "").trim().toLowerCase();
+
+/**
+ * Normalizes page-access values from array or map format.
+ * @param {string[]|Object<string, boolean>} value - Page access configuration.
+ * @returns {string[]} Enabled and normalized paths.
+ */
 const normalizePageAccessList = (value) => {
   if (Array.isArray(value)) {
     return value
@@ -21,6 +40,13 @@ const normalizePageAccessList = (value) => {
   return [];
 };
 
+/**
+ * Maps employee/user records to a normalized manager view model.
+ * @param {string} uid - Manager user id.
+ * @param {Object} [employeeData={}] - Employee data from company node.
+ * @param {Object} [userData={}] - User profile data.
+ * @returns {Object} Normalized manager.
+ */
 const toManagerViewModel = (uid, employeeData = {}, userData = {}) => {
   const firstName = userData.firstName || "";
   const lastName = userData.lastName || "";
@@ -38,6 +64,12 @@ const toManagerViewModel = (uid, employeeData = {}, userData = {}) => {
   };
 };
 
+/**
+ * Subscribes to owner/leader members for a company.
+ * @param {string} companyId - Company id.
+ * @param {Function} callback - Listener receiving managers list.
+ * @returns {Function} Unsubscribe callback.
+ */
 export const subscribeCompanyManagers = (companyId, callback) => {
   if (!companyId) {
     callback([]);
@@ -77,6 +109,11 @@ export const subscribeCompanyManagers = (companyId, callback) => {
   });
 };
 
+/**
+ * Reads persisted manager permissions for a company.
+ * @param {string} companyId - Company id.
+ * @returns {Promise<Object<string, {role:string, pageAccess:string[]}>>} Permissions by user id.
+ */
 export const getCompanyManagerPermissions = async (companyId) => {
   if (!companyId) return {};
 
@@ -97,6 +134,13 @@ export const getCompanyManagerPermissions = async (companyId) => {
   return next;
 };
 
+/**
+ * Creates or updates manager permission data for a user.
+ * @param {string} companyId - Company id.
+ * @param {string} userId - Manager user id.
+ * @param {{role?:string, pageAccess?:string[]|Object<string, boolean>}} [patch={}] - Permissions patch.
+ * @returns {Promise<void>} Update completion.
+ */
 export const upsertCompanyManagerPermissions = async (companyId, userId, patch = {}) => {
   if (!companyId || !userId) return;
 
