@@ -35,7 +35,7 @@ export default function SectionNavButtons({
   variant = "page",
 }) {
   const { pathname } = useLocation();
-  const { isLoading, canAccessPath } = useRouteAuthorization();
+  const { isLoading, canAccessPath, resolveBestPath } = useRouteAuthorization();
 
   const styles = variantStyles[variant] || variantStyles.page;
   const visibleLinks = useMemo(() => {
@@ -53,11 +53,30 @@ export default function SectionNavButtons({
     });
   }, [canAccessPath, isLoading, links]);
 
-  if (visibleLinks.length === 0) return null;
+  const resolvedLinks = useMemo(() => {
+    if (isLoading) return visibleLinks;
+
+    return visibleLinks.map((link) => {
+      const rootPath = normalizePath(link?.to);
+      if (!rootPath) return link;
+
+      const sectionLinks = SECTION_LINKS_BY_ROOT[rootPath];
+      if (!Array.isArray(sectionLinks) || sectionLinks.length === 0) {
+        return link;
+      }
+
+      const candidatePaths = sectionLinks.map((sectionLink) => sectionLink?.to);
+      const bestPath = resolveBestPath(candidatePaths, rootPath);
+
+      return { ...link, to: bestPath || rootPath };
+    });
+  }, [isLoading, resolveBestPath, visibleLinks]);
+
+  if (resolvedLinks.length === 0) return null;
 
   return (
     <nav aria-label={ariaLabel} className={`flex items-center ${className}`}>
-      {visibleLinks.map((link, index) => (
+      {resolvedLinks.map((link, index) => (
         <NavLink
           key={`${link.to}-${link.label}-${index}`}
           to={link.to}
