@@ -1,3 +1,11 @@
+/**
+ * @module workshops/StepTime
+ * @description Sidebar timeline component displaying workshop step progression and remaining time.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
 import { useStepTimeline } from "./useStepTimeline";
 
 // Formate un nombre de secondes en MM:SS
@@ -9,6 +17,23 @@ function formatMMSS(totalSeconds) {
 }
 
 // Composant principal pour afficher le timer et les étapes
+/**
+ * Renders the workshop timeline sidebar.
+ *
+ * @param {Object} props - Component props.
+ * @param {Object} props.sessionData - Workshop metadata and steps configuration.
+ * @param {Date|string|number} props.startAt - Session start date/time value used by the timeline hook.
+ * @returns {JSX.Element} The rendered workshop timeline sidebar.
+ *
+ * @example
+ * import StepTime from "./StepTime.jsx";
+ *
+ * // Real usage reference: src/workshops/WorkshopRunner.jsx
+ * <StepTime sessionData={sessionData} startAt={startAt} />;
+ *
+ * // Related real usage:
+ * // - src/workshops/StepTime.jsx calls useStepTimeline(sessionData, startAt)
+ */
 function StepTime({ sessionData, startAt }) {
   const {
     elapsedMinutes,

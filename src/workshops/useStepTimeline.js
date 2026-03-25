@@ -1,3 +1,11 @@
+/**
+ * @module workshops/useStepTimeline
+ * @description Timeline hook computing active workshop step and elapsed/remaining timing metrics.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
 import { useEffect, useMemo, useState } from "react";
 
 // Transforme les étapes pour calculer les temps de début et de fin (en minutes)
@@ -11,6 +19,21 @@ function computeSteps(steps) {
   });
 }
 
+/**
+ * Computes timeline metrics for workshop steps.
+ *
+ * @param {Object} sessionData - Workshop data containing a `steps` array with `duration` values in minutes.
+ * @param {Date|string|number} startAt - Session start date/time.
+ * @returns {Object} Derived timeline state (currentStep, currentIndex, elapsed, remaining, and completion flags).
+ *
+ * @example
+ * import { useStepTimeline } from "./useStepTimeline.js";
+ *
+ * // Real usage references:
+ * // - src/workshops/StepTime.jsx
+ * // - src/workshops/WorkshopRunner.jsx
+ * const { currentStep, isFinished } = useStepTimeline(sessionData, startAt);
+ */
 export function useStepTimeline(sessionData, startAt) {
   const startDate = useMemo(() => {
     const d = startAt instanceof Date ? startAt : new Date(startAt);

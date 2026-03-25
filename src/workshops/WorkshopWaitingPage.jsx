@@ -1,3 +1,11 @@
+/**
+ * @module workshops/WorkshopWaitingPage
+ * @description Waiting room screen displayed before a workshop start time.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
 import zebra from "../assets/zebra.svg";
 import MaterialIcon from "../components/MaterialIcon";
 
@@ -20,6 +28,21 @@ function formatRemainingTime(remainingMs) {
   )}`;
 }
 
+/**
+ * Renders the waiting screen displayed before workshop start.
+ *
+ * @param {Object} props - Component props.
+ * @param {string} props.sessionTitle - Workshop session title.
+ * @param {Date} props.startAt - Scheduled workshop start date/time.
+ * @param {number} props.remainingMs - Remaining milliseconds before start.
+ * @returns {JSX.Element} The rendered waiting page.
+ *
+ * @example
+ * import WorkshopWaitingPage from "./WorkshopWaitingPage.jsx";
+ *
+ * // Real usage reference: src/workshops/WorkshopRunner.jsx
+ * <WorkshopWaitingPage sessionTitle={sessionData.title} startAt={startAt} remainingMs={remainingMs} />;
+ */
 export default function WorkshopWaitingPage({
   sessionTitle,
   startAt,

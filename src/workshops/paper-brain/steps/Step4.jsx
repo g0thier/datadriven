@@ -1,3 +1,11 @@
+/**
+ * @module workshops/paper-brain/steps/Step4
+ * @description Paper Brain step 4 screen for collaborative clustering and positioning of notes.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import WorkshopStepLayout from "../../WorkshopStepLayout.jsx";
 
@@ -122,6 +130,23 @@ function useDragNotes({
   return { onPointerDown, onPointerMove, onPointerUp };
 }
 
+/**
+ * Renders Paper Brain step 4 (collective board organization).
+ *
+ * @param {Object} props - Component props.
+ * @param {Object} props.step - Step metadata.
+ * @param {string} props.sessionTitle - Current session title.
+ * @param {Object} props.collaboration - Collaboration state and actions.
+ * @returns {JSX.Element} The rendered step 4 screen.
+ *
+ * @example
+ * import Step4 from "./steps/Step4.jsx";
+ *
+ * // Real usage references:
+ * // - src/workshops/paper-brain/data.js
+ * // - src/workshops/WorkshopRunner.jsx
+ * <Step4 step={step} sessionTitle={sessionTitle} collaboration={collaboration} />;
+ */
 function Step4({ step, sessionTitle, collaboration }) {
   const notes = useMemo(() => collaboration?.notes ?? [], [collaboration?.notes]);
   const commentsByNote = collaboration?.commentsByNote || {};

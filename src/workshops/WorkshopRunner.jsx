@@ -1,3 +1,11 @@
+/**
+ * @module workshops/WorkshopRunner
+ * @description Route entry component that resolves, orchestrates, and renders workshop runtime screens.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getWorkshopSession } from "../firebase";
@@ -10,6 +18,24 @@ import RouteFallback from "../components/fallback/RouteFallback.jsx";
 import WorkshopSummaryPage from "./WorkshopSummaryPage.jsx";
 import WorkshopVoiceOverlay from "../components/workshop-audio/WorkshopVoiceOverlay.jsx";
 
+/**
+ * Renders the workshop runtime route page.
+ * Resolves workshop/session data, handles waiting/finished states, and renders active steps.
+ *
+ * @returns {JSX.Element} The workshop runtime screen.
+ *
+ * @example
+ * import { lazy } from "react";
+ * const WorkshopRunner = lazy(() => import("./workshops/WorkshopRunner.jsx"));
+ *
+ * // Real usage reference: src/App.jsx
+ * <Route path="/innovation/:workshopId/:id" element={<WorkshopRunner />} />;
+ *
+ * // Internal callsites in this component:
+ * // - useStepTimeline(sessionData, startAt)
+ * // - usePaperBrainCollaboration({ sessionId, session, workshopId })
+ * // - <StepTime ... />, <WorkshopWaitingPage ... />, <WorkshopSummaryPage ... />
+ */
 export default function WorkshopRunner() {
   const { workshopId: routeWorkshopId, id: sessionId } = useParams();
   const [session, setSession] = useState(null);

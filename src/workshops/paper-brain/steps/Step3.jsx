@@ -1,6 +1,31 @@
+/**
+ * @module workshops/paper-brain/steps/Step3
+ * @description Paper Brain step 3 screen for note rotation and enrichment.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
 import { useMemo, useState } from "react";
 import WorkshopStepLayout from "../../WorkshopStepLayout.jsx";
 
+/**
+ * Renders Paper Brain step 3 (rotation and enrichment).
+ *
+ * @param {Object} props - Component props.
+ * @param {Object} props.step - Step metadata.
+ * @param {string} props.sessionTitle - Current session title.
+ * @param {Object} props.collaboration - Collaboration state and actions.
+ * @returns {JSX.Element} The rendered step 3 screen.
+ *
+ * @example
+ * import Step3 from "./steps/Step3.jsx";
+ *
+ * // Real usage references:
+ * // - src/workshops/paper-brain/data.js
+ * // - src/workshops/WorkshopRunner.jsx
+ * <Step3 step={step} sessionTitle={sessionTitle} collaboration={collaboration} />;
+ */
 function Step3({ step, sessionTitle, collaboration }) {
   const notes = useMemo(() => collaboration?.notes ?? [], [collaboration?.notes]);
   const commentsByNote = collaboration?.commentsByNote || {};

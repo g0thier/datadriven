@@ -1,8 +1,30 @@
+/**
+ * @module workshops/paper-brain/PaperBrainSummary
+ * @description Workshop-specific summary view for the Paper Brain workflow.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
 import { useMemo } from "react";
 
 const EMPTY_OBJECT = Object.freeze({});
 const EMPTY_ARRAY = Object.freeze([]);
 
+/**
+ * Renders the Paper Brain workshop summary screen.
+ *
+ * @param {Object} props - Component props.
+ * @param {string} props.sessionTitle - Workshop session title.
+ * @param {Object} props.collaboration - Collaboration state from usePaperBrainCollaboration.
+ * @returns {JSX.Element} The rendered Paper Brain summary.
+ *
+ * @example
+ * import PaperBrainSummary from "./paper-brain/PaperBrainSummary.jsx";
+ *
+ * // Real usage reference: src/workshops/WorkshopSummaryPage.jsx
+ * <PaperBrainSummary sessionTitle={sessionTitle} collaboration={collaboration} />;
+ */
 export default function PaperBrainSummary({ sessionTitle, collaboration }) {
   const notes = Array.isArray(collaboration?.notes) ? collaboration.notes : EMPTY_ARRAY;
   const commentsByNote =

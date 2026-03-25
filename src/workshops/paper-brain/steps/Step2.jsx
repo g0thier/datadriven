@@ -1,8 +1,34 @@
+/**
+ * @module workshops/paper-brain/steps/Step2
+ * @description Paper Brain step 2 screen for individual note creation.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
 import { useEffect } from "react";
 import WorkshopStepLayout from "../../WorkshopStepLayout.jsx";
 
 const initialNoteCreationByParticipant = new Set();
 
+/**
+ * Renders Paper Brain step 2 (individual idea generation).
+ *
+ * @param {Object} props - Component props.
+ * @param {Object} props.step - Step metadata.
+ * @param {string} props.sessionTitle - Current session title.
+ * @param {Object} props.collaboration - Collaboration state and actions.
+ * @param {Object} props.session - Workshop session payload.
+ * @returns {JSX.Element} The rendered step 2 screen.
+ *
+ * @example
+ * import Step2 from "./steps/Step2.jsx";
+ *
+ * // Real usage references:
+ * // - src/workshops/paper-brain/data.js
+ * // - src/workshops/WorkshopRunner.jsx
+ * <Step2 step={step} sessionTitle={sessionTitle} collaboration={collaboration} session={session} />;
+ */
 function Step2({ step, sessionTitle, collaboration, session }) {
   const myNotes = collaboration?.myNotes || [];
   const isLoading = Boolean(collaboration?.isLoading);

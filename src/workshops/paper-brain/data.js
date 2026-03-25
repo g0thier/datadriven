@@ -1,3 +1,11 @@
+/**
+ * @module workshops/paper-brain/data
+ * @description Paper Brain workshop definition and step metadata registry entry.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
 import paperBrainImg from "../../assets/workshops/paper-brain.png";
 
 import Step1 from "./steps/Step1.jsx";
@@ -42,6 +50,18 @@ const description5 = [
     "Objectif : transformer la créativité en innovation exploitable."
 ];
 
+/**
+ * Paper Brain workshop configuration used by the workshops registry.
+ *
+ * @type {Object}
+ * @example
+ * import { paperBrain } from "./paper-brain/data.js";
+ *
+ * // Real usage references:
+ * // - src/workshops/index.js (WORKSHOPS["paper-brain"])
+ * // - src/workshops/paper-brain/data.js (steps use Step1..Step5 components)
+ * const stepComponent = paperBrain.steps[0].component;
+ */
 export const paperBrain = {
   id: "paper-brain",
   title: "Paper Brain",

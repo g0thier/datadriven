@@ -1,3 +1,11 @@
+/**
+ * @module workshops/paper-brain/usePaperBrainCollaboration
+ * @description Collaboration hook managing realtime Paper Brain workshop state and actions.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   addPaperBrainComment,
@@ -100,6 +108,25 @@ const resolveParticipantIdentity = ({ sessionGuests, authUser }) => {
   };
 };
 
+/**
+ * Provides realtime collaboration state and actions for Paper Brain sessions.
+ *
+ * @param {Object} params - Hook parameters.
+ * @param {string} params.sessionId - Active workshop session id.
+ * @param {Object} params.session - Session payload containing participants/guests metadata.
+ * @param {string} params.workshopId - Workshop id used to enable Paper Brain behavior.
+ * @returns {Object} Collaboration state (notes, comments, votes, participant, errors) and write actions.
+ *
+ * @example
+ * import { usePaperBrainCollaboration } from "./paper-brain/usePaperBrainCollaboration.js";
+ *
+ * // Real usage reference: src/workshops/WorkshopRunner.jsx
+ * const collaboration = usePaperBrainCollaboration({
+ *   sessionId,
+ *   session,
+ *   workshopId: resolvedWorkshopId,
+ * });
+ */
 export function usePaperBrainCollaboration({ sessionId, session, workshopId }) {
   const isEnabled = Boolean(sessionId) && workshopId === "paper-brain";
 
@@ -635,4 +662,14 @@ export function usePaperBrainCollaboration({ sessionId, session, workshopId }) {
   };
 }
 
+/**
+ * Default export alias for usePaperBrainCollaboration.
+ *
+ * @type {typeof usePaperBrainCollaboration}
+ * @example
+ * import { usePaperBrainCollaboration } from "./paper-brain/usePaperBrainCollaboration.js";
+ *
+ * // Real usage reference (named import): src/workshops/WorkshopRunner.jsx
+ * const collaboration = usePaperBrainCollaboration({ sessionId, session, workshopId });
+ */
 export default usePaperBrainCollaboration;
