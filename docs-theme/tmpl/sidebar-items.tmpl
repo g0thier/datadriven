@@ -1,0 +1,49 @@
+<?js
+    var data = this.sidebar
+    function renderModuleTree(items, isRoot) {
+        var html = isRoot ? '<ul class="sidebar-tree">' : '<ul class="nav-level">';
+
+        items.forEach(function(item) {
+            var hasChildren = Array.isArray(item.children) && item.children.length > 0;
+            html += '<li>';
+
+            if(hasChildren) {
+                html += '<details class="module-tree-node">';
+                html += '<summary class="sidebar-section-group">' + item.name + '</summary>';
+                html += renderModuleTree(item.children, false);
+                html += '</details>';
+            } else if(item.anchor) {
+                html += '<div class="sidebar-section-children module-leaf">' + item.anchor + '</div>';
+            } else {
+                html += '<div class="sidebar-section-group module-leaf">' + item.name + '</div>';
+            }
+
+            html += '</li>';
+        });
+
+        html += '</ul>';
+        return html;
+    }
+
+    if(Array.isArray(data.sections)) {
+
+        data.sections.forEach(function(section) {
+            if(section.items.length > 0) { ?>
+
+            <div class="sidebar-section-title with-arrow" data-isopen="false" id="<?js= section.id?>">
+                <div><?js= section.name ?></div>
+                <svg><use xlink:href="#down-icon"></use></svg>
+            </div>
+            <div class="sidebar-section-children-container">
+                <?js if(section.name === 'Modules') { ?>
+                    <?js= renderModuleTree(section.items, true) ?>
+                <?js } else { ?>
+                    <?js section.items.forEach(function(item) { ?>
+                        <div class="sidebar-section-children">
+                            <?js= item.anchor ?>
+                        </div>
+                    <?js }) ?>
+                <?js } ?>
+            </div>
+
+<?js }})}?>
