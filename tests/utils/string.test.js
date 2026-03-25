@@ -11,3 +11,7 @@ test("slugify should convert a string to a slug", () => {
   expect(slugify("This & That")).toBe("this-that");
   expect(slugify("To be 3")).toBe("to-be-3");
 });
+
+test("slugify removes accents", () => {
+  expect(slugify("Équipe Développement")).toBe("equipe-developpement");
+});
