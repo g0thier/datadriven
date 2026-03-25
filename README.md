@@ -9,7 +9,7 @@ This project represents the first building block of a **SaaS (Software as a Serv
 
 This initial version includes a module entitled **“Innovation & Creativity”**, designed as a suite of collaborative tools aimed at structuring and facilitating innovation processes based on recognized methodologies.
 
-![Page Index](docs/images/index.png)
+![Login page](docs/images/login.png)
 
 ## Table of Contents
 
