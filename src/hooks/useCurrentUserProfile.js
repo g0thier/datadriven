@@ -3,6 +3,14 @@ import { onValue, ref } from "firebase/database";
 import { database, onAuthStateChangedListener } from "../firebase";
 import { resolvePlanLabel } from "../utils/subscription.utils";
 
+/**
+ * @module hooks/useCurrentUserProfile
+ * @description Hook loading the current user profile and subscription view models from Firebase.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
 const EMPTY_PROFILE = {
   profilePicture: "",
   firstName: "",
@@ -33,6 +41,11 @@ const ROLE_LABELS = {
   colab: "Collaborateur",
 };
 
+/**
+ * Splits a display name into first and last name parts.
+ * @param {string} [displayName=""] - Display name string.
+ * @returns {{firstName:string, lastName:string}} Name parts.
+ */
 const parseDisplayName = (displayName = "") => {
   const parts = String(displayName || "")
     .trim()
@@ -47,12 +60,22 @@ const parseDisplayName = (displayName = "") => {
   };
 };
 
+/**
+ * Converts a role key to a localized profile label.
+ * @param {string} [role=""] - Raw role value.
+ * @returns {string} Localized role label or normalized role.
+ */
 const normalizeRoleLabel = (role = "") => {
   const normalizedRole = String(role || "").trim().toLowerCase();
   if (!normalizedRole) return "";
   return ROLE_LABELS[normalizedRole] || normalizedRole;
 };
 
+/**
+ * Resolves the best office location label from office data.
+ * @param {Object} [officeData={}] - Office payload.
+ * @returns {string} Office location label.
+ */
 const resolveOfficeLocation = (officeData = {}) => {
   const alias = String(officeData?.alias || "").trim();
   if (alias) return alias;
@@ -63,6 +86,12 @@ const resolveOfficeLocation = (officeData = {}) => {
   return String(officeData?.address || "").trim();
 };
 
+/**
+ * Maps user/company data to the profile view model consumed by the UI.
+ * @param {Object} [userData={}] - User payload from database.
+ * @param {Object|null} [currentUser=null] - Authenticated Firebase user.
+ * @returns {{profilePicture:string, firstName:string, lastName:string, jobTitle:string, emailAddress:string, phoneNumber:string, officeLocation:string}} Profile view model.
+ */
 const toProfileViewModel = (userData = {}, currentUser = null) => {
   const fallbackName = parseDisplayName(currentUser?.displayName || "");
 
@@ -77,6 +106,11 @@ const toProfileViewModel = (userData = {}, currentUser = null) => {
   };
 };
 
+/**
+ * Maps company billing data to the subscription view model consumed by the UI.
+ * @param {Object} [companyData={}] - Company payload from database.
+ * @returns {{planKey:string, planLabel:string, status:string, currentPeriodEnd:string, cancelAtPeriodEnd:boolean, lastPaymentStatus:string}} Subscription view model.
+ */
 const toSubscriptionViewModel = (companyData = {}) => {
   const billingData =
     companyData?.billing && typeof companyData.billing === "object"
@@ -102,6 +136,10 @@ const toSubscriptionViewModel = (companyData = {}) => {
   };
 };
 
+/**
+ * Exposes reactive profile and subscription data for the current authenticated user.
+ * @returns {{profile:Object, subscription:Object, isLoading:boolean, loadError:string}} Profile state for UI rendering.
+ */
 export default function useCurrentUserProfile() {
   const [profile, setProfile] = useState(EMPTY_PROFILE);
   const [subscription, setSubscription] = useState(EMPTY_SUBSCRIPTION);

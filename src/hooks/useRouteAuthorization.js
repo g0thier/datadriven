@@ -10,13 +10,30 @@ import {
 } from "../utils/routeAccess.utils.js";
 import { getCompanySubscriptionCapacity } from "../utils/subscriptionCapacity.utils.js";
 
+/**
+ * @module hooks/useRouteAuthorization
+ * @description Hook computing route authorization state from user role, permissions and capacity limits.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
 const ROLE_SET = new Set([APP_ROLES.OWNER, APP_ROLES.LEADER, APP_ROLES.COLAB]);
 
+/**
+ * Normalizes a role to one of the supported app roles.
+ * @param {string} [role=""] - Raw role value.
+ * @returns {string} Normalized role key.
+ */
 function normalizeRole(role = "") {
   const normalizedRole = String(role || "").trim().toLowerCase();
   return ROLE_SET.has(normalizedRole) ? normalizedRole : APP_ROLES.COLAB;
 }
 
+/**
+ * Exposes authorization helpers and loading state for guarded navigation.
+ * @returns {Object} User role state and route authorization resolvers.
+ */
 export default function useRouteAuthorization() {
   const [user, setUser] = useState(undefined);
   const [role, setRole] = useState(APP_ROLES.COLAB);

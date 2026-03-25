@@ -15,9 +15,22 @@ import {
   toWorkshopStartIso,
 } from "../utils/workshopDateTime";
 
+/**
+ * @module hooks/useWorkshopInvitation
+ * @description Hook to prepare workshop invitations and dispatch invite emails.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
 const SEND_WORKSHOP_INVITE_URL = import.meta.env.VITE_SEND_WORKSHOP_INVITE_URL;
 const DEFAULT_WORKSHOP = Object.values(WORKSHOPS)[0] ?? { title: "Atelier" };
 
+/**
+ * Resolves a stable workshop id from workshop metadata.
+ * @param {Object} workshop - Workshop candidate object.
+ * @returns {string} Resolved workshop identifier.
+ */
 const resolveWorkshopId = (workshop) => {
   const candidateIds = [
     typeof workshop?.id === "string" ? workshop.id.trim() : "",
@@ -32,6 +45,10 @@ const resolveWorkshopId = (workshop) => {
   return Object.keys(WORKSHOPS)[0] || "";
 };
 
+/**
+ * Exposes workshop invitation state and actions (selection, scheduling, sending).
+ * @returns {Object} Invitation form state, derived lists and sending handlers.
+ */
 function useWorkshopInvitation() {
   const location = useLocation();
   const navigate = useNavigate();

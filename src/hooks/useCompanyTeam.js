@@ -16,6 +16,18 @@ import {
   watchCompanyOffices,
 } from "../services/teamService";
 
+/**
+ * @module hooks/useCompanyTeam
+ * @description Hook to manage company team entities (offices, departments and members).
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
+/**
+ * Provides realtime team data and CRUD actions for company team entities.
+ * @returns {Object} Company team state, selectors and mutation handlers.
+ */
 export default function useCompanyTeam() {
   const [officeLocations, setOfficeLocations] = useState([]);
   const [departments, setDepartments] = useState([]);

@@ -12,6 +12,14 @@ import {
   touchWorkshopVoiceParticipant,
 } from "../firebase";
 
+/**
+ * @module hooks/useWorkshopVoiceRoom
+ * @description Hook implementing realtime workshop voice-room presence and WebRTC signaling.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
 const ICE_CONFIGURATION = {
   // TODO: Ajouter un serveur TURN pour fiabilité réseau entreprise (la v1 est STUN-only).
   iceServers: [
@@ -25,11 +33,19 @@ const LOCAL_SPEAKING_THRESHOLD = 0.035;
 const REMOTE_SPEAKING_THRESHOLD = 0.03;
 const SPEAKING_HOLD_MS = 280;
 
+/**
+ * Resolves the browser AudioContext constructor when available.
+ * @returns {Function|null} AudioContext class or `null` when unsupported.
+ */
 const getAudioContextClass = () => {
   if (typeof window === "undefined") return null;
   return window.AudioContext || window.webkitAudioContext || null;
 };
 
+/**
+ * Builds a stable client instance id for the current hook lifecycle.
+ * @returns {string} Generated instance id.
+ */
 const buildInstanceId = () => {
   if (typeof globalThis.crypto?.randomUUID === "function") {
     return globalThis.crypto.randomUUID();
@@ -39,6 +55,11 @@ const buildInstanceId = () => {
   return `${Date.now().toString(36)}-${random}`;
 };
 
+/**
+ * Builds local participant identity metadata from auth context.
+ * @param {string} instanceId - Local instance id used to derive short suffixes.
+ * @returns {{id:string, name:string, joinedAt:string}} Participant identity.
+ */
 const buildParticipantIdentity = (instanceId) => {
   const currentUser = auth.currentUser;
   const uid = String(currentUser?.uid || "").trim();
@@ -56,6 +77,11 @@ const buildParticipantIdentity = (instanceId) => {
   };
 };
 
+/**
+ * Closes the current AudioContext safely and clears the associated ref.
+ * @param {{current: AudioContext|null}} audioContextRef - Audio context ref.
+ * @returns {Promise<void>} Promise resolved once close attempts complete.
+ */
 const closeAudioContext = async (audioContextRef) => {
   const currentContext = audioContextRef.current;
   audioContextRef.current = null;
@@ -69,6 +95,15 @@ const closeAudioContext = async (audioContextRef) => {
   }
 };
 
+/**
+ * Observes voice activity on an audio stream and emits speaking state changes.
+ * @param {Object} params - Observer params.
+ * @param {MediaStream} params.stream - Audio stream to observe.
+ * @param {number} params.threshold - RMS threshold considered as voice activity.
+ * @param {{current: AudioContext|null}} params.audioContextRef - Shared audio context ref.
+ * @param {Function} params.onSpeakingChange - Callback invoked on speaking-state changes.
+ * @returns {Function} Cleanup function stopping the observer.
+ */
 const startVoiceActivityObserver = ({
   stream,
   threshold,
@@ -148,6 +183,15 @@ const startVoiceActivityObserver = ({
   };
 };
 
+/**
+ * Exposes voice-room connection state and push-to-talk controls for a workshop room.
+ * @param {Object} params - Hook options.
+ * @param {string} params.roomId - Voice room identifier.
+ * @param {boolean} params.workshopActive - Whether workshop audio is currently enabled.
+ * @param {boolean} params.stepAudioEnabled - Whether current workshop step allows audio.
+ * @param {number} [params.maxParticipants=8] - Maximum allowed participants.
+ * @returns {Object} Voice-room state, participant stats and control handlers.
+ */
 export function useWorkshopVoiceRoom({
   roomId,
   workshopActive,

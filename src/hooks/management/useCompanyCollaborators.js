@@ -7,17 +7,46 @@ import {
   updateCompanyMember,
 } from "../../firebase";
 
+/**
+ * @module hooks/management/useCompanyCollaborators
+ * @description Hook to list collaborators and promote them to leader role.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
+/**
+ * Normalizes a role string.
+ * @param {string} role - Raw role value.
+ * @returns {string} Normalized role.
+ */
 const normalizeRole = (role) => String(role || "").trim().toLowerCase();
 
+/**
+ * Resolves a stable collaborator identifier from a member payload.
+ * @param {Object} member - Member payload.
+ * @param {number} index - Fallback index.
+ * @returns {string|number} Resolved collaborator id.
+ */
 const getCollaboratorId = (member, index) =>
   member?.id ?? member?._id ?? member?.uid ?? member?.email ?? `collaborator-${index}`;
 
+/**
+ * Resolves a display name for a collaborator.
+ * @param {Object} member - Member payload.
+ * @returns {string} Display name.
+ */
 const getCollaboratorDisplayName = (member) =>
   [member?.firstName, member?.lastName].filter(Boolean).join(" ").trim() ||
   member?.name ||
   member?.fullName ||
   "Collaborateur";
 
+/**
+ * Builds a searchable collaborator label combining name and email.
+ * @param {Object} member - Member payload.
+ * @returns {string} Search label.
+ */
 const getCollaboratorSearchLabel = (member) => {
   const displayName = getCollaboratorDisplayName(member);
   const email = member?.email || member?.mail || "";
@@ -25,6 +54,10 @@ const getCollaboratorSearchLabel = (member) => {
   return email ? `${displayName} — ${email}` : displayName;
 };
 
+/**
+ * Exposes collaborator list data and promotion actions.
+ * @returns {Object} Collaborators view-model, action state and handlers.
+ */
 export default function useCompanyCollaborators() {
   const [companyId, setCompanyId] = useState(null);
   const [memberRecords, setMemberRecords] = useState([]);

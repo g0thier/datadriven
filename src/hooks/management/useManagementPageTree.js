@@ -8,6 +8,14 @@ import {
 import { COLAB_RESTRICTED_LINKS } from "../../constants/routeAccess.js";
 import { buildUniquePageTree } from "../../utils/navigationTree.utils.js";
 
+/**
+ * @module hooks/management/useManagementPageTree
+ * @description Hook to build restricted management page tree and display metadata maps.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
 const MANAGEMENT_LINK_GROUPS = [navbarLinks, innovationLinks, teamLinks, managementLinks];
 const MANAGEMENT_PAGE_EXCEPTIONS = ["/soon"];
 const RESTRICTED_PATHS = new Set(
@@ -16,6 +24,10 @@ const RESTRICTED_PATHS = new Set(
     .filter(Boolean)
 );
 
+/**
+ * Exposes management navigation tree, leaf paths and path display metadata resolver.
+ * @returns {{pageTree:Array, pageLeafPaths:string[], getPathDisplayMeta:Function}} Tree and metadata selectors.
+ */
 export default function useManagementPageTree() {
   const restrictedLinkGroups = useMemo(
     () =>

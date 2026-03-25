@@ -8,6 +8,18 @@ import {
 } from "../../firebase";
 import { buildManagerList } from "../../utils/managers.utils.js";
 
+/**
+ * @module hooks/management/useCompanyManagers
+ * @description Hook to list managers and demote them back to collaborator role.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
+/**
+ * Exposes manager list data and demotion actions.
+ * @returns {Object} Managers view-model, action state and handlers.
+ */
 export default function useCompanyManagers() {
   const [companyId, setCompanyId] = useState(null);
   const [managerRecords, setManagerRecords] = useState([]);

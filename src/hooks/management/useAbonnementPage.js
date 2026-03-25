@@ -15,6 +15,18 @@ import {
 } from "../../utils/subscription.utils.js";
 import { getCompanySubscriptionCapacity } from "../../utils/subscriptionCapacity.utils.js";
 
+/**
+ * @module hooks/management/useAbonnementPage
+ * @description Hook handling abonnement page state, Stripe actions and capacity metrics.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
+/**
+ * Exposes abonnement page data and actions (checkout and billing portal).
+ * @returns {Object} Subscription capacity state, status messaging and action handlers.
+ */
 export default function useAbonnementPage() {
   const location = useLocation();
 

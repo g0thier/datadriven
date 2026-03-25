@@ -7,6 +7,19 @@ import {
 } from "../constants/registerCompany";
 import { registerCompanyAccount } from "../services/registerCompanyService";
 
+/**
+ * @module hooks/useRegisterCompany
+ * @description Hook handling the multi-step company registration workflow.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
+/**
+ * Builds the backend registration payload from the registration form state.
+ * @param {Object} form - Current registration form values.
+ * @returns {{company:Object, admin:Object, acceptTerms:boolean}} Registration payload.
+ */
 function buildPayload(form) {
   return {
     company: {
@@ -36,6 +49,10 @@ function buildPayload(form) {
   };
 }
 
+/**
+ * Exposes state and actions for the company registration flow.
+ * @returns {Object} Registration state, derived labels and form handlers.
+ */
 export default function useRegisterCompany() {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState(REGISTER_COMPANY_INITIAL_FORM);

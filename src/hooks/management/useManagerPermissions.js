@@ -13,13 +13,37 @@ import {
   isOwnerProfile,
 } from "../../utils/management/permissions.selectors.js";
 
+/**
+ * @module hooks/management/useManagerPermissions
+ * @description Hook to hydrate, normalize and persist manager page permissions.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
+/**
+ * Normalizes a role string.
+ * @param {string} role - Raw role value.
+ * @returns {string} Normalized role.
+ */
 const normalizeRole = (role) => String(role || "").trim().toLowerCase();
 
+/**
+ * Lists enabled path keys from a page-access map.
+ * @param {Object<string, boolean>} [pageAccess={}] - Page access map.
+ * @returns {string[]} Enabled paths.
+ */
 const listEnabledPagePaths = (pageAccess = {}) =>
   Object.entries(pageAccess)
     .filter(([, isEnabled]) => Boolean(isEnabled))
     .map(([path]) => path);
 
+/**
+ * Maps persisted backend permissions into local hook state format.
+ * @param {Object} [persistedPermissions={}] - Persisted permissions by manager id.
+ * @param {string[]} [pageLeafPaths=[]] - Known selectable page leaf paths.
+ * @returns {Object<string, {pageAccess:Object<string, boolean>}>} Normalized permissions state.
+ */
 function mapPersistedPermissionsToState(persistedPermissions = {}, pageLeafPaths = []) {
   const source = persistedPermissions ?? {};
   const next = {};
@@ -49,6 +73,13 @@ function mapPersistedPermissionsToState(persistedPermissions = {}, pageLeafPaths
   return next;
 }
 
+/**
+ * Builds a persisted payload for one manager from local permissions state.
+ * @param {Object} manager - Manager record.
+ * @param {{pageAccess:Object<string, boolean>}} managerPermissions - Local manager permissions.
+ * @param {string[]} pageLeafPaths - Known selectable page leaf paths.
+ * @returns {{role:string, pageAccess:string[]}} Persistable permissions payload.
+ */
 function buildPersistedPayload(manager, managerPermissions, pageLeafPaths) {
   const role = normalizeRole(manager?.role);
   const pageAccess =
@@ -59,6 +90,15 @@ function buildPersistedPayload(manager, managerPermissions, pageLeafPaths) {
   return { role, pageAccess };
 }
 
+/**
+ * Exposes manager-permission state, counters and toggles for the management UI.
+ * @param {Object} params - Hook params.
+ * @param {string} params.companyId - Company identifier.
+ * @param {Object[]} params.managers - Managers list.
+ * @param {Array<{path:string, children:Array<{path:string}>}>} params.pageTree - Page tree structure.
+ * @param {string[]} params.pageLeafPaths - Selectable leaf paths.
+ * @returns {Object} Permissions state, selectors and mutation handlers.
+ */
 export default function useManagerPermissions({
   companyId,
   managers,
