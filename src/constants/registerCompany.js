@@ -1,3 +1,15 @@
+/**
+ * @module constants/registerCompany
+ * @description Step labels and initial form values for the company registration flow.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
+/**
+ * UI content displayed for each registration step.
+ * @type {Object<number, {title:string, subtitle:string}>}
+ */
 export const REGISTER_COMPANY_STEP_CONTENT = {
   1: {
     title: "Créer un compte entreprise",
@@ -21,6 +33,10 @@ export const REGISTER_COMPANY_STEP_CONTENT = {
   },
 };
 
+/**
+ * Initial state for the company registration form.
+ * @type {{companyName:string, legalForm:string, siret:string, vatNumber:string, companyAddress:string, companyCity:string, companyZip:string, companyCountry:string, adminFirstName:string, adminLastName:string, adminEmail:string, adminPhone:string, password:string, passwordConfirm:string, acceptTerms:boolean}}
+ */
 export const REGISTER_COMPANY_INITIAL_FORM = {
   companyName: "",
   legalForm: "",

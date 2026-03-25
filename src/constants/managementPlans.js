@@ -2,6 +2,18 @@ import helloImage from "../assets/paywall/hello.jpg";
 import freelanceImage from "../assets/paywall/freelance.jpg";
 import startupImage from "../assets/paywall/startup.jpg";
 
+/**
+ * @module constants/managementPlans
+ * @description Catalog of management subscription plans displayed on the paywall.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
+/**
+ * Available subscription plans with quota and pricing metadata.
+ * @type {Array<{name:string, owner:number, leader:number, colab:number, monthlyPrice:number, previousMonthlyPrice?:number, launchLabel?:string, description:string, isRecommended?:boolean, image:string}>}
+ */
 export const PLANS = [
   {
     name: "Hello",

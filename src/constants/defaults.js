@@ -1,5 +1,14 @@
 /**
- * Default departments to initialize for new companies
+ * @module constants/defaults
+ * @description Default constant values used to bootstrap company setup forms.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
+/**
+ * Default departments used when creating a new company.
+ * @type {string[]}
  */
 const DEFAULT_DEPARTMENTS = [
   "Ressources Humaines",
