@@ -1,8 +1,26 @@
+/**
+ * @module pages/innovation/Innovation
+ * @description Innovation landing page listing available workshop cards.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import Navbar from "../../components/Navbar.jsx";
 import Cards from "../../components/innovation/Cards.jsx";
 import SectionNavButtons from "../../components/SectionNavButtons.jsx";
 import { innovationLinks } from "../../constants/navigationLinks.js";
 
+/**
+ * Renders the Innovation page.
+ * @returns {JSX.Element} The rendered page layout.
+ *
+ * @example
+ * import { lazy } from "react";
+ * const Innovation = lazy(() => import("./pages/innovation/Innovation.jsx"));
+ *
+ * // Real usage reference: src/App.jsx
+ * <Route path="/innovation/ateliers" element={<Innovation />} />;
+ */
 function Innovation() {
   return (
     <>

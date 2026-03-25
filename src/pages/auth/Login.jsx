@@ -1,3 +1,10 @@
+/**
+ * @module pages/auth/Login
+ * @description Authentication page for user sign-in with email and password.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import { useState, useEffect } from "react";
 import zebra from "../../assets/zebra.svg";
 import SwapLink from "../../components/SwapLink";
@@ -6,6 +13,17 @@ import MaterialIcon from "../../components/MaterialIcon";
 import { useNavigate } from "react-router-dom";
 import {signInWithEmail, onAuthStateChangedListener} from "../../firebase";
 
+/**
+ * Renders the Login page.
+ * @returns {JSX.Element} The rendered page layout.
+ *
+ * @example
+ * import { lazy } from "react";
+ * const Login = lazy(() => import("./pages/auth/Login.jsx"));
+ *
+ * // Real usage reference: src/App.jsx
+ * <Route path="/login" element={<Login />} />;
+ */
 function Login() {
   const navigate = useNavigate();
 

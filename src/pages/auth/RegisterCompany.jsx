@@ -1,3 +1,10 @@
+/**
+ * @module pages/auth/RegisterCompany
+ * @description Multi-step registration page for creating a company account.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import zebra from "../../assets/zebra.svg";
 import SwapLink from "../../components/SwapLink";
 import RegisterActions from "../../components/auth/register-company/RegisterActions";
@@ -5,6 +12,17 @@ import RegisterCompanyForm from "../../components/auth/register-company/Register
 import RegisterProgress from "../../components/auth/register-company/RegisterProgress";
 import useRegisterCompany from "../../hooks/useRegisterCompany";
 
+/**
+ * Renders the RegisterCompany page.
+ * @returns {JSX.Element} The rendered page layout.
+ *
+ * @example
+ * import { lazy } from "react";
+ * const RegisterCompany = lazy(() => import("./pages/auth/RegisterCompany.jsx"));
+ *
+ * // Real usage reference: src/App.jsx
+ * <Route path="/register" element={<RegisterCompany />} />;
+ */
 function RegisterCompany() {
   const {
     step,

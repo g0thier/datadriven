@@ -1,3 +1,10 @@
+/**
+ * @module pages/innovation/WorkshopInvitation
+ * @description Workshop invitation page to schedule sessions and select invitees.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import Navbar from "../../components/Navbar.jsx";
 import SectionNavButtons from "../../components/SectionNavButtons.jsx";
 import {
@@ -12,6 +19,17 @@ import {
 import { innovationLinks } from "../../constants/navigationLinks.js";
 import useWorkshopInvitation from "../../hooks/useWorkshopInvitation";
 
+/**
+ * Renders the WorkshopInvitation page.
+ * @returns {JSX.Element} The rendered page layout.
+ *
+ * @example
+ * import { lazy } from "react";
+ * const WorkshopInvitation = lazy(() => import("./pages/innovation/WorkshopInvitation.jsx"));
+ *
+ * // Real usage reference: src/App.jsx
+ * <Route path="/innovation/invitation" element={<WorkshopInvitation />} />;
+ */
 function WorkshopInvitation() {
   const {
     atelier,

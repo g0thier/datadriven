@@ -1,5 +1,25 @@
+/**
+ * @module pages/NotFound
+ * @description Fallback page displayed for unknown routes.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import zebra from '../assets/zebra.svg';
 
+/**
+ * Renders the NotFound page.
+ * @param {Object} props - Page props.
+ * @param {string} [props.code="FAIL"] - Error code label displayed in the hero title.
+ * @returns {JSX.Element} The rendered page layout.
+ *
+ * @example
+ * import { lazy } from "react";
+ * const NotFound = lazy(() => import("./pages/NotFound.jsx"));
+ *
+ * // Real usage reference: src/App.jsx
+ * <Route path="*" element={<NotFound />} />;
+ */
 function NotFound({ code = "FAIL" }) {
 
   return (

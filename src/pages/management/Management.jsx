@@ -1,3 +1,10 @@
+/**
+ * @module pages/management/Management
+ * @description Management page for manager permissions and collaborator promotion.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import Navbar from "../../components/Navbar.jsx";
 import SectionNavButtons from "../../components/SectionNavButtons.jsx";
 import ManagerSummary from "../../components/management/ManagerSummary.jsx";
@@ -11,6 +18,17 @@ import useCompanyCollaborators from "../../hooks/management/useCompanyCollaborat
 import useManagementPageTree from "../../hooks/management/useManagementPageTree.js";
 import useManagerPermissions from "../../hooks/management/useManagerPermissions.js";
 
+/**
+ * Renders the Management page.
+ * @returns {JSX.Element} The rendered page layout.
+ *
+ * @example
+ * import { lazy } from "react";
+ * const Management = lazy(() => import("./pages/management/Management.jsx"));
+ *
+ * // Real usage reference: src/App.jsx
+ * <Route path="/management/comptes" element={<Management />} />;
+ */
 export default function Management() {
   const { companyId, managers, demoteManager, demotingManagerId, demotionError } =
     useCompanyManagers();

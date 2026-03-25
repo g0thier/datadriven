@@ -1,3 +1,10 @@
+/**
+ * @module pages/management/Abonnement
+ * @description Subscription management page for plans, portal access, and capacity status.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import Navbar from "../../components/Navbar.jsx";
 import SectionNavButtons from "../../components/SectionNavButtons.jsx";
 import Cards from "../../components/management/Cards.jsx";
@@ -9,6 +16,17 @@ import { managementLinks } from "../../constants/navigationLinks.js";
 import { PLANS } from "../../constants/managementPlans.js";
 import useAbonnementPage from "../../hooks/management/useAbonnementPage.js";
 
+/**
+ * Renders the Abonnement page.
+ * @returns {JSX.Element} The rendered page layout.
+ *
+ * @example
+ * import { lazy } from "react";
+ * const Abonnement = lazy(() => import("./pages/management/Abonnement.jsx"));
+ *
+ * // Real usage reference: src/App.jsx
+ * <Route path="/management/abonnement" element={<Abonnement />} />;
+ */
 export default function Abonnement() {
   const {
     loadingPlanName,

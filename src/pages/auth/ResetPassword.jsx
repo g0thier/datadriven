@@ -1,3 +1,10 @@
+/**
+ * @module pages/auth/ResetPassword
+ * @description Password reset page for requesting a recovery email.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import { useState } from "react";
 import zebra from '../../assets/zebra.svg';
 import SwapLink from "../../components/SwapLink";
@@ -5,6 +12,17 @@ import MaterialIcon from "../../components/MaterialIcon";
 
 import {resetPassword} from "../../firebase";
 
+/**
+ * Renders the ResetPassword page.
+ * @returns {JSX.Element} The rendered page layout.
+ *
+ * @example
+ * import { lazy } from "react";
+ * const ResetPassword = lazy(() => import("./pages/auth/ResetPassword.jsx"));
+ *
+ * // Real usage reference: src/App.jsx
+ * <Route path="/reset-password" element={<ResetPassword />} />;
+ */
 function ResetPassword() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);

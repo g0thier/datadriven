@@ -1,3 +1,10 @@
+/**
+ * @module pages/Team
+ * @description Team directory page for offices, departments, and members management.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import Navbar from "../components/Navbar.jsx";
 import { useState } from "react";
 import SectionNavButtons from "../components/SectionNavButtons.jsx";
@@ -10,6 +17,17 @@ import SubscriptionCapacityInline from "../components/management/SubscriptionCap
 import useCompanyTeam from "../hooks/useCompanyTeam.js";
 import { teamLinks } from "../constants/navigationLinks.js";
 
+/**
+ * Renders the Team page.
+ * @returns {JSX.Element} The rendered page layout.
+ *
+ * @example
+ * import { lazy } from "react";
+ * const Team = lazy(() => import("./pages/Team.jsx"));
+ *
+ * // Real usage reference: src/App.jsx
+ * <Route path="/team/annuaire" element={<Team />} />;
+ */
 export default function Team() {
   const [activeTab, setActiveTab] = useState("BUREAUX");
 

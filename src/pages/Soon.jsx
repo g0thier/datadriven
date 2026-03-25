@@ -1,7 +1,25 @@
+/**
+ * @module pages/Soon
+ * @description Placeholder page for upcoming application sections.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import Navbar from "../components/Navbar.jsx";
 import SectionNavButtons from "../components/SectionNavButtons.jsx";
 import { soonLinks } from "../constants/navigationLinks.js";
 
+/**
+ * Renders the Soon page.
+ * @returns {JSX.Element} The rendered page layout.
+ *
+ * @example
+ * import { lazy } from "react";
+ * const Soon = lazy(() => import("./pages/Soon.jsx"));
+ *
+ * // Real usage reference: src/App.jsx
+ * <Route path="/soon" element={<Soon />} />;
+ */
 export default function Soon() {
   return (
     <>

@@ -1,3 +1,10 @@
+/**
+ * @module pages/innovation/MyEvents
+ * @description Events page showing upcoming and past workshops for the current user.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import MaterialIcon from "../../components/MaterialIcon.jsx";
@@ -88,6 +95,17 @@ function EventCard({ event, isPast }) {
   );
 }
 
+/**
+ * Renders the MyEvents page.
+ * @returns {JSX.Element} The rendered page layout.
+ *
+ * @example
+ * import { lazy } from "react";
+ * const MyEvents = lazy(() => import("./pages/innovation/MyEvents.jsx"));
+ *
+ * // Real usage reference: src/App.jsx
+ * <Route path="/innovation/scheduled" element={<MyEvents />} />;
+ */
 export default function MyEvents() {
   const [uid, setUid] = useState(() => auth.currentUser?.uid || "");
   const [sessions, setSessions] = useState([]);
