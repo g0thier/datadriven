@@ -1,3 +1,16 @@
+/**
+ * @module utils/navigationTree
+ * @description Helpers to build and flatten a unique navigation tree from link groups.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
+/**
+ * Normalizes an application path by removing query/hash and trailing slash.
+ * @param {string} path - Raw path to normalize.
+ * @returns {string} Normalized absolute path, or an empty string when invalid.
+ */
 function normalizePath(path) {
   if (typeof path !== "string") return "";
 
@@ -9,6 +22,12 @@ function normalizePath(path) {
   return cleaned;
 }
 
+/**
+ * Extracts a section path up to a given depth.
+ * @param {string} path - Full path.
+ * @param {number} level - Number of segments to keep.
+ * @returns {string} Truncated path, or an empty string when unavailable.
+ */
 function getLevelPath(path, level) {
   const normalized = normalizePath(path);
   if (!normalized) return "";
@@ -19,6 +38,12 @@ function getLevelPath(path, level) {
   return `/${parts.join("/")}`;
 }
 
+/**
+ * Builds a unique two-level page tree from navigation link groups.
+ * @param {Array<Array<Object>>} linkGroups - Nested list of links (`link.to` is used when present).
+ * @param {string[]} [exceptions=[]] - Paths to exclude from the tree.
+ * @returns {Array<{path: string, children: Array<{path: string}>}>} Unique page tree.
+ */
 export function buildUniquePageTree(linkGroups, exceptions = []) {
   const exceptionsSet = new Set(exceptions.map(normalizePath).filter(Boolean));
   const roots = new Map();
@@ -46,6 +71,11 @@ export function buildUniquePageTree(linkGroups, exceptions = []) {
   return Array.from(roots.values());
 }
 
+/**
+ * Flattens a page tree into a simple array of unique paths.
+ * @param {Array<{path: string, children: Array<{path: string}>}>} tree - Tree to flatten.
+ * @returns {string[]} Flattened list containing level-1 and level-2 paths.
+ */
 export function flattenPageTreePaths(tree) {
   return tree.flatMap((level1) => [level1.path, ...level1.children.map((child) => child.path)]);
 }

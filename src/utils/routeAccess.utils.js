@@ -5,6 +5,14 @@ import {
   OVER_CAPACITY_ALLOWED_LINKS,
 } from "../constants/routeAccess.js";
 
+/**
+ * @module utils/routeAccess
+ * @description Role-based route authorization helpers with over-capacity logic.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
 const COLAB_RESTRICTED_SET = new Set(
   (COLAB_RESTRICTED_LINKS || [])
     .map((path) => normalizePath(path))
@@ -17,6 +25,11 @@ const OVER_CAPACITY_ALLOWED_SET = new Set(
     .filter(Boolean)
 );
 
+/**
+ * Normalizes a role name to one of the known application roles.
+ * @param {string} [role=""] - Raw role value.
+ * @returns {string} Normalized role key.
+ */
 function normalizeRole(role = "") {
   const normalized = String(role || "").trim().toLowerCase();
   if (normalized === APP_ROLES.OWNER) return APP_ROLES.OWNER;
@@ -25,6 +38,11 @@ function normalizeRole(role = "") {
   return APP_ROLES.COLAB;
 }
 
+/**
+ * Normalizes a route path by removing query/hash and trailing slash.
+ * @param {string} [path=""] - Raw path.
+ * @returns {string} Normalized absolute path or empty string.
+ */
 export function normalizePath(path = "") {
   if (typeof path !== "string") return "";
 
@@ -38,6 +56,11 @@ export function normalizePath(path = "") {
   return sanitized;
 }
 
+/**
+ * Extracts the first-level section root from a path.
+ * @param {string} [path=""] - Route path.
+ * @returns {string} Section root path or empty string.
+ */
 export function getSectionRootPath(path = "") {
   const normalized = normalizePath(path);
   if (!normalized || normalized === "/") return "";
@@ -46,6 +69,11 @@ export function getSectionRootPath(path = "") {
   return firstSegment ? `/${firstSegment}` : "";
 }
 
+/**
+ * Normalizes, deduplicates and filters a list of paths.
+ * @param {string[]} [paths=[]] - Candidate paths.
+ * @returns {string[]} Unique normalized paths.
+ */
 export function normalizePathList(paths = []) {
   const source = Array.isArray(paths) ? paths : [];
   const seen = new Set();
@@ -61,6 +89,11 @@ export function normalizePathList(paths = []) {
   return next;
 }
 
+/**
+ * Normalizes leader page access from an array or map object.
+ * @param {string[]|Object<string, boolean>} value - Access configuration.
+ * @returns {string[]} Normalized allowed paths.
+ */
 export function normalizeLeaderPageAccess(value) {
   if (Array.isArray(value)) {
     return normalizePathList(value);
@@ -76,11 +109,26 @@ export function normalizeLeaderPageAccess(value) {
   return [];
 }
 
+/**
+ * Checks if a leader can access a path according to explicit permissions.
+ * @param {string} path - Target path.
+ * @param {string[]|Object<string, boolean>} [leaderPageAccess=[]] - Leader page access config.
+ * @returns {boolean} Whether access is granted.
+ */
 function canLeaderAccessPath(path, leaderPageAccess = []) {
   const leaderAccessSet = new Set(normalizeLeaderPageAccess(leaderPageAccess));
   return leaderAccessSet.has(path);
 }
 
+/**
+ * Evaluates route access for a given role and subscription capacity state.
+ * @param {Object} params - Access check inputs.
+ * @param {string} params.role - User role.
+ * @param {string} params.path - Target path.
+ * @param {string[]|Object<string, boolean>} [params.leaderPageAccess=[]] - Leader page access config.
+ * @param {boolean} [params.isSubscriptionOverCapacity=false] - Whether the company is over capacity.
+ * @returns {boolean} Whether route access is allowed.
+ */
 export function isRouteAllowedForRole({
   role,
   path,
@@ -113,6 +161,16 @@ export function isRouteAllowedForRole({
   return canLeaderAccessPath(normalizedPath, leaderPageAccess);
 }
 
+/**
+ * Returns the first allowed path from candidates, otherwise a fallback path.
+ * @param {Object} params - Resolution inputs.
+ * @param {string[]} [params.candidatePaths=[]] - Candidate destination paths.
+ * @param {string} params.role - User role.
+ * @param {string[]|Object<string, boolean>} [params.leaderPageAccess=[]] - Leader page access config.
+ * @param {boolean} [params.isSubscriptionOverCapacity=false] - Whether the company is over capacity.
+ * @param {string} [params.fallbackPath=COLAB_DEFAULT_REDIRECT_PATH] - Fallback path.
+ * @returns {string} First authorized route.
+ */
 export function resolveFirstAllowedPath({
   candidatePaths = [],
   role,
@@ -139,6 +197,17 @@ export function resolveFirstAllowedPath({
   return normalizedFallback;
 }
 
+/**
+ * Resolves an authorized navigation target from a preferred target and fallbacks.
+ * @param {Object} params - Resolution inputs.
+ * @param {string} params.targetPath - Preferred target path.
+ * @param {string} params.role - User role.
+ * @param {string[]|Object<string, boolean>} [params.leaderPageAccess=[]] - Leader page access config.
+ * @param {boolean} [params.isSubscriptionOverCapacity=false] - Whether the company is over capacity.
+ * @param {string[]} [params.candidatePaths=[]] - Candidate fallback paths.
+ * @param {string} [params.fallbackPath=COLAB_DEFAULT_REDIRECT_PATH] - Final fallback path.
+ * @returns {string} Authorized target path.
+ */
 export function resolveAuthorizedTargetPath({
   targetPath,
   role,

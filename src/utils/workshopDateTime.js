@@ -1,12 +1,30 @@
+/**
+ * @module utils/workshopDateTime
+ * @description Date/time utilities for workshop scheduling with UTC offset handling.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
 const WORKSHOP_TIMEZONE_FALLBACK = "UTC+01:00";
 const MIN_UTC_OFFSET_MINUTES = -12 * 60;
 const MAX_UTC_OFFSET_MINUTES = 14 * 60;
 const UTC_OFFSET_STEP_MINUTES = 15;
 
+/**
+ * Left-pads a numeric value to two digits.
+ * @param {number|string} value - Value to pad.
+ * @returns {string} Two-digit string.
+ */
 function pad2(value) {
   return String(value).padStart(2, "0");
 }
 
+/**
+ * Formats a UTC offset in minutes as `UTC±HH:MM`.
+ * @param {number} offsetMinutes - Offset value in minutes.
+ * @returns {string} Formatted UTC offset.
+ */
 function formatUtcOffset(offsetMinutes) {
   if (offsetMinutes === 0) return "UTC+00:00";
 
@@ -18,6 +36,11 @@ function formatUtcOffset(offsetMinutes) {
   return `UTC${sign}${pad2(hours)}:${pad2(minutes)}`;
 }
 
+/**
+ * Parses a `UTC±HH:MM` offset string into minutes.
+ * @param {string} timeZone - Time zone string.
+ * @returns {number|null} Offset in minutes, or `null` when invalid.
+ */
 function parseUtcOffsetToMinutes(timeZone) {
   const normalized = String(timeZone || "").trim().toUpperCase();
   const match = /^UTC([+-])(\d{2}):(\d{2})$/.exec(normalized);
@@ -36,6 +59,12 @@ function parseUtcOffsetToMinutes(timeZone) {
   return totalMinutes;
 }
 
+/**
+ * Parses and validates workshop date/time fields.
+ * @param {string} date - Date in `YYYY-MM-DD` format.
+ * @param {string} time - Time in `HH:mm` or `HH:mm:ss` format.
+ * @returns {{year:number, month:number, day:number, hour:number, minute:number, second:number}|null} Parsed parts or `null`.
+ */
 function parseDateAndTime(date, time) {
   const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(date || "").trim());
   const timeMatch = /^(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(
@@ -66,10 +95,19 @@ function parseDateAndTime(date, time) {
   return { year, month, day, hour, minute, second };
 }
 
+/**
+ * Returns the default workshop timezone used by the app.
+ * @returns {string} Default timezone string.
+ */
 export function resolveDefaultWorkshopTimeZone() {
   return WORKSHOP_TIMEZONE_FALLBACK;
 }
 
+/**
+ * Returns all valid UTC offset options, ensuring selected offset is included.
+ * @param {string} selectedTimeZone - Currently selected timezone.
+ * @returns {string[]} Ordered unique timezone options.
+ */
 export function getWorkshopTimeZoneOptions(selectedTimeZone) {
   const allOffsets = [];
   for (
@@ -90,6 +128,13 @@ export function getWorkshopTimeZoneOptions(selectedTimeZone) {
   return Array.from(new Set(zones));
 }
 
+/**
+ * Converts workshop local date/time and UTC offset into an ISO UTC instant.
+ * @param {string} date - Date in `YYYY-MM-DD` format.
+ * @param {string} time - Time in `HH:mm` or `HH:mm:ss` format.
+ * @param {string} timeZone - Time zone as `UTC±HH:MM`.
+ * @returns {string} ISO datetime string, or empty string when input is invalid.
+ */
 export function toWorkshopStartIso(date, time, timeZone) {
   const parsed = parseDateAndTime(date, time);
   if (!parsed) return "";

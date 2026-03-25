@@ -4,7 +4,6 @@
  * @author Gauthier Rammault
  * @version 1.0.0
  * @license proprietary
- * @see
  */
 
 /**
