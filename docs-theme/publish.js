@@ -369,6 +369,32 @@ function insertModulePath(tree, item, linktoFn) {
     });
 }
 
+function sortModuleTree(items) {
+    items.sort((a, b) => {
+        const aIsFolder = Array.isArray(a.children) && a.children.length > 0;
+        const bIsFolder = Array.isArray(b.children) && b.children.length > 0;
+        const byName = String(a.name).localeCompare(String(b.name));
+
+        // Alphabetical order first.
+        if (byName !== 0) {
+            return byName;
+        }
+
+        // If same name, files first then folders.
+        if (aIsFolder !== bIsFolder) {
+            return aIsFolder ? 1 : -1;
+        }
+
+        return 0;
+    });
+
+    items.forEach((item) => {
+        if (Array.isArray(item.children) && item.children.length > 0) {
+            sortModuleTree(item.children);
+        }
+    });
+}
+
 async function generate(title, docs, filename, resolveLinks) {
     let docData;
     let html;
@@ -494,6 +520,7 @@ function buildSidebarMembers({
                 }
             });
 
+            sortModuleTree(navProps.items);
             return navProps;
         }
 
