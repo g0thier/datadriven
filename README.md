@@ -16,161 +16,148 @@ This initial version includes a module entitled **“Innovation & Creativity”*
 - [Data-Driven Management System](#data-driven-management-system)
   - [Description](#description)
   - [Table of Contents](#table-of-contents)
-  - [🎯 Objective of the project](#-objective-of-the-project)
-  - [👥 Target audience](#-target-audience)
-  - [⚙️ What this template includes](#️-what-this-template-includes)
-  - [🗂️ Repository structure](#️-repository-structure)
-  - [🚀 Quick start](#-quick-start)
-  - [🐳 Install \& execute](#-install--execute)
-  - [🥽 Security](#-security)
-  - [📸 Page screenshots](#-page-screenshots)
-  - [📰 Changelog](#-changelog)
-  - [🩷 Acknowledgements](#-acknowledgements)
-    - [Environnement](#environnement)
-  - [🧪 Project Status](#-project-status)
-  - [🔒 License](#-license)
-  - [🤝 Contributing](#-contributing)
-  - [👤 Author](#-author)
+  - [Objective](#objective)
+  - [Target Audience](#target-audience)
+  - [Current Modules](#current-modules)
+  - [Repository Structure](#repository-structure)
+  - [Installation](#installation)
+  - [Available Scripts](#available-scripts)
+  - [Page Screenshots](#page-screenshots)
+    - [Auth](#auth)
+    - [Innovation](#innovation)
+    - [Team](#team)
+    - [Management](#management)
+    - [Soon](#soon)
+  - [Security](#security)
+  - [Changelog](#changelog)
+  - [Contributing](#contributing)
+  - [License](#license)
+  - [Author](#author)
 
-## 🎯 Objective of the project
+## Objective
 
-Facilitate and Accelerate project creation.
+Provide a practical SaaS foundation for strategic, data-driven management workflows used by leadership teams and managers.
 
-## 👥 Target audience 
+## Target Audience
 
-- C-level executives (C-suite) in companies
-- Innovation managers and teams
+- C-level leaders and decision makers
+- Innovation managers and workshop facilitators
+- HR and operations teams managing organization structure and access
 
-## ⚙️ What this template includes
+## Current Modules
 
-- `.gitignore` for macOS configuration
-- Core community files:
-  - `CODE_OF_CONDUCT.md`
-  - `CONTRIBUTING.md`
-  - `SECURITY.md`
-  - `CHANGELOG.md`
-  - `LICENSE.md`
-  - `ACKNOWLEDGEMENTS.md`
-- Optional Streamlit starter app in `dashboard/`
-- Basic documentation assets in `docs/`
+- `Auth`: sign-in, company registration, and password reset
+- `Innovation`: workshop catalog, invitation workflow, and scheduled/past sessions
+- `Team`: company directory management (offices, departments, members)
+- `Management`: manager access controls and subscription management
 
-## 🗂️ Repository structure
+## Repository Structure
 
 ```text
 datadriven/
 ├── docs/
 │   └── images/
-├── node_modules/
-├── public/
-│   └── vite.svg
+│       ├── innovation/
+│       ├── management/
+│       └── team/
+├── functions/
+├── scripts/
+│   └── capture-pages.mjs
 ├── src/
-│   └── assets/
-│   │   └── react.svg
-│   └── App.css
+│   ├── components/
+│   ├── constants/
+│   ├── hooks/
+│   ├── pages/
+│   │   ├── auth/
+│   │   ├── innovation/
+│   │   └── management/
+│   ├── workshops/
 │   └── App.jsx
-│   └── index.css
-│   └── main.jsx
-├── .gitattributes
-├── .gitignore
-├── ACKNOWLEDGEMENTS.md
-├── CHANGELOG.md
-├── CODE_OF_CONDUCT.md
-├── CONTRIBUTING.md
-├── LICENSE.md
-├── README.md
-└── SECURITY.md
+├── tests/
+├── firebase.json
+├── package.json
+└── README.md
 ```
 
-## 🚀 Quick start
+## Installation
 
-1. Use this folder as a base for your new open source project.
-2. Rename the project and update this `README.md`.
-3. Replace placeholder content in:
-   - `CONTRIBUTING.md`
-   - `SECURITY.md`
-   - `CHANGELOG.md`
-   - `ACKNOWLEDGEMENTS.md`
-   - `LICENSE.md` (if needed)
-4. Add your source code and project-specific docs.
-5. Publish and maintain the repository using your contribution workflow.
-
-## 🐳 Install & execute
-
-Install dependencies and start the development server:
+Install dependencies:
 
 ```bash
 npm install
+```
+
+Start the development server:
+
+```bash
 npm run dev
 ```
 
-## 🥽 Security
-
-- See [SECURITY.md](/SECURITY.md) for vulnerability reporting guidelines.
-
-## 📸 Page screenshots
-
-Generate screenshots automatically for all routes declared with `<Route path="...">` in `src/`:
+## Available Scripts
 
 ```bash
-npm run screenshots
+npm run dev          # Start Vite in development mode
+npm run build        # Build production assets
+npm run preview      # Preview the production build locally
+npm run test         # Run unit/integration tests with Vitest
+npm run lint         # Run ESLint
+npm run doc          # Generate JSDoc documentation
+npm run screenshots  # Capture route screenshots into docs/images
 ```
 
-The script:
-- discovers routes automatically in `src/**/*.js(x)/ts(x)`
-- skips dynamic routes by default (with `:`), unless `SCREENSHOT_INCLUDE_DYNAMIC=true`
-- starts the Vite server automatically (`npm run dev -- --host 127.0.0.1 --port 4173`)
-- saves images into `docs/images/`
+## Page Screenshots
 
-If protected routes require login, set these keys in `.env.local`:
+### Auth
 
-```bash
-SCREENSHOT_AUTH_EMAIL=you@example.com
-SCREENSHOT_AUTH_PASSWORD=your-password
-```
+- `/login`  
+  ![Login page](docs/images/login.png)
+- `/register`  
+  ![Register page](docs/images/register.png)
+- `/reset-password`  
+  ![Reset password page](docs/images/reset-password.png)
 
-Optional overrides:
+### Innovation
 
-```bash
-SCREENSHOT_BASE_URL=http://127.0.0.1:4173
-SCREENSHOT_LOGIN_PATH=/login
-SCREENSHOT_EXTRA_ROUTES=/foo,/bar
-SCREENSHOT_AUTO_START=false
-SCREENSHOT_DEV_COMMAND="npm run dev -- --host 127.0.0.1 --port 4173"
-```
+- `/innovation/ateliers`  
+  ![Innovation workshops](docs/images/innovation/ateliers.png)
+- `/innovation/invitation`  
+  ![Workshop invitation](docs/images/innovation/invitation.png)
+- `/innovation/scheduled`  
+  ![Scheduled events](docs/images/innovation/scheduled.png)
 
-## 📰 Changelog
+### Team
 
-Track all notable project changes in [CHANGELOG.md](/CHANGELOG.md).
+- `/team/annuaire`  
+  ![Team directory](docs/images/team/annuaire.png)
 
-Recommended:
-- Follow a consistent format such as Keep a Changelog
-- Create an entry for each release
-- Include Added, Changed, Fixed, and Removed sections when relevant
+### Management
 
-## 🩷 Acknowledgements
+- `/management/comptes`  
+  ![Management accounts](docs/images/management/comptes.png)
+- `/management/abonnement`  
+  ![Management subscription](docs/images/management/abonnement.png)
 
-- Use [ACKNOWLEDGEMENTS.md](/ACKNOWLEDGEMENTS.md) to credit people, tools, libraries, and communities that helped the project.
+### Soon
 
-### Environnement
+- `/soon`  
+  ![Soon page](docs/images/soon.png)
 
-- **Python ≥ 3.13.5**
-- Dependencies listed in [requirements.txt](/dashboard/requirements.txt)
+## Security
 
-## 🧪 Project Status
+Security reporting process is documented in [SECURITY.md](SECURITY.md).
 
-- 🔬 **Statut** : experimental
-- 🧭 **Roadmap** : to be defined
+## Changelog
 
-## 🔒 License
+Project changes are tracked in [CHANGELOG.md](CHANGELOG.md).
 
-- See [LICENSE.md](/LICENSE.md).
+## Contributing
 
-## 🤝 Contributing
+Contributions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
-Contributions are welcome.
-- See [CONTRIBUTING.md](/CONTRIBUTING.md)
-- Code of conduct available in [CODE_OF_CONDUCT.md](/CODE_OF_CONDUCT.md).
+## License
 
-## 👤 Author
+License details are available in [LICENSE.md](LICENSE.md).
+
+## Author
 
 Gauthier Rammault
