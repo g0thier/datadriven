@@ -1,3 +1,24 @@
+/**
+ * @module components/management/ManageSubscriptionButton
+ * @description UI component module for ManageSubscriptionButton.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+/**
+ * Renders the ManageSubscriptionButton component.
+ * @param {Object} props - Component props.
+ * @param {*} props.onClick - onClick prop.
+ * @param {boolean} [props.isLoading=false] - isLoading prop.
+ * @param {boolean} [props.isDisabled=false] - isDisabled prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import ManageSubscriptionButton from "../components/management/ManageSubscriptionButton";
+ *
+ * // Real usage reference: src/pages/management/Abonnement.jsx
+ * <ManageSubscriptionButton />;
+ */
 export default function ManageSubscriptionButton({
   onClick,
   isLoading = false,

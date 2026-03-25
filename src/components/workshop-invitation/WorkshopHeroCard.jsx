@@ -1,3 +1,22 @@
+/**
+ * @module components/workshop-invitation/WorkshopHeroCard
+ * @description UI component module for WorkshopHeroCard.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+/**
+ * Renders the WorkshopHeroCard component.
+ * @param {Object} props - Component props.
+ * @param {*} props.atelier - atelier prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import WorkshopHeroCard from "../components/workshop-invitation/WorkshopHeroCard";
+ *
+ * // Real usage reference: src/pages/innovation/WorkshopInvitation.jsx
+ * <WorkshopHeroCard />;
+ */
 function WorkshopHeroCard({ atelier }) {
   return (
     <div className="relative rounded-2xl shadow-sm border border-slate-200 mb-6 overflow-hidden">

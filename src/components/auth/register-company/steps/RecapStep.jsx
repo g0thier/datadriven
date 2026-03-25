@@ -1,3 +1,22 @@
+/**
+ * @module components/auth/register-company/steps/RecapStep
+ * @description UI component module for RecapStep.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+/**
+ * Renders the RecapStep component.
+ * @param {Object} props - Component props.
+ * @param {*} props.form - form prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import RecapStep from "../components/auth/register-company/steps/RecapStep";
+ *
+ * // Real usage reference: src/components/auth/register-company/RegisterCompanyForm.jsx
+ * <RecapStep />;
+ */
 export default function RecapStep({ form }) {
   return (
     <div className="bg-white/70 rounded shadow-md w-80 md:w-105 p-6">

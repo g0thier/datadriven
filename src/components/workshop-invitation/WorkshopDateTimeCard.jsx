@@ -1,6 +1,30 @@
+/**
+ * @module components/workshop-invitation/WorkshopDateTimeCard
+ * @description UI component module for WorkshopDateTimeCard.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import { useMemo } from "react";
 import { getWorkshopTimeZoneOptions } from "../../utils/workshopDateTime";
 
+/**
+ * Renders the WorkshopDateTimeCard component.
+ * @param {Object} props - Component props.
+ * @param {*} props.date - date prop.
+ * @param {*} props.time - time prop.
+ * @param {*} props.timezone - timezone prop.
+ * @param {*} props.onDateChange - onDateChange prop.
+ * @param {*} props.onTimeChange - onTimeChange prop.
+ * @param {*} props.onTimezoneChange - onTimezoneChange prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import WorkshopDateTimeCard from "../components/workshop-invitation/WorkshopDateTimeCard";
+ *
+ * // Real usage reference: src/pages/innovation/WorkshopInvitation.jsx
+ * <WorkshopDateTimeCard />;
+ */
 function WorkshopDateTimeCard({
   date,
   time,

@@ -1,3 +1,10 @@
+/**
+ * @module components/team/MembersView
+ * @description UI component module for MembersView.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import { ActionButton, Th, Td, TableShell } from "./UITeam.jsx";
 import { useState } from "react";
 import MemberModal from "./MemberModal.jsx";
@@ -65,6 +72,25 @@ function toErrorMessage(error) {
   return error?.message || "Une erreur est survenue.";
 }
 
+/**
+ * Renders the MembersView component.
+ * @param {Object} props - Component props.
+ * @param {*} props.teamMembers - teamMembers prop.
+ * @param {*} props.addMember - addMember prop.
+ * @param {*} props.updateMember - updateMember prop.
+ * @param {*} props.removeMember - removeMember prop.
+ * @param {*} props.officeLocations - officeLocations prop.
+ * @param {*} props.departments - departments prop.
+ * @param {*} props.officeById - officeById prop.
+ * @param {*} props.deptById - deptById prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import MembersView from "../components/team/MembersView";
+ *
+ * // Real usage reference: src/pages/Team.jsx
+ * <MembersView />;
+ */
 export default function MembersView({
   teamMembers,
   addMember,

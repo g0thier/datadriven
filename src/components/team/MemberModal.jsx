@@ -1,3 +1,10 @@
+/**
+ * @module components/team/MemberModal
+ * @description UI component module for MemberModal.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import {
   ActionButton,
   CellInput,
@@ -5,6 +12,29 @@ import {
   DepartmentsTagsEditor,
 } from "./UITeam.jsx";
 
+/**
+ * Renders the MemberModal component.
+ * @param {Object} props - Component props.
+ * @param {*} props.isOpen - isOpen prop.
+ * @param {*} props.mode - mode prop.
+ * @param {*} props.form - form prop.
+ * @param {boolean} [props.hideDeleteButton=false] - hideDeleteButton prop.
+ * @param {*} props.onChangeField - onChangeField prop.
+ * @param {*} props.officeLocations - officeLocations prop.
+ * @param {*} props.departments - departments prop.
+ * @param {*} props.submitError - submitError prop.
+ * @param {*} props.isSubmitting - isSubmitting prop.
+ * @param {*} props.onDelete - onDelete prop.
+ * @param {*} props.onCancel - onCancel prop.
+ * @param {*} props.onSubmit - onSubmit prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import MemberModal from "../components/team/MemberModal";
+ *
+ * // Real usage reference: src/components/team/MembersView.jsx
+ * <MemberModal />;
+ */
 export default function MemberModal({
   isOpen,
   mode,

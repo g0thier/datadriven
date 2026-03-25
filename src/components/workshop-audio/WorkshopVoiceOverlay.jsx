@@ -1,7 +1,29 @@
+/**
+ * @module components/workshop-audio/WorkshopVoiceOverlay
+ * @description UI component module for WorkshopVoiceOverlay.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import { useState } from "react";
 import MaterialIcon from "../MaterialIcon.jsx";
 import useWorkshopVoiceRoom from "../../hooks/useWorkshopVoiceRoom.js";
 
+/**
+ * Renders the WorkshopVoiceOverlay component.
+ * @param {Object} props - Component props.
+ * @param {*} props.roomId - roomId prop.
+ * @param {*} props.workshopActive - workshopActive prop.
+ * @param {*} props.stepAudioEnabled - stepAudioEnabled prop.
+ * @param {number} [props.maxParticipants=8] - maxParticipants prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import WorkshopVoiceOverlay from "../components/workshop-audio/WorkshopVoiceOverlay";
+ *
+ * // Real usage reference: src/workshops/WorkshopRunner.jsx
+ * <WorkshopVoiceOverlay />;
+ */
 export default function WorkshopVoiceOverlay({
   roomId,
   workshopActive,

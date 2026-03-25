@@ -1,3 +1,26 @@
+/**
+ * @module components/management/ManagerSummary
+ * @description UI component module for ManagerSummary.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+/**
+ * Renders the ManagerSummary component.
+ * @param {Object} props - Component props.
+ * @param {*} props.selectedManager - selectedManager prop.
+ * @param {*} props.selectedDepartmentsCount - selectedDepartmentsCount prop.
+ * @param {*} props.totalDepartmentsCount - totalDepartmentsCount prop.
+ * @param {*} props.selectedLevel2PagesCount - selectedLevel2PagesCount prop.
+ * @param {*} props.totalLevel2PagesCount - totalLevel2PagesCount prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import ManagerSummary from "../components/management/ManagerSummary";
+ *
+ * // Real usage reference: src/pages/management/Management.jsx
+ * <ManagerSummary />;
+ */
 export default function ManagerSummary({
   selectedManager,
   selectedDepartmentsCount,

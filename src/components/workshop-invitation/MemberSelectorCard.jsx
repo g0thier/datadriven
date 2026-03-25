@@ -1,5 +1,29 @@
+/**
+ * @module components/workshop-invitation/MemberSelectorCard
+ * @description UI component module for MemberSelectorCard.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import SelectableCheckboxList from "./SelectableCheckboxList";
 
+/**
+ * Renders the MemberSelectorCard component.
+ * @param {Object} props - Component props.
+ * @param {*} props.items - items prop.
+ * @param {*} props.filteredItems - filteredItems prop.
+ * @param {*} props.search - search prop.
+ * @param {*} props.onSearchChange - onSearchChange prop.
+ * @param {*} props.selectedIds - selectedIds prop.
+ * @param {*} props.onToggle - onToggle prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import MemberSelectorCard from "../components/workshop-invitation/MemberSelectorCard";
+ *
+ * // Real usage reference: src/pages/innovation/WorkshopInvitation.jsx
+ * <MemberSelectorCard />;
+ */
 function MemberSelectorCard({
   items,
   filteredItems,

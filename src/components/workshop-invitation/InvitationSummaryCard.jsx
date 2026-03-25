@@ -1,3 +1,27 @@
+/**
+ * @module components/workshop-invitation/InvitationSummaryCard
+ * @description UI component module for InvitationSummaryCard.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+/**
+ * Renders the InvitationSummaryCard component.
+ * @param {Object} props - Component props.
+ * @param {*} props.workshopDate - workshopDate prop.
+ * @param {*} props.workshopTime - workshopTime prop.
+ * @param {*} props.selectedDepartmentCount - selectedDepartmentCount prop.
+ * @param {*} props.selectedMemberCount - selectedMemberCount prop.
+ * @param {*} props.totalGuestCount - totalGuestCount prop.
+ * @param {*} props.canSend - canSend prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import InvitationSummaryCard from "../components/workshop-invitation/InvitationSummaryCard";
+ *
+ * // Real usage reference: src/pages/innovation/WorkshopInvitation.jsx
+ * <InvitationSummaryCard />;
+ */
 function InvitationSummaryCard({
   workshopDate,
   workshopTime,

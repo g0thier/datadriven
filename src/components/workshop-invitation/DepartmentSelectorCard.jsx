@@ -1,5 +1,29 @@
+/**
+ * @module components/workshop-invitation/DepartmentSelectorCard
+ * @description UI component module for DepartmentSelectorCard.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import SelectableCheckboxList from "./SelectableCheckboxList";
 
+/**
+ * Renders the DepartmentSelectorCard component.
+ * @param {Object} props - Component props.
+ * @param {*} props.items - items prop.
+ * @param {*} props.filteredItems - filteredItems prop.
+ * @param {*} props.search - search prop.
+ * @param {*} props.onSearchChange - onSearchChange prop.
+ * @param {*} props.selectedIds - selectedIds prop.
+ * @param {*} props.onToggle - onToggle prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import DepartmentSelectorCard from "../components/workshop-invitation/DepartmentSelectorCard";
+ *
+ * // Real usage reference: src/pages/innovation/WorkshopInvitation.jsx
+ * <DepartmentSelectorCard />;
+ */
 function DepartmentSelectorCard({
   items,
   filteredItems,

@@ -1,5 +1,27 @@
+/**
+ * @module components/auth/register-company/RegisterActions
+ * @description UI component module for RegisterActions.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import MaterialIcon from "../../MaterialIcon";
 
+/**
+ * Renders the RegisterActions component.
+ * @param {Object} props - Component props.
+ * @param {*} props.step - step prop.
+ * @param {*} props.canGoNext - canGoNext prop.
+ * @param {*} props.isSubmitting - isSubmitting prop.
+ * @param {*} props.onBack - onBack prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import RegisterActions from "../components/auth/register-company/RegisterActions";
+ *
+ * // Real usage reference: src/pages/auth/RegisterCompany.jsx
+ * <RegisterActions />;
+ */
 export default function RegisterActions({
   step,
   canGoNext,

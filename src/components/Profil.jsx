@@ -1,3 +1,10 @@
+/**
+ * @module components/Profil
+ * @description UI component module for Profil.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import { useNavigate } from "react-router-dom";
 import { logout } from "../firebase";
 import MaterialIcon from "../components/MaterialIcon";
@@ -50,6 +57,16 @@ const formatDateLabel = (isoDate) => {
   return new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" }).format(parsedDate);
 };
 
+/**
+ * Renders the Profil component.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import Profil from "../components/Profil";
+ *
+ * // Real usage reference: src/components/Navbar.jsx
+ * <Profil />;
+ */
 function Profil() {
   const navigate = useNavigate();
   const { profile, subscription, isLoading, loadError } = useCurrentUserProfile();

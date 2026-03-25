@@ -1,3 +1,10 @@
+/**
+ * @module components/Navbar
+ * @description UI component module for Navbar.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import logotype from "../assets/logotype.svg";
@@ -6,6 +13,16 @@ import MaterialIcon from "../components/MaterialIcon";
 import { navbarLinks } from "../constants/navigationLinks.js";
 import SectionNavButtons from "./SectionNavButtons.jsx";
 
+/**
+ * Renders the Navbar component.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import Navbar from "../components/Navbar";
+ *
+ * // Real usage reference: src/pages/Team.jsx
+ * <Navbar />;
+ */
 export default function Navbar() {
   const [openProfil, setOpenProfil] = useState(false);
 

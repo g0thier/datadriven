@@ -1,5 +1,25 @@
+/**
+ * @module components/auth/register-company/steps/SecurityStep
+ * @description UI component module for SecurityStep.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 const INPUT_CLASS = "bg-white p-5 rounded shadow-md w-80 md:w-[420px]";
 
+/**
+ * Renders the SecurityStep component.
+ * @param {Object} props - Component props.
+ * @param {*} props.form - form prop.
+ * @param {*} props.onChange - onChange prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import SecurityStep from "../components/auth/register-company/steps/SecurityStep";
+ *
+ * // Real usage reference: src/components/auth/register-company/RegisterCompanyForm.jsx
+ * <SecurityStep />;
+ */
 export default function SecurityStep({ form, onChange }) {
   const hasPasswordMismatch =
     form.passwordConfirm.length > 0 && form.password !== form.passwordConfirm;

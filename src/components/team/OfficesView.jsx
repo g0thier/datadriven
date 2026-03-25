@@ -1,5 +1,29 @@
+/**
+ * @module components/team/OfficesView
+ * @description UI component module for OfficesView.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import { ActionButton, CellInput, Th, Td, TableShell } from "./UITeam.jsx";
 
+/**
+ * Renders the OfficesView component.
+ * @param {Object} props - Component props.
+ * @param {*} props.officeLocations - officeLocations prop.
+ * @param {*} props.editingOfficeId - editingOfficeId prop.
+ * @param {*} props.setEditingOfficeId - setEditingOfficeId prop.
+ * @param {*} props.addOffice - addOffice prop.
+ * @param {*} props.updateOffice - updateOffice prop.
+ * @param {*} props.removeOffice - removeOffice prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import OfficesView from "../components/team/OfficesView";
+ *
+ * // Real usage reference: src/pages/Team.jsx
+ * <OfficesView />;
+ */
 export default function OfficesView({
   officeLocations,
   editingOfficeId,

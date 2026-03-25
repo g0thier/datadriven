@@ -1,5 +1,27 @@
+/**
+ * @module components/management/CollaboratorSearchPanel
+ * @description UI component module for CollaboratorSearchPanel.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import { useMemo, useState } from "react";
 
+/**
+ * Renders the CollaboratorSearchPanel component.
+ * @param {Object} props - Component props.
+ * @param {*} props.collaborators - collaborators prop.
+ * @param {*} props.onPromoteCollaborator - onPromoteCollaborator prop.
+ * @param {*} props.promotingCollaboratorId - promotingCollaboratorId prop.
+ * @param {*} props.promotionError - promotionError prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import CollaboratorSearchPanel from "../components/management/CollaboratorSearchPanel";
+ *
+ * // Real usage reference: src/pages/management/Management.jsx
+ * <CollaboratorSearchPanel />;
+ */
 export default function CollaboratorSearchPanel({
   collaborators,
   onPromoteCollaborator,

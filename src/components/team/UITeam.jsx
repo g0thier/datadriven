@@ -1,5 +1,26 @@
+/**
+ * @module components/team/UITeam
+ * @description UI component module for UITeam.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import { useMemo } from "react";
 
+/**
+ * Renders the TabButton component.
+ * @param {Object} props - Component props.
+ * @param {*} props.active - active prop.
+ * @param {*} props.onClick - onClick prop.
+ * @param {*} props.children - children prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import { TabButton } from "../components/team/UITeam";
+ *
+ * // Real usage reference: src/pages/Team.jsx
+ * <TabButton />;
+ */
 export function TabButton({ active, onClick, children }) {
   return (
     <button
@@ -18,6 +39,22 @@ export function TabButton({ active, onClick, children }) {
   );
 }
 
+/**
+ * Renders the ActionButton component.
+ * @param {Object} props - Component props.
+ * @param {*} props.onClick - onClick prop.
+ * @param {*} props.children - children prop.
+ * @param {*} props.danger - danger prop.
+ * @param {boolean} [props.disabled=false] - disabled prop.
+ * @param {string} [props.type="button"] - type prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import { ActionButton } from "../components/team/UITeam";
+ *
+ * // Real usage reference: src/components/team/MemberModal.jsx
+ * <ActionButton />;
+ */
 export function ActionButton({ onClick, children, danger, disabled = false, type = "button" }) {
   return (
     <button
@@ -38,6 +75,20 @@ export function ActionButton({ onClick, children, danger, disabled = false, type
   );
 }
 
+/**
+ * Renders the CellInput component.
+ * @param {Object} props - Component props.
+ * @param {*} props.value - value prop.
+ * @param {*} props.onChange - onChange prop.
+ * @param {*} props.placeholder - placeholder prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import { CellInput } from "../components/team/UITeam";
+ *
+ * // Real usage reference: src/components/team/DepartmentsView.jsx
+ * <CellInput />;
+ */
 export function CellInput({ value, onChange, placeholder }) {
   return (
     <input
@@ -54,6 +105,18 @@ export function CellInput({ value, onChange, placeholder }) {
   );
 }
 
+/**
+ * Renders the Th component.
+ * @param {Object} props - Component props.
+ * @param {*} props.children - children prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import { Th } from "../components/team/UITeam";
+ *
+ * // Real usage reference: src/components/team/MembersView.jsx
+ * <Th />;
+ */
 export function Th({ children }) {
   return (
     <th
@@ -70,6 +133,20 @@ export function Th({ children }) {
   );
 }
 
+/**
+ * Renders the Td component.
+ * @param {Object} props - Component props.
+ * @param {*} props.children - children prop.
+ * @param {*} props.colSpan - colSpan prop.
+ * @param {string} [props.verticalAlign="top"] - verticalAlign prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import { Td } from "../components/team/UITeam";
+ *
+ * // Real usage reference: src/components/team/MembersView.jsx
+ * <Td />;
+ */
 export function Td({ children, colSpan, verticalAlign = "top" }) {
   return (
     <td
@@ -86,6 +163,20 @@ export function Td({ children, colSpan, verticalAlign = "top" }) {
 }
 
 /** Office dropdown: value = officeId */
+/**
+ * Renders the OfficeSelect component.
+ * @param {Object} props - Component props.
+ * @param {*} props.value - value prop.
+ * @param {*} props.officeLocations - officeLocations prop.
+ * @param {*} props.onChange - onChange prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import { OfficeSelect } from "../components/team/UITeam";
+ *
+ * // Real usage reference: src/components/team/MemberModal.jsx
+ * <OfficeSelect />;
+ */
 export function OfficeSelect({ value, officeLocations, onChange }) {
   const v = value == null ? "" : String(value);
 
@@ -112,6 +203,20 @@ export function OfficeSelect({ value, officeLocations, onChange }) {
 }
 
 /** Departments tags editor: value = number[] (ids), options = [{id,name}] */
+/**
+ * Renders the DepartmentsTagsEditor component.
+ * @param {Object} props - Component props.
+ * @param {*} props.value - value prop.
+ * @param {*} props.options - options prop.
+ * @param {*} props.onChange - onChange prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import { DepartmentsTagsEditor } from "../components/team/UITeam";
+ *
+ * // Real usage reference: src/components/team/MemberModal.jsx
+ * <DepartmentsTagsEditor />;
+ */
 export function DepartmentsTagsEditor({ value, options, onChange }) {
   const selectedIds = Array.isArray(value) ? value : [];
   const opts = options ?? [];
@@ -202,6 +307,20 @@ export function DepartmentsTagsEditor({ value, options, onChange }) {
   );
 }
 
+/**
+ * Renders the TableShell component.
+ * @param {Object} props - Component props.
+ * @param {*} props.title - title prop.
+ * @param {*} props.onAdd - onAdd prop.
+ * @param {*} props.children - children prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import { TableShell } from "../components/team/UITeam";
+ *
+ * // Real usage reference: src/components/team/MembersView.jsx
+ * <TableShell />;
+ */
 export function TableShell({ title, onAdd, children }) {
   return (
     <div style={{ display: "grid", gap: 12 }}>

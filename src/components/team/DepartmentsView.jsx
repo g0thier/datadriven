@@ -1,5 +1,29 @@
+/**
+ * @module components/team/DepartmentsView
+ * @description UI component module for DepartmentsView.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import { ActionButton, CellInput, Th, Td, TableShell } from "./UITeam.jsx";
 
+/**
+ * Renders the DepartmentsView component.
+ * @param {Object} props - Component props.
+ * @param {*} props.departments - departments prop.
+ * @param {*} props.editingDeptId - editingDeptId prop.
+ * @param {*} props.setEditingDeptId - setEditingDeptId prop.
+ * @param {*} props.addDepartment - addDepartment prop.
+ * @param {*} props.updateDepartment - updateDepartment prop.
+ * @param {*} props.removeDepartment - removeDepartment prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import DepartmentsView from "../components/team/DepartmentsView";
+ *
+ * // Real usage reference: src/pages/Team.jsx
+ * <DepartmentsView />;
+ */
 export default function DepartmentsView({
   departments,
   editingDeptId,

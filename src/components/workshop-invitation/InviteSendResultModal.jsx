@@ -1,3 +1,10 @@
+/**
+ * @module components/workshop-invitation/InviteSendResultModal
+ * @description UI component module for InviteSendResultModal.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import MaterialIcon from "../MaterialIcon";
 
 const ICON_BY_VARIANT = {
@@ -10,6 +17,22 @@ const ICON_COLOR_BY_VARIANT = {
   warning: "text-amber-400",
 };
 
+/**
+ * Renders the InviteSendResultModal component.
+ * @param {Object} props - Component props.
+ * @param {*} props.isOpen - isOpen prop.
+ * @param {*} props.variant - variant prop.
+ * @param {*} props.title - title prop.
+ * @param {Array} [props.lines=[]] - lines prop.
+ * @param {*} props.onConfirm - onConfirm prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import InviteSendResultModal from "../components/workshop-invitation/InviteSendResultModal";
+ *
+ * // Real usage reference: src/pages/innovation/WorkshopInvitation.jsx
+ * <InviteSendResultModal />;
+ */
 function InviteSendResultModal({ isOpen, variant, title, lines = [], onConfirm }) {
   if (!isOpen) return null;
 

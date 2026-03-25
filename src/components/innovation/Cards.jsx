@@ -1,3 +1,10 @@
+/**
+ * @module components/innovation/Cards
+ * @description UI component module for Cards.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import { useNavigate } from "react-router-dom";
 
 import { WORKSHOPS } from "../../workshops/index.js";
@@ -19,6 +26,16 @@ function formatWorkshopDuration(workshop) {
   return fallbackDuration || "Durée non définie";
 }
 
+/**
+ * Renders the Cards component.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import Cards from "../components/innovation/Cards";
+ *
+ * // Real usage reference: src/pages/innovation/Innovation.jsx
+ * <Cards />;
+ */
 function Cards() {
   const navigate = useNavigate();
   const workshopCards = Object.values(WORKSHOPS || {});

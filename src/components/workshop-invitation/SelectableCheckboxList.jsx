@@ -1,3 +1,24 @@
+/**
+ * @module components/workshop-invitation/SelectableCheckboxList
+ * @description UI component module for SelectableCheckboxList.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+/**
+ * Renders the SelectableCheckboxList component.
+ * @param {Object} props - Component props.
+ * @param {*} props.items - items prop.
+ * @param {*} props.selectedIds - selectedIds prop.
+ * @param {*} props.onToggle - onToggle prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import SelectableCheckboxList from "../components/workshop-invitation/SelectableCheckboxList";
+ *
+ * // Real usage reference: src/components/workshop-invitation/MemberSelectorCard.jsx
+ * <SelectableCheckboxList />;
+ */
 function SelectableCheckboxList({ items, selectedIds, onToggle }) {
   return (
     <div className="space-y-2 max-h-90 overflow-auto pr-1">

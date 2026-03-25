@@ -1,3 +1,10 @@
+/**
+ * @module components/management/PagesSelection
+ * @description UI component module for PagesSelection.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import MaterialIcon from "../MaterialIcon.jsx";
 import { getLevel1SelectionState } from "../../utils/management/permissions.selectors.js";
 
@@ -28,6 +35,24 @@ function PermissionCheckbox({ checked, onChange, label, description, disabled = 
   );
 }
 
+/**
+ * Renders the PagesSelection component.
+ * @param {Object} props - Component props.
+ * @param {*} props.pageTree - pageTree prop.
+ * @param {*} props.pageAccess - pageAccess prop.
+ * @param {*} props.isDisabled - isDisabled prop.
+ * @param {boolean} [props.isOwnerProfile=false] - isOwnerProfile prop.
+ * @param {*} props.onToggleLevel1 - onToggleLevel1 prop.
+ * @param {*} props.onToggleLevel2 - onToggleLevel2 prop.
+ * @param {*} props.getPathDisplayMeta - getPathDisplayMeta prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import PagesSelection from "../components/management/PagesSelection";
+ *
+ * // Real usage reference: src/pages/management/Management.jsx
+ * <PagesSelection />;
+ */
 export default function PagesSelection({
   pageTree,
   pageAccess,

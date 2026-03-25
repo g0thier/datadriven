@@ -1,3 +1,10 @@
+/**
+ * @module components/management/SubscriptionCapacityInline
+ * @description UI component module for SubscriptionCapacityInline.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import { useEffect, useRef, useState } from "react";
 import MaterialIcon from "../MaterialIcon.jsx";
 import useAbonnementPage from "../../hooks/management/useAbonnementPage.js";
@@ -7,6 +14,16 @@ function toLimitLabel(value) {
   return numericValue > 0 ? numericValue : "-";
 }
 
+/**
+ * Renders the SubscriptionCapacityInline component.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import SubscriptionCapacityInline from "../components/management/SubscriptionCapacityInline";
+ *
+ * // Real usage reference: src/pages/Team.jsx
+ * <SubscriptionCapacityInline />;
+ */
 export default function SubscriptionCapacityInline() {
   const {
     companyRoleCounts,

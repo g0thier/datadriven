@@ -1,9 +1,34 @@
+/**
+ * @module components/management/ManagersAccess
+ * @description UI component module for ManagersAccess.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import MaterialIcon from "../MaterialIcon.jsx";
 
 const EMPTY_MANAGER_PERMISSIONS = {
   pageAccess: {},
 };
 
+/**
+ * Renders the ManagersAccess component.
+ * @param {Object} props - Component props.
+ * @param {*} props.managers - managers prop.
+ * @param {*} props.selectedManagerId - selectedManagerId prop.
+ * @param {*} props.permissionsByManager - permissionsByManager prop.
+ * @param {*} props.onSelectManager - onSelectManager prop.
+ * @param {*} props.onDemoteManager - onDemoteManager prop.
+ * @param {string} [props.demotingManagerId=""] - demotingManagerId prop.
+ * @param {string} [props.demotionError=""] - demotionError prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import ManagersAccess from "../components/management/ManagersAccess";
+ *
+ * // Real usage reference: src/pages/management/Management.jsx
+ * <ManagersAccess />;
+ */
 export default function ManagersAccess({
   managers,
   selectedManagerId,

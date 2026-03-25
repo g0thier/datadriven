@@ -1,3 +1,10 @@
+/**
+ * @module components/management/Cards
+ * @description UI component module for Cards.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 const formatOwnerLabel = (count) => `${count} administrateur${count > 1 ? "s" : ""}`;
 const formatLeaderLabel = (count) => `${count} leader${count > 1 ? "s" : ""}`;
 const formatColabLabel = (count) => `${count} collaborateur${count > 1 ? "s" : ""}`;
@@ -12,6 +19,20 @@ const formatMonthlyPriceLabel = (amount) => {
   return `${value}€`;
 };
 
+/**
+ * Renders the Cards component.
+ * @param {Object} props - Component props.
+ * @param {*} props.plans - plans prop.
+ * @param {*} props.onSelectPlan - onSelectPlan prop.
+ * @param {string} [props.loadingPlanName=""] - loadingPlanName prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import Cards from "../components/management/Cards";
+ *
+ * // Real usage reference: src/pages/management/Abonnement.jsx
+ * <Cards />;
+ */
 export default function Cards({ plans, onSelectPlan, loadingPlanName = "" }) {
   const isAnyPlanLoading = Boolean(loadingPlanName);
 

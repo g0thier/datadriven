@@ -1,3 +1,10 @@
+/**
+ * @module components/SectionNavButtons
+ * @description UI component module for SectionNavButtons.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
 import { useMemo } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { SECTION_LINKS_BY_ROOT } from "../constants/sectionLinks.js";
@@ -28,6 +35,21 @@ const variantStyles = {
   },
 };
 
+/**
+ * Renders the SectionNavButtons component.
+ * @param {Object} props - Component props.
+ * @param {Array} [props.links=[]] - links prop.
+ * @param {string} [props.className=""] - className prop.
+ * @param {string} [props.ariaLabel="Navigation de section"] - ariaLabel prop.
+ * @param {string} [props.variant="page"] - variant prop.
+ * @returns {JSX.Element|null} Rendered component output.
+ *
+ * @example
+ * import SectionNavButtons from "../components/SectionNavButtons";
+ *
+ * // Real usage reference: src/pages/Team.jsx
+ * <SectionNavButtons />;
+ */
 export default function SectionNavButtons({
   links = [],
   className = "",
