@@ -65,7 +65,7 @@ const description5 = [
 export const paperBrain = {
   id: "paper-brain",
   title: "Paper Brain",
-  groupSize: "à partir de 3 personnes",
+  groupSize: "3 à 8 personnes",
   image: paperBrainImg,
   benefits: [
     "Générer beaucoup dʼidées en peu de temps.",

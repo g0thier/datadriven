@@ -6,8 +6,15 @@
  * @license proprietary
  */
 
+import { continueArreteTente } from "./continue-stop-try/data.js";
+import { defectuologie } from "./defectuologie/data.js";
+import { designThinking } from "./design-thinking/data.js";
+import { matricesCroisees } from "./matrices-croisees/data.js";
+import { mindMapping } from "./mind-mapping/data.js";
 import { paperBrain } from "./paper-brain/data.js";
-// import { sixHats } from "./six-hats/data.js";
+import { sixChapeauxBono } from "./six-hats/data.js";
+import { speedBoat } from "./speed-boat/data.js";
+import { worldCafe } from "./world-coffee/data.js";
 
 /**
  * Registry object containing all available workshop configurations.
@@ -23,7 +30,15 @@ import { paperBrain } from "./paper-brain/data.js";
  */
 export const WORKSHOPS = {
   "paper-brain": paperBrain,
-  // "six-hats": sixHats,
+  "continue-arrete-tente": continueArreteTente,
+  "defectuologie": defectuologie,
+  "speed-boat": speedBoat,
+  "matrices-croisees": matricesCroisees,
+  "mind-mapping": mindMapping,
+  "six-chapeaux-bono": sixChapeauxBono,
+
+  "design-thinking": designThinking,
+  "world-cafe": worldCafe,
 };
 
 /**

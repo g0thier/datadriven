@@ -1,0 +1,97 @@
+/**
+ * @module workshops/continue-arrete-tente/data
+ * @description On continue / On arrête / On tente workshop definition and step metadata registry entry.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
+import continueArreteTenteImg from "../../assets/workshops/continue-arrete-tente.png";
+
+/*
+import Step1 from "./steps/Step1.jsx";
+import Step2 from "./steps/Step2.jsx";
+import Step3 from "./steps/Step3.jsx";
+import Step4 from "./steps/Step4.jsx";
+import Step5 from "./steps/Step5.jsx";
+*/
+
+const description1 = [
+    "Le facilitateur précise le périmètre : projet, équipe, rituel ou période concernée.",
+    "Trois colonnes sont préparées : on continue, on arrête, on tente.",
+    "👉 Plus le périmètre est clair, plus les contributions seront utiles."
+];
+
+const description2 = [
+    "Chaque participant note ses propositions dans les trois colonnes.",
+    "On encourage des formulations courtes et concrètes.",
+    "👉 Une idée par post-it permet ensuite une lecture plus fluide."
+];
+
+const description3 = [
+    "Le groupe met en commun les éléments et regroupe les doublons.",
+    "On clarifie les formulations si besoin, sans débattre trop tôt.",
+    "👉 On cherche à comprendre avant de décider."
+];
+
+const description4 = [
+    "Les participants votent pour retenir les éléments les plus importants de chaque colonne.",
+    "On garde quelques priorités maximum pour rester réaliste.",
+    "👉 La simplicité fait la force de l’outil."
+];
+
+const description5 = [
+    "Le groupe transforme les choix en engagements : ce qu’on maintient, ce qu’on stoppe, ce qu’on expérimente.",
+    "On peut associer un responsable et une échéance à chaque point retenu.",
+    "👉 L’atelier devient utile quand il produit une suite visible."
+];
+
+export const continueArreteTente = {
+  id: "continue-arrete-tente",
+  title: "On continue, arrête, tente",
+  groupSize: "3 à 12 personnes",
+  image: continueArreteTenteImg,
+  benefits: [
+    "Faire un retour d’expérience très lisible.",
+    "Identifier rapidement les pratiques à conserver, stopper ou tester.",
+    "Favoriser un échange simple, direct et constructif.",
+    "Aider une équipe à passer du constat à l’engagement.",
+  ],
+  steps: [
+    {
+      label: "Cadrage de la rétrospective",
+      duration: 5,
+      //component: Step1,
+      description: description1,
+      audioEnabled: true,
+    },
+    {
+      label: "Réflexion individuelle",
+      duration: 8,
+      //component: Step2,
+      description: description2,
+      audioEnabled: false,
+    },
+    {
+      label: "Partage collectif",
+      duration: 10,
+      //component: Step3,
+      description: description3,
+      audioEnabled: true,
+    },
+    {
+      label: "Choix des priorités",
+      duration: 10,
+      //component: Step4,
+      description: description4,
+      audioEnabled: true,
+    },
+    {
+      label: "Engagement d’équipe",
+      duration: 7,
+      //component: Step5,
+      description: description5,
+      audioEnabled: true,
+    }
+  ],
+};
