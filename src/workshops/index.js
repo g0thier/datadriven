@@ -36,7 +36,6 @@ export const WORKSHOPS = {
   "matrices-croisees": matricesCroisees,
   "mind-mapping": mindMapping,
   "six-chapeaux-bono": sixChapeauxBono,
-
   "design-thinking": designThinking,
   "world-cafe": worldCafe,
 };
