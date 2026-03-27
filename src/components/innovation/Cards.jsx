@@ -46,7 +46,7 @@ function Cards() {
         <div
           key={card.id}
           onClick={() =>
-            navigate("/innovation/invitation", { state: { workshop: card } })
+            navigate("/innovation/invitation", { state: { workshopId: card.id } })
           }
           className="group bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden hover:-translate-y-2"
         >

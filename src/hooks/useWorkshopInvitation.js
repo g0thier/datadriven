@@ -52,9 +52,15 @@ const resolveWorkshopId = (workshop) => {
 function useWorkshopInvitation() {
   const location = useLocation();
   const navigate = useNavigate();
-  const atelier = location.state?.workshop ?? DEFAULT_WORKSHOP;
+  const stateWorkshop = location.state?.workshop;
+  const workshopIdFromState =
+    typeof location.state?.workshopId === "string" ? location.state.workshopId.trim() : "";
+  const workshopId = useMemo(() => {
+    if (workshopIdFromState && getWorkshop(workshopIdFromState)) return workshopIdFromState;
+    return resolveWorkshopId(stateWorkshop);
+  }, [stateWorkshop, workshopIdFromState]);
+  const atelier = getWorkshop(workshopId) ?? stateWorkshop ?? DEFAULT_WORKSHOP;
   const { companyId, officeLocations, departments, teamMembers } = useCompanyTeam();
-  const workshopId = useMemo(() => resolveWorkshopId(atelier), [atelier]);
 
   const [selectedDepartmentIds, setSelectedDepartmentIds] = useState([]);
   const [selectedMemberIds, setSelectedMemberIds] = useState([]);

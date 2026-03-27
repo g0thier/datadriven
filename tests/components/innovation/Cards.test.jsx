@@ -34,7 +34,11 @@ describe("innovation/Cards", () => {
 
     expect(navigateMock).toHaveBeenCalledWith(
       "/innovation/invitation",
-      expect.objectContaining({ state: expect.any(Object) })
+      expect.objectContaining({
+        state: {
+          workshopId: "paper-brain",
+        },
+      })
     );
   });
 });
