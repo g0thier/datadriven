@@ -1,0 +1,52 @@
+{
+  "rules": {
+    "users": {
+      // Optimisation : Permet de filtrer efficacement les utilisateurs par entreprise via le code
+      ".indexOn": ["companyId"],
+      
+      "$uid": {
+        // LECTURE : Autorisée si :
+        // 1. C'est mon propre profil (auth.uid === $uid)
+        // 2. OU je fais partie de la même entreprise que l'utilisateur consulté
+        ".read": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('companyId').val() === data.child('companyId').val())",
+        
+        // ÉCRITURE : Autorisée si :
+        // 1. C'est mon propre profil (pour mettre à jour mes infos)
+        // 2. OU je suis 'owner'/'leader' ET je fais partie de la même entreprise que la cible
+        ".write": "auth != null && (auth.uid === $uid || (root.child('users').child(auth.uid).child('companyId').val() === data.child('companyId').val() && (root.child('users').child(auth.uid).child('role').val() === 'owner' || root.child('users').child(auth.uid).child('role').val() === 'leader')))"
+      }
+    },
+
+    "companies": {
+      "$companyId": {
+        // LECTURE : Seuls les membres dont le profil 'users/uid/companyId' correspond à cet ID peuvent lire
+        ".read": "auth != null && root.child('users').child(auth.uid).child('companyId').val() === $companyId",
+        
+        // ÉCRITURE : Seuls les 'owner' ou 'leader' appartenant à cette entreprise peuvent modifier les infos
+        ".write": "auth != null && root.child('users').child(auth.uid).child('companyId').val() === $companyId && (root.child('users').child(auth.uid).child('role').val() === 'owner' || root.child('users').child(auth.uid).child('role').val() === 'leader')"
+      }
+    },
+
+    "workshopSessions": {
+      // Optimisation : Permet de récupérer toutes les sessions d'une entreprise donnée
+      ".indexOn": ["companyId"],
+      
+      "$sessionId": {
+        // LECTURE : Seuls les membres de la même entreprise que la session peuvent la voir
+        ".read": "auth != null && root.child('users').child(auth.uid).child('companyId').val() === data.child('companyId').val()",
+        
+        // ÉCRITURE : On vérifie le companyId. 
+        // Si la session existe déjà (data.exists()), on garde le companyId actuel.
+        // Si c'est une création, on vérifie que le companyId envoyé (newData) est bien celui de l'utilisateur.
+        ".write": "auth != null && root.child('users').child(auth.uid).child('companyId').val() === (data.exists() ? data.child('companyId').val() : newData.child('companyId').val())"
+      }
+    },
+
+    "stripe": {
+      // Sécurité maximale : Personne ne peut lire ou écrire via le SDK client (Frontend).
+      // Seul ton Backend (Node.js/Cloud Functions) peut y accéder via l'Admin SDK.
+      ".read": false,
+      ".write": false
+    }
+  }
+}
