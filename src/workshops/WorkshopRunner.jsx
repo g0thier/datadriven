@@ -12,11 +12,11 @@ import { getWorkshopSession } from "../firebase";
 import StepTime from "./StepTime.jsx";
 import { useStepTimeline } from "./useStepTimeline.js";
 import { getWorkshop } from "./index.js";
-import { usePaperBrainCollaboration } from "./paper-brain/usePaperBrainCollaboration.js";
 import WorkshopWaitingPage from "./WorkshopWaitingPage.jsx";
 import RouteFallback from "../components/fallback/RouteFallback.jsx";
 import WorkshopSummaryPage from "./WorkshopSummaryPage.jsx";
 import WorkshopVoiceOverlay from "../components/workshop-audio/WorkshopVoiceOverlay.jsx";
+import WorkshopSelector from "./WorkshopSelector.jsx";
 
 /**
  * Renders the workshop runtime route page.
@@ -33,7 +33,7 @@ import WorkshopVoiceOverlay from "../components/workshop-audio/WorkshopVoiceOver
  *
  * // Internal callsites in this component:
  * // - useStepTimeline(sessionData, startAt)
- * // - usePaperBrainCollaboration({ sessionId, session, workshopId })
+ * // - Workshop bridge selected by workshop id
  * // - <StepTime ... />, <WorkshopWaitingPage ... />, <WorkshopSummaryPage ... />
  */
 export default function WorkshopRunner() {
@@ -84,12 +84,6 @@ export default function WorkshopRunner() {
 
   const resolvedWorkshopId = session?.workshopId || routeWorkshopId;
   const sessionData = getWorkshop(resolvedWorkshopId);
-  const collaboration = usePaperBrainCollaboration({
-    sessionId,
-    session,
-    workshopId: resolvedWorkshopId,
-  });
-
   const startAt = useMemo(() => {
     const sessionDate = session?.workshopDateTime ? new Date(session.workshopDateTime) : null;
     if (sessionDate && !Number.isNaN(sessionDate.getTime())) {
@@ -145,32 +139,40 @@ export default function WorkshopRunner() {
   }
 
   return (
-    <div className="min-h-screen">
-      <StepTime sessionData={sessionData} startAt={startAt} />
+    <WorkshopSelector
+      sessionId={sessionId}
+      session={session}
+      workshopId={resolvedWorkshopId}
+    >
+      {(collaboration) => (
+        <div className="min-h-screen">
+          <StepTime sessionData={sessionData} startAt={startAt} />
 
-      {isFinished ? (
-        <WorkshopSummaryPage
-          workshopId={resolvedWorkshopId}
-          sessionTitle={sessionData.title}
-          collaboration={collaboration}
-        />
-      ) : StepComponent && currentStep ? (
-        <StepComponent
-          sessionTitle={sessionData.title}
-          step={currentStep}
-          session={session}
-          collaboration={collaboration}
-        />
-      ) : (
-        <RouteFallback />
+          {isFinished ? (
+            <WorkshopSummaryPage
+              workshopId={resolvedWorkshopId}
+              sessionTitle={sessionData.title}
+              collaboration={collaboration}
+            />
+          ) : StepComponent && currentStep ? (
+            <StepComponent
+              sessionTitle={sessionData.title}
+              step={currentStep}
+              session={session}
+              collaboration={collaboration}
+            />
+          ) : (
+            <RouteFallback />
+          )}
+
+          <WorkshopVoiceOverlay
+            roomId={sessionId}
+            workshopActive={isWorkshopActive}
+            stepAudioEnabled={stepAudioEnabled}
+            maxParticipants={8}
+          />
+        </div>
       )}
-
-      <WorkshopVoiceOverlay
-        roomId={sessionId}
-        workshopActive={isWorkshopActive}
-        stepAudioEnabled={stepAudioEnabled}
-        maxParticipants={8}
-      />
-    </div>
+    </WorkshopSelector>
   );
 }
