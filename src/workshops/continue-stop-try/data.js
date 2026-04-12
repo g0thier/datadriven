@@ -23,15 +23,18 @@ const description1 = [
 ];
 
 const description2 = [
-    "Chaque participant note ses propositions dans les trois colonnes.",
-    "On encourage des formulations courtes et concrètes.",
-    "👉 Une idée par post-it permet ensuite une lecture plus fluide."
+    "Chaque participant note ses idées dans les trois colonnes.",
+    "- Une idée par post-it",
+    "- Sans discussion, ni autocensure",
+    "Objectifs : éviter l’influence, libérer les introvertis et favoriser l’originalité."
 ];
 
 const description3 = [
-    "Le groupe met en commun les éléments et regroupe les doublons.",
-    "On clarifie les formulations si besoin, sans débattre trop tôt.",
-    "👉 On cherche à comprendre avant de décider."
+    "Le groupe met les idées en commun :",
+    "- Les post-it sont affichés au mur",
+    "- Les idées similaires sont regroupées",
+    "- Les participants peuvent clarifier certaines propositions",
+    "👉 L’objectif est d’organiser et comprendre les idées, sans les juger."
 ];
 
 const description4 = [
