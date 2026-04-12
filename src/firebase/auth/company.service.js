@@ -1,6 +1,6 @@
 import { get, push, ref, update } from "firebase/database";
-import DEFAULT_DEPARTMENTS from "../constants/defaults";
-import slugify from "../utils/string";
+import DEFAULT_DEPARTMENTS from "../../constants/defaults";
+import slugify from "../../utils/string";
 import { database } from "./app";
 
 /**

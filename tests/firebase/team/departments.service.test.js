@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { makeSnapshot } from "../helpers/firebaseTestUtils.js";
+import { makeSnapshot } from "../../helpers/firebaseTestUtils.js";
 
 const onValue = vi.fn();
 const push = vi.fn();
@@ -9,9 +9,9 @@ const set = vi.fn();
 const update = vi.fn();
 
 vi.mock("firebase/database", () => ({ onValue, push, ref, remove, set, update }));
-vi.mock("../../src/firebase/app", () => ({ database: {} }));
+vi.mock("../../../src/firebase/auth/app", () => ({ database: {} }));
 
-describe("firebase/departments.service", () => {
+describe("firebase/team/departments.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     onValue.mockImplementation((_r, cb) => {
@@ -25,7 +25,7 @@ describe("firebase/departments.service", () => {
   });
 
   it("subscribes and normalizes departments", async () => {
-    const mod = await import("../../src/firebase/departments.service.js");
+    const mod = await import("../../../src/firebase/team/departments.service.js");
     const cb = vi.fn();
     mod.subscribeCompanyDepartments("c1", cb);
     expect(cb).toHaveBeenCalledWith(
@@ -34,7 +34,7 @@ describe("firebase/departments.service", () => {
   });
 
   it("adds/updates/removes department", async () => {
-    const mod = await import("../../src/firebase/departments.service.js");
+    const mod = await import("../../../src/firebase/team/departments.service.js");
     await expect(mod.addCompanyDepartment("c1", { name: "Ops" })).resolves.toBe("d_new");
     await mod.updateCompanyDepartment("c1", "d1", { name: "Ops", isActive: false });
     await mod.removeCompanyDepartment("c1", "d1");

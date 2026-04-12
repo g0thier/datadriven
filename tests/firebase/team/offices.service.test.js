@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { makeSnapshot } from "../helpers/firebaseTestUtils.js";
+import { makeSnapshot } from "../../helpers/firebaseTestUtils.js";
 
 const get = vi.fn();
 const onValue = vi.fn();
@@ -10,9 +10,9 @@ const set = vi.fn();
 const update = vi.fn();
 
 vi.mock("firebase/database", () => ({ get, onValue, push, ref, remove, set, update }));
-vi.mock("../../src/firebase/app", () => ({ database: {} }));
+vi.mock("../../../src/firebase/auth/app", () => ({ database: {} }));
 
-describe("firebase/offices.service", () => {
+describe("firebase/team/offices.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     push.mockReturnValue({ key: "o_new" });
@@ -27,14 +27,14 @@ describe("firebase/offices.service", () => {
   });
 
   it("subscribes and normalizes offices", async () => {
-    const mod = await import("../../src/firebase/offices.service.js");
+    const mod = await import("../../../src/firebase/team/offices.service.js");
     const cb = vi.fn();
     mod.subscribeCompanyOffices("c1", cb);
     expect(cb).toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining({ id: "o1" })]));
   });
 
   it("adds office and manages default logic updates", async () => {
-    const mod = await import("../../src/firebase/offices.service.js");
+    const mod = await import("../../../src/firebase/team/offices.service.js");
     await expect(mod.addCompanyOffice("c1", { alias: "HQ" })).resolves.toBe("o_new");
 
     await mod.updateCompanyOffice("c1", "o1", { isDefault: true, city: "Lausanne" });

@@ -5,21 +5,21 @@ const createUserWithEmailAndPassword = vi.fn();
 const signOut = vi.fn();
 const updateCurrentUser = vi.fn();
 
-vi.mock("../../src/firebase/app", () => ({ auth }));
+vi.mock("../../../src/firebase/auth/app", () => ({ auth }));
 vi.mock("firebase/auth", () => ({
   createUserWithEmailAndPassword,
   signOut,
   updateCurrentUser,
 }));
 
-describe("firebase/member-auth.service", () => {
+describe("firebase/auth/member-auth.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     auth.currentUser = { uid: "owner" };
   });
 
   it("validates input", async () => {
-    const mod = await import("../../src/firebase/member-auth.service.js");
+    const mod = await import("../../../src/firebase/auth/member-auth.service.js");
     await expect(mod.signUpMemberWithEmail("", "x")).rejects.toThrow();
     await expect(mod.signUpMemberWithEmail("a@b.com", "")).rejects.toThrow();
   });
@@ -29,7 +29,7 @@ describe("firebase/member-auth.service", () => {
     signOut.mockResolvedValue(undefined);
     updateCurrentUser.mockResolvedValue(undefined);
 
-    const mod = await import("../../src/firebase/member-auth.service.js");
+    const mod = await import("../../../src/firebase/auth/member-auth.service.js");
     const user = await mod.signUpMemberWithEmail("m@b.com", "pwd");
 
     expect(user.uid).toBe("member");

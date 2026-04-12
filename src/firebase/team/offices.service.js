@@ -1,5 +1,5 @@
 import { get, onValue, push, ref, remove, set, update } from "firebase/database";
-import { database } from "./app";
+import { database } from "../index";
 
 /**
  * @module firebase/offices.service

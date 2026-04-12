@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { makeSnapshot } from "../helpers/firebaseTestUtils.js";
-import { waitFor } from "../helpers/renderHook.js";
+import { makeSnapshot } from "../../helpers/firebaseTestUtils.js";
+import { waitFor } from "../../helpers/renderHook.js";
 
 const get = vi.fn();
 const onValue = vi.fn();
@@ -8,9 +8,9 @@ const ref = vi.fn((_db, path = "") => path || "root");
 const update = vi.fn();
 
 vi.mock("firebase/database", () => ({ get, onValue, ref, update }));
-vi.mock("../../src/firebase/app", () => ({ database: {} }));
+vi.mock("../../../src/firebase/auth/app", () => ({ database: {} }));
 
-describe("firebase/management.service", () => {
+describe("firebase/management/management.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     onValue.mockImplementation((_r, cb) => {
@@ -29,7 +29,7 @@ describe("firebase/management.service", () => {
   });
 
   it("subscribes managers from owner/leader roles", async () => {
-    const mod = await import("../../src/firebase/management.service.js");
+    const mod = await import("../../../src/firebase/management/management.service.js");
     const cb = vi.fn();
     mod.subscribeCompanyManagers("c1", cb);
     await waitFor(() => {
@@ -40,7 +40,7 @@ describe("firebase/management.service", () => {
   });
 
   it("gets and upserts manager permissions", async () => {
-    const mod = await import("../../src/firebase/management.service.js");
+    const mod = await import("../../../src/firebase/management/management.service.js");
     const data = await mod.getCompanyManagerPermissions("c1");
     expect(data.u2.pageAccess).toEqual(["/management/comptes"]);
 

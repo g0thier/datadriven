@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { makeSnapshot } from "../helpers/firebaseTestUtils.js";
+import { makeSnapshot } from "../../helpers/firebaseTestUtils.js";
 
 const get = vi.fn();
 const onChildAdded = vi.fn();
@@ -22,9 +22,9 @@ vi.mock("firebase/database", () => ({
   set,
   update,
 }));
-vi.mock("../../src/firebase/app", () => ({ database: {} }));
+vi.mock("../../../src/firebase/auth/app", () => ({ database: {} }));
 
-describe("firebase/workshop-voice.service", () => {
+describe("firebase/workshops/workshop-voice.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     get.mockResolvedValue(makeSnapshot({ p1: { id: "p1" }, p2: { id: "p2" } }));
@@ -44,7 +44,7 @@ describe("firebase/workshop-voice.service", () => {
   });
 
   it("gets/sets/touches/removes participants", async () => {
-    const mod = await import("../../src/firebase/workshop-voice.service.js");
+    const mod = await import("../../../src/firebase/workshops/workshop-voice.service.js");
 
     await expect(mod.getWorkshopVoiceParticipantCount("r1")).resolves.toBe(2);
     await mod.setWorkshopVoiceParticipant("r1", { id: "p1", name: "Ada" });
@@ -57,7 +57,7 @@ describe("firebase/workshop-voice.service", () => {
   });
 
   it("subscribes participants and signals, sends and acks signal", async () => {
-    const mod = await import("../../src/firebase/workshop-voice.service.js");
+    const mod = await import("../../../src/firebase/workshops/workshop-voice.service.js");
 
     const cbParticipants = vi.fn();
     mod.subscribeWorkshopVoiceParticipants("r1", cbParticipants);
@@ -75,7 +75,7 @@ describe("firebase/workshop-voice.service", () => {
   });
 
   it("registers disconnect cleanup", async () => {
-    const mod = await import("../../src/firebase/workshop-voice.service.js");
+    const mod = await import("../../../src/firebase/workshops/workshop-voice.service.js");
     const cancel = await mod.registerWorkshopVoiceDisconnectCleanup("r1", "p1");
     expect(typeof cancel).toBe("function");
     await cancel();

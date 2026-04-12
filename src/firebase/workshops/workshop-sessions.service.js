@@ -1,5 +1,5 @@
 import { get, onValue, push, ref, update } from "firebase/database";
-import { database } from "./app";
+import { database } from "../index";
 
 /**
  * @module firebase/workshop-sessions.service

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { makeSnapshot } from "../helpers/firebaseTestUtils.js";
-import { waitFor } from "../helpers/renderHook.js";
+import { makeSnapshot } from "../../helpers/firebaseTestUtils.js";
+import { waitFor } from "../../helpers/renderHook.js";
 
 const get = vi.fn();
 const onValue = vi.fn();
@@ -9,9 +9,9 @@ const ref = vi.fn((_db, path = "") => path || "root");
 const update = vi.fn();
 
 vi.mock("firebase/database", () => ({ get, onValue, push, ref, update }));
-vi.mock("../../src/firebase/app", () => ({ database: {} }));
+vi.mock("../../../src/firebase/auth/app", () => ({ database: {} }));
 
-describe("firebase/members.service", () => {
+describe("firebase/team/members.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     push.mockReturnValue({ key: "m_new" });
@@ -28,7 +28,7 @@ describe("firebase/members.service", () => {
   });
 
   it("subscribes members", async () => {
-    const mod = await import("../../src/firebase/members.service.js");
+    const mod = await import("../../../src/firebase/team/members.service.js");
     const cb = vi.fn();
     mod.subscribeCompanyMembers("c1", cb);
     await waitFor(() => {
@@ -39,7 +39,7 @@ describe("firebase/members.service", () => {
   });
 
   it("adds, updates and removes member", async () => {
-    const mod = await import("../../src/firebase/members.service.js");
+    const mod = await import("../../../src/firebase/team/members.service.js");
     await expect(mod.addCompanyMember("c1", { name: "Ada Lovelace", role: "leader" })).resolves.toBe("m_new");
     await mod.updateCompanyMember("c1", "m_new", { name: "Grace Hopper", office: "o1", departments: ["d1"] });
     await mod.removeCompanyMember("c1", "m_new");

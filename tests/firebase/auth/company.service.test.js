@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { makeSnapshot } from "../helpers/firebaseTestUtils.js";
+import { makeSnapshot } from "../../helpers/firebaseTestUtils.js";
 
 const get = vi.fn();
 const push = vi.fn();
@@ -7,9 +7,9 @@ const ref = vi.fn((_db, path = "") => path || "root");
 const update = vi.fn();
 
 vi.mock("firebase/database", () => ({ get, push, ref, update }));
-vi.mock("../../src/firebase/app", () => ({ database: {} }));
+vi.mock("../../../src/firebase/auth/app", () => ({ database: {} }));
 
-vi.mock("../../src/utils/string", () => ({
+vi.mock("../../../src/utils/string", () => ({
   default: (value) => String(value || "").toLowerCase().replace(/\s+/g, "-"),
 }));
 
@@ -23,7 +23,7 @@ describe("firebase/company.service", () => {
   });
 
   it("creates company and returns ids", async () => {
-    const mod = await import("../../src/firebase/company.service.js");
+    const mod = await import("../../../src/firebase/auth/company.service.js");
     const result = await mod.createCompany("u1", {
       company: {
         name: "My Company",
@@ -40,7 +40,7 @@ describe("firebase/company.service", () => {
   });
 
   it("gets user company id", async () => {
-    const mod = await import("../../src/firebase/company.service.js");
+    const mod = await import("../../../src/firebase/auth/company.service.js");
     await expect(mod.getUserCompanyId("u1")).resolves.toBe("c1");
     await expect(mod.getUserCompanyId("")).resolves.toBeNull();
   });

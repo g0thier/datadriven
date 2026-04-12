@@ -6,14 +6,14 @@
  * @license proprietary
  */
 
-export { auth, database } from "./app";
-export * from "./auth.service";
-export * from "./member-auth.service";
-export * from "./company.service";
-export * from "./departments.service";
-export * from "./offices.service";
-export * from "./members.service";
-export * from "./management.service";
-export * from "./workshop-sessions.service";
-export * from "./paper-brain.service";
-export * from "./workshop-voice.service";
+export { auth, database } from "./auth/app";
+export * from "./auth/auth.service";
+export * from "./auth/member-auth.service";
+export * from "./auth/company.service";
+export * from "./team/departments.service";
+export * from "./team/offices.service";
+export * from "./team/members.service";
+export * from "./management/management.service";
+export * from "./workshops/workshop-sessions.service";
+export * from "./workshops/paper-brain.service";
+export * from "./workshops/workshop-voice.service";

@@ -8,7 +8,7 @@ import {
   set,
   update,
 } from "firebase/database";
-import { database } from "./app";
+import { database } from "../index";
 
 /**
  * @module firebase/paper-brain.service

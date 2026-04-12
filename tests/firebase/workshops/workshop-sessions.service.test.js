@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { makeSnapshot } from "../helpers/firebaseTestUtils.js";
+import { makeSnapshot } from "../../helpers/firebaseTestUtils.js";
 
 const get = vi.fn();
 const onValue = vi.fn();
@@ -8,9 +8,9 @@ const ref = vi.fn((_db, path = "") => path || "root");
 const update = vi.fn();
 
 vi.mock("firebase/database", () => ({ get, onValue, push, ref, update }));
-vi.mock("../../src/firebase/app", () => ({ database: {} }));
+vi.mock("../../../src/firebase/auth/app", () => ({ database: {} }));
 
-describe("firebase/workshop-sessions.service", () => {
+describe("firebase/workshops/workshop-sessions.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     push.mockReturnValue({ key: "s1" });
@@ -28,7 +28,7 @@ describe("firebase/workshop-sessions.service", () => {
   });
 
   it("creates workshop session with summaries", async () => {
-    const mod = await import("../../src/firebase/workshop-sessions.service.js");
+    const mod = await import("../../../src/firebase/workshops/workshop-sessions.service.js");
     const out = await mod.createWorkshopSession("c1", {
       workshopId: "paper-brain",
       workshopTitle: "Paper Brain",
@@ -43,13 +43,13 @@ describe("firebase/workshop-sessions.service", () => {
   });
 
   it("gets a workshop session", async () => {
-    const mod = await import("../../src/firebase/workshop-sessions.service.js");
+    const mod = await import("../../../src/firebase/workshops/workshop-sessions.service.js");
     const session = await mod.getWorkshopSession("s1");
     expect(session.id).toBe("s1");
   });
 
   it("subscribes user sessions and sorts them", async () => {
-    const mod = await import("../../src/firebase/workshop-sessions.service.js");
+    const mod = await import("../../../src/firebase/workshops/workshop-sessions.service.js");
     const cb = vi.fn();
     mod.subscribeUserWorkshopSessions("u1", cb);
     const sessions = cb.mock.calls.at(-1)[0];

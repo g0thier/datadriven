@@ -10,7 +10,7 @@ const onAuthStateChanged = vi.fn((_auth, cb) => {
   return () => {};
 });
 
-vi.mock("../../src/firebase/app", () => ({ auth }));
+vi.mock("../../../src/firebase/auth/app", () => ({ auth }));
 vi.mock("firebase/auth", () => ({
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -26,7 +26,7 @@ describe("firebase/auth.service", () => {
 
   it("signs up and returns user", async () => {
     createUserWithEmailAndPassword.mockResolvedValue({ user: { uid: "u2" } });
-    const mod = await import("../../src/firebase/auth.service.js");
+    const mod = await import("../../../src/firebase/auth/auth.service.js");
     const user = await mod.signUpWithEmail("a@b.com", "pwd");
     expect(user.uid).toBe("u2");
   });
@@ -35,14 +35,14 @@ describe("firebase/auth.service", () => {
     signInWithEmailAndPassword.mockResolvedValue({ user: { uid: "u3" } });
     signOut.mockResolvedValue(undefined);
 
-    const mod = await import("../../src/firebase/auth.service.js");
+    const mod = await import("../../../src/firebase/auth/auth.service.js");
     await expect(mod.signInWithEmail("a@b.com", "pwd")).resolves.toMatchObject({ uid: "u3" });
     await expect(mod.logout()).resolves.toBeUndefined();
   });
 
   it("resets password and subscribes auth listener", async () => {
     sendPasswordResetEmail.mockResolvedValue(undefined);
-    const mod = await import("../../src/firebase/auth.service.js");
+    const mod = await import("../../../src/firebase/auth/auth.service.js");
     await mod.resetPassword("a@b.com");
 
     const cb = vi.fn();

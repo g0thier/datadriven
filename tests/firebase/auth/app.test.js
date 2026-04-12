@@ -10,7 +10,7 @@ vi.mock("firebase/database", () => ({ getDatabase }));
 
 describe("firebase/app", () => {
   it("initializes app and shared instances", async () => {
-    const mod = await import("../../src/firebase/app.js");
+    const mod = await import("../../../src/firebase/auth/app.js");
 
     expect(initializeApp).toHaveBeenCalledTimes(1);
     expect(getAuth).toHaveBeenCalledTimes(1);

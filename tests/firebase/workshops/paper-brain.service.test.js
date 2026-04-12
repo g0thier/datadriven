@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { makeSnapshot } from "../helpers/firebaseTestUtils.js";
+import { makeSnapshot } from "../../helpers/firebaseTestUtils.js";
 
 const get = vi.fn();
 const onValue = vi.fn();
@@ -20,9 +20,9 @@ vi.mock("firebase/database", () => ({
   set,
   update,
 }));
-vi.mock("../../src/firebase/app", () => ({ database: {} }));
+vi.mock("../../../src/firebase/auth/app", () => ({ database: {} }));
 
-describe("firebase/paper-brain.service", () => {
+describe("firebase/workshops/paper-brain.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     onValue.mockImplementation((_r, cb) => {
@@ -47,7 +47,7 @@ describe("firebase/paper-brain.service", () => {
   });
 
   it("subscribes session and upserts participant", async () => {
-    const mod = await import("../../src/firebase/paper-brain.service.js");
+    const mod = await import("../../../src/firebase/workshops/paper-brain.service.js");
     const cb = vi.fn();
     mod.subscribePaperBrainSession("s1", cb);
     expect(cb).toHaveBeenCalled();
@@ -57,7 +57,7 @@ describe("firebase/paper-brain.service", () => {
   });
 
   it("creates/updates/removes notes and comments", async () => {
-    const mod = await import("../../src/firebase/paper-brain.service.js");
+    const mod = await import("../../../src/firebase/workshops/paper-brain.service.js");
 
     await expect(mod.createPaperBrainNote("s1", { authorId: "p1", text: "Idea" })).resolves.toBe("n_new");
     await mod.updatePaperBrainNote("s1", "n1", { text: "Updated" });
@@ -75,7 +75,7 @@ describe("firebase/paper-brain.service", () => {
   });
 
   it("toggles votes with transaction result", async () => {
-    const mod = await import("../../src/firebase/paper-brain.service.js");
+    const mod = await import("../../../src/firebase/workshops/paper-brain.service.js");
     const result = await mod.togglePaperBrainVote("s1", "p1", "n1", { maxVotes: 3, validNoteIds: new Set(["n1"]) });
     expect(result.committed).toBe(true);
     expect(result.votes).toBeTruthy();
