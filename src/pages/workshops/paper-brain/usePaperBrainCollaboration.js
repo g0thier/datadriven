@@ -7,11 +7,10 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { auth, onAuthStateChangedListener } from "../../../firebase";
 import {
   addPaperBrainComment,
-  auth,
   createPaperBrainNote,
-  onAuthStateChangedListener,
   removePaperBrainComment,
   removePaperBrainNote,
   setPaperBrainNotePosition,
@@ -21,7 +20,7 @@ import {
   updatePaperBrainComment,
   updatePaperBrainNote,
   upsertPaperBrainParticipant,
-} from "../../../firebase";
+} from "../../../firebase/workshops/paper-brain.service";
 
 const MAX_STICKERS = 3;
 

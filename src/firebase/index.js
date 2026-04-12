@@ -15,5 +15,4 @@ export * from "./team/offices.service";
 export * from "./team/members.service";
 export * from "./management/management.service";
 export * from "./workshops/workshop-sessions.service";
-export * from "./workshops/paper-brain.service";
 export * from "./workshops/workshop-voice.service";

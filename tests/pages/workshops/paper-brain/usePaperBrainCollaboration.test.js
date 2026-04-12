@@ -5,13 +5,16 @@ import { renderHook, waitFor } from "../../../helpers/renderHook.js";
 let authCallback;
 
 const firebaseMocks = {
-  addPaperBrainComment: vi.fn(),
   auth: { currentUser: { uid: "u1", email: "ada@example.com", displayName: "Ada" } },
-  createPaperBrainNote: vi.fn(),
   onAuthStateChangedListener: vi.fn((cb) => {
     authCallback = cb;
     return () => {};
   }),
+};
+
+const paperBrainServiceMocks = {
+  addPaperBrainComment: vi.fn(),
+  createPaperBrainNote: vi.fn(),
   removePaperBrainComment: vi.fn(),
   removePaperBrainNote: vi.fn(),
   setPaperBrainNotePosition: vi.fn(),
@@ -24,12 +27,13 @@ const firebaseMocks = {
 };
 
 vi.mock("../../../../src/firebase", () => firebaseMocks);
+vi.mock("../../../../src/firebase/workshops/paper-brain.service", () => paperBrainServiceMocks);
 
 describe("usePaperBrainCollaboration", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    firebaseMocks.subscribePaperBrainSession.mockImplementation((_sessionId, onData) => {
+    paperBrainServiceMocks.subscribePaperBrainSession.mockImplementation((_sessionId, onData) => {
       onData({
         step1: { description: "Challenge" },
         notes: {
@@ -65,16 +69,19 @@ describe("usePaperBrainCollaboration", () => {
       return () => {};
     });
 
-    firebaseMocks.upsertPaperBrainParticipant.mockResolvedValue(undefined);
-    firebaseMocks.createPaperBrainNote.mockResolvedValue("n3");
-    firebaseMocks.updatePaperBrainNote.mockResolvedValue(undefined);
-    firebaseMocks.removePaperBrainNote.mockResolvedValue(undefined);
-    firebaseMocks.addPaperBrainComment.mockResolvedValue("c2");
-    firebaseMocks.updatePaperBrainComment.mockResolvedValue(undefined);
-    firebaseMocks.removePaperBrainComment.mockResolvedValue(undefined);
-    firebaseMocks.setPaperBrainNotePosition.mockResolvedValue(undefined);
-    firebaseMocks.setPaperBrainStep1Description.mockResolvedValue(undefined);
-    firebaseMocks.togglePaperBrainVote.mockResolvedValue({ committed: true, votes: { n1: true } });
+    paperBrainServiceMocks.upsertPaperBrainParticipant.mockResolvedValue(undefined);
+    paperBrainServiceMocks.createPaperBrainNote.mockResolvedValue("n3");
+    paperBrainServiceMocks.updatePaperBrainNote.mockResolvedValue(undefined);
+    paperBrainServiceMocks.removePaperBrainNote.mockResolvedValue(undefined);
+    paperBrainServiceMocks.addPaperBrainComment.mockResolvedValue("c2");
+    paperBrainServiceMocks.updatePaperBrainComment.mockResolvedValue(undefined);
+    paperBrainServiceMocks.removePaperBrainComment.mockResolvedValue(undefined);
+    paperBrainServiceMocks.setPaperBrainNotePosition.mockResolvedValue(undefined);
+    paperBrainServiceMocks.setPaperBrainStep1Description.mockResolvedValue(undefined);
+    paperBrainServiceMocks.togglePaperBrainVote.mockResolvedValue({
+      committed: true,
+      votes: { n1: true },
+    });
   });
 
   it("stays disabled for non paper-brain workshop", async () => {
@@ -126,24 +133,26 @@ describe("usePaperBrainCollaboration", () => {
       await hook.result.actions.toggleVote("n2");
     });
 
-    expect(firebaseMocks.setPaperBrainStep1Description).toHaveBeenCalled();
-    expect(firebaseMocks.createPaperBrainNote).toHaveBeenCalled();
-    expect(firebaseMocks.updatePaperBrainNote).toHaveBeenCalled();
-    expect(firebaseMocks.removePaperBrainNote).toHaveBeenCalled();
-    expect(firebaseMocks.addPaperBrainComment).toHaveBeenCalled();
-    expect(firebaseMocks.updatePaperBrainComment).toHaveBeenCalled();
-    expect(firebaseMocks.removePaperBrainComment).toHaveBeenCalled();
-    expect(firebaseMocks.setPaperBrainNotePosition).toHaveBeenCalled();
-    expect(firebaseMocks.togglePaperBrainVote).toHaveBeenCalled();
+    expect(paperBrainServiceMocks.setPaperBrainStep1Description).toHaveBeenCalled();
+    expect(paperBrainServiceMocks.createPaperBrainNote).toHaveBeenCalled();
+    expect(paperBrainServiceMocks.updatePaperBrainNote).toHaveBeenCalled();
+    expect(paperBrainServiceMocks.removePaperBrainNote).toHaveBeenCalled();
+    expect(paperBrainServiceMocks.addPaperBrainComment).toHaveBeenCalled();
+    expect(paperBrainServiceMocks.updatePaperBrainComment).toHaveBeenCalled();
+    expect(paperBrainServiceMocks.removePaperBrainComment).toHaveBeenCalled();
+    expect(paperBrainServiceMocks.setPaperBrainNotePosition).toHaveBeenCalled();
+    expect(paperBrainServiceMocks.togglePaperBrainVote).toHaveBeenCalled();
 
     await hook.unmount();
   });
 
   it("surfaces sync error from subscription", async () => {
-    firebaseMocks.subscribePaperBrainSession.mockImplementation((_sessionId, _onData, onError) => {
+    paperBrainServiceMocks.subscribePaperBrainSession.mockImplementation(
+      (_sessionId, _onData, onError) => {
       onError(new Error("sync failed"));
       return () => {};
-    });
+      }
+    );
 
     const { default: usePaperBrainCollaboration } = await import(
       "../../../../src/pages/workshops/paper-brain/usePaperBrainCollaboration.js"

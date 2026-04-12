@@ -8,7 +8,6 @@ describe("firebase/index", () => {
       subscribeCompanyMembers: expect.any(Function),
       createWorkshopSession: expect.any(Function),
       setWorkshopVoiceParticipant: expect.any(Function),
-      createPaperBrainNote: expect.any(Function),
     });
   });
 });
