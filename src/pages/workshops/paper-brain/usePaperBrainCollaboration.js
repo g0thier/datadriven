@@ -120,7 +120,7 @@ const resolveParticipantIdentity = ({ sessionGuests, authUser }) => {
  * @example
  * import { usePaperBrainCollaboration } from "./paper-brain/usePaperBrainCollaboration.js";
  *
- * // Real usage reference: src/workshops/WorkshopRunner.jsx
+ * // Real usage reference: src/pages/workshops/WorkshopRunner.jsx
  * const collaboration = usePaperBrainCollaboration({
  *   sessionId,
  *   session,
@@ -669,7 +669,7 @@ export function usePaperBrainCollaboration({ sessionId, session, workshopId }) {
  * @example
  * import { usePaperBrainCollaboration } from "./paper-brain/usePaperBrainCollaboration.js";
  *
- * // Real usage reference (named import): src/workshops/WorkshopRunner.jsx
+ * // Real usage reference (named import): src/pages/workshops/WorkshopRunner.jsx
  * const collaboration = usePaperBrainCollaboration({ sessionId, session, workshopId });
  */
 export default usePaperBrainCollaboration;

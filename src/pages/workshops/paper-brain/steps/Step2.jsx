@@ -25,8 +25,8 @@ const initialNoteCreationByParticipant = new Set();
  * import Step2 from "./steps/Step2.jsx";
  *
  * // Real usage references:
- * // - src/workshops/paper-brain/data.js
- * // - src/workshops/WorkshopRunner.jsx
+ * // - src/pages/workshops/paper-brain/data.js
+ * // - src/pages/workshops/WorkshopRunner.jsx
  * <Step2 step={step} sessionTitle={sessionTitle} collaboration={collaboration} session={session} />;
  */
 function Step2({ step, sessionTitle, collaboration, session }) {

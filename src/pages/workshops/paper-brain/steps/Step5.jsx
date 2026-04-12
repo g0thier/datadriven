@@ -42,8 +42,8 @@ function normalizePosition(position = {}, fallback = buildGridPosition(0)) {
  * import Step5 from "./steps/Step5.jsx";
  *
  * // Real usage references:
- * // - src/workshops/paper-brain/data.js
- * // - src/workshops/WorkshopRunner.jsx
+ * // - src/pages/workshops/paper-brain/data.js
+ * // - src/pages/workshops/WorkshopRunner.jsx
  * <Step5 step={step} sessionTitle={sessionTitle} collaboration={collaboration} />;
  */
 function Step5({ step, sessionTitle, collaboration }) {

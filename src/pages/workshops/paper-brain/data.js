@@ -58,8 +58,8 @@ const description5 = [
  * import { paperBrain } from "./paper-brain/data.js";
  *
  * // Real usage references:
- * // - src/workshops/index.js (WORKSHOPS["paper-brain"])
- * // - src/workshops/paper-brain/data.js (steps use Step1..Step5 components)
+ * // - src/pages/workshops/index.js (WORKSHOPS["paper-brain"])
+ * // - src/pages/workshops/paper-brain/data.js (steps use Step1..Step5 components)
  * const stepComponent = paperBrain.steps[0].component;
  */
 export const paperBrain = {

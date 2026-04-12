@@ -22,8 +22,8 @@ import WorkshopStepLayout from "../../WorkshopStepLayout.jsx";
  * import Step3 from "./steps/Step3.jsx";
  *
  * // Real usage references:
- * // - src/workshops/paper-brain/data.js
- * // - src/workshops/WorkshopRunner.jsx
+ * // - src/pages/workshops/paper-brain/data.js
+ * // - src/pages/workshops/WorkshopRunner.jsx
  * <Step3 step={step} sessionTitle={sessionTitle} collaboration={collaboration} />;
  */
 function Step3({ step, sessionTitle, collaboration }) {

@@ -21,8 +21,8 @@ import WorkshopStepLayout from "../../WorkshopStepLayout.jsx";
  * import Step1 from "./steps/Step1.jsx";
  *
  * // Real usage references:
- * // - src/workshops/paper-brain/data.js (step component mapping)
- * // - src/workshops/WorkshopRunner.jsx (dynamic <StepComponent ... /> render)
+ * // - src/pages/workshops/paper-brain/data.js (step component mapping)
+ * // - src/pages/workshops/WorkshopRunner.jsx (dynamic <StepComponent ... /> render)
  * <Step1 sessionTitle={sessionTitle} step={step} collaboration={collaboration} />;
  */
 export default function Step1({ sessionTitle, step, collaboration }) {

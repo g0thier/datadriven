@@ -22,7 +22,7 @@ const EMPTY_ARRAY = Object.freeze([]);
  * @example
  * import PaperBrainSummary from "./paper-brain/PaperBrainSummary.jsx";
  *
- * // Real usage reference: src/workshops/WorkshopSummaryPage.jsx
+ * // Real usage reference: src/pages/workshops/WorkshopSummaryPage.jsx
  * <PaperBrainSummary sessionTitle={sessionTitle} collaboration={collaboration} />;
  */
 export default function PaperBrainSummary({ sessionTitle, collaboration }) {

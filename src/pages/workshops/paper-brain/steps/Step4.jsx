@@ -143,8 +143,8 @@ function useDragNotes({
  * import Step4 from "./steps/Step4.jsx";
  *
  * // Real usage references:
- * // - src/workshops/paper-brain/data.js
- * // - src/workshops/WorkshopRunner.jsx
+ * // - src/pages/workshops/paper-brain/data.js
+ * // - src/pages/workshops/WorkshopRunner.jsx
  * <Step4 step={step} sessionTitle={sessionTitle} collaboration={collaboration} />;
  */
 function Step4({ step, sessionTitle, collaboration }) {
