@@ -8,13 +8,11 @@
 
 import continueArreteTenteImg from "../../../assets/workshops/continue-arrete-tente.png";
 
-/*
 import Step1 from "./steps/Step1.jsx";
 import Step2 from "./steps/Step2.jsx";
 import Step3 from "./steps/Step3.jsx";
 import Step4 from "./steps/Step4.jsx";
 import Step5 from "./steps/Step5.jsx";
-*/
 
 const description1 = [
     "Le facilitateur précise le périmètre : projet, équipe, rituel ou période concernée.",
@@ -64,35 +62,35 @@ export const continueArreteTente = {
     {
       label: "Cadrage de la rétrospective",
       duration: 5,
-      //component: Step1,
+      component: Step1,
       description: description1,
       audioEnabled: true,
     },
     {
       label: "Réflexion individuelle",
       duration: 8,
-      //component: Step2,
+      component: Step2,
       description: description2,
       audioEnabled: false,
     },
     {
       label: "Partage collectif",
       duration: 10,
-      //component: Step3,
+      component: Step3,
       description: description3,
       audioEnabled: true,
     },
     {
       label: "Choix des priorités",
       duration: 10,
-      //component: Step4,
+      component: Step4,
       description: description4,
       audioEnabled: true,
     },
     {
       label: "Engagement d’équipe",
       duration: 7,
-      //component: Step5,
+      component: Step5,
       description: description5,
       audioEnabled: true,
     }

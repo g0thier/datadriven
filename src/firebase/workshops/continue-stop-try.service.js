@@ -1,0 +1,373 @@
+import {
+  get,
+  onValue,
+  push,
+  ref,
+  remove,
+  runTransaction,
+  set,
+  update,
+} from "firebase/database";
+import { database } from "../index";
+
+/**
+ * @module firebase/workshops/continue-stop-try.service
+ * @description Realtime persistence helpers for the Continue Stop Try workshop board.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
+const WORKSHOP_MAX_STICKERS = 3;
+
+/**
+ * Returns current time in ISO format.
+ * @returns {string} ISO datetime.
+ */
+const nowIso = () => new Date().toISOString();
+
+/**
+ * Builds the continue-stop-try root path for a session.
+ * @param {string} sessionId - Workshop session id.
+ * @returns {string} Continue Stop Try root path.
+ */
+const toContinueStopTryPath = (sessionId) => `workshopSessions/${sessionId}/continueArreteTente`;
+
+/**
+ * Normalizes note position with numeric fallback coordinates.
+ * @param {{x?:number, y?:number}} [position={}] - Raw position.
+ * @param {{x:number, y:number}} [fallback={x:40,y:40}] - Fallback coordinates.
+ * @returns {{x:number, y:number}} Normalized position.
+ */
+const normalizePosition = (position = {}, fallback = { x: 40, y: 40 }) => {
+  const x = Number(position?.x);
+  const y = Number(position?.y);
+
+  return {
+    x: Number.isFinite(x) ? x : fallback.x,
+    y: Number.isFinite(y) ? y : fallback.y,
+  };
+};
+
+/**
+ * Subscribes to a Continue Stop Try session payload.
+ * @param {string} sessionId - Workshop session id.
+ * @param {Function} callback - Listener receiving session board data.
+ * @param {Function} [onError=() => {}] - Error callback.
+ * @returns {Function} Unsubscribe callback.
+ */
+export const subscribeContinueStopTrySession = (
+  sessionId,
+  callback,
+  onError = () => {}
+) => {
+  if (!sessionId) {
+    callback(null);
+    return () => {};
+  }
+
+  const continueStopTryRef = ref(database, toContinueStopTryPath(sessionId));
+  return onValue(
+    continueStopTryRef,
+    (snapshot) => {
+      callback(snapshot.exists() ? snapshot.val() : null);
+    },
+    onError
+  );
+};
+
+/**
+ * Upserts a Continue Stop Try participant with presence timestamps.
+ * @param {string} sessionId - Workshop session id.
+ * @param {{id:string, name?:string, email?:string, isAuthenticated?:boolean}} [participant={}] - Participant payload.
+ * @returns {Promise<void>} Upsert completion.
+ */
+export const upsertContinueStopTryParticipant = async (
+  sessionId,
+  participant = {}
+) => {
+  if (!sessionId || !participant?.id) return;
+
+  const participantRef = ref(
+    database,
+    `${toContinueStopTryPath(sessionId)}/participants/${participant.id}`
+  );
+  const now = nowIso();
+
+  await runTransaction(participantRef, (current) => {
+    const currentData = current && typeof current === "object" ? current : {};
+
+    return {
+      id: participant.id,
+      name: participant.name || currentData.name || "",
+      email: participant.email || currentData.email || "",
+      isAuthenticated: Boolean(
+        participant.isAuthenticated ?? currentData.isAuthenticated
+      ),
+      joinedAt: currentData.joinedAt || now,
+      lastSeenAt: now,
+    };
+  });
+};
+
+/**
+ * Sets step-1 challenge description for the session board.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} participantId - Editor participant id.
+ * @param {string} description - Step description text.
+ * @returns {Promise<void>} Update completion.
+ */
+export const setContinueStopTryStep1Description = async (
+  sessionId,
+  participantId,
+  description
+) => {
+  if (!sessionId) return;
+
+  const now = nowIso();
+  await update(ref(database, `${toContinueStopTryPath(sessionId)}/step1`), {
+    description: description ?? "",
+    updatedAt: now,
+    updatedBy: participantId || "",
+  });
+};
+
+/**
+ * Creates a Continue Stop Try note.
+ * @param {string} sessionId - Workshop session id.
+ * @param {{authorId:string, text?:string, position?:{x?:number,y?:number}}} [payload={}] - Note payload.
+ * @returns {Promise<string>} Created note id.
+ */
+export const createContinueStopTryNote = async (sessionId, payload = {}) => {
+  if (!sessionId || !payload?.authorId) {
+    throw new Error("createContinueStopTryNote: sessionId ou authorId manquant");
+  }
+
+  const noteRef = push(ref(database, `${toContinueStopTryPath(sessionId)}/notes`));
+  const noteId = noteRef.key;
+  if (!noteId) {
+    throw new Error("Impossible de générer noteId");
+  }
+
+  const now = nowIso();
+
+  await set(noteRef, {
+    id: noteId,
+    authorId: payload.authorId,
+    text: payload.text ?? "",
+    position: normalizePosition(payload.position),
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  return noteId;
+};
+
+/**
+ * Updates a Continue Stop Try note content or position.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Note id.
+ * @param {{text?:string, position?:{x?:number,y?:number}}} [patch={}] - Note patch.
+ * @returns {Promise<void>} Update completion.
+ */
+export const updateContinueStopTryNote = async (sessionId, noteId, patch = {}) => {
+  if (!sessionId || !noteId) return;
+
+  const payload = {
+    updatedAt: nowIso(),
+  };
+
+  if (Object.prototype.hasOwnProperty.call(patch, "text")) {
+    payload.text = patch.text ?? "";
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, "position")) {
+    payload.position = normalizePosition(patch.position);
+  }
+
+  await update(ref(database, `${toContinueStopTryPath(sessionId)}/notes/${noteId}`), payload);
+};
+
+/**
+ * Removes a note and associated comments/votes.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Note id.
+ * @returns {Promise<void>} Delete completion.
+ */
+export const removeContinueStopTryNote = async (sessionId, noteId) => {
+  if (!sessionId || !noteId) return;
+
+  const basePath = toContinueStopTryPath(sessionId);
+  const updates = {
+    [`${basePath}/notes/${noteId}`]: null,
+    [`${basePath}/commentsByNote/${noteId}`]: null,
+  };
+
+  const votesSnapshot = await get(ref(database, `${basePath}/votesByParticipant`));
+  if (votesSnapshot.exists()) {
+    const votesByParticipant = votesSnapshot.val() || {};
+    Object.keys(votesByParticipant).forEach((participantId) => {
+      if (votesByParticipant?.[participantId]?.[noteId]) {
+        updates[`${basePath}/votesByParticipant/${participantId}/${noteId}`] = null;
+      }
+    });
+  }
+
+  await update(ref(database), updates);
+};
+
+/**
+ * Adds a comment to a note.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Note id.
+ * @param {{authorId:string, text?:string}} [payload={}] - Comment payload.
+ * @returns {Promise<string>} Created comment id.
+ */
+export const addContinueStopTryComment = async (sessionId, noteId, payload = {}) => {
+  if (!sessionId || !noteId || !payload?.authorId) {
+    throw new Error("addContinueStopTryComment: paramètres manquants");
+  }
+
+  const commentRef = push(
+    ref(database, `${toContinueStopTryPath(sessionId)}/commentsByNote/${noteId}`)
+  );
+  const commentId = commentRef.key;
+  if (!commentId) {
+    throw new Error("Impossible de générer commentId");
+  }
+
+  const now = nowIso();
+
+  await set(commentRef, {
+    id: commentId,
+    authorId: payload.authorId,
+    text: payload.text ?? "",
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  return commentId;
+};
+
+/**
+ * Updates a note comment.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Note id.
+ * @param {string} commentId - Comment id.
+ * @param {{text?:string}} [patch={}] - Comment patch.
+ * @returns {Promise<void>} Update completion.
+ */
+export const updateContinueStopTryComment = async (
+  sessionId,
+  noteId,
+  commentId,
+  patch = {}
+) => {
+  if (!sessionId || !noteId || !commentId) return;
+
+  const payload = {
+    updatedAt: nowIso(),
+  };
+
+  if (Object.prototype.hasOwnProperty.call(patch, "text")) {
+    payload.text = patch.text ?? "";
+  }
+
+  await update(
+    ref(
+      database,
+      `${toContinueStopTryPath(sessionId)}/commentsByNote/${noteId}/${commentId}`
+    ),
+    payload
+  );
+};
+
+/**
+ * Removes a note comment.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Note id.
+ * @param {string} commentId - Comment id.
+ * @returns {Promise<void>} Delete completion.
+ */
+export const removeContinueStopTryComment = async (sessionId, noteId, commentId) => {
+  if (!sessionId || !noteId || !commentId) return;
+
+  await remove(
+    ref(
+      database,
+      `${toContinueStopTryPath(sessionId)}/commentsByNote/${noteId}/${commentId}`
+    )
+  );
+};
+
+/**
+ * Updates only a note position.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Note id.
+ * @param {{x?:number, y?:number}} position - Target position.
+ * @returns {Promise<void>} Update completion.
+ */
+export const setContinueStopTryNotePosition = async (sessionId, noteId, position) => {
+  if (!sessionId || !noteId) return;
+
+  await update(ref(database, `${toContinueStopTryPath(sessionId)}/notes/${noteId}`), {
+    position: normalizePosition(position),
+    updatedAt: nowIso(),
+  });
+};
+
+/**
+ * Toggles a participant vote on a note with optional max-votes guard.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} participantId - Participant id.
+ * @param {string} noteId - Note id.
+ * @param {{maxVotes?:number, validNoteIds?:Set<string>}} [options={}] - Voting options.
+ * @returns {Promise<{committed:boolean, votes:Object}>} Transaction result and resulting votes.
+ */
+export const toggleContinueStopTryVote = async (
+  sessionId,
+  participantId,
+  noteId,
+  options = {}
+) => {
+  if (!sessionId || !participantId || !noteId) {
+    return { committed: false, votes: {} };
+  }
+
+  const maxVotes = Number.isFinite(options?.maxVotes)
+    ? options.maxVotes
+    : WORKSHOP_MAX_STICKERS;
+  const validNoteIds =
+    options?.validNoteIds instanceof Set ? options.validNoteIds : null;
+
+  const votesRef = ref(
+    database,
+    `${toContinueStopTryPath(sessionId)}/votesByParticipant/${participantId}`
+  );
+
+  const result = await runTransaction(votesRef, (current) => {
+    const nextVotes = current && typeof current === "object" ? { ...current } : {};
+
+    if (nextVotes[noteId]) {
+      delete nextVotes[noteId];
+      return Object.keys(nextVotes).length > 0 ? nextVotes : null;
+    }
+
+    const usedVotes = Object.entries(nextVotes).reduce((count, [id, enabled]) => {
+      if (!enabled) return count;
+      if (validNoteIds && !validNoteIds.has(id)) return count;
+      return count + 1;
+    }, 0);
+
+    if (usedVotes >= maxVotes) {
+      return;
+    }
+
+    nextVotes[noteId] = true;
+    return nextVotes;
+  });
+
+  return {
+    committed: result.committed,
+    votes: result.snapshot.exists() ? result.snapshot.val() : {},
+  };
+};
