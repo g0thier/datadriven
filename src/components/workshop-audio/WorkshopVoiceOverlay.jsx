@@ -26,12 +26,14 @@ import useWorkshopVoiceRoom from "../../hooks/useWorkshopVoiceRoom.js";
  */
 export default function WorkshopVoiceOverlay({
   roomId,
+  channelId = "general",
   workshopActive,
   stepAudioEnabled,
   maxParticipants = 8,
 }) {
   const voiceRoom = useWorkshopVoiceRoom({
     roomId,
+    channelId,
     workshopActive,
     stepAudioEnabled,
     maxParticipants,

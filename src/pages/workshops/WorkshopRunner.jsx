@@ -109,7 +109,6 @@ export default function WorkshopRunner() {
 
   const StepComponent = currentStep?.component ?? null;
   const isWorkshopActive = !isWaiting && !isFinished;
-  const stepAudioEnabled = Boolean(currentStep?.audioEnabled);
 
   if (isLoadingSession) {
     // Chargement de la session…
@@ -145,33 +144,46 @@ export default function WorkshopRunner() {
       workshopId={resolvedWorkshopId}
     >
       {(collaboration) => (
-        <div className="min-h-screen">
-          <StepTime sessionData={sessionData} startAt={startAt} />
+        (() => {
+          const requestedAudioChannel =
+            currentStep?.audioChannel === "subgroup" ? "subgroup" : "general";
+          const subgroupId = String(collaboration?.subgroupId || "").trim();
+          const hasSubgroupAudioChannel = requestedAudioChannel !== "subgroup" || Boolean(subgroupId);
+          const stepAudioEnabled = Boolean(currentStep?.audioEnabled) && hasSubgroupAudioChannel;
+          const voiceChannelId =
+            requestedAudioChannel === "subgroup" && subgroupId ? `subgroup-${subgroupId}` : "general";
 
-          {isFinished ? (
-            <WorkshopSummaryPage
-              workshopId={resolvedWorkshopId}
-              sessionTitle={sessionData.title}
-              collaboration={collaboration}
-            />
-          ) : StepComponent && currentStep ? (
-            <StepComponent
-              sessionTitle={sessionData.title}
-              step={currentStep}
-              session={session}
-              collaboration={collaboration}
-            />
-          ) : (
-            <RouteFallback />
-          )}
+          return (
+            <div className="min-h-screen">
+              <StepTime sessionData={sessionData} startAt={startAt} />
 
-          <WorkshopVoiceOverlay
-            roomId={sessionId}
-            workshopActive={isWorkshopActive}
-            stepAudioEnabled={stepAudioEnabled}
-            maxParticipants={8}
-          />
-        </div>
+              {isFinished ? (
+                <WorkshopSummaryPage
+                  workshopId={resolvedWorkshopId}
+                  sessionTitle={sessionData.title}
+                  collaboration={collaboration}
+                />
+              ) : StepComponent && currentStep ? (
+                <StepComponent
+                  sessionTitle={sessionData.title}
+                  step={currentStep}
+                  session={session}
+                  collaboration={collaboration}
+                />
+              ) : (
+                <RouteFallback />
+              )}
+
+              <WorkshopVoiceOverlay
+                roomId={sessionId}
+                channelId={voiceChannelId}
+                workshopActive={isWorkshopActive}
+                stepAudioEnabled={stepAudioEnabled}
+                maxParticipants={8}
+              />
+            </div>
+          );
+        })()
       )}
     </WorkshopSelector>
   );

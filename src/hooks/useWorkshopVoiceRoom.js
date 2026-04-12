@@ -194,6 +194,7 @@ const startVoiceActivityObserver = ({
  */
 export function useWorkshopVoiceRoom({
   roomId,
+  channelId = "general",
   workshopActive,
   stepAudioEnabled,
   maxParticipants = 8,
@@ -211,6 +212,7 @@ export function useWorkshopVoiceRoom({
   const instanceIdRef = useRef(buildInstanceId());
   const participantRef = useRef(null);
   const connectedRoomIdRef = useRef("");
+  const connectedChannelIdRef = useRef("general");
   const localStreamRef = useRef(null);
   const peersRef = useRef(new Map());
   const heartbeatIntervalRef = useRef(null);
@@ -368,7 +370,7 @@ export function useWorkshopVoiceRoom({
           from: localParticipantIdRef,
           type: "ice",
           payload: event.candidate.toJSON(),
-        }).catch((error) => {
+        }, { channelId: connectedChannelIdRef.current }).catch((error) => {
           console.error("Impossible d'envoyer le ICE candidate:", error);
         });
       };
@@ -426,7 +428,7 @@ export function useWorkshopVoiceRoom({
               from: localParticipantIdRef,
               type: "offer",
               payload: { type: offer.type, sdp: offer.sdp },
-            });
+            }, { channelId: connectedChannelIdRef.current });
           } catch (error) {
             console.error("Impossible de créer/envoyer une offre WebRTC:", error);
           }
@@ -452,14 +454,18 @@ export function useWorkshopVoiceRoom({
       if (!signalId) return;
 
       if (!remoteParticipantId || remoteParticipantId === localParticipantIdRef) {
-        ackWorkshopVoiceSignal(activeRoomId, localParticipantIdRef, signalId).catch(() => {});
+        ackWorkshopVoiceSignal(activeRoomId, localParticipantIdRef, signalId, {
+          channelId: connectedChannelIdRef.current,
+        }).catch(() => {});
         return;
       }
 
       let peerData = ensurePeerConnection(remoteParticipantId, false);
 
       if (!peerData) {
-        ackWorkshopVoiceSignal(activeRoomId, localParticipantIdRef, signalId).catch(() => {});
+        ackWorkshopVoiceSignal(activeRoomId, localParticipantIdRef, signalId, {
+          channelId: connectedChannelIdRef.current,
+        }).catch(() => {});
         return;
       }
 
@@ -477,7 +483,7 @@ export function useWorkshopVoiceRoom({
             from: localParticipantIdRef,
             type: "answer",
             payload: { type: answer.type, sdp: answer.sdp },
-          });
+          }, { channelId: connectedChannelIdRef.current });
         } else if (signalType === "answer") {
           await peerData.peerConnection.setRemoteDescription(
             new RTCSessionDescription(signal.payload)
@@ -495,7 +501,9 @@ export function useWorkshopVoiceRoom({
       } catch (error) {
         console.error("Erreur lors du traitement d'un signal WebRTC:", error);
       } finally {
-        ackWorkshopVoiceSignal(activeRoomId, localParticipantIdRef, signalId).catch((error) => {
+        ackWorkshopVoiceSignal(activeRoomId, localParticipantIdRef, signalId, {
+          channelId: connectedChannelIdRef.current,
+        }).catch((error) => {
           console.error("Impossible d'acquitter le signal WebRTC:", error);
         });
       }
@@ -508,11 +516,13 @@ export function useWorkshopVoiceRoom({
     leaveInProgressRef.current = true;
 
     const activeRoomId = connectedRoomIdRef.current || roomId;
+    const activeChannelId = connectedChannelIdRef.current || channelId;
     const participantId = participantRef.current?.id || "";
 
     joinedRef.current = false;
     participantRef.current = null;
     connectedRoomIdRef.current = "";
+    connectedChannelIdRef.current = "general";
 
     setIsTalkPressed(false);
     setStatus("idle");
@@ -536,13 +546,15 @@ export function useWorkshopVoiceRoom({
     await closeAudioContext(remoteAudioContextRef);
 
     if (activeRoomId && participantId) {
-      removeWorkshopVoiceParticipant(activeRoomId, participantId).catch((error) => {
+      removeWorkshopVoiceParticipant(activeRoomId, participantId, {
+        channelId: activeChannelId,
+      }).catch((error) => {
         console.error("Impossible de supprimer le participant audio:", error);
       });
     }
 
     leaveInProgressRef.current = false;
-  }, [closeAllPeers, roomId, stopLocalStream]);
+  }, [channelId, closeAllPeers, roomId, stopLocalStream]);
 
   const joinRoom = useCallback(async () => {
     if (!isSupported) {
@@ -568,7 +580,9 @@ export function useWorkshopVoiceRoom({
     setErrorMessage("");
 
     try {
-      const currentParticipantCount = await getWorkshopVoiceParticipantCount(roomId);
+      const currentParticipantCount = await getWorkshopVoiceParticipantCount(roomId, {
+        channelId,
+      });
       if (currentParticipantCount >= maxParticipants) {
         throw new Error(`Salle audio pleine (${maxParticipants} participants maximum).`);
       }
@@ -598,15 +612,17 @@ export function useWorkshopVoiceRoom({
 
       participantRef.current = localIdentity;
       connectedRoomIdRef.current = roomId;
+      connectedChannelIdRef.current = channelId;
 
-      await setWorkshopVoiceParticipant(roomId, localIdentity);
+      await setWorkshopVoiceParticipant(roomId, localIdentity, { channelId });
       onDisconnectCancelRef.current = await registerWorkshopVoiceDisconnectCleanup(
         roomId,
-        localIdentity.id
+        localIdentity.id,
+        { channelId }
       );
 
       heartbeatIntervalRef.current = window.setInterval(() => {
-        touchWorkshopVoiceParticipant(roomId, localIdentity.id).catch((error) => {
+        touchWorkshopVoiceParticipant(roomId, localIdentity.id, { channelId }).catch((error) => {
           console.error("Impossible de rafraîchir la présence audio:", error);
         });
       }, HEARTBEAT_INTERVAL_MS);
@@ -624,7 +640,7 @@ export function useWorkshopVoiceRoom({
 
       await leaveRoom();
     }
-  }, [isSupported, leaveRoom, maxParticipants, roomId, status, workshopActive]);
+  }, [channelId, isSupported, leaveRoom, maxParticipants, roomId, status, workshopActive]);
 
   const startTalking = useCallback(() => {
     if (!isJoined) return;
@@ -685,6 +701,7 @@ export function useWorkshopVoiceRoom({
     if (!isJoined) return () => {};
 
     const activeRoomId = connectedRoomIdRef.current;
+    const activeChannelId = connectedChannelIdRef.current;
     const participantId = participantRef.current?.id || "";
     if (!activeRoomId || !participantId) return () => {};
 
@@ -696,7 +713,8 @@ export function useWorkshopVoiceRoom({
       (error) => {
         console.error("Erreur de synchronisation des participants audio:", error);
         setErrorMessage("La synchronisation des participants audio a échoué.");
-      }
+      },
+      { channelId: activeChannelId }
     );
 
     const unsubscribeSignals = subscribeWorkshopVoiceSignals(
@@ -708,7 +726,8 @@ export function useWorkshopVoiceRoom({
       (error) => {
         console.error("Erreur de signalisation audio:", error);
         setErrorMessage("La signalisation audio est interrompue.");
-      }
+      },
+      { channelId: activeChannelId }
     );
 
     return () => {
@@ -758,6 +777,13 @@ export function useWorkshopVoiceRoom({
       void leaveRoom();
     }
   }, [leaveRoom, roomId]);
+
+  useEffect(() => {
+    if (!joinedRef.current) return;
+    if (connectedChannelIdRef.current !== channelId) {
+      void leaveRoom();
+    }
+  }, [channelId, leaveRoom]);
 
   useEffect(() => {
     return () => {

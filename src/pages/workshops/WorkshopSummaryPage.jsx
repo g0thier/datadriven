@@ -8,6 +8,7 @@
 
 import ContinueStopTrySummary from "./continue-stop-try/ContinueStopTrySummary.jsx";
 import PaperBrainSummary from "./paper-brain/PaperBrainSummary.jsx";
+import DefectuologieSummary from "./defectuologie/DefectuologieSummary.jsx";
 
 function GenericWorkshopSummary({ sessionTitle }) {
   return (
@@ -43,6 +44,15 @@ export default function WorkshopSummaryPage({ workshopId, sessionTitle, collabor
   if (workshopId === "continue-arrete-tente" || workshopId === "continue-stop-try") {
     return (
       <ContinueStopTrySummary
+        sessionTitle={sessionTitle}
+        collaboration={collaboration}
+      />
+    );
+  }
+
+  if (workshopId === "defectuologie") {
+    return (
+      <DefectuologieSummary
         sessionTitle={sessionTitle}
         collaboration={collaboration}
       />

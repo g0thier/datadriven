@@ -22,9 +22,20 @@ import { database } from "../index";
 /**
  * Builds the base voice path for a room id.
  * @param {string} roomId - Voice room id.
+ * @param {string} [channelId="general"] - Voice channel id.
  * @returns {string} Voice root path.
  */
-const toVoicePath = (roomId) => `workshopSessions/${roomId}/voice`;
+const toVoicePath = (roomId, channelId = "general") => {
+  const normalizedChannelId = String(channelId || "general")
+    .trim()
+    .replace(/[.#$/[\]]/g, "-");
+
+  if (!normalizedChannelId || normalizedChannelId === "general") {
+    return `workshopSessions/${roomId}/voice`;
+  }
+
+  return `workshopSessions/${roomId}/voiceChannels/${normalizedChannelId}`;
+};
 
 /**
  * Returns current time in ISO format.
@@ -47,12 +58,14 @@ const toParticipantPayload = (participant = {}) => ({
 /**
  * Returns the number of voice participants currently in a room.
  * @param {string} roomId - Voice room id.
+ * @param {{channelId?:string}} [options={}] - Read options.
  * @returns {Promise<number>} Participant count.
  */
-export const getWorkshopVoiceParticipantCount = async (roomId) => {
+export const getWorkshopVoiceParticipantCount = async (roomId, options = {}) => {
   if (!roomId) return 0;
+  const voicePath = toVoicePath(roomId, options?.channelId);
 
-  const snapshot = await get(ref(database, `${toVoicePath(roomId)}/participants`));
+  const snapshot = await get(ref(database, `${voicePath}/participants`));
   if (!snapshot.exists()) return 0;
 
   const participants = snapshot.val() || {};
@@ -63,13 +76,19 @@ export const getWorkshopVoiceParticipantCount = async (roomId) => {
  * Upserts a voice participant in a room.
  * @param {string} roomId - Voice room id.
  * @param {Object} [participant={}] - Participant payload.
+ * @param {{channelId?:string}} [options={}] - Write options.
  * @returns {Promise<void>} Upsert completion.
  */
-export const setWorkshopVoiceParticipant = async (roomId, participant = {}) => {
+export const setWorkshopVoiceParticipant = async (
+  roomId,
+  participant = {},
+  options = {}
+) => {
   const payload = toParticipantPayload(participant);
   if (!roomId || !payload.id) return;
+  const voicePath = toVoicePath(roomId, options?.channelId);
 
-  const participantRef = ref(database, `${toVoicePath(roomId)}/participants/${payload.id}`);
+  const participantRef = ref(database, `${voicePath}/participants/${payload.id}`);
 
   await set(participantRef, {
     ...payload,
@@ -81,13 +100,19 @@ export const setWorkshopVoiceParticipant = async (roomId, participant = {}) => {
  * Updates a participant heartbeat timestamp.
  * @param {string} roomId - Voice room id.
  * @param {string} participantId - Participant id.
+ * @param {{channelId?:string}} [options={}] - Write options.
  * @returns {Promise<void>} Touch completion.
  */
-export const touchWorkshopVoiceParticipant = async (roomId, participantId) => {
+export const touchWorkshopVoiceParticipant = async (
+  roomId,
+  participantId,
+  options = {}
+) => {
   const cleanedParticipantId = String(participantId || "").trim();
   if (!roomId || !cleanedParticipantId) return;
+  const voicePath = toVoicePath(roomId, options?.channelId);
 
-  await update(ref(database, `${toVoicePath(roomId)}/participants/${cleanedParticipantId}`), {
+  await update(ref(database, `${voicePath}/participants/${cleanedParticipantId}`), {
     lastSeenAt: nowIso(),
   });
 };
@@ -96,13 +121,19 @@ export const touchWorkshopVoiceParticipant = async (roomId, participantId) => {
  * Registers participant auto-removal on disconnect and returns cancel handler.
  * @param {string} roomId - Voice room id.
  * @param {string} participantId - Participant id.
+ * @param {{channelId?:string}} [options={}] - Write options.
  * @returns {Promise<Function>} Cancel cleanup handler.
  */
-export const registerWorkshopVoiceDisconnectCleanup = async (roomId, participantId) => {
+export const registerWorkshopVoiceDisconnectCleanup = async (
+  roomId,
+  participantId,
+  options = {}
+) => {
   const cleanedParticipantId = String(participantId || "").trim();
   if (!roomId || !cleanedParticipantId) return () => {};
+  const voicePath = toVoicePath(roomId, options?.channelId);
 
-  const participantRef = ref(database, `${toVoicePath(roomId)}/participants/${cleanedParticipantId}`);
+  const participantRef = ref(database, `${voicePath}/participants/${cleanedParticipantId}`);
   const disconnector = onDisconnect(participantRef);
   await disconnector.remove();
 
@@ -119,14 +150,20 @@ export const registerWorkshopVoiceDisconnectCleanup = async (roomId, participant
  * Removes a participant and its pending signals.
  * @param {string} roomId - Voice room id.
  * @param {string} participantId - Participant id.
+ * @param {{channelId?:string}} [options={}] - Write options.
  * @returns {Promise<void>} Removal completion.
  */
-export const removeWorkshopVoiceParticipant = async (roomId, participantId) => {
+export const removeWorkshopVoiceParticipant = async (
+  roomId,
+  participantId,
+  options = {}
+) => {
   const cleanedParticipantId = String(participantId || "").trim();
   if (!roomId || !cleanedParticipantId) return;
+  const voicePath = toVoicePath(roomId, options?.channelId);
 
-  await remove(ref(database, `${toVoicePath(roomId)}/participants/${cleanedParticipantId}`));
-  await remove(ref(database, `${toVoicePath(roomId)}/signals/${cleanedParticipantId}`));
+  await remove(ref(database, `${voicePath}/participants/${cleanedParticipantId}`));
+  await remove(ref(database, `${voicePath}/signals/${cleanedParticipantId}`));
 };
 
 /**
@@ -134,9 +171,15 @@ export const removeWorkshopVoiceParticipant = async (roomId, participantId) => {
  * @param {string} roomId - Voice room id.
  * @param {Function} callback - Listener receiving participants list.
  * @param {Function} [onError=() => {}] - Error callback.
+ * @param {{channelId?:string}} [options={}] - Read options.
  * @returns {Function} Unsubscribe callback.
  */
-export const subscribeWorkshopVoiceParticipants = (roomId, callback, onError = () => {}) => {
+export const subscribeWorkshopVoiceParticipants = (
+  roomId,
+  callback,
+  onError = () => {},
+  options = {}
+) => {
   const safeCallback = typeof callback === "function" ? callback : () => {};
   const safeOnError = typeof onError === "function" ? onError : () => {};
 
@@ -145,7 +188,8 @@ export const subscribeWorkshopVoiceParticipants = (roomId, callback, onError = (
     return () => {};
   }
 
-  const participantsRef = ref(database, `${toVoicePath(roomId)}/participants`);
+  const voicePath = toVoicePath(roomId, options?.channelId);
+  const participantsRef = ref(database, `${voicePath}/participants`);
 
   return onValue(
     participantsRef,
@@ -172,12 +216,14 @@ export const subscribeWorkshopVoiceParticipants = (roomId, callback, onError = (
  * @param {string} roomId - Voice room id.
  * @param {string} targetParticipantId - Target participant id.
  * @param {{from:string, type:string, payload?:Object}} [signal={}] - Signal payload.
+ * @param {{channelId?:string}} [options={}] - Write options.
  * @returns {Promise<string|null>} Created signal id or `null`.
  */
 export const sendWorkshopVoiceSignal = async (
   roomId,
   targetParticipantId,
-  signal = {}
+  signal = {},
+  options = {}
 ) => {
   const cleanedTargetParticipantId = String(targetParticipantId || "").trim();
   const from = String(signal.from || "").trim();
@@ -185,7 +231,8 @@ export const sendWorkshopVoiceSignal = async (
 
   if (!roomId || !cleanedTargetParticipantId || !from || !type) return null;
 
-  const signalsRef = ref(database, `${toVoicePath(roomId)}/signals/${cleanedTargetParticipantId}`);
+  const voicePath = toVoicePath(roomId, options?.channelId);
+  const signalsRef = ref(database, `${voicePath}/signals/${cleanedTargetParticipantId}`);
   const signalRef = push(signalsRef);
   const signalId = signalRef.key;
 
@@ -210,13 +257,15 @@ export const sendWorkshopVoiceSignal = async (
  * @param {string} participantId - Local participant id.
  * @param {Function} callback - Listener receiving signal payload.
  * @param {Function} [onError=() => {}] - Error callback.
+ * @param {{channelId?:string}} [options={}] - Read options.
  * @returns {Function} Unsubscribe callback.
  */
 export const subscribeWorkshopVoiceSignals = (
   roomId,
   participantId,
   callback,
-  onError = () => {}
+  onError = () => {},
+  options = {}
 ) => {
   const safeCallback = typeof callback === "function" ? callback : () => {};
   const safeOnError = typeof onError === "function" ? onError : () => {};
@@ -226,7 +275,8 @@ export const subscribeWorkshopVoiceSignals = (
     return () => {};
   }
 
-  const signalsRef = ref(database, `${toVoicePath(roomId)}/signals/${cleanedParticipantId}`);
+  const voicePath = toVoicePath(roomId, options?.channelId);
+  const signalsRef = ref(database, `${voicePath}/signals/${cleanedParticipantId}`);
   return onChildAdded(
     signalsRef,
     (snapshot) => {
@@ -246,15 +296,21 @@ export const subscribeWorkshopVoiceSignals = (
  * @param {string} roomId - Voice room id.
  * @param {string} participantId - Local participant id.
  * @param {string} signalId - Signal id.
+ * @param {{channelId?:string}} [options={}] - Write options.
  * @returns {Promise<void>} Acknowledgement completion.
  */
-export const ackWorkshopVoiceSignal = async (roomId, participantId, signalId) => {
+export const ackWorkshopVoiceSignal = async (
+  roomId,
+  participantId,
+  signalId,
+  options = {}
+) => {
   const cleanedParticipantId = String(participantId || "").trim();
   const cleanedSignalId = String(signalId || "").trim();
 
   if (!roomId || !cleanedParticipantId || !cleanedSignalId) return;
 
-  await remove(
-    ref(database, `${toVoicePath(roomId)}/signals/${cleanedParticipantId}/${cleanedSignalId}`)
-  );
+  const voicePath = toVoicePath(roomId, options?.channelId);
+
+  await remove(ref(database, `${voicePath}/signals/${cleanedParticipantId}/${cleanedSignalId}`));
 };
