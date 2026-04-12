@@ -1,25 +1,54 @@
 /**
- * @module workshops/paper-brain/steps/Step4
- * @description Paper Brain step 4 screen for collaborative clustering and positioning of notes.
+ * @module workshops/continue-stop-try/steps/Step3
+ * @description Continue Stop Try step 3 screen for collaborative board organization in 3 columns.
  * @author Gauthier Rammault
  * @version 1.0.0
  * @license proprietary
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import WorkshopStepLayout from "../../WorkshopStepLayout.jsx";
+
+const DEFAULT_COLUMNS = [
+  {
+    id: "continue",
+    label: "On continue",
+    noteBgClass: "bg-green-100",
+    columnBgClass: "bg-green-50/70",
+    borderClass: "border-green-200",
+  },
+  {
+    id: "stop",
+    label: "On arrête",
+    noteBgClass: "bg-red-100",
+    columnBgClass: "bg-red-50/70",
+    borderClass: "border-red-200",
+  },
+  {
+    id: "try",
+    label: "On tente",
+    noteBgClass: "bg-blue-100",
+    columnBgClass: "bg-blue-50/70",
+    borderClass: "border-blue-200",
+  },
+];
+
+const CANVAS_WIDTH = 960;
+const CANVAS_HEIGHT = 1200;
+const NOTE_WIDTH = 200;
+const NOTE_FALLBACK_HEIGHT = 140;
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
 function buildGridPosition(index = 0) {
-  const col = index % 5;
-  const row = Math.floor(index / 5);
+  const col = index % 2;
+  const row = Math.floor(index / 2);
 
   return {
-    x: 40 + col * 290,
-    y: 40 + row * 220,
+    x: 24 + col * 220,
+    y: 24 + row * 170,
   };
 }
 
@@ -38,7 +67,6 @@ function useDragNotes({
   getScale,
   onMove,
   onMoveEnd,
-  onDragStart,
 }) {
   const dragRef = useRef({
     draggingId: null,
@@ -73,8 +101,6 @@ function useDragNotes({
       noteRect,
       latestPosition: { x: startX, y: startY },
     };
-
-    onDragStart?.(noteId);
   };
 
   const onPointerMove = (event) => {
@@ -92,8 +118,8 @@ function useDragNotes({
     const canvasWidth = canvasElement.scrollWidth / scale;
     const canvasHeight = canvasElement.scrollHeight / scale;
 
-    const noteWidth = (dragState.noteRect?.width ?? 260) / scale;
-    const noteHeight = (dragState.noteRect?.height ?? 180) / scale;
+    const noteWidth = (dragState.noteRect?.width ?? NOTE_WIDTH) / scale;
+    const noteHeight = (dragState.noteRect?.height ?? NOTE_FALLBACK_HEIGHT) / scale;
 
     const nextPosition = {
       x: clamp(dragState.startX + deltaX, 0, canvasWidth - noteWidth),
@@ -130,64 +156,31 @@ function useDragNotes({
   return { onPointerDown, onPointerMove, onPointerUp };
 }
 
-/**
- * Renders Paper Brain step 4 (collective board organization).
- *
- * @param {Object} props - Component props.
- * @param {Object} props.step - Step metadata.
- * @param {string} props.sessionTitle - Current session title.
- * @param {Object} props.collaboration - Collaboration state and actions.
- * @returns {JSX.Element} The rendered step 4 screen.
- *
- * @example
- * import Step4 from "./steps/Step4.jsx";
- *
- * // Real usage references:
- * // - src/pages/workshops/paper-brain/data.js
- * // - src/pages/workshops/WorkshopRunner.jsx
- * <Step4 step={step} sessionTitle={sessionTitle} collaboration={collaboration} />;
- */
-function Step4({ step, sessionTitle, collaboration }) {
-  const notes = useMemo(() => collaboration?.notes ?? [], [collaboration?.notes]);
-  const commentsByNote = collaboration?.commentsByNote || {};
-  const syncError = collaboration?.syncError || "";
+const groupNotesByColumn = (notes = []) => {
+  const grouped = {
+    continue: [],
+    stop: [],
+    try: [],
+  };
 
-  const challenge =
-    String(collaboration?.step1Description || "").trim() ||
-    "Le défi sera visible ici dès qu'il est défini à l'étape 1.";
+  notes.forEach((note) => {
+    const columnId = String(note?.columnId || "").trim();
+    if (!grouped[columnId]) return;
+    grouped[columnId].push(note);
+  });
 
-  const [zoom, setZoom] = useState(100);
-  const scale = zoom / 100;
+  return grouped;
+};
 
-  const [localPositions, setLocalPositions] = useState({});
-  const draggingNoteIdsRef = useRef(new Set());
-
-  useEffect(() => {
-    setLocalPositions((previousPositions) => {
-      const nextPositions = { ...previousPositions };
-      const activeNoteIds = new Set();
-
-      notes.forEach((note, index) => {
-        activeNoteIds.add(note.id);
-
-        const normalizedPosition = normalizePosition(note.position, buildGridPosition(index));
-
-        if (!draggingNoteIdsRef.current.has(note.id)) {
-          nextPositions[note.id] = normalizedPosition;
-        }
-      });
-
-      Object.keys(nextPositions).forEach((noteId) => {
-        if (!activeNoteIds.has(noteId)) {
-          delete nextPositions[noteId];
-        }
-      });
-
-      return nextPositions;
-    });
-  }, [notes]);
-
-  const setNotePositionAction = collaboration?.actions?.setNotePosition;
+function DraggableColumnBoard({
+  column,
+  notes,
+  localPositions,
+  setLocalPositions,
+  scale,
+  onCommitPosition,
+}) {
+  const canvasRef = useRef(null);
 
   const handleMove = useCallback(
     (noteId, position) => {
@@ -196,35 +189,26 @@ function Step4({ step, sessionTitle, collaboration }) {
         [noteId]: position,
       }));
     },
-    []
+    [setLocalPositions]
   );
 
   const handleMoveEnd = useCallback(
     (noteId, position) => {
-      draggingNoteIdsRef.current.delete(noteId);
-
-      setLocalPositions((previousPositions) => ({
-        ...previousPositions,
-        [noteId]: position,
-      }));
-
-      // Une seule écriture Firebase par drag: au relâché uniquement.
-      setNotePositionAction?.(noteId, position);
+      setLocalPositions((previousPositions) => {
+        const nextPositions = { ...previousPositions };
+        delete nextPositions[noteId];
+        return nextPositions;
+      });
+      onCommitPosition?.(noteId, position);
     },
-    [setNotePositionAction]
+    [onCommitPosition, setLocalPositions]
   );
 
-  const handleDragStart = useCallback((noteId) => {
-    draggingNoteIdsRef.current.add(noteId);
-  }, []);
-
-  const canvasRef = useRef(null);
   const { onPointerDown, onPointerMove, onPointerUp } = useDragNotes({
     canvasRef,
     getScale: () => scale,
     onMove: handleMove,
     onMoveEnd: handleMoveEnd,
-    onDragStart: handleDragStart,
   });
 
   const notesWithDisplayPosition = useMemo(() => {
@@ -235,8 +219,99 @@ function Step4({ step, sessionTitle, collaboration }) {
     }));
   }, [localPositions, notes]);
 
-  const CANVAS_WIDTH = 2800;
-  const CANVAS_HEIGHT = 1600;
+  if (notes.length === 0) {
+    return (
+      <div className="rounded-xl border border-slate-200 p-8 text-center text-gray-500 bg-white">
+        Cette colonne se remplira après l'étape 2.
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full overflow-auto rounded-xl border border-slate-200 bg-white">
+      <div
+        ref={canvasRef}
+        className="relative origin-top-left"
+        style={{
+          width: CANVAS_WIDTH * scale,
+          height: CANVAS_HEIGHT * scale,
+        }}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        onPointerLeave={onPointerUp}
+      >
+        <div
+          className="absolute inset-0 pointer-events-none opacity-20"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, rgba(15,23,42,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(15,23,42,0.08) 1px, transparent 1px)",
+            backgroundSize: `${56 * scale}px ${56 * scale}px`,
+          }}
+        />
+
+        {notesWithDisplayPosition.map((note) => (
+          <div
+            key={note.id}
+            className="absolute select-none touch-none"
+            style={{
+              transform: `translate(${note.displayPosition.x * scale}px, ${
+                note.displayPosition.y * scale
+              }px) scale(${scale})`,
+              transformOrigin: "top left",
+              width: NOTE_WIDTH,
+            }}
+          >
+            <div
+              className={`relative rounded-lg shadow-md p-4 min-h-28 ${column.noteBgClass}`}
+              role="button"
+              tabIndex={0}
+              onPointerDown={(event) => onPointerDown(event, note.id)}
+              data-x={note.displayPosition.x}
+              data-y={note.displayPosition.y}
+              title="Glisser pour déplacer"
+            >
+              <p className="text-gray-700 text-sm whitespace-pre-wrap">
+                {note.text || <span className="text-gray-400">—</span>}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Step3({ step, sessionTitle, collaboration }) {
+  const columns = Array.isArray(collaboration?.columns) && collaboration.columns.length > 0
+    ? collaboration.columns
+    : DEFAULT_COLUMNS;
+
+  const notes = useMemo(() => collaboration?.notes ?? [], [collaboration?.notes]);
+  const notesByColumn =
+    collaboration?.notesByColumn && typeof collaboration.notesByColumn === "object"
+      ? collaboration.notesByColumn
+      : groupNotesByColumn(notes);
+
+  const syncError = collaboration?.syncError || "";
+
+  const challenge =
+    String(collaboration?.step1Description || "").trim() ||
+    "Le défi sera visible ici dès qu'il est défini à l'étape 1.";
+
+  const [zoom, setZoom] = useState(50);
+  const scale = zoom / 100;
+
+  const [localPositions, setLocalPositions] = useState({});
+
+  const setNotePositionAction = collaboration?.actions?.setNotePosition;
+
+  const handleMoveEnd = useCallback(
+    (noteId, position) => {
+      setNotePositionAction?.(noteId, position);
+    },
+    [setNotePositionAction]
+  );
 
   return (
     <WorkshopStepLayout
@@ -254,105 +329,47 @@ function Step4({ step, sessionTitle, collaboration }) {
         </p>
       )}
 
-      <div className="bg-white rounded-2xl shadow-md p-4">
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-sm text-gray-600">
-            {notes.length} notes • Glissez-déposez pour organiser
-          </p>
+      <div className="flex items-center justify-end mb-3 gap-3">
+        <span className="text-xs text-gray-500 w-12 text-right">{zoom}%</span>
 
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-500 w-12 text-right">{zoom}%</span>
+        <input
+          type="range"
+          min="30"
+          max="100"
+          step="5"
+          value={zoom}
+          onChange={(event) => setZoom(Number(event.target.value))}
+          className="w-40 accent-slate-600"
+        />
+      </div>
 
-            <input
-              type="range"
-              min="20"
-              max="100"
-              step="5"
-              value={zoom}
-              onChange={(event) => setZoom(Number(event.target.value))}
-              className="w-40 accent-slate-600"
-            />
-          </div>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+        {columns.map((column) => {
+          const columnNotes = notesByColumn[column.id] || [];
 
-        {notes.length === 0 ? (
-          <div className="rounded-xl border border-slate-200 p-8 text-center text-gray-500">
-            Les notes apparaîtront ici dès qu'elles seront créées en étape 2.
-          </div>
-        ) : (
-          <div className="w-full overflow-auto rounded-xl border border-slate-200">
-            <div
-              ref={canvasRef}
-              className="relative origin-top-left"
-              style={{
-                width: CANVAS_WIDTH * scale,
-                height: CANVAS_HEIGHT * scale,
-              }}
-              onPointerMove={onPointerMove}
-              onPointerUp={onPointerUp}
-              onPointerCancel={onPointerUp}
-              onPointerLeave={onPointerUp}
+          return (
+            <section
+              key={column.id}
+              className={`rounded-2xl border p-4 ${column.columnBgClass} ${column.borderClass}`}
             >
-              <div
-                className="absolute inset-0 pointer-events-none opacity-30"
-                style={{
-                  backgroundImage:
-                    "linear-gradient(to right, rgba(15,23,42,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(15,23,42,0.08) 1px, transparent 1px)",
-                  backgroundSize: `${60 * scale}px ${60 * scale}px`,
-                }}
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                {column.label} ({columnNotes.length})
+              </h3>
+
+              <DraggableColumnBoard
+                column={column}
+                notes={columnNotes}
+                localPositions={localPositions}
+                setLocalPositions={setLocalPositions}
+                scale={scale}
+                onCommitPosition={handleMoveEnd}
               />
-
-              {notesWithDisplayPosition.map((note) => {
-                const comments = commentsByNote[note.id] || [];
-
-                return (
-                  <div
-                    key={note.id}
-                    className="absolute select-none touch-none"
-                    style={{
-                      transform: `translate(${note.displayPosition.x * scale}px, ${note.displayPosition.y *
-                        scale}px) scale(${scale})`,
-                      transformOrigin: "top left",
-                      width: 260,
-                    }}
-                  >
-                    <div
-                      className="relative bg-yellow-100 rounded-lg shadow-md p-4"
-                      role="button"
-                      tabIndex={0}
-                      onPointerDown={(event) => onPointerDown(event, note.id)}
-                      data-x={note.displayPosition.x}
-                      data-y={note.displayPosition.y}
-                      title="Glisser pour déplacer"
-                    >
-                      <p className="text-gray-700 text-sm whitespace-pre-wrap">
-                        {note.text || <span className="text-gray-400">—</span>}
-                      </p>
-
-                      {!!comments.length && (
-                        <div className="mt-3 space-y-2">
-                          {comments.map((comment) => (
-                            <div
-                              key={comment.id}
-                              className="bg-violet-50 border border-violet-100 rounded-lg p-2"
-                            >
-                              <p className="text-violet-700 text-xs whitespace-pre-wrap">
-                                {comment.text}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+            </section>
+          );
+        })}
       </div>
     </WorkshopStepLayout>
   );
 }
 
-export default Step4;
+export default Step3;

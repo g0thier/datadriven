@@ -1,6 +1,6 @@
 /**
- * @module workshops/paper-brain/steps/Step1
- * @description Paper Brain step 1 screen for defining the workshop challenge.
+ * @module workshops/continue-stop-try/steps/Step1
+ * @description Continue Stop Try step 1 screen for defining the retrospective scope.
  * @author Gauthier Rammault
  * @version 1.0.0
  * @license proprietary
@@ -9,21 +9,13 @@
 import WorkshopStepLayout from "../../WorkshopStepLayout.jsx";
 
 /**
- * Renders Paper Brain step 1 (challenge definition).
+ * Renders Continue Stop Try step 1 (retrospective framing).
  *
  * @param {Object} props - Component props.
  * @param {string} props.sessionTitle - Current session title.
  * @param {Object} props.step - Step metadata (label, description, duration, etc.).
  * @param {Object} props.collaboration - Collaboration state and actions.
  * @returns {JSX.Element} The rendered step 1 screen.
- *
- * @example
- * import Step1 from "./steps/Step1.jsx";
- *
- * // Real usage references:
- * // - src/pages/workshops/paper-brain/data.js (step component mapping)
- * // - src/pages/workshops/WorkshopRunner.jsx (dynamic <StepComponent ... /> render)
- * <Step1 sessionTitle={sessionTitle} step={step} collaboration={collaboration} />;
  */
 export default function Step1({ sessionTitle, step, collaboration }) {
   const description = collaboration?.step1Description ?? "";

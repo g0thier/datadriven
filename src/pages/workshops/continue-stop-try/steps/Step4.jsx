@@ -1,6 +1,6 @@
 /**
- * @module workshops/paper-brain/steps/Step5
- * @description Paper Brain step 5 screen for voting and prioritization with stickers.
+ * @module workshops/continue-stop-try/steps/Step4
+ * @description Continue Stop Try step 4 screen for dot voting in 3 column dashboards.
  * @author Gauthier Rammault
  * @version 1.0.0
  * @license proprietary
@@ -9,13 +9,50 @@
 import { useMemo, useState } from "react";
 import WorkshopStepLayout from "../../WorkshopStepLayout.jsx";
 
+const DEFAULT_COLUMNS = [
+  {
+    id: "continue",
+    label: "On continue",
+    noteBgClass: "bg-green-100",
+    noteMutedBgClass: "bg-green-50",
+    columnBgClass: "bg-green-50/70",
+    borderClass: "border-green-200",
+    indicatorClass: "bg-green-500",
+    indicatorSoftClass: "bg-green-200",
+  },
+  {
+    id: "stop",
+    label: "On arrête",
+    noteBgClass: "bg-red-100",
+    noteMutedBgClass: "bg-red-50",
+    columnBgClass: "bg-red-50/70",
+    borderClass: "border-red-200",
+    indicatorClass: "bg-red-500",
+    indicatorSoftClass: "bg-red-200",
+  },
+  {
+    id: "try",
+    label: "On tente",
+    noteBgClass: "bg-blue-100",
+    noteMutedBgClass: "bg-blue-50",
+    columnBgClass: "bg-blue-50/70",
+    borderClass: "border-blue-200",
+    indicatorClass: "bg-blue-500",
+    indicatorSoftClass: "bg-blue-200",
+  },
+];
+
+const CANVAS_WIDTH = 960;
+const CANVAS_HEIGHT = 1200;
+const NOTE_WIDTH = 200;
+
 function buildGridPosition(index = 0) {
-  const col = index % 5;
-  const row = Math.floor(index / 5);
+  const col = index % 2;
+  const row = Math.floor(index / 2);
 
   return {
-    x: 40 + col * 290,
-    y: 40 + row * 220,
+    x: 24 + col * 220,
+    y: 24 + row * 170,
   };
 }
 
@@ -29,32 +66,41 @@ function normalizePosition(position = {}, fallback = buildGridPosition(0)) {
   };
 }
 
-/**
- * Renders Paper Brain step 5 (selection and prioritization).
- *
- * @param {Object} props - Component props.
- * @param {Object} props.step - Step metadata.
- * @param {string} props.sessionTitle - Current session title.
- * @param {Object} props.collaboration - Collaboration state and actions.
- * @returns {JSX.Element} The rendered step 5 screen.
- *
- * @example
- * import Step5 from "./steps/Step5.jsx";
- *
- * // Real usage references:
- * // - src/pages/workshops/paper-brain/data.js
- * // - src/pages/workshops/WorkshopRunner.jsx
- * <Step5 step={step} sessionTitle={sessionTitle} collaboration={collaboration} />;
- */
-function Step5({ step, sessionTitle, collaboration }) {
-  const notes = useMemo(() => collaboration?.notes ?? [], [collaboration?.notes]);
-  const commentsByNote = collaboration?.commentsByNote || {};
-  const votesByNote = collaboration?.votesByNote || {};
+const groupNotesByColumn = (notes = []) => {
+  const grouped = {
+    continue: [],
+    stop: [],
+    try: [],
+  };
 
+  notes.forEach((note) => {
+    const columnId = String(note?.columnId || "").trim();
+    if (!grouped[columnId]) return;
+    grouped[columnId].push(note);
+  });
+
+  return grouped;
+};
+
+function Step4({ step, sessionTitle, collaboration }) {
+  const columns = Array.isArray(collaboration?.columns) && collaboration.columns.length > 0
+    ? collaboration.columns
+    : DEFAULT_COLUMNS;
+
+  const notes = useMemo(() => collaboration?.notes ?? [], [collaboration?.notes]);
+  const notesByColumn =
+    collaboration?.notesByColumn && typeof collaboration.notesByColumn === "object"
+      ? collaboration.notesByColumn
+      : groupNotesByColumn(notes);
+
+  const votesByNote = collaboration?.votesByNote || {};
   const currentParticipantId = collaboration?.participant?.id || "";
-  const remainingVotes = Number.isFinite(collaboration?.remainingVotes)
-    ? collaboration.remainingVotes
-    : 0;
+  const remainingVotesByColumn =
+    collaboration?.remainingVotesByColumn &&
+    typeof collaboration.remainingVotesByColumn === "object"
+      ? collaboration.remainingVotesByColumn
+      : { continue: 0, stop: 0, try: 0 };
+
   const maxStickers = Number.isFinite(collaboration?.maxStickers)
     ? collaboration.maxStickers
     : 3;
@@ -65,23 +111,13 @@ function Step5({ step, sessionTitle, collaboration }) {
     String(collaboration?.step1Description || "").trim() ||
     "Le défi sera visible ici dès qu'il est défini à l'étape 1.";
 
-  const [zoom, setZoom] = useState(100);
+  const [zoom, setZoom] = useState(50);
   const scale = zoom / 100;
 
-  const notesWithPosition = useMemo(() => {
-    return notes.map((note, index) => ({
-      ...note,
-      displayPosition: normalizePosition(note.position, buildGridPosition(index)),
-    }));
-  }, [notes]);
-
-  const toggleSticker = (noteId, hasMine) => {
-    if (!hasMine && remainingVotes <= 0) return;
+  const toggleSticker = (noteId, hasMine, columnId) => {
+    if (!hasMine && (remainingVotesByColumn[columnId] || 0) <= 0) return;
     collaboration?.actions?.toggleVote?.(noteId);
   };
-
-  const CANVAS_WIDTH = 2800;
-  const CANVAS_HEIGHT = 1600;
 
   return (
     <WorkshopStepLayout
@@ -99,145 +135,140 @@ function Step5({ step, sessionTitle, collaboration }) {
         </p>
       )}
 
-      <div className="bg-white rounded-2xl shadow-md p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500">Gommettes à distribuer :</span>
+      <div className="flex items-center justify-end mb-3 gap-3">
+        <span className="text-xs text-gray-500 w-12 text-right">{zoom}%</span>
 
-            <div className="flex items-center gap-1">
-              {Array.from({ length: maxStickers }).map((_, index) => (
-                <div
-                  key={index}
-                  className={`w-6 h-6 rounded-full ${
-                    index < remainingVotes ? "bg-green-400" : "bg-green-200"
-                  }`}
-                  title={index < remainingVotes ? "Disponible" : "Déjà utilisée"}
-                />
-              ))}
-            </div>
-          </div>
+        <input
+          type="range"
+          min="30"
+          max="100"
+          step="5"
+          value={zoom}
+          onChange={(event) => setZoom(Number(event.target.value))}
+          className="w-40 accent-slate-600"
+        />
+      </div>
 
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-500 w-12 text-right">{zoom}%</span>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+        {columns.map((column) => {
+          const columnNotes = notesByColumn[column.id] || [];
+          const remainingVotes = remainingVotesByColumn[column.id] || 0;
 
-            <input
-              type="range"
-              min="20"
-              max="100"
-              step="5"
-              value={zoom}
-              onChange={(event) => setZoom(Number(event.target.value))}
-              className="w-40 accent-slate-600"
-            />
-          </div>
-        </div>
-
-        {notes.length === 0 ? (
-          <div className="rounded-xl border border-slate-200 p-8 text-center text-gray-500">
-            Les notes apparaîtront ici dès qu'elles seront créées en étape 2.
-          </div>
-        ) : (
-          <div className="w-full overflow-auto rounded-xl border border-slate-200">
-            <div
-              className="relative origin-top-left"
-              style={{
-                width: CANVAS_WIDTH * scale,
-                height: CANVAS_HEIGHT * scale,
-              }}
+          return (
+            <section
+              key={column.id}
+              className={`rounded-2xl border p-4 ${column.columnBgClass} ${column.borderClass}`}
             >
-              <div
-                className="absolute inset-0 pointer-events-none opacity-30"
-                style={{
-                  backgroundImage:
-                    "linear-gradient(to right, rgba(15,23,42,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(15,23,42,0.08) 1px, transparent 1px)",
-                  backgroundSize: `${60 * scale}px ${60 * scale}px`,
-                }}
-              />
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <h3 className="text-sm font-semibold text-gray-700">
+                  {column.label} ({columnNotes.length})
+                </h3>
 
-              {notesWithPosition.map((note) => {
-                const stickerSet = votesByNote[note.id] || new Set();
-                const hasMine = stickerSet.has(currentParticipantId);
-                const otherCount = Math.max(0, stickerSet.size - (hasMine ? 1 : 0));
-                const comments = commentsByNote[note.id] || [];
-                const isDisabled = !hasMine && remainingVotes <= 0;
+                <div className="flex items-center gap-1" title="Gommettes restantes dans cette colonne">
+                  {Array.from({ length: maxStickers }).map((_, index) => (
+                    <div
+                      key={index}
+                      className={`w-4 h-4 rounded-full ${
+                        index < remainingVotes ? column.indicatorClass : column.indicatorSoftClass
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
 
-                return (
+              {columnNotes.length === 0 ? (
+                <div className="rounded-xl border border-slate-200 p-8 text-center text-gray-500 bg-white">
+                  Cette colonne se remplira après l'étape 2.
+                </div>
+              ) : (
+                <div className="w-full overflow-auto rounded-xl border border-slate-200 bg-white">
                   <div
-                    key={note.id}
-                    className="absolute select-none touch-none"
+                    className="relative origin-top-left"
                     style={{
-                      transform: `translate(${note.displayPosition.x * scale}px, ${note.displayPosition.y *
-                        scale}px) scale(${scale})`,
-                      transformOrigin: "top left",
-                      width: 260,
+                      width: CANVAS_WIDTH * scale,
+                      height: CANVAS_HEIGHT * scale,
                     }}
                   >
                     <div
-                      className={`relative rounded-lg shadow-md p-4 ${
-                        isDisabled ? "bg-yellow-50" : "bg-yellow-100 cursor-pointer"
-                      }`}
-                      role="button"
-                      tabIndex={0}
-                      title="Cliquer pour ajouter/retirer une gommette"
-                      onClick={() => toggleSticker(note.id, hasMine)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          toggleSticker(note.id, hasMine);
-                        }
+                      className="absolute inset-0 pointer-events-none opacity-20"
+                      style={{
+                        backgroundImage:
+                          "linear-gradient(to right, rgba(15,23,42,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(15,23,42,0.08) 1px, transparent 1px)",
+                        backgroundSize: `${56 * scale}px ${56 * scale}px`,
                       }}
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <span className="text-xs text-gray-500"></span>
+                    />
 
-                        <div className="flex items-center gap-1">
+                    {columnNotes.map((note, index) => {
+                      const displayPosition = normalizePosition(note.position, buildGridPosition(index));
+                      const stickerSet = votesByNote[note.id] || new Set();
+                      const hasMine = stickerSet.has(currentParticipantId);
+                      const otherCount = Math.max(0, stickerSet.size - (hasMine ? 1 : 0));
+                      const isDisabled = !hasMine && remainingVotes <= 0;
+
+                      return (
+                        <div
+                          key={note.id}
+                          className="absolute select-none touch-none"
+                          style={{
+                            transform: `translate(${displayPosition.x * scale}px, ${
+                              displayPosition.y * scale
+                            }px) scale(${scale})`,
+                            transformOrigin: "top left",
+                            width: NOTE_WIDTH,
+                          }}
+                        >
                           <div
-                            className={`w-3 h-3 rounded-full ${
-                              hasMine
-                                ? "bg-green-500"
-                                : "bg-transparent border border-green-300"
+                            className={`relative rounded-lg shadow-md p-4 min-h-28 ${
+                              isDisabled ? column.noteMutedBgClass : `${column.noteBgClass} cursor-pointer`
                             }`}
-                            title={hasMine ? "Ta gommette" : "Pas de gommette"}
-                          />
+                            role="button"
+                            tabIndex={0}
+                            title="Cliquer pour ajouter/retirer une gommette"
+                            onClick={() => toggleSticker(note.id, hasMine, column.id)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                toggleSticker(note.id, hasMine, column.id);
+                              }
+                            }}
+                          >
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <span className="text-xs text-gray-500"></span>
 
-                          {Array.from({ length: otherCount }).map((_, index) => (
-                            <div
-                              key={index}
-                              className="w-3 h-3 rounded-full bg-blue-500"
-                              title="Gommette d'un autre participant"
-                            />
-                          ))}
-                        </div>
-                      </div>
+                              <div className="flex items-center gap-1">
+                                <div
+                                  className={`w-3 h-3 rounded-full ${
+                                    hasMine ? "bg-green-600" : "bg-transparent border border-green-300"
+                                  }`}
+                                  title={hasMine ? "Ta gommette" : "Pas de gommette"}
+                                />
 
-                      <p className="text-gray-700 text-sm whitespace-pre-wrap">
-                        {note.text || <span className="text-gray-400">—</span>}
-                      </p>
-
-                      {!!comments.length && (
-                        <div className="mt-3 space-y-2">
-                          {comments.map((comment) => (
-                            <div
-                              key={comment.id}
-                              className="bg-violet-50 border border-violet-100 rounded-lg p-2"
-                            >
-                              <p className="text-violet-700 text-xs whitespace-pre-wrap">
-                                {comment.text}
-                              </p>
+                                {Array.from({ length: otherCount }).map((_, stickerIndex) => (
+                                  <div
+                                    key={stickerIndex}
+                                    className="w-3 h-3 rounded-full bg-blue-500"
+                                    title="Gommette d'un autre participant"
+                                  />
+                                ))}
+                              </div>
                             </div>
-                          ))}
+
+                            <p className="text-gray-700 text-sm whitespace-pre-wrap">
+                              {note.text || <span className="text-gray-400">—</span>}
+                            </p>
+                          </div>
                         </div>
-                      )}
-                    </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+                </div>
+              )}
+            </section>
+          );
+        })}
       </div>
     </WorkshopStepLayout>
   );
 }
 
-export default Step5;
+export default Step4;

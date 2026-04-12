@@ -1,6 +1,6 @@
 /**
- * @module workshops/paper-brain/steps/Step2
- * @description Paper Brain step 2 screen for individual note creation.
+ * @module workshops/continue-stop-try/steps/Step2
+ * @description Continue Stop Try step 2 screen for individual note creation per column.
  * @author Gauthier Rammault
  * @version 1.0.0
  * @license proprietary
@@ -9,77 +9,102 @@
 import { useEffect } from "react";
 import WorkshopStepLayout from "../../WorkshopStepLayout.jsx";
 
-const initialNoteCreationByParticipant = new Set();
+const initialNoteCreationByParticipantColumn = new Set();
 
-/**
- * Renders Paper Brain step 2 (individual idea generation).
- *
- * @param {Object} props - Component props.
- * @param {Object} props.step - Step metadata.
- * @param {string} props.sessionTitle - Current session title.
- * @param {Object} props.collaboration - Collaboration state and actions.
- * @param {Object} props.session - Workshop session payload.
- * @returns {JSX.Element} The rendered step 2 screen.
- *
- * @example
- * import Step2 from "./steps/Step2.jsx";
- *
- * // Real usage references:
- * // - src/pages/workshops/paper-brain/data.js
- * // - src/pages/workshops/WorkshopRunner.jsx
- * <Step2 step={step} sessionTitle={sessionTitle} collaboration={collaboration} session={session} />;
- */
+const DEFAULT_COLUMNS = [
+  {
+    id: "continue",
+    label: "On continue",
+    noteBgClass: "bg-green-100",
+    columnBgClass: "bg-green-50/70",
+    borderClass: "border-green-200",
+  },
+  {
+    id: "stop",
+    label: "On arrête",
+    noteBgClass: "bg-red-100",
+    columnBgClass: "bg-red-50/70",
+    borderClass: "border-red-200",
+  },
+  {
+    id: "try",
+    label: "On tente",
+    noteBgClass: "bg-blue-100",
+    columnBgClass: "bg-blue-50/70",
+    borderClass: "border-blue-200",
+  },
+];
+
+const groupNotesByColumn = (notes = []) => {
+  const grouped = {
+    continue: [],
+    stop: [],
+    try: [],
+  };
+
+  notes.forEach((note) => {
+    const columnId = String(note?.columnId || "").trim();
+    if (!grouped[columnId]) return;
+    grouped[columnId].push(note);
+  });
+
+  return grouped;
+};
+
 function Step2({ step, sessionTitle, collaboration, session }) {
-  const myNotes = collaboration?.myNotes || [];
+  const columns = Array.isArray(collaboration?.columns) && collaboration.columns.length > 0
+    ? collaboration.columns
+    : DEFAULT_COLUMNS;
+
+  const myNotes = Array.isArray(collaboration?.myNotes) ? collaboration.myNotes : [];
+  const myNotesByColumn =
+    collaboration?.myNotesByColumn && typeof collaboration.myNotesByColumn === "object"
+      ? collaboration.myNotesByColumn
+      : groupNotesByColumn(myNotes);
+
   const isLoading = Boolean(collaboration?.isLoading);
   const syncError = collaboration?.syncError || "";
   const participantId = collaboration?.participant?.id || "";
   const sessionId = session?.sessionId || session?.id || "";
-  const initialNoteKey = `${sessionId}:${participantId}`;
   const step1Description = String(collaboration?.step1Description || "").trim() || "...";
 
   const addNote = collaboration?.actions?.addNote;
   const updateNoteText = collaboration?.actions?.updateNoteText;
   const removeNoteAction = collaboration?.actions?.removeNote;
 
-  // Conserve l'UX d'origine: toujours au moins un post-it visible.
   useEffect(() => {
     if (isLoading) return;
-    if (myNotes.length > 0) return;
     if (typeof addNote !== "function") return;
     if (!sessionId || !participantId) return;
-    if (initialNoteCreationByParticipant.has(initialNoteKey)) return;
 
-    initialNoteCreationByParticipant.add(initialNoteKey);
+    columns.forEach((column) => {
+      const columnNotes = myNotesByColumn[column.id] || [];
+      if (columnNotes.length > 0) return;
 
-    let isCancelled = false;
+      const initialNoteKey = `${sessionId}:${participantId}:${column.id}`;
+      if (initialNoteCreationByParticipantColumn.has(initialNoteKey)) return;
 
-    const createInitialNote = async () => {
-      const createdNoteId = await addNote({ text: "" });
+      initialNoteCreationByParticipantColumn.add(initialNoteKey);
 
-      // Autorise un retry si l'écriture initiale échoue.
-      if (!createdNoteId && !isCancelled) {
-        initialNoteCreationByParticipant.delete(initialNoteKey);
-      }
-    };
-
-    createInitialNote();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [addNote, initialNoteKey, isLoading, myNotes.length, participantId, sessionId]);
+      addNote({ columnId: column.id, text: "" }).then((createdNoteId) => {
+        if (!createdNoteId) {
+          initialNoteCreationByParticipantColumn.delete(initialNoteKey);
+        }
+      });
+    });
+  }, [addNote, columns, isLoading, myNotesByColumn, participantId, sessionId]);
 
   const handleChange = (noteId, value) => {
     updateNoteText?.(noteId, value);
   };
 
-  const addEmptyNote = () => {
-    addNote?.({ text: "" });
+  const addEmptyNote = (columnId) => {
+    addNote?.({ columnId, text: "" });
   };
 
-  const removeNote = (noteId) => {
-    if (myNotes.length <= 1) return;
+  const removeNote = (columnId, noteId) => {
+    const columnNotes = myNotesByColumn[columnId] || [];
+    if (columnNotes.length <= 1) return;
     removeNoteAction?.(noteId);
   };
 
@@ -99,44 +124,59 @@ function Step2({ step, sessionTitle, collaboration, session }) {
         </p>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {myNotes.map((note, index) => {
-          const isLast = index === myNotes.length - 1;
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+        {columns.map((column) => {
+          const columnNotes = myNotesByColumn[column.id] || [];
 
           return (
-            <div
-              key={note.id}
-              className="relative bg-yellow-100 rounded-lg shadow-md p-4 min-h-37.5 flex flex-col"
+            <section
+              key={column.id}
+              className={`rounded-2xl border p-4 ${column.columnBgClass} ${column.borderClass}`}
             >
-              <textarea
-                className="flex-1 bg-transparent resize-none focus:outline-none text-gray-800"
-                placeholder="Écrivez une idée..."
-                value={note.text || ""}
-                onChange={(event) => handleChange(note.id, event.target.value)}
-              />
+              <h3 className="text-sm font-semibold text-gray-700 mb-4">{column.label}</h3>
 
-              {myNotes.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeNote(note.id)}
-                  className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-sm"
-                  aria-label="Supprimer la note"
-                >
-                  ✕
-                </button>
-              )}
+              <div className="space-y-4">
+                {columnNotes.map((note, index) => {
+                  const isLast = index === columnNotes.length - 1;
 
-              {isLast && (
-                <button
-                  type="button"
-                  onClick={addEmptyNote}
-                  className="absolute bottom-3 right-3 w-8 h-8 -mb-5 -mr-5 rounded-full bg-violet-500 text-white flex items-center justify-center shadow-md hover:bg-violet-600 transition"
-                  aria-label="Ajouter une note"
-                >
-                  +
-                </button>
-              )}
-            </div>
+                  return (
+                    <article
+                      key={note.id}
+                      className={`relative rounded-lg shadow-md p-4 min-h-37.5 flex flex-col ${column.noteBgClass}`}
+                    >
+                      <textarea
+                        className="flex-1 bg-transparent resize-none focus:outline-none text-gray-800"
+                        placeholder="Écrivez une idée..."
+                        value={note.text || ""}
+                        onChange={(event) => handleChange(note.id, event.target.value)}
+                      />
+
+                      {columnNotes.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeNote(column.id, note.id)}
+                          className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-sm"
+                          aria-label="Supprimer la note"
+                        >
+                          ✕
+                        </button>
+                      )}
+
+                      {isLast && (
+                        <button
+                          type="button"
+                          onClick={() => addEmptyNote(column.id)}
+                          className="absolute bottom-3 right-3 w-8 h-8 -mb-5 -mr-5 rounded-full bg-violet-500 text-white flex items-center justify-center shadow-md hover:bg-violet-600 transition"
+                          aria-label={`Ajouter une note ${column.label}`}
+                        >
+                          +
+                        </button>
+                      )}
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
           );
         })}
       </div>

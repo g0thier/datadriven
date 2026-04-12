@@ -6,61 +6,58 @@
  * @license proprietary
  */
 
-import { useMemo } from "react";
+const DEFAULT_COLUMNS = [
+  {
+    id: "continue",
+    label: "On continue",
+    noteBgClass: "bg-green-100",
+    columnBgClass: "bg-green-50/70",
+    borderClass: "border-green-200",
+  },
+  {
+    id: "stop",
+    label: "On arrête",
+    noteBgClass: "bg-red-100",
+    columnBgClass: "bg-red-50/70",
+    borderClass: "border-red-200",
+  },
+  {
+    id: "try",
+    label: "On tente",
+    noteBgClass: "bg-blue-100",
+    columnBgClass: "bg-blue-50/70",
+    borderClass: "border-blue-200",
+  },
+];
 
-const EMPTY_OBJECT = Object.freeze({});
 const EMPTY_ARRAY = Object.freeze([]);
 
-/**
- * Renders the Continue Stop Try workshop summary screen.
- *
- * @param {Object} props - Component props.
- * @param {string} props.sessionTitle - Workshop session title.
- * @param {Object} props.collaboration - Collaboration state from usePaperBrainCollaboration.
- * @returns {JSX.Element} The rendered Continue Stop Try summary.
- *
- * @example
- * import ContinueStopTrySummary from "./continue-stop-try/ContinueStopTrySummary.jsx";
- *
- * // Real usage reference: src/pages/workshops/WorkshopSummaryPage.jsx
- * <ContinueStopTrySummary sessionTitle={sessionTitle} collaboration={collaboration} />;
- */
-export default function ContinueStopTrySummary({ sessionTitle, collaboration }) {
-  const notes = Array.isArray(collaboration?.notes) ? collaboration.notes : EMPTY_ARRAY;
-  const commentsByNote =
-    collaboration?.commentsByNote && typeof collaboration.commentsByNote === "object"
-      ? collaboration.commentsByNote
-      : EMPTY_OBJECT;
-  const votesByNote =
-    collaboration?.votesByNote && typeof collaboration.votesByNote === "object"
-      ? collaboration.votesByNote
-      : EMPTY_OBJECT;
-  const syncError = collaboration?.syncError || "";
-  const currentParticipantId = collaboration?.participant?.id || "";
+const groupNotesByColumn = (notes = []) => {
+  const grouped = {
+    continue: [],
+    stop: [],
+    try: [],
+  };
 
-  const challenge =
-    String(collaboration?.step1Description || "").trim() ||
-    "Le défi n'a pas été renseigné pendant l'atelier.";
+  notes.forEach((note) => {
+    const columnId = String(note?.columnId || "").trim();
+    if (!grouped[columnId]) return;
+    grouped[columnId].push(note);
+  });
 
-  const rankedNotes = useMemo(() => {
-    return notes
+  return grouped;
+};
+
+const buildRankedNotesByColumn = (notesByColumn, votesByNote) => {
+  const buildSorted = (items = []) => {
+    return items
       .map((note) => {
         const stickerSet = votesByNote[note.id];
         const stickerCount = stickerSet instanceof Set ? stickerSet.size : 0;
-        const hasMine =
-          stickerSet instanceof Set && currentParticipantId
-            ? stickerSet.has(currentParticipantId)
-            : false;
-        const otherCount = Math.max(0, stickerCount - (hasMine ? 1 : 0));
-        const comments = commentsByNote[note.id] || [];
 
         return {
           ...note,
           stickerCount,
-          hasMine,
-          otherCount,
-          comments,
-          commentCount: comments.length,
         };
       })
       .filter((note) => note.stickerCount > 0)
@@ -69,17 +66,52 @@ export default function ContinueStopTrySummary({ sessionTitle, collaboration }) 
           return b.stickerCount - a.stickerCount;
         }
 
-        if (b.commentCount !== a.commentCount) {
-          return b.commentCount - a.commentCount;
-        }
-
         if (a.createdAt !== b.createdAt) {
           return String(a.createdAt || "").localeCompare(String(b.createdAt || ""));
         }
 
         return String(a.id || "").localeCompare(String(b.id || ""));
       });
-  }, [commentsByNote, currentParticipantId, notes, votesByNote]);
+  };
+
+  return {
+    continue: buildSorted(notesByColumn.continue || []),
+    stop: buildSorted(notesByColumn.stop || []),
+    try: buildSorted(notesByColumn.try || []),
+  };
+};
+
+export default function ContinueStopTrySummary({ sessionTitle, collaboration }) {
+  const columns = Array.isArray(collaboration?.columns) && collaboration.columns.length > 0
+    ? collaboration.columns
+    : DEFAULT_COLUMNS;
+
+  const notes = Array.isArray(collaboration?.notes) ? collaboration.notes : EMPTY_ARRAY;
+
+  const notesByColumn =
+    collaboration?.notesByColumn && typeof collaboration.notesByColumn === "object"
+      ? collaboration.notesByColumn
+      : groupNotesByColumn(notes);
+
+  const votesByNote = collaboration?.votesByNote || {};
+
+  const rankedNotesByColumn =
+    collaboration?.rankedNotesByColumn && typeof collaboration.rankedNotesByColumn === "object"
+      ? collaboration.rankedNotesByColumn
+      : buildRankedNotesByColumn(notesByColumn, votesByNote);
+
+  const step5PlaceholdersByColumn =
+    collaboration?.step5PlaceholdersByColumn &&
+    typeof collaboration.step5PlaceholdersByColumn === "object"
+      ? collaboration.step5PlaceholdersByColumn
+      : { continue: "", stop: "", try: "" };
+
+  const currentParticipantId = collaboration?.participant?.id || "";
+  const syncError = collaboration?.syncError || "";
+
+  const challenge =
+    String(collaboration?.step1Description || "").trim() ||
+    "Le défi n'a pas été renseigné pendant l'atelier.";
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-200 py-12 px-6">
@@ -98,67 +130,72 @@ export default function ContinueStopTrySummary({ sessionTitle, collaboration }) 
           </p>
         )}
 
-        <div className="bg-white rounded-2xl shadow-md p-6">
-          <h2 className="text-lg font-semibold text-gray-700 mb-4">
-            Résultats votés ({rankedNotes.length})
-          </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+          {columns.map((column) => {
+            const rankedNotes = rankedNotesByColumn[column.id] || [];
+            const placeholderText = String(step5PlaceholdersByColumn[column.id] || "").trim();
 
-          {rankedNotes.length === 0 ? (
-            <p className="text-gray-500">
-              Aucune note n'a reçu de gommette pendant la priorisation.
-            </p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 items-start">
-              {rankedNotes.map((note, index) => (
-                <article
-                  key={note.id}
-                  className="relative bg-yellow-100 rounded-lg shadow-md p-4 min-h-37.5 flex flex-col"
-                >
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <span className="text-sm font-semibold text-gray-600">#{index + 1}</span>
+            return (
+              <section
+                key={column.id}
+                className={`rounded-2xl border p-4 ${column.columnBgClass} ${column.borderClass}`}
+              >
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">{column.label}</h3>
 
-                    <div className="flex items-center gap-2 text-xs">
-                      <div className="flex items-center gap-1">
-                        <div
-                          className={`w-3 h-3 rounded-full ${
-                            note.hasMine ? "bg-green-500" : "bg-transparent border border-green-300"
-                          }`}
-                          title={note.hasMine ? "Ta gommette" : "Pas de gommette"}
-                        />
-
-                        {Array.from({ length: note.otherCount }).map((_, stickerIndex) => (
-                          <div
-                            key={stickerIndex}
-                            className="w-3 h-3 rounded-full bg-blue-500"
-                            title="Gommette d'un autre participant"
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <p className="text-gray-700 text-sm whitespace-pre-wrap">
-                    {note.text || <span className="text-gray-400">—</span>}
-                  </p>
-
-                  {!!note.commentCount && (
-                    <div className="mt-3 space-y-2">
-                      {note.comments.map((comment) => (
-                        <div
-                          key={comment.id}
-                          className="bg-violet-50 border border-violet-100 rounded-lg p-2"
-                        >
-                          <p className="text-violet-700 text-xs whitespace-pre-wrap">
-                            {comment.text || <span className="text-violet-300">—</span>}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4 min-h-28">
+                  {placeholderText ? (
+                    <p className="text-gray-700 text-sm whitespace-pre-wrap">{placeholderText}</p>
+                  ) : (
+                    <p className="text-gray-400 text-sm">Aucun engagement rédigé.</p>
                   )}
-                </article>
-              ))}
-            </div>
-          )}
+                </div>
+
+                {rankedNotes.length === 0 ? (
+                  <p className="text-sm text-gray-500">Aucune note votée dans cette colonne.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {rankedNotes.map((note, index) => {
+                      const stickerSet = votesByNote[note.id] || new Set();
+                      const hasMine = stickerSet.has(currentParticipantId);
+                      const otherCount = Math.max(0, stickerSet.size - (hasMine ? 1 : 0));
+
+                      return (
+                        <article
+                          key={note.id}
+                          className={`rounded-lg shadow-md p-4 min-h-28 ${column.noteBgClass}`}
+                        >
+                          <div className="flex items-start justify-between gap-3 mb-2">
+                            <span className="text-sm font-semibold text-gray-600">#{index + 1}</span>
+
+                            <div className="flex items-center gap-1">
+                              <div
+                                className={`w-3 h-3 rounded-full ${
+                                  hasMine ? "bg-green-600" : "bg-transparent border border-green-300"
+                                }`}
+                                title={hasMine ? "Ta gommette" : "Pas de gommette"}
+                              />
+
+                              {Array.from({ length: otherCount }).map((_, stickerIndex) => (
+                                <div
+                                  key={stickerIndex}
+                                  className="w-3 h-3 rounded-full bg-blue-500"
+                                  title="Gommette d'un autre participant"
+                                />
+                              ))}
+                            </div>
+                          </div>
+
+                          <p className="text-gray-700 text-sm whitespace-pre-wrap">
+                            {note.text || <span className="text-gray-400">—</span>}
+                          </p>
+                        </article>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+            );
+          })}
         </div>
       </div>
     </div>

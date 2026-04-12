@@ -1,6 +1,6 @@
 /**
  * @module workshops/continue-stop-try/useContinueStopTryCollaboration
- * @description Collaboration hook managing realtime On continue, arrête, tente workshop state and actions.
+ * @description Collaboration hook managing realtime Continue / Stop / Try workshop state and actions.
  * @author Gauthier Rammault
  * @version 1.0.0
  * @license proprietary
@@ -9,20 +9,53 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { auth, onAuthStateChangedListener } from "../../../firebase";
 import {
-  addContinueStopTryComment,
   createContinueStopTryNote,
-  removeContinueStopTryComment,
   removeContinueStopTryNote,
   setContinueStopTryNotePosition,
   setContinueStopTryStep1Description,
+  setContinueStopTryStep5Placeholder,
   subscribeContinueStopTrySession,
   toggleContinueStopTryVote,
-  updateContinueStopTryComment,
   updateContinueStopTryNote,
   upsertContinueStopTryParticipant,
 } from "../../../firebase/workshops/continue-stop-try.service";
 
-const MAX_STICKERS = 3;
+const COLUMN_CONFIG = [
+  {
+    id: "continue",
+    label: "On continue",
+    noteBgClass: "bg-green-100",
+    noteMutedBgClass: "bg-green-50",
+    columnBgClass: "bg-green-50/70",
+    borderClass: "border-green-200",
+    indicatorClass: "bg-green-500",
+    indicatorSoftClass: "bg-green-200",
+  },
+  {
+    id: "stop",
+    label: "On arrête",
+    noteBgClass: "bg-red-100",
+    noteMutedBgClass: "bg-red-50",
+    columnBgClass: "bg-red-50/70",
+    borderClass: "border-red-200",
+    indicatorClass: "bg-red-500",
+    indicatorSoftClass: "bg-red-200",
+  },
+  {
+    id: "try",
+    label: "On tente",
+    noteBgClass: "bg-blue-100",
+    noteMutedBgClass: "bg-blue-50",
+    columnBgClass: "bg-blue-50/70",
+    borderClass: "border-blue-200",
+    indicatorClass: "bg-blue-500",
+    indicatorSoftClass: "bg-blue-200",
+  },
+];
+
+const COLUMN_IDS = COLUMN_CONFIG.map((column) => column.id);
+const COLUMN_IDS_SET = new Set(COLUMN_IDS);
+const MAX_STICKERS_PER_COLUMN = 3;
 
 const EMPTY_OBJECT = Object.freeze({});
 const EMPTY_ARRAY = Object.freeze([]);
@@ -39,12 +72,12 @@ const sortByCreatedAt = (a, b) => {
 };
 
 const buildGridPosition = (index = 0) => {
-  const col = index % 5;
-  const row = Math.floor(index / 5);
+  const col = index % 2;
+  const row = Math.floor(index / 2);
 
   return {
-    x: 40 + col * 290,
-    y: 40 + row * 220,
+    x: 24 + col * 220,
+    y: 24 + row * 170,
   };
 };
 
@@ -56,6 +89,18 @@ const normalizePosition = (position = {}, fallback = buildGridPosition(0)) => {
     x: Number.isFinite(x) ? x : fallback.x,
     y: Number.isFinite(y) ? y : fallback.y,
   };
+};
+
+const normalizeColumnId = (value) => {
+  const normalized = String(value || "").trim().toLowerCase();
+  return COLUMN_IDS_SET.has(normalized) ? normalized : "";
+};
+
+const makeEmptyByColumn = (initialValueFactory) => {
+  return COLUMN_IDS.reduce((accumulator, columnId) => {
+    accumulator[columnId] = initialValueFactory(columnId);
+    return accumulator;
+  }, {});
 };
 
 const resolveGuestName = (guest = {}) => {
@@ -108,23 +153,13 @@ const resolveParticipantIdentity = ({ sessionGuests, authUser }) => {
 };
 
 /**
- * Provides realtime collaboration state and actions for On continue, arrête, tente sessions.
+ * Provides realtime collaboration state and actions for Continue / Stop / Try sessions.
  *
  * @param {Object} params - Hook parameters.
  * @param {string} params.sessionId - Active workshop session id.
  * @param {Object} params.session - Session payload containing participants/guests metadata.
- * @param {string} params.workshopId - Workshop id used to enable On continue, arrête, tente behavior.
- * @returns {Object} Collaboration state (notes, comments, votes, participant, errors) and write actions.
- *
- * @example
- * import { useContinueStopTryCollaboration } from "./continue-stop-try/useContinueStopTryCollaboration.js";
- *
- * // Real usage reference: src/pages/workshops/WorkshopRunner.jsx
- * const collaboration = useContinueStopTryCollaboration({
- *   sessionId,
- *   session,
- *   workshopId: resolvedWorkshopId,
- * });
+ * @param {string} params.workshopId - Workshop id used to enable Continue / Stop / Try behavior.
+ * @returns {Object} Collaboration state and write actions.
  */
 export function useContinueStopTryCollaboration({ sessionId, session, workshopId }) {
   const isContinueStopTryWorkshop =
@@ -219,16 +254,33 @@ export function useContinueStopTryCollaboration({ sessionId, session, workshopId
 
   const notes = useMemo(() => {
     return Object.entries(rawNotes)
-      .map(([noteId, data], index) => ({
-        id: String(data?.id || noteId),
-        authorId: String(data?.authorId || ""),
-        text: data?.text ?? "",
-        position: normalizePosition(data?.position, buildGridPosition(index)),
-        createdAt: data?.createdAt || "",
-        updatedAt: data?.updatedAt || "",
-      }))
+      .map(([noteId, data], index) => {
+        const columnId = normalizeColumnId(data?.columnId);
+        if (!columnId) return null;
+
+        return {
+          id: String(data?.id || noteId),
+          authorId: String(data?.authorId || ""),
+          columnId,
+          text: data?.text ?? "",
+          position: normalizePosition(data?.position, buildGridPosition(index)),
+          createdAt: data?.createdAt || "",
+          updatedAt: data?.updatedAt || "",
+        };
+      })
+      .filter(Boolean)
       .sort(sortByCreatedAt);
   }, [rawNotes]);
+
+  const notesByColumn = useMemo(() => {
+    const grouped = makeEmptyByColumn(() => []);
+
+    notes.forEach((note) => {
+      grouped[note.columnId].push(note);
+    });
+
+    return grouped;
+  }, [notes]);
 
   const notesById = useMemo(
     () =>
@@ -239,31 +291,14 @@ export function useContinueStopTryCollaboration({ sessionId, session, workshopId
     [notes]
   );
 
-  const rawCommentsByNote =
-    activeContinueStopTryState?.commentsByNote &&
-    typeof activeContinueStopTryState.commentsByNote === "object"
-      ? activeContinueStopTryState.commentsByNote
-      : EMPTY_OBJECT;
+  const noteIdsSet = useMemo(() => new Set(notes.map((note) => note.id)), [notes]);
 
-  const commentsByNote = useMemo(() => {
-    const normalizedComments = {};
-
-    Object.entries(rawCommentsByNote).forEach(([noteId, comments]) => {
-      if (!comments || typeof comments !== "object") return;
-
-      normalizedComments[noteId] = Object.entries(comments)
-        .map(([commentId, data]) => ({
-          id: String(data?.id || commentId),
-          authorId: String(data?.authorId || ""),
-          text: data?.text ?? "",
-          createdAt: data?.createdAt || "",
-          updatedAt: data?.updatedAt || "",
-        }))
-        .sort(sortByCreatedAt);
-    });
-
-    return normalizedComments;
-  }, [rawCommentsByNote]);
+  const noteColumnsById = useMemo(() => {
+    return notes.reduce((accumulator, note) => {
+      accumulator[note.id] = note.columnId;
+      return accumulator;
+    }, {});
+  }, [notes]);
 
   const rawVotesByParticipant =
     activeContinueStopTryState?.votesByParticipant &&
@@ -279,6 +314,7 @@ export function useContinueStopTryCollaboration({ sessionId, session, workshopId
 
       const cleanedVotes = Object.entries(votes).reduce((accumulator, [noteId, enabled]) => {
         if (!enabled) return accumulator;
+        if (!noteIdsSet.has(noteId)) return accumulator;
         accumulator[noteId] = true;
         return accumulator;
       }, {});
@@ -289,9 +325,7 @@ export function useContinueStopTryCollaboration({ sessionId, session, workshopId
     });
 
     return normalizedVotes;
-  }, [rawVotesByParticipant]);
-
-  const noteIdsSet = useMemo(() => new Set(notes.map((note) => note.id)), [notes]);
+  }, [noteIdsSet, rawVotesByParticipant]);
 
   const votesByNote = useMemo(() => {
     const byNote = {};
@@ -310,6 +344,69 @@ export function useContinueStopTryCollaboration({ sessionId, session, workshopId
 
     return byNote;
   }, [noteIdsSet, votesByParticipant]);
+
+  const myVotes = useMemo(() => {
+    const currentParticipantId = participant?.id || "";
+    if (!currentParticipantId) return EMPTY_OBJECT;
+
+    return votesByParticipant[currentParticipantId] || EMPTY_OBJECT;
+  }, [participant?.id, votesByParticipant]);
+
+  const myVoteCountByColumn = useMemo(() => {
+    const countByColumn = makeEmptyByColumn(() => 0);
+
+    Object.keys(myVotes).forEach((noteId) => {
+      const columnId = noteColumnsById[noteId];
+      if (!COLUMN_IDS_SET.has(columnId)) return;
+      countByColumn[columnId] += 1;
+    });
+
+    return countByColumn;
+  }, [myVotes, noteColumnsById]);
+
+  const remainingVotesByColumn = useMemo(() => {
+    return makeEmptyByColumn((columnId) =>
+      Math.max(0, MAX_STICKERS_PER_COLUMN - (myVoteCountByColumn[columnId] || 0))
+    );
+  }, [myVoteCountByColumn]);
+
+  const rankedNotesByColumn = useMemo(() => {
+    return makeEmptyByColumn((columnId) => {
+      const notesForColumn = notesByColumn[columnId] || EMPTY_ARRAY;
+
+      return notesForColumn
+        .map((note) => {
+          const stickerSet = votesByNote[note.id];
+          const stickerCount = stickerSet instanceof Set ? stickerSet.size : 0;
+          return {
+            ...note,
+            stickerCount,
+          };
+        })
+        .filter((note) => note.stickerCount > 0)
+        .sort((a, b) => {
+          if (b.stickerCount !== a.stickerCount) {
+            return b.stickerCount - a.stickerCount;
+          }
+
+          if (a.createdAt !== b.createdAt) {
+            return String(a.createdAt || "").localeCompare(String(b.createdAt || ""));
+          }
+
+          return String(a.id || "").localeCompare(String(b.id || ""));
+        });
+    });
+  }, [notesByColumn, votesByNote]);
+
+  const rawStep5Placeholders =
+    activeContinueStopTryState?.step5Placeholders &&
+    typeof activeContinueStopTryState.step5Placeholders === "object"
+      ? activeContinueStopTryState.step5Placeholders
+      : EMPTY_OBJECT;
+
+  const step5PlaceholdersByColumn = useMemo(() => {
+    return makeEmptyByColumn((columnId) => String(rawStep5Placeholders?.[columnId]?.text || ""));
+  }, [rawStep5Placeholders]);
 
   const remoteParticipants =
     activeContinueStopTryState?.participants &&
@@ -384,10 +481,7 @@ export function useContinueStopTryCollaboration({ sessionId, session, workshopId
     (participantId) => {
       if (!participantId) return "Participant";
 
-      return (
-        participantById[participantId]?.name ||
-        makeParticipantFallbackLabel(participantId)
-      );
+      return participantById[participantId]?.name || makeParticipantFallbackLabel(participantId);
     },
     [participantById]
   );
@@ -399,19 +493,15 @@ export function useContinueStopTryCollaboration({ sessionId, session, workshopId
     [currentParticipantId, notes]
   );
 
-  const myVotes =
-    currentParticipantId && votesByParticipant[currentParticipantId]
-      ? votesByParticipant[currentParticipantId]
-      : EMPTY_OBJECT;
+  const myNotesByColumn = useMemo(() => {
+    const grouped = makeEmptyByColumn(() => []);
 
-  const myVoteCount = useMemo(() => {
-    return Object.keys(myVotes).reduce((count, noteId) => {
-      if (!noteIdsSet.has(noteId)) return count;
-      return count + 1;
-    }, 0);
-  }, [myVotes, noteIdsSet]);
+    myNotes.forEach((note) => {
+      grouped[note.columnId].push(note);
+    });
 
-  const remainingVotes = Math.max(0, MAX_STICKERS - myVoteCount);
+    return grouped;
+  }, [myNotes]);
 
   const setStep1Description = useCallback(
     async (description) => {
@@ -427,17 +517,43 @@ export function useContinueStopTryCollaboration({ sessionId, session, workshopId
     [currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]
   );
 
+  const setStep5Placeholder = useCallback(
+    async (columnId, text) => {
+      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
+
+      const normalizedColumnId = normalizeColumnId(columnId);
+      if (!normalizedColumnId) return;
+
+      try {
+        await setContinueStopTryStep5Placeholder(
+          sessionId,
+          currentParticipantId,
+          normalizedColumnId,
+          text
+        );
+      } catch (error) {
+        console.error("Impossible de mettre à jour le placeholder:", error);
+        setSessionError("Le texte d'engagement n'a pas pu être enregistré.");
+      }
+    },
+    [currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]
+  );
+
   const addNote = useCallback(
     async (options = {}) => {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return null;
 
-      const fallbackPosition = buildGridPosition(notes.length);
+      const columnId = normalizeColumnId(options?.columnId);
+      if (!columnId) return null;
+
+      const fallbackPosition = buildGridPosition((notesByColumn[columnId] || EMPTY_ARRAY).length);
       const position = normalizePosition(options?.position, fallbackPosition);
       const text = options?.text ?? "";
 
       try {
         return await createContinueStopTryNote(sessionId, {
           authorId: currentParticipantId,
+          columnId,
           text,
           position,
         });
@@ -447,7 +563,14 @@ export function useContinueStopTryCollaboration({ sessionId, session, workshopId
         return null;
       }
     },
-    [currentParticipantId, isEnabled, notes.length, participantReady, sessionId, setSessionError]
+    [
+      currentParticipantId,
+      isEnabled,
+      notesByColumn,
+      participantReady,
+      sessionId,
+      setSessionError,
+    ]
   );
 
   const updateNoteText = useCallback(
@@ -488,87 +611,6 @@ export function useContinueStopTryCollaboration({ sessionId, session, workshopId
     [currentParticipantId, isEnabled, notesById, participantReady, sessionId, setSessionError]
   );
 
-  const addComment = useCallback(
-    async (noteId, text = "") => {
-      if (!isEnabled || !sessionId || !participantReady || !noteId || !currentParticipantId) {
-        return null;
-      }
-
-      const note = notesById[noteId];
-      if (!note || note.authorId === currentParticipantId) return null;
-
-      try {
-        return await addContinueStopTryComment(sessionId, noteId, {
-          authorId: currentParticipantId,
-          text,
-        });
-      } catch (error) {
-        console.error("Impossible d'ajouter le commentaire:", error);
-        setSessionError("Le commentaire n'a pas pu être ajouté.");
-        return null;
-      }
-    },
-    [currentParticipantId, isEnabled, notesById, participantReady, sessionId, setSessionError]
-  );
-
-  const updateCommentText = useCallback(
-    async (noteId, commentId, text) => {
-      if (
-        !isEnabled ||
-        !sessionId ||
-        !participantReady ||
-        !noteId ||
-        !commentId ||
-        !currentParticipantId
-      ) {
-        return;
-      }
-
-      const comment = (commentsByNote[noteId] || EMPTY_ARRAY).find(
-        (currentComment) => currentComment.id === commentId
-      );
-
-      if (!comment || comment.authorId !== currentParticipantId) return;
-
-      try {
-        await updateContinueStopTryComment(sessionId, noteId, commentId, { text });
-      } catch (error) {
-        console.error("Impossible de mettre à jour le commentaire:", error);
-        setSessionError("Le commentaire n'a pas pu être mis à jour.");
-      }
-    },
-    [commentsByNote, currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]
-  );
-
-  const removeComment = useCallback(
-    async (noteId, commentId) => {
-      if (
-        !isEnabled ||
-        !sessionId ||
-        !participantReady ||
-        !noteId ||
-        !commentId ||
-        !currentParticipantId
-      ) {
-        return;
-      }
-
-      const comment = (commentsByNote[noteId] || EMPTY_ARRAY).find(
-        (currentComment) => currentComment.id === commentId
-      );
-
-      if (!comment || comment.authorId !== currentParticipantId) return;
-
-      try {
-        await removeContinueStopTryComment(sessionId, noteId, commentId);
-      } catch (error) {
-        console.error("Impossible de supprimer le commentaire:", error);
-        setSessionError("Le commentaire n'a pas pu être supprimé.");
-      }
-    },
-    [commentsByNote, currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]
-  );
-
   const setNotePosition = useCallback(
     async (noteId, position) => {
       if (!isEnabled || !sessionId || !participantReady || !noteId) return;
@@ -591,8 +633,9 @@ export function useContinueStopTryCollaboration({ sessionId, session, workshopId
 
       try {
         return await toggleContinueStopTryVote(sessionId, currentParticipantId, noteId, {
-          maxVotes: MAX_STICKERS,
+          maxVotesPerColumn: MAX_STICKERS_PER_COLUMN,
           validNoteIds: noteIdsSet,
+          noteColumnsById,
         });
       } catch (error) {
         console.error("Impossible de modifier le vote:", error);
@@ -603,6 +646,7 @@ export function useContinueStopTryCollaboration({ sessionId, session, workshopId
     [
       currentParticipantId,
       isEnabled,
+      noteColumnsById,
       noteIdsSet,
       participantReady,
       sessionId,
@@ -613,34 +657,34 @@ export function useContinueStopTryCollaboration({ sessionId, session, workshopId
   const actions = useMemo(
     () => ({
       setStep1Description,
+      setStep5Placeholder,
       addNote,
       updateNoteText,
       removeNote,
-      addComment,
-      updateCommentText,
-      removeComment,
       setNotePosition,
       toggleVote,
     }),
     [
-      addComment,
       addNote,
-      removeComment,
       removeNote,
       setNotePosition,
       setStep1Description,
+      setStep5Placeholder,
       toggleVote,
-      updateCommentText,
       updateNoteText,
     ]
   );
 
   const step1Description = String(activeContinueStopTryState?.step1?.description || "");
-  const effectiveSyncError =
-    isEnabled && syncErrorSessionId === sessionId ? syncError : "";
+  const effectiveSyncError = isEnabled && syncErrorSessionId === sessionId ? syncError : "";
   const effectiveIsLoading =
-    isEnabled &&
-    (!participantReady || (lastSnapshotSessionId !== sessionId && !effectiveSyncError));
+    isEnabled && (!participantReady || (lastSnapshotSessionId !== sessionId && !effectiveSyncError));
+
+  const myVoteCount = Object.values(myVoteCountByColumn).reduce((sum, count) => sum + count, 0);
+  const remainingVotes = Object.values(remainingVotesByColumn).reduce(
+    (sum, count) => sum + count,
+    0
+  );
 
   return {
     isEnabled,
@@ -650,15 +694,21 @@ export function useContinueStopTryCollaboration({ sessionId, session, workshopId
     participant,
     participants,
     getParticipantLabel,
+    columns: COLUMN_CONFIG,
     step1Description,
+    step5PlaceholdersByColumn,
     notes,
+    notesByColumn,
+    rankedNotesByColumn,
     myNotes,
-    commentsByNote,
+    myNotesByColumn,
     votesByParticipant,
     votesByNote,
     myVoteCount,
+    myVoteCountByColumn,
     remainingVotes,
-    maxStickers: MAX_STICKERS,
+    remainingVotesByColumn,
+    maxStickers: MAX_STICKERS_PER_COLUMN,
     actions,
   };
 }
@@ -667,10 +717,5 @@ export function useContinueStopTryCollaboration({ sessionId, session, workshopId
  * Default export alias for useContinueStopTryCollaboration.
  *
  * @type {typeof useContinueStopTryCollaboration}
- * @example
- * import { useContinueStopTryCollaboration } from "./continue-stop-try/useContinueStopTryCollaboration.js";
- *
- * // Real usage reference (named import): src/pages/workshops/WorkshopRunner.jsx
- * const collaboration = useContinueStopTryCollaboration({ sessionId, session, workshopId });
  */
 export default useContinueStopTryCollaboration;

@@ -6,6 +6,7 @@
  * @license proprietary
  */
 
+import ContinueStopTrySummary from "./continue-stop-try/ContinueStopTrySummary.jsx";
 import PaperBrainSummary from "./paper-brain/PaperBrainSummary.jsx";
 
 function GenericWorkshopSummary({ sessionTitle }) {
@@ -33,24 +34,15 @@ function GenericWorkshopSummary({ sessionTitle }) {
  * @param {string} props.sessionTitle - Session title displayed in the summary view.
  * @param {Object} props.collaboration - Collaboration state payload forwarded to workshop summaries.
  * @returns {JSX.Element} The rendered workshop summary page.
- *
- * @example
- * import WorkshopSummaryPage from "./WorkshopSummaryPage.jsx";
- *
- * // Real usage reference: src/workshops/WorkshopRunner.jsx
- * <WorkshopSummaryPage
- *   workshopId={resolvedWorkshopId}
- *   sessionTitle={sessionData.title}
- *   collaboration={collaboration}
- * />;
- *
- * // Workshop-specific summary callsite:
- * // - src/workshops/WorkshopSummaryPage.jsx -> <PaperBrainSummary ... />
  */
 export default function WorkshopSummaryPage({ workshopId, sessionTitle, collaboration }) {
   if (workshopId === "paper-brain") {
+    return <PaperBrainSummary sessionTitle={sessionTitle} collaboration={collaboration} />;
+  }
+
+  if (workshopId === "continue-arrete-tente" || workshopId === "continue-stop-try") {
     return (
-      <PaperBrainSummary
+      <ContinueStopTrySummary
         sessionTitle={sessionTitle}
         collaboration={collaboration}
       />

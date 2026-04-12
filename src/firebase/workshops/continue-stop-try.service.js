@@ -3,7 +3,6 @@ import {
   onValue,
   push,
   ref,
-  remove,
   runTransaction,
   set,
   update,
@@ -18,7 +17,9 @@ import { database } from "../index";
  * @license proprietary
  */
 
-const WORKSHOP_MAX_STICKERS = 3;
+const WORKSHOP_MAX_STICKERS_PER_COLUMN = 3;
+
+const VALID_COLUMN_IDS = new Set(["continue", "stop", "try"]);
 
 /**
  * Returns current time in ISO format.
@@ -32,6 +33,16 @@ const nowIso = () => new Date().toISOString();
  * @returns {string} Continue Stop Try root path.
  */
 const toContinueStopTryPath = (sessionId) => `workshopSessions/${sessionId}/continueArreteTente`;
+
+/**
+ * Validates and normalizes a column id.
+ * @param {string} columnId - Raw column id.
+ * @returns {"continue"|"stop"|"try"|""} Normalized column id or empty string if invalid.
+ */
+const normalizeColumnId = (columnId) => {
+  const normalized = String(columnId || "").trim().toLowerCase();
+  return VALID_COLUMN_IDS.has(normalized) ? normalized : "";
+};
 
 /**
  * Normalizes note position with numeric fallback coordinates.
@@ -133,14 +144,51 @@ export const setContinueStopTryStep1Description = async (
 };
 
 /**
+ * Sets step-5 editable placeholder text for a column.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} participantId - Editor participant id.
+ * @param {"continue"|"stop"|"try"} columnId - Column id.
+ * @param {string} text - Placeholder value.
+ * @returns {Promise<void>} Update completion.
+ */
+export const setContinueStopTryStep5Placeholder = async (
+  sessionId,
+  participantId,
+  columnId,
+  text
+) => {
+  if (!sessionId) return;
+
+  const normalizedColumnId = normalizeColumnId(columnId);
+  if (!normalizedColumnId) return;
+
+  await update(
+    ref(
+      database,
+      `${toContinueStopTryPath(sessionId)}/step5Placeholders/${normalizedColumnId}`
+    ),
+    {
+      text: text ?? "",
+      updatedAt: nowIso(),
+      updatedBy: participantId || "",
+    }
+  );
+};
+
+/**
  * Creates a Continue Stop Try note.
  * @param {string} sessionId - Workshop session id.
- * @param {{authorId:string, text?:string, position?:{x?:number,y?:number}}} [payload={}] - Note payload.
+ * @param {{authorId:string, columnId:"continue"|"stop"|"try", text?:string, position?:{x?:number,y?:number}}} [payload={}] - Note payload.
  * @returns {Promise<string>} Created note id.
  */
 export const createContinueStopTryNote = async (sessionId, payload = {}) => {
   if (!sessionId || !payload?.authorId) {
     throw new Error("createContinueStopTryNote: sessionId ou authorId manquant");
+  }
+
+  const normalizedColumnId = normalizeColumnId(payload?.columnId);
+  if (!normalizedColumnId) {
+    throw new Error("createContinueStopTryNote: columnId invalide");
   }
 
   const noteRef = push(ref(database, `${toContinueStopTryPath(sessionId)}/notes`));
@@ -154,6 +202,7 @@ export const createContinueStopTryNote = async (sessionId, payload = {}) => {
   await set(noteRef, {
     id: noteId,
     authorId: payload.authorId,
+    columnId: normalizedColumnId,
     text: payload.text ?? "",
     position: normalizePosition(payload.position),
     createdAt: now,
@@ -167,7 +216,7 @@ export const createContinueStopTryNote = async (sessionId, payload = {}) => {
  * Updates a Continue Stop Try note content or position.
  * @param {string} sessionId - Workshop session id.
  * @param {string} noteId - Note id.
- * @param {{text?:string, position?:{x?:number,y?:number}}} [patch={}] - Note patch.
+ * @param {{text?:string, position?:{x?:number,y?:number}, columnId?:"continue"|"stop"|"try"}} [patch={}] - Note patch.
  * @returns {Promise<void>} Update completion.
  */
 export const updateContinueStopTryNote = async (sessionId, noteId, patch = {}) => {
@@ -183,12 +232,19 @@ export const updateContinueStopTryNote = async (sessionId, noteId, patch = {}) =
   if (Object.prototype.hasOwnProperty.call(patch, "position")) {
     payload.position = normalizePosition(patch.position);
   }
+  if (Object.prototype.hasOwnProperty.call(patch, "columnId")) {
+    const normalizedColumnId = normalizeColumnId(patch.columnId);
+    if (!normalizedColumnId) {
+      throw new Error("updateContinueStopTryNote: columnId invalide");
+    }
+    payload.columnId = normalizedColumnId;
+  }
 
   await update(ref(database, `${toContinueStopTryPath(sessionId)}/notes/${noteId}`), payload);
 };
 
 /**
- * Removes a note and associated comments/votes.
+ * Removes a note and associated votes.
  * @param {string} sessionId - Workshop session id.
  * @param {string} noteId - Note id.
  * @returns {Promise<void>} Delete completion.
@@ -199,7 +255,6 @@ export const removeContinueStopTryNote = async (sessionId, noteId) => {
   const basePath = toContinueStopTryPath(sessionId);
   const updates = {
     [`${basePath}/notes/${noteId}`]: null,
-    [`${basePath}/commentsByNote/${noteId}`]: null,
   };
 
   const votesSnapshot = await get(ref(database, `${basePath}/votesByParticipant`));
@@ -213,90 +268,6 @@ export const removeContinueStopTryNote = async (sessionId, noteId) => {
   }
 
   await update(ref(database), updates);
-};
-
-/**
- * Adds a comment to a note.
- * @param {string} sessionId - Workshop session id.
- * @param {string} noteId - Note id.
- * @param {{authorId:string, text?:string}} [payload={}] - Comment payload.
- * @returns {Promise<string>} Created comment id.
- */
-export const addContinueStopTryComment = async (sessionId, noteId, payload = {}) => {
-  if (!sessionId || !noteId || !payload?.authorId) {
-    throw new Error("addContinueStopTryComment: paramètres manquants");
-  }
-
-  const commentRef = push(
-    ref(database, `${toContinueStopTryPath(sessionId)}/commentsByNote/${noteId}`)
-  );
-  const commentId = commentRef.key;
-  if (!commentId) {
-    throw new Error("Impossible de générer commentId");
-  }
-
-  const now = nowIso();
-
-  await set(commentRef, {
-    id: commentId,
-    authorId: payload.authorId,
-    text: payload.text ?? "",
-    createdAt: now,
-    updatedAt: now,
-  });
-
-  return commentId;
-};
-
-/**
- * Updates a note comment.
- * @param {string} sessionId - Workshop session id.
- * @param {string} noteId - Note id.
- * @param {string} commentId - Comment id.
- * @param {{text?:string}} [patch={}] - Comment patch.
- * @returns {Promise<void>} Update completion.
- */
-export const updateContinueStopTryComment = async (
-  sessionId,
-  noteId,
-  commentId,
-  patch = {}
-) => {
-  if (!sessionId || !noteId || !commentId) return;
-
-  const payload = {
-    updatedAt: nowIso(),
-  };
-
-  if (Object.prototype.hasOwnProperty.call(patch, "text")) {
-    payload.text = patch.text ?? "";
-  }
-
-  await update(
-    ref(
-      database,
-      `${toContinueStopTryPath(sessionId)}/commentsByNote/${noteId}/${commentId}`
-    ),
-    payload
-  );
-};
-
-/**
- * Removes a note comment.
- * @param {string} sessionId - Workshop session id.
- * @param {string} noteId - Note id.
- * @param {string} commentId - Comment id.
- * @returns {Promise<void>} Delete completion.
- */
-export const removeContinueStopTryComment = async (sessionId, noteId, commentId) => {
-  if (!sessionId || !noteId || !commentId) return;
-
-  await remove(
-    ref(
-      database,
-      `${toContinueStopTryPath(sessionId)}/commentsByNote/${noteId}/${commentId}`
-    )
-  );
 };
 
 /**
@@ -316,11 +287,11 @@ export const setContinueStopTryNotePosition = async (sessionId, noteId, position
 };
 
 /**
- * Toggles a participant vote on a note with optional max-votes guard.
+ * Toggles a participant vote on a note with per-column max-votes guard.
  * @param {string} sessionId - Workshop session id.
  * @param {string} participantId - Participant id.
  * @param {string} noteId - Note id.
- * @param {{maxVotes?:number, validNoteIds?:Set<string>}} [options={}] - Voting options.
+ * @param {{maxVotesPerColumn?:number, validNoteIds?:Set<string>, noteColumnsById?:Object<string,string>}} [options={}] - Voting options.
  * @returns {Promise<{committed:boolean, votes:Object}>} Transaction result and resulting votes.
  */
 export const toggleContinueStopTryVote = async (
@@ -333,11 +304,20 @@ export const toggleContinueStopTryVote = async (
     return { committed: false, votes: {} };
   }
 
-  const maxVotes = Number.isFinite(options?.maxVotes)
-    ? options.maxVotes
-    : WORKSHOP_MAX_STICKERS;
+  const maxVotesPerColumn = Number.isFinite(options?.maxVotesPerColumn)
+    ? options.maxVotesPerColumn
+    : WORKSHOP_MAX_STICKERS_PER_COLUMN;
   const validNoteIds =
     options?.validNoteIds instanceof Set ? options.validNoteIds : null;
+  const noteColumnsById =
+    options?.noteColumnsById && typeof options.noteColumnsById === "object"
+      ? options.noteColumnsById
+      : {};
+
+  const targetColumnId = normalizeColumnId(noteColumnsById[noteId]);
+  if (!targetColumnId) {
+    return { committed: false, votes: {} };
+  }
 
   const votesRef = ref(
     database,
@@ -352,13 +332,17 @@ export const toggleContinueStopTryVote = async (
       return Object.keys(nextVotes).length > 0 ? nextVotes : null;
     }
 
-    const usedVotes = Object.entries(nextVotes).reduce((count, [id, enabled]) => {
+    const usedVotesForColumn = Object.entries(nextVotes).reduce((count, [id, enabled]) => {
       if (!enabled) return count;
       if (validNoteIds && !validNoteIds.has(id)) return count;
+
+      const columnId = normalizeColumnId(noteColumnsById[id]);
+      if (!columnId || columnId !== targetColumnId) return count;
+
       return count + 1;
     }, 0);
 
-    if (usedVotes >= maxVotes) {
+    if (usedVotesForColumn >= maxVotesPerColumn) {
       return;
     }
 
