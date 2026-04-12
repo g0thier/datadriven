@@ -21,7 +21,7 @@ const ResetPassword = lazy(() => import('./pages/auth/ResetPassword.jsx'));
 const NotFound = lazy(() => import('./pages/NotFound.jsx'));
 
 // Page utilisateur authentifié.
-const WorkshopRunner = lazy(() => import('./workshops/WorkshopRunner.jsx'));
+const WorkshopRunner = lazy(() => import('./pages/workshops/WorkshopRunner.jsx'));
 const MyEvents = lazy(() => import("./pages/innovation/MyEvents.jsx"));
 
 // Management et pages authorisées.

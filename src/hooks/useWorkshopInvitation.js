@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { auth, createWorkshopSession } from "../firebase";
-import { WORKSHOPS, getWorkshop } from "../workshops";
+import { WORKSHOPS, getWorkshop } from "../pages/workshops";
 
 import useCompanyTeam from "./useCompanyTeam";
 import {

@@ -7,7 +7,7 @@
  */
 import { useNavigate } from "react-router-dom";
 
-import { WORKSHOPS } from "../../workshops/index.js";
+import { WORKSHOPS } from "../../pages/workshops/index.js";
 
 function getWorkshopTotalDurationMinutes(workshop) {
   const steps = Array.isArray(workshop?.steps) ? workshop.steps : [];
