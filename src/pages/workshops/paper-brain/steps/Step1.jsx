@@ -31,7 +31,10 @@ export default function Step1({ sessionTitle, step, collaboration }) {
   const syncError = collaboration?.syncError || "";
 
   const handleChange = (event) => {
-    collaboration?.actions?.setStep1Description?.(event.target.value);
+    const nextDescription = event.target.value;
+    if (isLoading || nextDescription === description) return;
+
+    collaboration?.actions?.setStep1Description?.(nextDescription, description);
   };
 
   return (

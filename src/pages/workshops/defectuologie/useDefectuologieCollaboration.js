@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { auth, onAuthStateChangedListener } from "../../../firebase";
 import {
   assignDefectuologieParticipantToSubgroup,
@@ -208,6 +208,8 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
   const [lastSnapshotSessionId, setLastSnapshotSessionId] = useState("");
   const [syncError, setSyncError] = useState("");
   const [syncErrorSessionId, setSyncErrorSessionId] = useState("");
+  const [lastNonEmptyStep1Description, setLastNonEmptyStep1Description] = useState("");
+  const step1RestoreInFlightRef = useRef(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChangedListener((nextAuthUser) => {
@@ -259,6 +261,20 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
   }, [isEnabled, sessionId, setSessionError]);
 
   const activeState = isEnabled && lastSnapshotSessionId === sessionId ? state : null;
+  const rawStep1Description = String(activeState?.step1?.description || "");
+
+  useEffect(() => {
+    setLastNonEmptyStep1Description("");
+    step1RestoreInFlightRef.current = false;
+  }, [isEnabled, sessionId]);
+
+  useEffect(() => {
+    if (!rawStep1Description) return;
+
+    setLastNonEmptyStep1Description((currentValue) =>
+      currentValue === rawStep1Description ? currentValue : rawStep1Description
+    );
+  }, [rawStep1Description]);
 
   useEffect(() => {
     if (!isEnabled || !sessionId || !participantReady || !participant?.id) return () => {};
@@ -324,7 +340,7 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
     }, {});
   }, [subgroups]);
 
-  const step1Description = String(activeState?.step1?.description || "");
+  const step1Description = rawStep1Description || lastNonEmptyStep1Description;
 
   const {
     items: defects,
@@ -457,6 +473,46 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
   const subgroupId = participantToSubgroup[currentParticipantId] || "";
   const activeSubgroup = subgroupById[subgroupId] || null;
 
+  useEffect(() => {
+    if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
+    if (rawStep1Description || !lastNonEmptyStep1Description) return;
+    if (step1RestoreInFlightRef.current) return;
+
+    let cancelled = false;
+    step1RestoreInFlightRef.current = true;
+
+    const restoreStep1Description = async () => {
+      try {
+        await setDefectuologieStep1Description(
+          sessionId,
+          currentParticipantId,
+          lastNonEmptyStep1Description,
+          { expectedPreviousDescription: "" }
+        );
+      } catch (error) {
+        if (cancelled) return;
+        console.error("Impossible de restaurer le sujet:", error);
+      } finally {
+        if (!cancelled) {
+          step1RestoreInFlightRef.current = false;
+        }
+      }
+    };
+
+    restoreStep1Description();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    currentParticipantId,
+    isEnabled,
+    lastNonEmptyStep1Description,
+    participantReady,
+    rawStep1Description,
+    sessionId,
+  ]);
+
   const activeDefects = defectsBySubgroup[subgroupId] || EMPTY_ARRAY;
   const activeSolutions = solutionsBySubgroup[subgroupId] || EMPTY_ARRAY;
 
@@ -574,17 +630,26 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
   }, [selectedDefectBySubgroup, selectedSolutionBySubgroup, step6BySubgroup, subgroups]);
 
   const setStep1Description = useCallback(
-    async (description) => {
+    async (description, previousDescription = step1Description) => {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
 
       try {
-        await setDefectuologieStep1Description(sessionId, currentParticipantId, description);
+        await setDefectuologieStep1Description(sessionId, currentParticipantId, description, {
+          expectedPreviousDescription: previousDescription,
+        });
       } catch (error) {
         console.error("Impossible de mettre a jour le sujet:", error);
         setSessionError("Le sujet n'a pas pu etre enregistre.");
       }
     },
-    [currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]
+    [
+      currentParticipantId,
+      isEnabled,
+      participantReady,
+      sessionId,
+      setSessionError,
+      step1Description,
+    ]
   );
 
   const addDefect = useCallback(

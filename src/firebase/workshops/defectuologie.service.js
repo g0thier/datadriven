@@ -424,16 +424,44 @@ export const assignDefectuologieParticipantToSubgroup = async (
 export const setDefectuologieStep1Description = async (
   sessionId,
   participantId,
-  description
+  description,
+  options = {}
 ) => {
   if (!sessionId) return;
 
-  const now = nowIso();
+  const nextDescription = String(description ?? "");
+  const hasExpectedPreviousDescription = Object.prototype.hasOwnProperty.call(
+    options,
+    "expectedPreviousDescription"
+  );
+  const expectedPreviousDescription = hasExpectedPreviousDescription
+    ? String(options.expectedPreviousDescription ?? "")
+    : null;
 
-  await update(ref(database, `${toDefectuologiePath(sessionId)}/step1`), {
-    description: description ?? "",
-    updatedAt: now,
-    updatedBy: participantId || "",
+  await runTransaction(ref(database, `${toDefectuologiePath(sessionId)}/step1`), (current) => {
+    const currentData = current && typeof current === "object" ? current : {};
+    const currentDescription = String(currentData.description ?? "");
+
+    // Prevent non-empty descriptions from being cleared by stale or implicit client writes.
+    if (nextDescription === "" && currentDescription !== "") {
+      return;
+    }
+
+    const shouldRejectStaleClear =
+      nextDescription === "" &&
+      expectedPreviousDescription !== null &&
+      expectedPreviousDescription !== currentDescription &&
+      currentDescription !== "";
+
+    if (shouldRejectStaleClear) {
+      return;
+    }
+
+    return {
+      description: nextDescription,
+      updatedAt: nowIso(),
+      updatedBy: participantId || "",
+    };
   });
 };
 

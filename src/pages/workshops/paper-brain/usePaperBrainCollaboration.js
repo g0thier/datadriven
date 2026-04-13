@@ -6,7 +6,7 @@
  * @license proprietary
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { auth, onAuthStateChangedListener } from "../../../firebase";
 import {
   addPaperBrainComment,
@@ -135,6 +135,8 @@ export function usePaperBrainCollaboration({ sessionId, session, workshopId }) {
   const [lastSnapshotSessionId, setLastSnapshotSessionId] = useState("");
   const [syncError, setSyncError] = useState("");
   const [syncErrorSessionId, setSyncErrorSessionId] = useState("");
+  const [lastNonEmptyStep1Description, setLastNonEmptyStep1Description] = useState("");
+  const step1RestoreInFlightRef = useRef(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChangedListener((nextAuthUser) => {
@@ -186,6 +188,20 @@ export function usePaperBrainCollaboration({ sessionId, session, workshopId }) {
 
   const activePaperBrainState =
     isEnabled && lastSnapshotSessionId === sessionId ? paperBrainState : null;
+  const rawStep1Description = String(activePaperBrainState?.step1?.description || "");
+
+  useEffect(() => {
+    setLastNonEmptyStep1Description("");
+    step1RestoreInFlightRef.current = false;
+  }, [isEnabled, sessionId]);
+
+  useEffect(() => {
+    if (!rawStep1Description) return;
+
+    setLastNonEmptyStep1Description((currentValue) =>
+      currentValue === rawStep1Description ? currentValue : rawStep1Description
+    );
+  }, [rawStep1Description]);
 
   useEffect(() => {
     if (!isEnabled || !sessionId || !participantReady || !participant?.id) return () => {};
@@ -391,6 +407,47 @@ export function usePaperBrainCollaboration({ sessionId, session, workshopId }) {
   );
 
   const currentParticipantId = participant?.id || "";
+  const step1Description = rawStep1Description || lastNonEmptyStep1Description;
+
+  useEffect(() => {
+    if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
+    if (rawStep1Description || !lastNonEmptyStep1Description) return;
+    if (step1RestoreInFlightRef.current) return;
+
+    let cancelled = false;
+    step1RestoreInFlightRef.current = true;
+
+    const restoreStep1Description = async () => {
+      try {
+        await setPaperBrainStep1Description(
+          sessionId,
+          currentParticipantId,
+          lastNonEmptyStep1Description,
+          { expectedPreviousDescription: "" }
+        );
+      } catch (error) {
+        if (cancelled) return;
+        console.error("Impossible de restaurer la description:", error);
+      } finally {
+        if (!cancelled) {
+          step1RestoreInFlightRef.current = false;
+        }
+      }
+    };
+
+    restoreStep1Description();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    currentParticipantId,
+    isEnabled,
+    lastNonEmptyStep1Description,
+    participantReady,
+    rawStep1Description,
+    sessionId,
+  ]);
 
   const myNotes = useMemo(
     () => notes.filter((note) => note.authorId === currentParticipantId),
@@ -412,17 +469,26 @@ export function usePaperBrainCollaboration({ sessionId, session, workshopId }) {
   const remainingVotes = Math.max(0, MAX_STICKERS - myVoteCount);
 
   const setStep1Description = useCallback(
-    async (description) => {
+    async (description, previousDescription = step1Description) => {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
 
       try {
-        await setPaperBrainStep1Description(sessionId, currentParticipantId, description);
+        await setPaperBrainStep1Description(sessionId, currentParticipantId, description, {
+          expectedPreviousDescription: previousDescription,
+        });
       } catch (error) {
         console.error("Impossible de mettre à jour la description:", error);
         setSessionError("La description n'a pas pu être enregistrée.");
       }
     },
-    [currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]
+    [
+      currentParticipantId,
+      isEnabled,
+      participantReady,
+      sessionId,
+      setSessionError,
+      step1Description,
+    ]
   );
 
   const addNote = useCallback(
@@ -633,7 +699,6 @@ export function usePaperBrainCollaboration({ sessionId, session, workshopId }) {
     ]
   );
 
-  const step1Description = String(activePaperBrainState?.step1?.description || "");
   const effectiveSyncError =
     isEnabled && syncErrorSessionId === sessionId ? syncError : "";
   const effectiveIsLoading =

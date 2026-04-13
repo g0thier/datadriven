@@ -120,15 +120,44 @@ export const upsertPaperBrainParticipant = async (
 export const setPaperBrainStep1Description = async (
   sessionId,
   participantId,
-  description
+  description,
+  options = {}
 ) => {
   if (!sessionId) return;
 
-  const now = nowIso();
-  await update(ref(database, `${toPaperBrainPath(sessionId)}/step1`), {
-    description: description ?? "",
-    updatedAt: now,
-    updatedBy: participantId || "",
+  const nextDescription = String(description ?? "");
+  const hasExpectedPreviousDescription = Object.prototype.hasOwnProperty.call(
+    options,
+    "expectedPreviousDescription"
+  );
+  const expectedPreviousDescription = hasExpectedPreviousDescription
+    ? String(options.expectedPreviousDescription ?? "")
+    : null;
+
+  await runTransaction(ref(database, `${toPaperBrainPath(sessionId)}/step1`), (current) => {
+    const currentData = current && typeof current === "object" ? current : {};
+    const currentDescription = String(currentData.description ?? "");
+
+    // Prevent non-empty descriptions from being cleared by stale or implicit client writes.
+    if (nextDescription === "" && currentDescription !== "") {
+      return;
+    }
+
+    const shouldRejectStaleClear =
+      nextDescription === "" &&
+      expectedPreviousDescription !== null &&
+      expectedPreviousDescription !== currentDescription &&
+      currentDescription !== "";
+
+    if (shouldRejectStaleClear) {
+      return;
+    }
+
+    return {
+      description: nextDescription,
+      updatedAt: nowIso(),
+      updatedBy: participantId || "",
+    };
   });
 };
 
