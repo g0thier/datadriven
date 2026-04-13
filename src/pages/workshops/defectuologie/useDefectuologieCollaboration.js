@@ -4,6 +4,7 @@ import {
   assignDefectuologieParticipantToSubgroup,
   createDefectuologieDefect,
   createDefectuologieSolution,
+  fetchDefectuologieSessionOnce,
   initializeDefectuologieSubgroups,
   removeDefectuologieDefect,
   removeDefectuologieSolution,
@@ -99,19 +100,41 @@ const normalizeParticipantToSubgroup = (value = {}) => {
 const normalizeSubgroups = (value = {}) => {
   if (!value || typeof value !== "object") return EMPTY_ARRAY;
 
+  const normalizeParticipantIds = (participantIds = {}) => {
+    if (Array.isArray(participantIds)) {
+      return participantIds
+        .map((participantId) => String(participantId || "").trim())
+        .filter(Boolean);
+    }
+
+    if (!participantIds || typeof participantIds !== "object") return [];
+
+    return Object.entries(participantIds).reduce((accumulator, [participantId, enabledOrParticipantId]) => {
+      // Backward-compat: support array-like objects (`{0: "<uid>"}`).
+      if (typeof enabledOrParticipantId === "string") {
+        const cleanedParticipantId = String(enabledOrParticipantId || "").trim();
+        if (!cleanedParticipantId) return accumulator;
+
+        accumulator.push(cleanedParticipantId);
+        return accumulator;
+      }
+
+      if (!enabledOrParticipantId) return accumulator;
+
+      const cleanedParticipantId = String(participantId || "").trim();
+      if (!cleanedParticipantId) return accumulator;
+
+      accumulator.push(cleanedParticipantId);
+      return accumulator;
+    }, []);
+  };
+
   return Object.entries(value)
     .map(([subgroupId, subgroup], index) => {
       const id = String(subgroup?.id || subgroupId || "").trim();
       if (!id) return null;
 
-      const participantIds =
-        subgroup?.participantIds && typeof subgroup.participantIds === "object"
-          ? Object.entries(subgroup.participantIds).reduce((accumulator, [participantId, enabled]) => {
-              if (!enabled) return accumulator;
-              accumulator.push(String(participantId || "").trim());
-              return accumulator;
-            }, [])
-          : [];
+      const participantIds = normalizeParticipantIds(subgroup?.participantIds);
 
       return {
         id,
@@ -199,6 +222,40 @@ const normalizeVotesByParticipant = (value = {}, validIdsSet = null) => {
   }, {});
 };
 
+const buildStoredSubgroupKey = (sessionId, participantId) => {
+  const cleanedSessionId = String(sessionId || "").trim();
+  const cleanedParticipantId = String(participantId || "").trim();
+  if (!cleanedSessionId || !cleanedParticipantId) return "";
+  return `defectuologie:lastSubgroup:${cleanedSessionId}:${cleanedParticipantId}`;
+};
+
+const readStoredSubgroupId = (sessionId, participantId) => {
+  if (typeof window === "undefined") return "";
+
+  const storageKey = buildStoredSubgroupKey(sessionId, participantId);
+  if (!storageKey) return "";
+
+  try {
+    return String(window.localStorage.getItem(storageKey) || "").trim();
+  } catch {
+    return "";
+  }
+};
+
+const writeStoredSubgroupId = (sessionId, participantId, subgroupId) => {
+  if (typeof window === "undefined") return;
+
+  const storageKey = buildStoredSubgroupKey(sessionId, participantId);
+  const cleanedSubgroupId = String(subgroupId || "").trim();
+  if (!storageKey || !cleanedSubgroupId) return;
+
+  try {
+    window.localStorage.setItem(storageKey, cleanedSubgroupId);
+  } catch {
+    // Ignore localStorage errors (private mode, quota, etc.).
+  }
+};
+
 export function useDefectuologieCollaboration({ sessionId, session, workshopId }) {
   const isEnabled = Boolean(sessionId) && workshopId === "defectuologie";
 
@@ -209,7 +266,14 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
   const [syncError, setSyncError] = useState("");
   const [syncErrorSessionId, setSyncErrorSessionId] = useState("");
   const [lastNonEmptyStep1Description, setLastNonEmptyStep1Description] = useState("");
+  const [isInitialServerReadReady, setIsInitialServerReadReady] = useState(false);
+  const [lockedParticipantId, setLockedParticipantId] = useState("");
+  const [lockedSubgroupId, setLockedSubgroupId] = useState("");
+  const [lastContentfulSubgroupId, setLastContentfulSubgroupId] = useState("");
   const step1RestoreInFlightRef = useRef(false);
+  const subgroupRestoreInFlightRef = useRef(false);
+  const lastKnownSubgroupByParticipantRef = useRef({});
+  const lastMissingSubgroupWarningKeyRef = useRef("");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChangedListener((nextAuthUser) => {
@@ -230,7 +294,33 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
     [authUser, isAuthResolved, sessionGuests]
   );
 
+  useEffect(() => {
+    setLockedParticipantId("");
+  }, [isEnabled, sessionId]);
+
+  useEffect(() => {
+    const participantId = String(participant?.id || "").trim();
+    if (!participantId) return;
+
+    setLockedParticipantId((currentValue) => currentValue || participantId);
+  }, [participant?.id]);
+
+  const effectiveParticipant = useMemo(() => {
+    const participantId = String(participant?.id || "").trim();
+    if (!lockedParticipantId || lockedParticipantId === participantId) {
+      return participant;
+    }
+
+    return {
+      id: lockedParticipantId,
+      name: makeParticipantFallbackLabel(lockedParticipantId),
+      email: "",
+      isAuthenticated: true,
+    };
+  }, [lockedParticipantId, participant]);
+
   const participantReady = Boolean(isEnabled && isAuthResolved && participant?.id);
+  const writeReady = Boolean(isEnabled && participantReady && isInitialServerReadReady);
 
   const setSessionError = useCallback(
     (message) => {
@@ -260,12 +350,59 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
     return unsubscribe;
   }, [isEnabled, sessionId, setSessionError]);
 
+  useEffect(() => {
+    setIsInitialServerReadReady(false);
+  }, [isEnabled, sessionId]);
+
+  useEffect(() => {
+    if (!isEnabled || !sessionId) return;
+
+    let cancelled = false;
+    let hasHydrated = false;
+    let retryId = null;
+
+    const hydrateInitialState = async () => {
+      if (cancelled || hasHydrated) return;
+
+      try {
+        await fetchDefectuologieSessionOnce(sessionId);
+        if (cancelled) return;
+
+        hasHydrated = true;
+        if (retryId) {
+          clearInterval(retryId);
+          retryId = null;
+        }
+        setIsInitialServerReadReady(true);
+      } catch (error) {
+        if (cancelled) return;
+
+        console.error("Impossible de lire l'etat initial Defectuologie:", error);
+        setSessionError("Impossible de charger l'etat initial de l'atelier.");
+      }
+    };
+
+    hydrateInitialState();
+    retryId = setInterval(hydrateInitialState, 4_000);
+
+    return () => {
+      cancelled = true;
+      if (retryId) {
+        clearInterval(retryId);
+      }
+    };
+  }, [isEnabled, sessionId, setSessionError]);
+
   const activeState = isEnabled && lastSnapshotSessionId === sessionId ? state : null;
   const rawStep1Description = String(activeState?.step1?.description || "");
 
   useEffect(() => {
     setLastNonEmptyStep1Description("");
+    setLockedSubgroupId("");
+    setLastContentfulSubgroupId("");
     step1RestoreInFlightRef.current = false;
+    subgroupRestoreInFlightRef.current = false;
+    lastKnownSubgroupByParticipantRef.current = {};
   }, [isEnabled, sessionId]);
 
   useEffect(() => {
@@ -277,13 +414,13 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
   }, [rawStep1Description]);
 
   useEffect(() => {
-    if (!isEnabled || !sessionId || !participantReady || !participant?.id) return () => {};
+    if (!isEnabled || !sessionId || !writeReady || !effectiveParticipant?.id) return () => {};
 
     let isCancelled = false;
 
     const syncParticipant = async () => {
       try {
-        await upsertDefectuologieParticipant(sessionId, participant);
+        await upsertDefectuologieParticipant(sessionId, effectiveParticipant);
       } catch (error) {
         if (isCancelled) return;
         console.error("Impossible d'enregistrer le participant:", error);
@@ -297,17 +434,16 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
       isCancelled = true;
       clearInterval(intervalId);
     };
-  }, [isEnabled, participant, participantReady, sessionId]);
+  }, [effectiveParticipant, isEnabled, sessionId, writeReady]);
 
   useEffect(() => {
-    if (!isEnabled || !sessionId || !participantReady || !participant?.id) return;
+    if (!isEnabled || !sessionId || !writeReady || !effectiveParticipant?.id) return;
 
     let isCancelled = false;
 
     const syncSubgroups = async () => {
       try {
         await initializeDefectuologieSubgroups(sessionId);
-        await assignDefectuologieParticipantToSubgroup(sessionId, participant.id);
       } catch (error) {
         if (isCancelled) return;
         console.error("Impossible de synchroniser les sous-groupes:", error);
@@ -319,7 +455,7 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
     return () => {
       isCancelled = true;
     };
-  }, [isEnabled, participant?.id, participantReady, sessionId]);
+  }, [effectiveParticipant?.id, isEnabled, sessionId, writeReady]);
 
   const remoteParticipants =
     activeState?.participants && typeof activeState.participants === "object"
@@ -358,6 +494,33 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
   } = useMemo(
     () => normalizeItemsBySubgroup(activeState?.solutionsBySubgroup),
     [activeState?.solutionsBySubgroup]
+  );
+  const contentCountsBySubgroup = useMemo(() => {
+    const subgroupIds = new Set([
+      ...Object.keys(defectsBySubgroup || EMPTY_OBJECT),
+      ...Object.keys(solutionsBySubgroup || EMPTY_OBJECT),
+    ]);
+    const counts = {};
+
+    subgroupIds.forEach((subgroupId) => {
+      const defectsCount = Array.isArray(defectsBySubgroup[subgroupId])
+        ? defectsBySubgroup[subgroupId].length
+        : 0;
+      const solutionsCount = Array.isArray(solutionsBySubgroup[subgroupId])
+        ? solutionsBySubgroup[subgroupId].length
+        : 0;
+
+      counts[subgroupId] = defectsCount + solutionsCount;
+    });
+
+    return counts;
+  }, [defectsBySubgroup, solutionsBySubgroup]);
+  const nonEmptyContentSubgroupIds = useMemo(
+    () =>
+      Object.entries(contentCountsBySubgroup)
+        .filter(([, count]) => Number(count) > 0)
+        .map(([subgroupId]) => subgroupId),
+    [contentCountsBySubgroup]
   );
 
   const defectIdsSet = useMemo(() => new Set(defects.map((defect) => defect.id)), [defects]);
@@ -441,14 +604,14 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
       addParticipant(solution.authorId);
     });
 
-    if (participant?.id) {
-      addParticipant(participant.id, participant);
+    if (effectiveParticipant?.id) {
+      addParticipant(effectiveParticipant.id, effectiveParticipant);
     }
 
     return Array.from(participantMap.values()).sort((a, b) =>
       String(a.name || "").localeCompare(String(b.name || ""), "fr")
     );
-  }, [defects, participant, remoteParticipants, sessionGuests, solutions]);
+  }, [defects, effectiveParticipant, remoteParticipants, sessionGuests, solutions]);
 
   const participantById = useMemo(() => {
     return participants.reduce((accumulator, currentParticipant) => {
@@ -469,12 +632,203 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
     [participantById]
   );
 
-  const currentParticipantId = participant?.id || "";
-  const subgroupId = participantToSubgroup[currentParticipantId] || "";
-  const activeSubgroup = subgroupById[subgroupId] || null;
+  const currentParticipantId = effectiveParticipant?.id || "";
+  const subgroupIdFromMapping = participantToSubgroup[currentParticipantId] || "";
+  const subgroupIdFromAuthoredItems = useMemo(() => {
+    if (!currentParticipantId) return "";
+
+    const authoredDefect = defects.find((defect) => defect.authorId === currentParticipantId);
+    if (authoredDefect?.subgroupId) return String(authoredDefect.subgroupId).trim();
+
+    const authoredSolution = solutions.find((solution) => solution.authorId === currentParticipantId);
+    if (authoredSolution?.subgroupId) return String(authoredSolution.subgroupId).trim();
+
+    return "";
+  }, [currentParticipantId, defects, solutions]);
+  const subgroupIdFromMembership = useMemo(() => {
+    if (!currentParticipantId) return "";
+
+    const matchingSubgroup = subgroups.find((group) =>
+      Array.isArray(group?.participantIds) && group.participantIds.includes(currentParticipantId)
+    );
+
+    return String(matchingSubgroup?.id || "").trim();
+  }, [currentParticipantId, subgroups]);
+  const subgroupIdFromExistingContent = useMemo(() => {
+    if (nonEmptyContentSubgroupIds.length !== 1) return "";
+    return String(nonEmptyContentSubgroupIds[0] || "").trim();
+  }, [nonEmptyContentSubgroupIds]);
+
+  const resolvedSubgroupId =
+    subgroupIdFromMapping ||
+    subgroupIdFromMembership ||
+    subgroupIdFromAuthoredItems ||
+    subgroupIdFromExistingContent;
+  const subgroupIdFromStorage = useMemo(
+    () => readStoredSubgroupId(sessionId, currentParticipantId),
+    [currentParticipantId, sessionId]
+  );
+  const rememberedSubgroupId =
+    String(lastKnownSubgroupByParticipantRef.current[currentParticipantId] || "") ||
+    subgroupIdFromStorage;
+  const initialSubgroupId = rememberedSubgroupId || resolvedSubgroupId;
+  const subgroupId = lockedSubgroupId || initialSubgroupId;
+  const effectiveSubgroupId = useMemo(() => {
+    const currentSubgroupCount = Number(contentCountsBySubgroup[subgroupId] || 0);
+    if (subgroupId && currentSubgroupCount > 0) return subgroupId;
+
+    const previousSubgroupCount = Number(contentCountsBySubgroup[lastContentfulSubgroupId] || 0);
+    if (lastContentfulSubgroupId && previousSubgroupCount > 0) {
+      return lastContentfulSubgroupId;
+    }
+
+    if (nonEmptyContentSubgroupIds.length === 1) {
+      return String(nonEmptyContentSubgroupIds[0] || "").trim();
+    }
+
+    return subgroupId;
+  }, [contentCountsBySubgroup, lastContentfulSubgroupId, nonEmptyContentSubgroupIds, subgroupId]);
 
   useEffect(() => {
-    if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
+    setLockedSubgroupId("");
+  }, [currentParticipantId, isEnabled, sessionId]);
+
+  useEffect(() => {
+    if (!initialSubgroupId) return;
+    setLockedSubgroupId((currentValue) => currentValue || initialSubgroupId);
+  }, [initialSubgroupId]);
+  useEffect(() => {
+    if (!effectiveSubgroupId) return;
+    if (effectiveSubgroupId === subgroupId) return;
+
+    setLockedSubgroupId((currentValue) =>
+      currentValue === effectiveSubgroupId ? currentValue : effectiveSubgroupId
+    );
+  }, [effectiveSubgroupId, subgroupId]);
+
+  const activeSubgroup = useMemo(() => {
+    if (!effectiveSubgroupId) return null;
+
+    const knownSubgroup = subgroupById[effectiveSubgroupId];
+    if (knownSubgroup) return knownSubgroup;
+
+    const parsedGroupIndex = parseGroupIndex(effectiveSubgroupId);
+
+    return {
+      id: effectiveSubgroupId,
+      label: parsedGroupIndex > 0 ? `Sous-groupe ${parsedGroupIndex}` : "Sous-groupe",
+      participantIds: EMPTY_ARRAY,
+    };
+  }, [effectiveSubgroupId, subgroupById]);
+
+  useEffect(() => {
+    if (!currentParticipantId || !effectiveSubgroupId) return;
+
+    lastKnownSubgroupByParticipantRef.current[currentParticipantId] = effectiveSubgroupId;
+    writeStoredSubgroupId(sessionId, currentParticipantId, effectiveSubgroupId);
+  }, [currentParticipantId, effectiveSubgroupId, sessionId]);
+  useEffect(() => {
+    if (!effectiveSubgroupId) return;
+    if (Number(contentCountsBySubgroup[effectiveSubgroupId] || 0) <= 0) return;
+
+    setLastContentfulSubgroupId((currentValue) =>
+      currentValue === effectiveSubgroupId ? currentValue : effectiveSubgroupId
+    );
+  }, [contentCountsBySubgroup, effectiveSubgroupId]);
+
+  useEffect(() => {
+    if (!isEnabled || !sessionId || !writeReady || !currentParticipantId) return;
+    if (effectiveSubgroupId) return;
+
+    let cancelled = false;
+
+    const restoreSubgroupAssignment = async () => {
+      if (cancelled) return;
+      if (subgroupRestoreInFlightRef.current) return;
+
+      subgroupRestoreInFlightRef.current = true;
+
+      try {
+        await assignDefectuologieParticipantToSubgroup(sessionId, currentParticipantId);
+      } catch (error) {
+        if (cancelled) return;
+        console.error("Impossible de restaurer le sous-groupe:", error);
+      } finally {
+        subgroupRestoreInFlightRef.current = false;
+      }
+    };
+
+    restoreSubgroupAssignment();
+    const retryId = setInterval(restoreSubgroupAssignment, 5_000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(retryId);
+    };
+  }, [currentParticipantId, effectiveSubgroupId, isEnabled, sessionId, writeReady]);
+
+  useEffect(() => {
+    if (!isEnabled || !sessionId || !writeReady || !currentParticipantId) return;
+    if (effectiveSubgroupId) {
+      lastMissingSubgroupWarningKeyRef.current = "";
+      return;
+    }
+
+    const warningKey = `${sessionId}:${currentParticipantId}`;
+    if (lastMissingSubgroupWarningKeyRef.current === warningKey) return;
+    lastMissingSubgroupWarningKeyRef.current = warningKey;
+
+    console.warn("[Defectuologie] Sous-groupe introuvable", {
+      sessionId,
+      participantId: currentParticipantId,
+      hasLockedSubgroup: Boolean(lockedSubgroupId),
+      hasRememberedSubgroup: Boolean(rememberedSubgroupId),
+      hasEffectiveSubgroup: Boolean(effectiveSubgroupId),
+      hasMapping: Boolean(subgroupIdFromMapping),
+      hasMembership: Boolean(subgroupIdFromMembership),
+      hasAuthoredItems: Boolean(subgroupIdFromAuthoredItems),
+      hasSubgroupFromContent: Boolean(subgroupIdFromExistingContent),
+      hasStoredSubgroup: Boolean(subgroupIdFromStorage),
+      subgroupsCount: subgroups.length,
+      participantToSubgroupCount: Object.keys(participantToSubgroup).length,
+    });
+    console.warn(
+      "[Defectuologie] Sous-groupe introuvable details:",
+      JSON.stringify({
+        sessionId,
+        participantId: currentParticipantId,
+        hasLockedSubgroup: Boolean(lockedSubgroupId),
+        hasRememberedSubgroup: Boolean(rememberedSubgroupId),
+        hasEffectiveSubgroup: Boolean(effectiveSubgroupId),
+        hasMapping: Boolean(subgroupIdFromMapping),
+        hasMembership: Boolean(subgroupIdFromMembership),
+        hasAuthoredItems: Boolean(subgroupIdFromAuthoredItems),
+        hasSubgroupFromContent: Boolean(subgroupIdFromExistingContent),
+        hasStoredSubgroup: Boolean(subgroupIdFromStorage),
+        subgroupsCount: subgroups.length,
+        participantToSubgroupCount: Object.keys(participantToSubgroup).length,
+      })
+    );
+  }, [
+    currentParticipantId,
+    isEnabled,
+    writeReady,
+    participantToSubgroup,
+    sessionId,
+    lockedSubgroupId,
+    subgroupId,
+    effectiveSubgroupId,
+    rememberedSubgroupId,
+    subgroupIdFromMapping,
+    subgroupIdFromAuthoredItems,
+    subgroupIdFromMembership,
+    subgroupIdFromExistingContent,
+    subgroupIdFromStorage,
+    subgroups.length,
+  ]);
+
+  useEffect(() => {
+    if (!isEnabled || !sessionId || !writeReady || !currentParticipantId) return;
     if (rawStep1Description || !lastNonEmptyStep1Description) return;
     if (step1RestoreInFlightRef.current) return;
 
@@ -508,13 +862,13 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
     currentParticipantId,
     isEnabled,
     lastNonEmptyStep1Description,
-    participantReady,
+    writeReady,
     rawStep1Description,
     sessionId,
   ]);
 
-  const activeDefects = defectsBySubgroup[subgroupId] || EMPTY_ARRAY;
-  const activeSolutions = solutionsBySubgroup[subgroupId] || EMPTY_ARRAY;
+  const activeDefects = defectsBySubgroup[effectiveSubgroupId] || EMPTY_ARRAY;
+  const activeSolutions = solutionsBySubgroup[effectiveSubgroupId] || EMPTY_ARRAY;
 
   const activeDefectIdsSet = useMemo(() => new Set(activeDefects.map((defect) => defect.id)), [activeDefects]);
   const activeSolutionIdsSet = useMemo(
@@ -595,10 +949,10 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
     }, {});
   }, [rankedSolutionsBySubgroup, subgroups]);
 
-  const selectedDefect = selectedDefectBySubgroup[subgroupId] || null;
-  const selectedSolution = selectedSolutionBySubgroup[subgroupId] || null;
-  const defectTopTie = Boolean(defectTopTieBySubgroup[subgroupId]);
-  const solutionTopTie = Boolean(solutionTopTieBySubgroup[subgroupId]);
+  const selectedDefect = selectedDefectBySubgroup[effectiveSubgroupId] || null;
+  const selectedSolution = selectedSolutionBySubgroup[effectiveSubgroupId] || null;
+  const defectTopTie = Boolean(defectTopTieBySubgroup[effectiveSubgroupId]);
+  const solutionTopTie = Boolean(solutionTopTieBySubgroup[effectiveSubgroupId]);
 
   const rawStep6BySubgroup =
     activeState?.step6BySubgroup && typeof activeState.step6BySubgroup === "object"
@@ -616,7 +970,7 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
     }, {});
   }, [rawStep6BySubgroup, subgroups]);
 
-  const step6Proposal = String(step6BySubgroup?.[subgroupId]?.text || "");
+  const step6Proposal = String(step6BySubgroup?.[effectiveSubgroupId]?.text || "");
 
   const resultsBySubgroup = useMemo(() => {
     return subgroups.map((subgroup) => ({
@@ -631,7 +985,7 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
 
   const setStep1Description = useCallback(
     async (description, previousDescription = step1Description) => {
-      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
+      if (!isEnabled || !sessionId || !writeReady || !currentParticipantId) return;
 
       try {
         await setDefectuologieStep1Description(sessionId, currentParticipantId, description, {
@@ -645,7 +999,7 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
     [
       currentParticipantId,
       isEnabled,
-      participantReady,
+      writeReady,
       sessionId,
       setSessionError,
       step1Description,
@@ -654,12 +1008,18 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
 
   const addDefect = useCallback(
     async (options = {}) => {
-      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId || !subgroupId) {
+      if (
+        !isEnabled ||
+        !sessionId ||
+        !writeReady ||
+        !currentParticipantId ||
+        !effectiveSubgroupId
+      ) {
         return null;
       }
 
       try {
-        return await createDefectuologieDefect(sessionId, subgroupId, {
+        return await createDefectuologieDefect(sessionId, effectiveSubgroupId, {
           authorId: currentParticipantId,
           text: options?.text ?? "",
         });
@@ -672,35 +1032,45 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
     [
       currentParticipantId,
       isEnabled,
-      participantReady,
+      writeReady,
       sessionId,
       setSessionError,
-      subgroupId,
+      effectiveSubgroupId,
     ]
   );
 
   const updateDefectText = useCallback(
-    async (defectId, text) => {
-      if (!isEnabled || !sessionId || !participantReady || !defectId || !currentParticipantId) {
+    async (defectId, text, previousText = null) => {
+      if (!isEnabled || !sessionId || !writeReady || !defectId || !currentParticipantId) {
         return;
       }
 
       const defect = defectsById[defectId];
       if (!defect || defect.authorId !== currentParticipantId) return;
 
+      const currentText = String(defect.text ?? "");
+      if (currentText === String(text ?? "")) return;
+
+      const expectedPreviousText =
+        previousText === null || previousText === undefined
+          ? currentText
+          : String(previousText ?? "");
+
       try {
-        await updateDefectuologieDefect(sessionId, defect.subgroupId, defectId, { text });
+        await updateDefectuologieDefect(sessionId, defect.subgroupId, defectId, { text }, {
+          expectedPreviousText,
+        });
       } catch (error) {
         console.error("Impossible de mettre a jour le defaut:", error);
         setSessionError("Le defaut n'a pas pu etre mis a jour.");
       }
     },
-    [currentParticipantId, defectsById, isEnabled, participantReady, sessionId, setSessionError]
+    [currentParticipantId, defectsById, isEnabled, sessionId, setSessionError, writeReady]
   );
 
   const removeDefect = useCallback(
     async (defectId) => {
-      if (!isEnabled || !sessionId || !participantReady || !defectId || !currentParticipantId) {
+      if (!isEnabled || !sessionId || !writeReady || !defectId || !currentParticipantId) {
         return;
       }
 
@@ -714,12 +1084,12 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
         setSessionError("Le defaut n'a pas pu etre supprime.");
       }
     },
-    [currentParticipantId, defectsById, isEnabled, participantReady, sessionId, setSessionError]
+    [currentParticipantId, defectsById, isEnabled, sessionId, setSessionError, writeReady]
   );
 
   const toggleDefectVote = useCallback(
     async (defectId) => {
-      if (!isEnabled || !sessionId || !participantReady || !defectId || !currentParticipantId) {
+      if (!isEnabled || !sessionId || !writeReady || !defectId || !currentParticipantId) {
         return { committed: false, votes: {} };
       }
 
@@ -738,7 +1108,7 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
       activeDefectIdsSet,
       currentParticipantId,
       isEnabled,
-      participantReady,
+      writeReady,
       sessionId,
       setSessionError,
     ]
@@ -746,12 +1116,18 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
 
   const addSolution = useCallback(
     async (options = {}) => {
-      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId || !subgroupId) {
+      if (
+        !isEnabled ||
+        !sessionId ||
+        !writeReady ||
+        !currentParticipantId ||
+        !effectiveSubgroupId
+      ) {
         return null;
       }
 
       try {
-        return await createDefectuologieSolution(sessionId, subgroupId, {
+        return await createDefectuologieSolution(sessionId, effectiveSubgroupId, {
           authorId: currentParticipantId,
           text: options?.text ?? "",
         });
@@ -764,24 +1140,34 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
     [
       currentParticipantId,
       isEnabled,
-      participantReady,
+      writeReady,
       sessionId,
       setSessionError,
-      subgroupId,
+      effectiveSubgroupId,
     ]
   );
 
   const updateSolutionText = useCallback(
-    async (solutionId, text) => {
-      if (!isEnabled || !sessionId || !participantReady || !solutionId || !currentParticipantId) {
+    async (solutionId, text, previousText = null) => {
+      if (!isEnabled || !sessionId || !writeReady || !solutionId || !currentParticipantId) {
         return;
       }
 
       const solution = solutionsById[solutionId];
       if (!solution || solution.authorId !== currentParticipantId) return;
 
+      const currentText = String(solution.text ?? "");
+      if (currentText === String(text ?? "")) return;
+
+      const expectedPreviousText =
+        previousText === null || previousText === undefined
+          ? currentText
+          : String(previousText ?? "");
+
       try {
-        await updateDefectuologieSolution(sessionId, solution.subgroupId, solutionId, { text });
+        await updateDefectuologieSolution(sessionId, solution.subgroupId, solutionId, { text }, {
+          expectedPreviousText,
+        });
       } catch (error) {
         console.error("Impossible de mettre a jour la solution:", error);
         setSessionError("La solution n'a pas pu etre mise a jour.");
@@ -790,7 +1176,7 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
     [
       currentParticipantId,
       isEnabled,
-      participantReady,
+      writeReady,
       sessionId,
       setSessionError,
       solutionsById,
@@ -799,7 +1185,7 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
 
   const removeSolution = useCallback(
     async (solutionId) => {
-      if (!isEnabled || !sessionId || !participantReady || !solutionId || !currentParticipantId) {
+      if (!isEnabled || !sessionId || !writeReady || !solutionId || !currentParticipantId) {
         return;
       }
 
@@ -816,7 +1202,7 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
     [
       currentParticipantId,
       isEnabled,
-      participantReady,
+      writeReady,
       sessionId,
       setSessionError,
       solutionsById,
@@ -825,7 +1211,7 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
 
   const toggleSolutionVote = useCallback(
     async (solutionId) => {
-      if (!isEnabled || !sessionId || !participantReady || !solutionId || !currentParticipantId) {
+      if (!isEnabled || !sessionId || !writeReady || !solutionId || !currentParticipantId) {
         return { committed: false, votes: {} };
       }
 
@@ -844,7 +1230,7 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
       activeSolutionIdsSet,
       currentParticipantId,
       isEnabled,
-      participantReady,
+      writeReady,
       sessionId,
       setSessionError,
     ]
@@ -852,12 +1238,23 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
 
   const setStep6Proposal = useCallback(
     async (text) => {
-      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId || !subgroupId) {
+      if (
+        !isEnabled ||
+        !sessionId ||
+        !writeReady ||
+        !currentParticipantId ||
+        !effectiveSubgroupId
+      ) {
         return;
       }
 
       try {
-        await setDefectuologieStep6Proposal(sessionId, currentParticipantId, subgroupId, text);
+        await setDefectuologieStep6Proposal(
+          sessionId,
+          currentParticipantId,
+          effectiveSubgroupId,
+          text
+        );
       } catch (error) {
         console.error("Impossible de mettre a jour la proposition:", error);
         setSessionError("La proposition n'a pas pu etre enregistree.");
@@ -866,10 +1263,10 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
     [
       currentParticipantId,
       isEnabled,
-      participantReady,
+      writeReady,
       sessionId,
       setSessionError,
-      subgroupId,
+      effectiveSubgroupId,
     ]
   );
 
@@ -902,19 +1299,22 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
 
   const effectiveSyncError = isEnabled && syncErrorSessionId === sessionId ? syncError : "";
   const effectiveIsLoading =
-    isEnabled && (!participantReady || (lastSnapshotSessionId !== sessionId && !effectiveSyncError));
+    isEnabled &&
+    (!participantReady ||
+      !writeReady ||
+      (lastSnapshotSessionId !== sessionId && !effectiveSyncError));
 
   return {
     isEnabled,
     participantReady,
     isLoading: effectiveIsLoading,
     syncError: effectiveSyncError,
-    participant,
+    participant: effectiveParticipant,
     participants,
     getParticipantLabel,
     step1Description,
     subgroups,
-    subgroupId,
+    subgroupId: effectiveSubgroupId,
     activeSubgroup,
     participantToSubgroup,
     defects,

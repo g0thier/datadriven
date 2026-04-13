@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import WorkshopStepLayout from "../../WorkshopStepLayout.jsx";
 
-const initialSolutionCreationByParticipantGroup = new Set();
-
-export default function Step4({ step, sessionTitle, collaboration, session }) {
+export default function Step4({ step, sessionTitle, collaboration }) {
   const subgroup = collaboration?.activeSubgroup || null;
   const subgroupLabel = subgroup?.label || "Sous-groupe";
   const solutions = useMemo(() => {
@@ -12,8 +10,6 @@ export default function Step4({ step, sessionTitle, collaboration, session }) {
   }, [collaboration?.activeSolutions]);
   const selectedDefect = collaboration?.selectedDefect || null;
   const currentParticipantId = collaboration?.participant?.id || "";
-  const sessionId = session?.sessionId || session?.id || "";
-  const subgroupId = String(subgroup?.id || "").trim();
   const isLoading = Boolean(collaboration?.isLoading);
   const syncError = collaboration?.syncError || "";
 
@@ -31,7 +27,7 @@ export default function Step4({ step, sessionTitle, collaboration, session }) {
     const currentText = String(solutions.find((solution) => solution.id === solutionId)?.text || "");
     if (currentText === text) return;
 
-    collaboration?.actions?.updateSolutionText?.(solutionId, text);
+    collaboration?.actions?.updateSolutionText?.(solutionId, text, currentText);
   };
 
   const removeSolution = (solutionId) => {
@@ -49,31 +45,6 @@ export default function Step4({ step, sessionTitle, collaboration, session }) {
       pendingFocusSolutionIdRef.current = createdId;
     }
   };
-
-  useEffect(() => {
-    if (isLoading) return;
-    if (!sessionId || !currentParticipantId || !subgroupId) return;
-    if (solutions.length > 0) return;
-    if (typeof addSolutionAction !== "function") return;
-
-    const initialKey = `${sessionId}:${currentParticipantId}:${subgroupId}`;
-    if (initialSolutionCreationByParticipantGroup.has(initialKey)) return;
-
-    initialSolutionCreationByParticipantGroup.add(initialKey);
-
-    addSolutionAction({ text: "" }).then((createdId) => {
-      if (!createdId) {
-        initialSolutionCreationByParticipantGroup.delete(initialKey);
-      }
-    });
-  }, [
-    addSolutionAction,
-    currentParticipantId,
-    isLoading,
-    sessionId,
-    solutions.length,
-    subgroupId,
-  ]);
 
   useEffect(() => {
     const pendingFocusSolutionId = pendingFocusSolutionIdRef.current;

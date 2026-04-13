@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import WorkshopStepLayout from "../../WorkshopStepLayout.jsx";
 
-const initialDefectCreationByParticipantGroup = new Set();
-
-export default function Step2({ step, sessionTitle, collaboration, session }) {
+export default function Step2({ step, sessionTitle, collaboration }) {
   const subgroup = collaboration?.activeSubgroup || null;
   const subgroupLabel = subgroup?.label || "Sous-groupe";
   const defects = useMemo(() => {
@@ -11,8 +9,6 @@ export default function Step2({ step, sessionTitle, collaboration, session }) {
     return collaboration.activeDefects;
   }, [collaboration?.activeDefects]);
   const currentParticipantId = collaboration?.participant?.id || "";
-  const sessionId = session?.sessionId || session?.id || "";
-  const subgroupId = String(subgroup?.id || "").trim();
   const isLoading = Boolean(collaboration?.isLoading);
   const syncError = collaboration?.syncError || "";
 
@@ -30,7 +26,7 @@ export default function Step2({ step, sessionTitle, collaboration, session }) {
     const currentText = String(defects.find((defect) => defect.id === defectId)?.text || "");
     if (currentText === text) return;
 
-    collaboration?.actions?.updateDefectText?.(defectId, text);
+    collaboration?.actions?.updateDefectText?.(defectId, text, currentText);
   };
 
   const removeDefect = (defectId) => {
@@ -48,31 +44,6 @@ export default function Step2({ step, sessionTitle, collaboration, session }) {
       pendingFocusDefectIdRef.current = createdId;
     }
   };
-
-  useEffect(() => {
-    if (isLoading) return;
-    if (!sessionId || !currentParticipantId || !subgroupId) return;
-    if (defects.length > 0) return;
-    if (typeof addDefectAction !== "function") return;
-
-    const initialKey = `${sessionId}:${currentParticipantId}:${subgroupId}`;
-    if (initialDefectCreationByParticipantGroup.has(initialKey)) return;
-
-    initialDefectCreationByParticipantGroup.add(initialKey);
-
-    addDefectAction({ text: "" }).then((createdId) => {
-      if (!createdId) {
-        initialDefectCreationByParticipantGroup.delete(initialKey);
-      }
-    });
-  }, [
-    addDefectAction,
-    currentParticipantId,
-    defects.length,
-    isLoading,
-    sessionId,
-    subgroupId,
-  ]);
 
   useEffect(() => {
     const pendingFocusDefectId = pendingFocusDefectIdRef.current;

@@ -73,7 +73,7 @@ export const defectuologie = {
   steps: [
     {
       label: "Choix du sujet",
-      duration: 5,
+      duration: 1,
       component: Step1,
       description: description1,
       audioEnabled: true,

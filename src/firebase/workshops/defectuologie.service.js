@@ -122,6 +122,52 @@ const buildInitialSubgroupAssignment = (participants = []) => {
   };
 };
 
+const normalizeSubgroupLabel = (subgroupId, label, fallbackIndex) => {
+  const cleanedLabel = String(label || "").trim();
+  if (cleanedLabel) return cleanedLabel;
+
+  const parsedIndex = parseSubgroupIndex(subgroupId);
+  if (parsedIndex > 0) return `Sous-groupe ${parsedIndex}`;
+
+  return `Sous-groupe ${fallbackIndex}`;
+};
+
+const normalizeSubgroupParticipantIds = (participantIds = {}) => {
+  if (Array.isArray(participantIds)) {
+    return participantIds.reduce((accumulator, participantId) => {
+      const cleanedParticipantId = String(participantId || "").trim();
+      if (!cleanedParticipantId) return accumulator;
+
+      accumulator[cleanedParticipantId] = true;
+      return accumulator;
+    }, {});
+  }
+
+  if (!participantIds || typeof participantIds !== "object") return {};
+
+  return Object.entries(participantIds).reduce(
+    (accumulator, [participantId, enabledOrParticipantId]) => {
+      // Backward-compat: support array-like objects (`{0: "<uid>"}`).
+      if (typeof enabledOrParticipantId === "string") {
+        const cleanedParticipantId = String(enabledOrParticipantId || "").trim();
+        if (!cleanedParticipantId) return accumulator;
+
+        accumulator[cleanedParticipantId] = true;
+        return accumulator;
+      }
+
+      if (!enabledOrParticipantId) return accumulator;
+
+      const cleanedParticipantId = String(participantId || "").trim();
+      if (!cleanedParticipantId) return accumulator;
+
+      accumulator[cleanedParticipantId] = true;
+      return accumulator;
+    },
+    {}
+  );
+};
+
 const normalizeSubgroups = (subgroups = {}) => {
   if (!subgroups || typeof subgroups !== "object") return {};
 
@@ -131,20 +177,11 @@ const normalizeSubgroups = (subgroups = {}) => {
     const subgroupId = normalizeSubgroupId(subgroup?.id || rawSubgroupId);
     if (!subgroupId) return;
 
-    const participantIds =
-      subgroup?.participantIds && typeof subgroup.participantIds === "object"
-        ? Object.entries(subgroup.participantIds).reduce((accumulator, [participantId, enabled]) => {
-            if (!enabled) return accumulator;
-            const cleanedParticipantId = String(participantId || "").trim();
-            if (!cleanedParticipantId) return accumulator;
-            accumulator[cleanedParticipantId] = true;
-            return accumulator;
-          }, {})
-        : {};
+    const participantIds = normalizeSubgroupParticipantIds(subgroup?.participantIds);
 
     normalized[subgroupId] = {
       id: subgroupId,
-      label: String(subgroup?.label || `Sous-groupe ${index + 1}`).trim(),
+      label: normalizeSubgroupLabel(subgroupId, subgroup?.label, index + 1),
       participantIds,
     };
   });
@@ -164,6 +201,122 @@ const normalizeParticipantToSubgroup = (value = {}) => {
     accumulator[cleanedParticipantId] = cleanedSubgroupId;
     return accumulator;
   }, {});
+};
+
+const rebuildParticipantMappingFromSubgroups = (subgroups = {}) => {
+  const normalizedSubgroups = normalizeSubgroups(subgroups);
+
+  return Object.values(normalizedSubgroups).reduce((accumulator, subgroup) => {
+    const subgroupId = String(subgroup?.id || "").trim();
+    if (!subgroupId) return accumulator;
+
+    const participantIds =
+      subgroup?.participantIds && typeof subgroup.participantIds === "object"
+        ? subgroup.participantIds
+        : {};
+
+    Object.entries(participantIds).forEach(([participantId, enabled]) => {
+      if (!enabled) return;
+      const cleanedParticipantId = String(participantId || "").trim();
+      if (!cleanedParticipantId) return;
+
+      accumulator[cleanedParticipantId] = subgroupId;
+    });
+
+    return accumulator;
+  }, {});
+};
+
+const ensureSubgroupExists = (subgroups, subgroupId) => {
+  const cleanedSubgroupId = normalizeSubgroupId(subgroupId);
+  if (!cleanedSubgroupId) return "";
+
+  if (!subgroups[cleanedSubgroupId]) {
+    subgroups[cleanedSubgroupId] = {
+      id: cleanedSubgroupId,
+      label: normalizeSubgroupLabel(
+        cleanedSubgroupId,
+        "",
+        Object.keys(subgroups).length + 1
+      ),
+      participantIds: {},
+    };
+  } else {
+    subgroups[cleanedSubgroupId] = {
+      ...subgroups[cleanedSubgroupId],
+      id: cleanedSubgroupId,
+      label: normalizeSubgroupLabel(
+        cleanedSubgroupId,
+        subgroups[cleanedSubgroupId]?.label,
+        Object.keys(subgroups).length + 1
+      ),
+      participantIds: normalizeSubgroupParticipantIds(subgroups[cleanedSubgroupId]?.participantIds),
+    };
+  }
+
+  return cleanedSubgroupId;
+};
+
+const mergeParticipantMappingIntoSubgroups = (subgroups = {}, participantToSubgroup = {}) => {
+  const nextSubgroups = normalizeSubgroups(subgroups);
+
+  Object.entries(participantToSubgroup).forEach(([participantId, subgroupId]) => {
+    const cleanedParticipantId = String(participantId || "").trim();
+    const cleanedSubgroupId = ensureSubgroupExists(nextSubgroups, subgroupId);
+
+    if (!cleanedParticipantId || !cleanedSubgroupId) return;
+
+    nextSubgroups[cleanedSubgroupId].participantIds[cleanedParticipantId] = true;
+  });
+
+  return nextSubgroups;
+};
+
+const ingestAuthoredItemsIntoAssignment = (
+  nextSubgroups,
+  participantToSubgroup,
+  itemsBySubgroup = {}
+) => {
+  if (!itemsBySubgroup || typeof itemsBySubgroup !== "object") return;
+
+  Object.entries(itemsBySubgroup).forEach(([rawSubgroupId, rawItems]) => {
+    const cleanedSubgroupId = ensureSubgroupExists(nextSubgroups, rawSubgroupId);
+    if (!cleanedSubgroupId) return;
+    if (!rawItems || typeof rawItems !== "object") return;
+
+    Object.values(rawItems).forEach((item) => {
+      const authorId = String(item?.authorId || "").trim();
+      if (!authorId) return;
+
+      const existingAssignment = participantToSubgroup[authorId];
+      const assignedSubgroupId = ensureSubgroupExists(
+        nextSubgroups,
+        existingAssignment || cleanedSubgroupId
+      );
+
+      if (!assignedSubgroupId) return;
+
+      participantToSubgroup[authorId] = assignedSubgroupId;
+      nextSubgroups[assignedSubgroupId].participantIds[authorId] = true;
+    });
+  });
+};
+
+const rebuildAssignmentFromAuthoredItems = (
+  defectsBySubgroup = {},
+  solutionsBySubgroup = {},
+  existingSubgroups = {}
+) => {
+  const nextSubgroups = normalizeSubgroups(existingSubgroups);
+  const participantToSubgroup = rebuildParticipantMappingFromSubgroups(nextSubgroups);
+
+  ingestAuthoredItemsIntoAssignment(nextSubgroups, participantToSubgroup, defectsBySubgroup);
+  ingestAuthoredItemsIntoAssignment(nextSubgroups, participantToSubgroup, solutionsBySubgroup);
+
+  return {
+    subgroups: nextSubgroups,
+    participantToSubgroup,
+  };
 };
 
 const countSubgroupParticipants = (subgroup = {}) => {
@@ -212,6 +365,37 @@ const createNextSubgroup = (subgroups = {}) => {
     label: `Sous-groupe ${nextIndex}`,
     participantIds: {},
   };
+};
+
+const rebuildSubgroupsFromParticipantMapping = (participantToSubgroup = {}, existingSubgroups = {}) => {
+  const normalizedExistingSubgroups = normalizeSubgroups(existingSubgroups);
+  const nextSubgroups = {};
+  let fallbackIndex = 1;
+
+  Object.entries(participantToSubgroup).forEach(([participantId, subgroupId]) => {
+    const cleanedParticipantId = String(participantId || "").trim();
+    const cleanedSubgroupId = normalizeSubgroupId(subgroupId);
+
+    if (!cleanedParticipantId || !cleanedSubgroupId) return;
+
+    if (!nextSubgroups[cleanedSubgroupId]) {
+      const existingSubgroup = normalizedExistingSubgroups[cleanedSubgroupId];
+      const parsedIndex = parseSubgroupIndex(cleanedSubgroupId);
+      const labelIndex = parsedIndex > 0 ? parsedIndex : fallbackIndex;
+
+      nextSubgroups[cleanedSubgroupId] = {
+        id: cleanedSubgroupId,
+        label: String(existingSubgroup?.label || `Sous-groupe ${labelIndex}`).trim(),
+        participantIds: {},
+      };
+
+      fallbackIndex += 1;
+    }
+
+    nextSubgroups[cleanedSubgroupId].participantIds[cleanedParticipantId] = true;
+  });
+
+  return nextSubgroups;
 };
 
 const normalizeTextPatch = (patch = {}) => {
@@ -269,6 +453,13 @@ export const subscribeDefectuologieSession = (
   );
 };
 
+export const fetchDefectuologieSessionOnce = async (sessionId) => {
+  if (!sessionId) return null;
+
+  const snapshot = await get(ref(database, toDefectuologiePath(sessionId)));
+  return snapshot.exists() ? snapshot.val() : null;
+};
+
 export const upsertDefectuologieParticipant = async (
   sessionId,
   participant = {}
@@ -303,12 +494,35 @@ export const initializeDefectuologieSubgroups = async (sessionId) => {
 
   await runTransaction(defectuologieRef, (current) => {
     const currentData = current && typeof current === "object" ? current : {};
-    const participantToSubgroup = normalizeParticipantToSubgroup(
+    const participantToSubgroupFromMapping = normalizeParticipantToSubgroup(
       currentData.participantToSubgroup
     );
+    const normalizedSubgroups = normalizeSubgroups(currentData.subgroups);
+    const reconstructedAssignment = rebuildAssignmentFromAuthoredItems(
+      currentData.defectsBySubgroup,
+      currentData.solutionsBySubgroup,
+      normalizedSubgroups
+    );
+    const participantToSubgroup =
+      Object.keys(participantToSubgroupFromMapping).length > 0
+        ? participantToSubgroupFromMapping
+        : reconstructedAssignment.participantToSubgroup;
+    const normalizedSubgroupsWithMapping =
+      Object.keys(participantToSubgroup).length > 0
+        ? mergeParticipantMappingIntoSubgroups(
+            Object.keys(normalizedSubgroups).length > 0
+              ? normalizedSubgroups
+              : reconstructedAssignment.subgroups,
+            participantToSubgroup
+          )
+        : normalizedSubgroups;
 
     if (Object.keys(participantToSubgroup).length > 0) {
-      return currentData;
+      return {
+        ...currentData,
+        subgroups: normalizedSubgroupsWithMapping,
+        participantToSubgroup,
+      };
     }
 
     const connectedParticipants = extractConnectedParticipants(currentData.participants);
@@ -340,10 +554,34 @@ export const assignDefectuologieParticipantToSubgroup = async (
     const currentData = current && typeof current === "object" ? current : {};
 
     const connectedParticipants = extractConnectedParticipants(currentData.participants);
-    const participantToSubgroup = normalizeParticipantToSubgroup(
+    const participantToSubgroupFromMapping = normalizeParticipantToSubgroup(
       currentData.participantToSubgroup
     );
     let subgroups = normalizeSubgroups(currentData.subgroups);
+    const reconstructedAssignment = rebuildAssignmentFromAuthoredItems(
+      currentData.defectsBySubgroup,
+      currentData.solutionsBySubgroup,
+      subgroups
+    );
+    let participantToSubgroup =
+      Object.keys(participantToSubgroupFromMapping).length > 0
+        ? participantToSubgroupFromMapping
+        : reconstructedAssignment.participantToSubgroup;
+
+    if (Object.keys(subgroups).length === 0 && Object.keys(reconstructedAssignment.subgroups).length > 0) {
+      subgroups = reconstructedAssignment.subgroups;
+    }
+
+    if (Object.keys(subgroups).length === 0 && Object.keys(participantToSubgroup).length > 0) {
+      subgroups = rebuildSubgroupsFromParticipantMapping(
+        participantToSubgroup,
+        currentData.subgroups
+      );
+    }
+
+    if (Object.keys(subgroups).length > 0 && Object.keys(participantToSubgroup).length > 0) {
+      subgroups = mergeParticipantMappingIntoSubgroups(subgroups, participantToSubgroup);
+    }
 
     const existingSubgroupId = participantToSubgroup[cleanedParticipantId];
     if (existingSubgroupId && subgroups[existingSubgroupId]) {
@@ -504,18 +742,65 @@ export const updateDefectuologieDefect = async (
   sessionId,
   subgroupId,
   defectId,
-  patch = {}
+  patch = {},
+  options = {}
 ) => {
   const cleanedSubgroupId = normalizeSubgroupId(subgroupId);
 
   if (!sessionId || !cleanedSubgroupId || !defectId) return;
 
-  await update(
+  const hasNextText = Object.prototype.hasOwnProperty.call(patch, "text");
+  if (!hasNextText) {
+    await update(
+      ref(
+        database,
+        `${toDefectuologiePath(sessionId)}/defectsBySubgroup/${cleanedSubgroupId}/${defectId}`
+      ),
+      normalizeTextPatch(patch)
+    );
+    return;
+  }
+
+  const nextText = String(patch.text ?? "");
+  const hasExpectedPreviousText = Object.prototype.hasOwnProperty.call(
+    options,
+    "expectedPreviousText"
+  );
+  const expectedPreviousText = hasExpectedPreviousText
+    ? String(options.expectedPreviousText ?? "")
+    : null;
+
+  await runTransaction(
     ref(
       database,
       `${toDefectuologiePath(sessionId)}/defectsBySubgroup/${cleanedSubgroupId}/${defectId}`
     ),
-    normalizeTextPatch(patch)
+    (current) => {
+      if (!current || typeof current !== "object") return current;
+
+      const currentText = String(current.text ?? "");
+
+      // Prevent stale or implicit writes from clearing an already-filled defect text.
+      if (nextText === "" && currentText !== "") {
+        return;
+      }
+
+      const shouldRejectStaleClear =
+        nextText === "" &&
+        expectedPreviousText !== null &&
+        expectedPreviousText !== currentText &&
+        currentText !== "";
+
+      if (shouldRejectStaleClear) {
+        return;
+      }
+
+      return {
+        ...current,
+        text: nextText,
+        updatedAt: nowIso(),
+      };
+    }
   );
 };
 
@@ -631,18 +916,65 @@ export const updateDefectuologieSolution = async (
   sessionId,
   subgroupId,
   solutionId,
-  patch = {}
+  patch = {},
+  options = {}
 ) => {
   const cleanedSubgroupId = normalizeSubgroupId(subgroupId);
 
   if (!sessionId || !cleanedSubgroupId || !solutionId) return;
 
-  await update(
+  const hasNextText = Object.prototype.hasOwnProperty.call(patch, "text");
+  if (!hasNextText) {
+    await update(
+      ref(
+        database,
+        `${toDefectuologiePath(sessionId)}/solutionsBySubgroup/${cleanedSubgroupId}/${solutionId}`
+      ),
+      normalizeTextPatch(patch)
+    );
+    return;
+  }
+
+  const nextText = String(patch.text ?? "");
+  const hasExpectedPreviousText = Object.prototype.hasOwnProperty.call(
+    options,
+    "expectedPreviousText"
+  );
+  const expectedPreviousText = hasExpectedPreviousText
+    ? String(options.expectedPreviousText ?? "")
+    : null;
+
+  await runTransaction(
     ref(
       database,
       `${toDefectuologiePath(sessionId)}/solutionsBySubgroup/${cleanedSubgroupId}/${solutionId}`
     ),
-    normalizeTextPatch(patch)
+    (current) => {
+      if (!current || typeof current !== "object") return current;
+
+      const currentText = String(current.text ?? "");
+
+      // Prevent stale or implicit writes from clearing an already-filled solution text.
+      if (nextText === "" && currentText !== "") {
+        return;
+      }
+
+      const shouldRejectStaleClear =
+        nextText === "" &&
+        expectedPreviousText !== null &&
+        expectedPreviousText !== currentText &&
+        currentText !== "";
+
+      if (shouldRejectStaleClear) {
+        return;
+      }
+
+      return {
+        ...current,
+        text: nextText,
+        updatedAt: nowIso(),
+      };
+    }
   );
 };
 
