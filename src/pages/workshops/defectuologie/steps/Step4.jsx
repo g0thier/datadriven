@@ -26,14 +26,21 @@ export default function Step4({ step, sessionTitle, collaboration, session }) {
   const pendingFocusSolutionIdRef = useRef("");
 
   const updateSolution = (solutionId, text) => {
+    if (isLoading) return;
+
+    const currentText = String(solutions.find((solution) => solution.id === solutionId)?.text || "");
+    if (currentText === text) return;
+
     collaboration?.actions?.updateSolutionText?.(solutionId, text);
   };
 
   const removeSolution = (solutionId) => {
+    if (isLoading) return;
     collaboration?.actions?.removeSolution?.(solutionId);
   };
 
   const createSolution = async ({ focusNewInput = false } = {}) => {
+    if (isLoading) return;
     if (typeof addSolutionAction !== "function") return;
 
     const createdId = await addSolutionAction({ text: "" });

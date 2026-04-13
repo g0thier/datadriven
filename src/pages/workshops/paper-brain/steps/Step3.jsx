@@ -31,6 +31,7 @@ function Step3({ step, sessionTitle, collaboration }) {
   const commentsByNote = collaboration?.commentsByNote || {};
   const currentParticipantId = collaboration?.participant?.id || "";
   const getParticipantLabel = collaboration?.getParticipantLabel;
+  const isLoading = Boolean(collaboration?.isLoading);
   const syncError = collaboration?.syncError || "";
 
   const challenge =
@@ -92,14 +93,23 @@ function Step3({ step, sessionTitle, collaboration }) {
   };
 
   const addComment = (noteId) => {
+    if (isLoading) return;
     collaboration?.actions?.addComment?.(noteId, "");
   };
 
   const updateComment = (noteId, commentId, value) => {
+    if (isLoading) return;
+
+    const currentValue = String(
+      (commentsByNote[noteId] || []).find((comment) => comment.id === commentId)?.text || ""
+    );
+    if (currentValue === value) return;
+
     collaboration?.actions?.updateCommentText?.(noteId, commentId, value);
   };
 
   const removeComment = (noteId, commentId) => {
+    if (isLoading) return;
     collaboration?.actions?.removeComment?.(noteId, commentId);
   };
 

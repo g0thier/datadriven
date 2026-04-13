@@ -25,14 +25,21 @@ export default function Step2({ step, sessionTitle, collaboration, session }) {
   const pendingFocusDefectIdRef = useRef("");
 
   const updateDefect = (defectId, text) => {
+    if (isLoading) return;
+
+    const currentText = String(defects.find((defect) => defect.id === defectId)?.text || "");
+    if (currentText === text) return;
+
     collaboration?.actions?.updateDefectText?.(defectId, text);
   };
 
   const removeDefect = (defectId) => {
+    if (isLoading) return;
     collaboration?.actions?.removeDefect?.(defectId);
   };
 
   const createDefect = async ({ focusNewInput = false } = {}) => {
+    if (isLoading) return;
     if (typeof addDefectAction !== "function") return;
 
     const createdId = await addDefectAction({ text: "" });

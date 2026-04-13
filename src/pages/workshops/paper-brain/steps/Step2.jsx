@@ -71,14 +71,21 @@ function Step2({ step, sessionTitle, collaboration, session }) {
   }, [addNote, initialNoteKey, isLoading, myNotes.length, participantId, sessionId]);
 
   const handleChange = (noteId, value) => {
+    if (isLoading) return;
+
+    const currentValue = String(myNotes.find((note) => note.id === noteId)?.text || "");
+    if (currentValue === value) return;
+
     updateNoteText?.(noteId, value);
   };
 
   const addEmptyNote = () => {
+    if (isLoading) return;
     addNote?.({ text: "" });
   };
 
   const removeNote = (noteId) => {
+    if (isLoading) return;
     if (myNotes.length <= 1) return;
     removeNoteAction?.(noteId);
   };

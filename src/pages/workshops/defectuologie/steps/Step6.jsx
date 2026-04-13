@@ -14,7 +14,10 @@ export default function Step6({ step, sessionTitle, collaboration }) {
     "Le sujet sera visible ici des qu'il est defini a l'etape 1.";
 
   const handleChange = (event) => {
-    collaboration?.actions?.setStep6Proposal?.(event.target.value);
+    const nextProposal = event.target.value;
+    if (isLoading || nextProposal === proposalText) return;
+
+    collaboration?.actions?.setStep6Proposal?.(nextProposal);
   };
 
   return (

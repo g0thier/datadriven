@@ -107,6 +107,7 @@ function Step5({ step, sessionTitle, collaboration }) {
       : { continue: "", stop: "", try: "" };
 
   const currentParticipantId = collaboration?.participant?.id || "";
+  const isLoading = Boolean(collaboration?.isLoading);
   const syncError = collaboration?.syncError || "";
 
   const challenge =
@@ -114,6 +115,11 @@ function Step5({ step, sessionTitle, collaboration }) {
     "Le défi sera visible ici dès qu'il est défini à l'étape 1.";
 
   const handlePlaceholderChange = (columnId, value) => {
+    if (isLoading) return;
+
+    const currentValue = String(step5PlaceholdersByColumn[columnId] || "");
+    if (currentValue === value) return;
+
     collaboration?.actions?.setStep5Placeholder?.(columnId, value);
   };
 
@@ -150,6 +156,7 @@ function Step5({ step, sessionTitle, collaboration }) {
                 placeholder="Définir l'engagement..."
                 value={placeholderText}
                 onChange={(event) => handlePlaceholderChange(column.id, event.target.value)}
+                disabled={isLoading}
               />
 
               {rankedNotes.length === 0 ? (

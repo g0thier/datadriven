@@ -95,14 +95,21 @@ function Step2({ step, sessionTitle, collaboration, session }) {
   }, [addNote, columns, isLoading, myNotesByColumn, participantId, sessionId]);
 
   const handleChange = (noteId, value) => {
+    if (isLoading) return;
+
+    const currentValue = String(myNotes.find((note) => note.id === noteId)?.text || "");
+    if (currentValue === value) return;
+
     updateNoteText?.(noteId, value);
   };
 
   const addEmptyNote = (columnId) => {
+    if (isLoading) return;
     addNote?.({ columnId, text: "" });
   };
 
   const removeNote = (columnId, noteId) => {
+    if (isLoading) return;
     const columnNotes = myNotesByColumn[columnId] || [];
     if (columnNotes.length <= 1) return;
     removeNoteAction?.(noteId);
