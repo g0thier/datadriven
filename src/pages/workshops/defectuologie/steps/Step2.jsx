@@ -106,12 +106,6 @@ export default function Step2({ step, sessionTitle, collaboration }) {
                           placeholder="Decrire un defaut..."
                           value={defect.text || ""}
                           onChange={(event) => updateDefect(defect.id, event.target.value)}
-                          onKeyDown={(event) => {
-                            if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
-
-                            event.preventDefault();
-                            void createDefect({ focusNewInput: true });
-                          }}
                         />
 
                         <button

@@ -115,12 +115,6 @@ export default function Step4({ step, sessionTitle, collaboration }) {
                             placeholder="Proposer une solution..."
                             value={solution.text || ""}
                             onChange={(event) => updateSolution(solution.id, event.target.value)}
-                            onKeyDown={(event) => {
-                              if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
-
-                              event.preventDefault();
-                              void createSolution({ focusNewInput: true });
-                            }}
                           />
 
                           <button
