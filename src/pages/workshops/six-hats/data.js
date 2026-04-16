@@ -8,7 +8,6 @@
 
 import sixHatsImg from "../../../assets/workshops/six-hats.png";
 
-/*
 import Step1 from "./steps/Step1.jsx";
 import Step2 from "./steps/Step2.jsx";
 import Step3 from "./steps/Step3.jsx";
@@ -16,7 +15,6 @@ import Step4 from "./steps/Step4.jsx";
 import Step5 from "./steps/Step5.jsx";
 import Step6 from "./steps/Step6.jsx";
 import Step7 from "./steps/Step7.jsx";
-*/
 
 const description1 = [
   "Le facilitateur présente le sujet ou le problème à traiter.",
@@ -76,49 +74,49 @@ export const sixChapeauxBono = {
     {
       label: "Introduction du sujet",
       duration: 5,
-      //component: Step1,
+      component: Step1,
       description: description1,
       audioEnabled: true,
     },
     {
       label: "Chapeau blanc",
       duration: 5,
-      //component: Step2,
+      component: Step2,
       description: description2,
       audioEnabled: false,
     },
     {
       label: "Chapeau rouge",
       duration: 5,
-      //component: Step3,
+      component: Step3,
       description: description3,
       audioEnabled: false,
     },
     {
       label: "Chapeau noir",
       duration: 5,
-      //component: Step4,
+      component: Step4,
       description: description4,
       audioEnabled: true,
     },
     {
       label: "Chapeau jaune",
       duration: 5,
-      //component: Step5,
+      component: Step5,
       description: description5,
       audioEnabled: true,
     },
     {
       label: "Chapeau vert",
-      duration: 10,
-      //component: Step6,
+      duration: 5,
+      component: Step6,
       description: description6,
       audioEnabled: false,
     },
     {
       label: "Chapeau bleu",
       duration: 5,
-      //component: Step7,
+      component: Step7,
       description: description7,
       audioEnabled: true,
     },
