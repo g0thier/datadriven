@@ -430,6 +430,15 @@ function Step4({ step, sessionTitle, collaboration }) {
               height: CANVAS_HEIGHT * scale,
             }}
           >
+            <div
+              className="absolute inset-0 pointer-events-none opacity-30"
+              style={{
+                backgroundImage:
+                  "linear-gradient(to right, rgba(15,23,42,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(15,23,42,0.08) 1px, transparent 1px)",
+                backgroundSize: `${60 * scale}px ${60 * scale}px`,
+              }}
+            />
+
             <svg
               className="absolute inset-0 pointer-events-none"
               width={CANVAS_WIDTH * scale}
