@@ -445,6 +445,7 @@ function Step4({ step, sessionTitle, collaboration }) {
                 const arcLength = centerRadius * span;
                 const maxCharsPerLine = Math.max(8, Math.floor(arcLength / (IDEA_FONT_SIZE * 0.58)));
                 const lines = splitLabelIntoLines(label, maxCharsPerLine, 3);
+                const linesForDisplay = segment.flipText ? lines : [...lines].reverse();
 
                 return (
                   <g key={segment.key}>
@@ -454,10 +455,10 @@ function Step4({ step, sessionTitle, collaboration }) {
                       strokeWidth={1.2 * scale}
                     />
 
-                    {lines.map((line, lineIndex) => {
+                    {linesForDisplay.map((line, lineIndex) => {
                       const lineRadius =
                         ideaArcInnerRadius +
-                        (IDEA_RING_THICKNESS * (lineIndex + 1)) / (lines.length + 1);
+                        (IDEA_RING_THICKNESS * (lineIndex + 1)) / (linesForDisplay.length + 1);
 
                       const linePath = describeArcPath({
                         cx: CENTER_X * scale,
