@@ -6,7 +6,7 @@ const CANVAS_HEIGHT = 2400;
 const CENTER_X = CANVAS_WIDTH / 2;
 const CENTER_Y = CANVAS_HEIGHT / 2;
 
-const CHALLENGE_WIDTH = 460;
+const CHALLENGE_WIDTH = 230;
 const NOTE_WIDTH = 230;
 const NOTE_HEIGHT = 160;
 const NOTE_GAP = 44;
@@ -125,7 +125,10 @@ function Step2({ step, sessionTitle, collaboration }) {
           </div>
         </div>
 
-        <div ref={scrollContainerRef} className="w-full overflow-auto rounded-xl border border-slate-200">
+        <div
+          ref={scrollContainerRef}
+          className="w-full aspect-square overflow-auto rounded-xl border border-slate-200"
+        >
           <div
             className="relative origin-top-left"
             style={{
@@ -192,7 +195,7 @@ function Step2({ step, sessionTitle, collaboration }) {
                 <div className="relative bg-yellow-100 border border-yellow-200 rounded-lg shadow-md p-4 h-40 flex flex-col">
                   <textarea
                     className="flex-1 bg-transparent resize-none focus:outline-none text-gray-800 text-sm"
-                    placeholder="Ecrivez une branche..."
+                    placeholder="Ecrivez une catégorie..."
                     value={note.text || ""}
                     onChange={(event) => updateNote(note.id, event.target.value)}
                   />
