@@ -82,14 +82,14 @@ export const mindMapping = {
     },
     {
       label: "Développement des idées",
-      duration: 1000,
+      duration: 10,
       component: Step3,
       description: description3,
       audioEnabled: false,
     },
     {
       label: "Exploration créative",
-      duration: 10,
+      duration: 1000,
       //component: Step4,
       description: description4,
       audioEnabled: false,

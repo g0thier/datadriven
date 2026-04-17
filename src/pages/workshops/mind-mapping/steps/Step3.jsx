@@ -112,7 +112,7 @@ function Step3({ step, sessionTitle, collaboration }) {
     String(collaboration?.step1Description || "").trim() ||
     "Le sujet sera visible ici des qu'il est defini a l'etape 1.";
 
-  const [zoom, setZoom] = useState(100);
+  const [zoom, setZoom] = useState(80);
   const scale = zoom / 100;
 
   const scrollContainerRef = useRef(null);
