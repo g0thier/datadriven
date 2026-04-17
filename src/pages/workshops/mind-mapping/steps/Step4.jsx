@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import WorkshopStepLayout from "../../WorkshopStepLayout.jsx";
 
 const CANVAS_WIDTH = 3600;
@@ -19,6 +19,11 @@ const NOTE_RING_THICKNESS = 40;
 const NOTE_RING_GAP = NOTE_RING_THICKNESS + 30;
 const MIN_NOTE_RING_RADIUS = 100;
 const MAX_NOTE_RING_RADIUS = Math.min(CENTER_X, CENTER_Y) - 150;
+
+const IDEA_LINK_ANCHOR_OFFSET = 30;
+const IDEA_LINK_BUTTON_SIZE = 28;
+const CONCEPT_CARD_WIDTH = 180;
+const CONCEPT_CARD_HEIGHT = 120;
 
 const SEGMENT_GAP = 0.02;
 
@@ -52,6 +57,19 @@ function clockwiseDelta(startAngle, endAngle) {
   return normalizeAngle(endAngle - startAngle) % fullTurn;
 }
 
+function shortestSignedDelta(startAngle, endAngle) {
+  const fullTurn = 2 * Math.PI;
+  let delta = (endAngle - startAngle) % fullTurn;
+
+  if (delta > Math.PI) {
+    delta -= fullTurn;
+  } else if (delta < -Math.PI) {
+    delta += fullTurn;
+  }
+
+  return delta;
+}
+
 function describeArcPath({ cx, cy, radius, startAngle, endAngle, sweepFlag }) {
   const start = polarToCartesian(cx, cy, radius, startAngle);
   const end = polarToCartesian(cx, cy, radius, endAngle);
@@ -82,6 +100,19 @@ function describeDonutArc({ cx, cy, innerRadius, outerRadius, startAngle, endAng
     `A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${innerStart.x} ${innerStart.y}`,
     "Z",
   ].join(" ");
+}
+
+function describeQuadraticPath(from, control, to) {
+  return `M ${from.x} ${from.y} Q ${control.x} ${control.y} ${to.x} ${to.y}`;
+}
+
+function getQuadraticPoint(from, control, to, t) {
+  const invT = 1 - t;
+
+  return {
+    x: invT * invT * from.x + 2 * invT * t * control.x + t * t * to.x,
+    y: invT * invT * from.y + 2 * invT * t * control.y + t * t * to.y,
+  };
 }
 
 function shouldFlipArcText(midAngle) {
@@ -119,7 +150,7 @@ function splitLabelIntoLines(label, maxCharsPerLine, maxLines = 3) {
     .filter(Boolean);
 
   if (!words.length) {
-    return ["Idée vide"];
+    return ["Idee vide"];
   }
 
   const lines = [];
@@ -163,7 +194,7 @@ function splitLabelIntoLines(label, maxCharsPerLine, maxLines = 3) {
     lastLine = candidate;
   }
 
-  truncated[maxLines - 1] = `${lastLine}…`;
+  truncated[maxLines - 1] = `${lastLine}...`;
   return truncated;
 }
 
@@ -212,13 +243,28 @@ function computeNoteAngularWeight({ ideaCount, totalIdeas, segmentGap = SEGMENT_
   return Math.max(ideaCount * ideaSliceAngle - segmentGap, 0);
 }
 
+function buildConceptPairKey(fromIdeaKey, toIdeaKey) {
+  return [fromIdeaKey, toIdeaKey].sort().join("__");
+}
+
+function isInteractiveTarget(target) {
+  return target instanceof Element && Boolean(target.closest("[data-mindmap-interactive='true']"));
+}
+
 function Step4({ step, sessionTitle, collaboration }) {
   const notes = useMemo(() => collaboration?.notes ?? [], [collaboration?.notes]);
   const commentsByNote = useMemo(
     () => collaboration?.commentsByNote || {},
     [collaboration?.commentsByNote]
   );
+  const concepts = useMemo(() => collaboration?.concepts ?? [], [collaboration?.concepts]);
+
+  const isLoading = Boolean(collaboration?.isLoading);
   const syncError = collaboration?.syncError || "";
+
+  const addConceptAction = collaboration?.actions?.addConcept;
+  const updateConceptTextAction = collaboration?.actions?.updateConceptText;
+  const removeConceptAction = collaboration?.actions?.removeConcept;
 
   const challenge =
     String(collaboration?.step1Description || "").trim() ||
@@ -228,6 +274,8 @@ function Step4({ step, sessionTitle, collaboration }) {
   const scale = zoom / 100;
 
   const [isPanning, setIsPanning] = useState(false);
+  const [linkSourceIdeaKey, setLinkSourceIdeaKey] = useState("");
+  const [linkCursor, setLinkCursor] = useState(null);
 
   const scrollContainerRef = useRef(null);
   const hasCenteredInitialViewRef = useRef(false);
@@ -307,6 +355,7 @@ function Step4({ step, sessionTitle, collaboration }) {
   const noteArcOuterRadius = noteRingRadius + NOTE_RING_THICKNESS / 2;
   const ideaArcInnerRadius = ideaRingRadius - IDEA_RING_THICKNESS / 2;
   const ideaArcOuterRadius = ideaRingRadius + IDEA_RING_THICKNESS / 2;
+  const ideaAnchorRadius = Math.max(40, ideaArcInnerRadius - IDEA_LINK_ANCHOR_OFFSET);
 
   const ideaArcSegments = useMemo(() => {
     return buildArcSegments({
@@ -329,39 +378,192 @@ function Step4({ step, sessionTitle, collaboration }) {
     });
   }, [ideaCountByNote, notesWithIdeas, totalIdeas]);
 
-  const startPan = (event) => {
-    if (event.button !== 0) return;
+  const ideaAnchors = useMemo(() => {
+    return ideaArcSegments.map((segment) => {
+      const midAngle = segment.startAngle + segment.span / 2;
+      const position = polarToCartesian(CENTER_X, CENTER_Y, ideaAnchorRadius, midAngle);
 
-    const container = scrollContainerRef.current;
-    if (!container) return;
+      return {
+        ideaKey: segment.data.key,
+        noteId: segment.data.noteId,
+        ideaId: segment.data.id,
+        x: position.x,
+        y: position.y,
+        angle: midAngle,
+      };
+    });
+  }, [ideaAnchorRadius, ideaArcSegments]);
 
-    container.setPointerCapture?.(event.pointerId);
+  const ideaAnchorByKey = useMemo(
+    () =>
+      ideaAnchors.reduce((accumulator, anchor) => {
+        accumulator[anchor.ideaKey] = anchor;
+        return accumulator;
+      }, {}),
+    [ideaAnchors]
+  );
 
-    panStateRef.current = {
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-      startScrollLeft: container.scrollLeft,
-      startScrollTop: container.scrollTop,
-    };
+  const conceptTextById = useMemo(
+    () =>
+      concepts.reduce((accumulator, concept) => {
+        accumulator[concept.id] = String(concept?.text || "");
+        return accumulator;
+      }, {}),
+    [concepts]
+  );
 
-    setIsPanning(true);
-  };
+  const conceptCurves = useMemo(() => {
+    if (!concepts.length) return [];
 
-  const movePan = (event) => {
-    const container = scrollContainerRef.current;
-    const panState = panStateRef.current;
+    const groupedConcepts = new Map();
 
-    if (!container || panState.pointerId !== event.pointerId) return;
+    concepts.forEach((concept) => {
+      const fromIdeaKey = `${concept?.from?.noteId || ""}::${concept?.from?.ideaId || ""}`;
+      const toIdeaKey = `${concept?.to?.noteId || ""}::${concept?.to?.ideaId || ""}`;
+      const fromAnchor = ideaAnchorByKey[fromIdeaKey];
+      const toAnchor = ideaAnchorByKey[toIdeaKey];
 
-    const deltaX = event.clientX - panState.startX;
-    const deltaY = event.clientY - panState.startY;
+      if (!fromAnchor || !toAnchor) return;
 
-    container.scrollLeft = panState.startScrollLeft - deltaX;
-    container.scrollTop = panState.startScrollTop - deltaY;
-  };
+      const pairKey = buildConceptPairKey(fromIdeaKey, toIdeaKey);
+      const currentGroup = groupedConcepts.get(pairKey) || [];
+      currentGroup.push({ concept, fromAnchor, toAnchor });
+      groupedConcepts.set(pairKey, currentGroup);
+    });
 
-  const stopPan = (event) => {
+    // Keep all concept curves bending inward (toward the center),
+    // so control radius always stays below anchor radius.
+    const minControlRadius = Math.max(30, ideaAnchorRadius * 0.16);
+    const maxControlRadius = Math.max(minControlRadius + 8, ideaAnchorRadius - 14);
+
+    const renderItems = [];
+
+    groupedConcepts.forEach((group, pairKey) => {
+      const groupCount = group.length;
+      if (!groupCount) return;
+
+      const { fromAnchor, toAnchor } = group[0];
+      const fromAngle = Math.atan2(fromAnchor.y - CENTER_Y, fromAnchor.x - CENTER_X);
+      const toAngle = Math.atan2(toAnchor.y - CENTER_Y, toAnchor.x - CENTER_X);
+      const delta = shortestSignedDelta(fromAngle, toAngle);
+      const proximity = 1 - Math.abs(delta) / Math.PI;
+
+      const baseControlRadius =
+        minControlRadius + (maxControlRadius - minControlRadius) * clamp(proximity, 0, 1);
+      const controlRadius = clamp(baseControlRadius, minControlRadius, maxControlRadius);
+
+      const midAngle = fromAngle + delta / 2;
+      const control = polarToCartesian(CENTER_X, CENTER_Y, controlRadius, midAngle);
+
+      const from = { x: fromAnchor.x, y: fromAnchor.y };
+      const to = { x: toAnchor.x, y: toAnchor.y };
+      const path = describeQuadraticPath(from, control, to);
+
+      group.forEach(({ concept }, index) => {
+        const markerT = (index + 1) / (groupCount + 1);
+        const markerPoint = getQuadraticPoint(from, control, to, markerT);
+
+        renderItems.push({
+          concept,
+          pairKey,
+          drawArc: index === 0,
+          from,
+          to,
+          control,
+          cardCenter: {
+            x: markerPoint.x,
+            y: markerPoint.y,
+          },
+          path,
+        });
+      });
+    });
+
+    return renderItems;
+  }, [concepts, ideaAnchorByKey, ideaAnchorRadius]);
+
+  const effectiveLinkSourceIdeaKey =
+    linkSourceIdeaKey && ideaAnchorByKey[linkSourceIdeaKey] ? linkSourceIdeaKey : "";
+  const linkSourceAnchor = effectiveLinkSourceIdeaKey
+    ? ideaAnchorByKey[effectiveLinkSourceIdeaKey]
+    : null;
+
+  const clearLinkingState = useCallback(() => {
+    setLinkSourceIdeaKey("");
+    setLinkCursor(null);
+  }, []);
+
+  const getCanvasPointFromEvent = useCallback(
+    (event) => {
+      const container = scrollContainerRef.current;
+      if (!container) return null;
+
+      const rect = container.getBoundingClientRect();
+
+      const x = (event.clientX - rect.left + container.scrollLeft) / scale;
+      const y = (event.clientY - rect.top + container.scrollTop) / scale;
+
+      return {
+        x: clamp(x, 0, CANVAS_WIDTH),
+        y: clamp(y, 0, CANVAS_HEIGHT),
+      };
+    },
+    [scale]
+  );
+
+  const startPan = useCallback(
+    (event) => {
+      if (event.button !== 0) return;
+
+      if (isInteractiveTarget(event.target)) return;
+
+      if (effectiveLinkSourceIdeaKey) {
+        clearLinkingState();
+        return;
+      }
+
+      const container = scrollContainerRef.current;
+      if (!container) return;
+
+      container.setPointerCapture?.(event.pointerId);
+
+      panStateRef.current = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        startScrollLeft: container.scrollLeft,
+        startScrollTop: container.scrollTop,
+      };
+
+      setIsPanning(true);
+    },
+    [clearLinkingState, effectiveLinkSourceIdeaKey]
+  );
+
+  const movePan = useCallback(
+    (event) => {
+      if (effectiveLinkSourceIdeaKey) {
+        const cursorPosition = getCanvasPointFromEvent(event);
+        if (cursorPosition) {
+          setLinkCursor(cursorPosition);
+        }
+      }
+
+      const container = scrollContainerRef.current;
+      const panState = panStateRef.current;
+
+      if (!container || panState.pointerId !== event.pointerId) return;
+
+      const deltaX = event.clientX - panState.startX;
+      const deltaY = event.clientY - panState.startY;
+
+      container.scrollLeft = panState.startScrollLeft - deltaX;
+      container.scrollTop = panState.startScrollTop - deltaY;
+    },
+    [effectiveLinkSourceIdeaKey, getCanvasPointFromEvent]
+  );
+
+  const stopPan = useCallback((event) => {
     const container = scrollContainerRef.current;
     const panState = panStateRef.current;
 
@@ -378,7 +580,68 @@ function Step4({ step, sessionTitle, collaboration }) {
     };
 
     setIsPanning(false);
-  };
+  }, []);
+
+  const handleIdeaAnchorClick = useCallback(
+    async (anchor) => {
+      if (isLoading || !anchor) return;
+
+      if (!effectiveLinkSourceIdeaKey) {
+        setLinkSourceIdeaKey(anchor.ideaKey);
+        setLinkCursor({ x: anchor.x, y: anchor.y });
+        return;
+      }
+
+      if (effectiveLinkSourceIdeaKey === anchor.ideaKey) {
+        clearLinkingState();
+        return;
+      }
+
+      const sourceAnchor = ideaAnchorByKey[effectiveLinkSourceIdeaKey];
+      if (!sourceAnchor) {
+        setLinkSourceIdeaKey(anchor.ideaKey);
+        setLinkCursor({ x: anchor.x, y: anchor.y });
+        return;
+      }
+
+      await addConceptAction?.({
+        fromNoteId: sourceAnchor.noteId,
+        fromIdeaId: sourceAnchor.ideaId,
+        toNoteId: anchor.noteId,
+        toIdeaId: anchor.ideaId,
+        text: "",
+      });
+
+      clearLinkingState();
+    },
+    [
+      addConceptAction,
+      clearLinkingState,
+      effectiveLinkSourceIdeaKey,
+      ideaAnchorByKey,
+      isLoading,
+    ]
+  );
+
+  const handleConceptTextChange = useCallback(
+    (conceptId, value) => {
+      if (isLoading || !conceptId) return;
+
+      const currentValue = conceptTextById[conceptId] || "";
+      if (currentValue === value) return;
+
+      updateConceptTextAction?.(conceptId, value);
+    },
+    [conceptTextById, isLoading, updateConceptTextAction]
+  );
+
+  const handleRemoveConcept = useCallback(
+    (conceptId) => {
+      if (isLoading || !conceptId) return;
+      removeConceptAction?.(conceptId);
+    },
+    [isLoading, removeConceptAction]
+  );
 
   return (
     <WorkshopStepLayout
@@ -395,7 +658,7 @@ function Step4({ step, sessionTitle, collaboration }) {
       <div className="bg-white rounded-2xl shadow-md p-4">
         <div className="flex items-center justify-between mb-3 gap-3">
           <p className="text-sm text-gray-600">
-            {notesWithIdeas.length} notes • {totalIdeas} idées
+            {notesWithIdeas.length} notes • {totalIdeas} idees • {concepts.length} concepts
           </p>
 
           <div className="flex items-center gap-3">
@@ -562,6 +825,37 @@ function Step4({ step, sessionTitle, collaboration }) {
                   </g>
                 );
               })}
+
+              {conceptCurves
+                .filter((curve) => curve.drawArc)
+                .map((curve) => (
+                <path
+                  key={`concept-path-${curve.pairKey}`}
+                  d={describeQuadraticPath(
+                    { x: curve.from.x * scale, y: curve.from.y * scale },
+                    { x: curve.control.x * scale, y: curve.control.y * scale },
+                    { x: curve.to.x * scale, y: curve.to.y * scale }
+                  )}
+                  fill="none"
+                  stroke="rgb(249 115 22)"
+                  strokeWidth={2.8 * scale}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  opacity="0.9"
+                />
+              ))}
+
+              {linkSourceAnchor && linkCursor && (
+                <line
+                  x1={linkSourceAnchor.x * scale}
+                  y1={linkSourceAnchor.y * scale}
+                  x2={linkCursor.x * scale}
+                  y2={linkCursor.y * scale}
+                  stroke="rgb(249 115 22)"
+                  strokeWidth={2.4 * scale}
+                  strokeLinecap="round"
+                />
+              )}
             </svg>
 
             <div
@@ -578,6 +872,112 @@ function Step4({ step, sessionTitle, collaboration }) {
                 <p className="text-gray-700 text-sm whitespace-pre-wrap">{challenge}</p>
               </div>
             </div>
+
+            {conceptCurves.map((curve) => (
+              <div
+                key={`concept-card-${curve.concept.id}`}
+                data-mindmap-interactive="true"
+                className="group absolute z-[80] hover:z-[150] focus-within:z-[150]"
+                style={{
+                  transform: `translate(${(curve.cardCenter.x - IDEA_LINK_BUTTON_SIZE / 2) * scale}px, ${(curve
+                    .cardCenter.y - IDEA_LINK_BUTTON_SIZE / 2) * scale}px) scale(${scale})`,
+                  transformOrigin: "top left",
+                  width: IDEA_LINK_BUTTON_SIZE,
+                  height: IDEA_LINK_BUTTON_SIZE,
+                }}
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  data-mindmap-interactive="true"
+                  className="absolute inset-0 w-7 h-7 rounded-full bg-orange-500 text-white text-sm font-semibold flex items-center justify-center shadow-md hover:bg-orange-600 transition"
+                  aria-label="Afficher le concept"
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  ?
+                </button>
+
+                <div
+                  data-mindmap-interactive="true"
+                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 scale-95 pointer-events-none transition duration-150 group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:scale-100 group-focus-within:pointer-events-auto"
+                  style={{
+                    width: CONCEPT_CARD_WIDTH,
+                    minHeight: CONCEPT_CARD_HEIGHT,
+                  }}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div className="relative bg-orange-50 border border-orange-200 rounded-lg shadow-sm p-2 flex flex-col">
+                    <textarea
+                      className="w-full h-20 bg-transparent resize-none focus:outline-none text-gray-800 text-xs"
+                      placeholder="Ecrivez un concept..."
+                      value={curve.concept.text || ""}
+                      disabled={isLoading}
+                      onChange={(event) =>
+                        handleConceptTextChange(curve.concept.id, event.target.value)
+                      }
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveConcept(curve.concept.id)}
+                      disabled={isLoading}
+                      className="absolute top-1.5 right-1.5 text-gray-400 hover:text-red-500 text-xs disabled:opacity-50"
+                      aria-label="Supprimer le concept"
+                    >
+                      x
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {ideaAnchors.map((anchor) => {
+              const isSource = effectiveLinkSourceIdeaKey === anchor.ideaKey;
+              const isLinking = Boolean(effectiveLinkSourceIdeaKey);
+
+              const buttonText = isLinking ? (isSource ? "+" : "o") : "+";
+              const buttonClass = isSource
+                ? "bg-orange-600 hover:bg-orange-700"
+                : isLinking
+                  ? "bg-orange-100 text-orange-700 hover:bg-orange-200"
+                  : "bg-orange-500 hover:bg-orange-600";
+
+              return (
+                <button
+                  key={`idea-anchor-${anchor.ideaKey}`}
+                  type="button"
+                  data-mindmap-interactive="true"
+                  disabled={isLoading}
+                  className={`absolute z-[70] w-7 h-7 rounded-full text-sm font-semibold flex items-center justify-center shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed ${buttonClass} ${
+                    isLinking && !isSource ? "border border-orange-300" : "text-white"
+                  }`}
+                  style={{
+                    transform: `translate(${(anchor.x - IDEA_LINK_BUTTON_SIZE / 2) * scale}px, ${(anchor.y -
+                      IDEA_LINK_BUTTON_SIZE / 2) * scale}px) scale(${scale})`,
+                    transformOrigin: "top left",
+                    width: IDEA_LINK_BUTTON_SIZE,
+                    height: IDEA_LINK_BUTTON_SIZE,
+                  }}
+                  aria-label={
+                    isLinking
+                      ? isSource
+                        ? "Noeud source"
+                        : "Relier cette idee"
+                      : "Commencer une liaison"
+                  }
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void handleIdeaAnchorClick(anchor);
+                  }}
+                >
+                  {buttonText}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>

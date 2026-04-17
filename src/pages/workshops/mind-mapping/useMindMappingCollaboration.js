@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { auth, onAuthStateChangedListener } from "../../../firebase";
 import {
+  addMindMappingConcept,
   addMindMappingComment,
   createMindMappingNote,
+  removeMindMappingConcept,
   removeMindMappingComment,
   removeMindMappingNote,
   setMindMappingStep1Description,
   subscribeMindMappingSession,
+  updateMindMappingConcept,
   updateMindMappingComment,
   updateMindMappingNote,
   upsertMindMappingParticipant,
@@ -189,6 +192,63 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
 
     return normalizedComments;
   }, [rawCommentsByNote]);
+
+  const rawConcepts =
+    activeMindMappingState?.concepts && typeof activeMindMappingState.concepts === "object"
+      ? activeMindMappingState.concepts
+      : EMPTY_OBJECT;
+
+  const concepts = useMemo(() => {
+    return Object.entries(rawConcepts)
+      .map(([conceptId, data]) => ({
+        id: String(data?.id || conceptId),
+        authorId: String(data?.authorId || ""),
+        text: data?.text ?? "",
+        from: {
+          noteId: String(data?.from?.noteId || ""),
+          ideaId: String(data?.from?.ideaId || ""),
+        },
+        to: {
+          noteId: String(data?.to?.noteId || ""),
+          ideaId: String(data?.to?.ideaId || ""),
+        },
+        createdAt: data?.createdAt || "",
+        updatedAt: data?.updatedAt || "",
+      }))
+      .filter(
+        (concept) =>
+          concept.from.noteId &&
+          concept.from.ideaId &&
+          concept.to.noteId &&
+          concept.to.ideaId
+      )
+      .sort(sortByCreatedAt);
+  }, [rawConcepts]);
+
+  const conceptsById = useMemo(
+    () =>
+      concepts.reduce((accumulator, concept) => {
+        accumulator[concept.id] = concept;
+        return accumulator;
+      }, {}),
+    [concepts]
+  );
+
+  const ideaKeySet = useMemo(() => {
+    const keys = new Set();
+
+    Object.entries(commentsByNote).forEach(([noteId, comments]) => {
+      if (!Array.isArray(comments)) return;
+
+      comments.forEach((comment) => {
+        const commentId = String(comment?.id || "");
+        if (!commentId) return;
+        keys.add(`${noteId}::${commentId}`);
+      });
+    });
+
+    return keys;
+  }, [commentsByNote]);
 
   useEffect(() => {
     if (!isEnabled || !sessionId || !participantReady || !participant?.id) return () => {};
@@ -478,6 +538,96 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
     ]
   );
 
+  const addConcept = useCallback(
+    async (payload = {}) => {
+      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) {
+        return null;
+      }
+
+      const fromNoteId = String(payload?.fromNoteId || "").trim();
+      const fromIdeaId = String(payload?.fromIdeaId || "").trim();
+      const toNoteId = String(payload?.toNoteId || "").trim();
+      const toIdeaId = String(payload?.toIdeaId || "").trim();
+
+      if (!fromNoteId || !fromIdeaId || !toNoteId || !toIdeaId) return null;
+
+      const fromKey = `${fromNoteId}::${fromIdeaId}`;
+      const toKey = `${toNoteId}::${toIdeaId}`;
+      if (!ideaKeySet.has(fromKey) || !ideaKeySet.has(toKey)) return null;
+
+      try {
+        return await addMindMappingConcept(sessionId, {
+          authorId: currentParticipantId,
+          text: payload?.text ?? "",
+          from: { noteId: fromNoteId, ideaId: fromIdeaId },
+          to: { noteId: toNoteId, ideaId: toIdeaId },
+        });
+      } catch (error) {
+        console.error("Impossible d'ajouter le concept:", error);
+        setSessionError("Le concept n'a pas pu etre ajoute.");
+        return null;
+      }
+    },
+    [
+      currentParticipantId,
+      ideaKeySet,
+      isEnabled,
+      participantReady,
+      sessionId,
+      setSessionError,
+    ]
+  );
+
+  const updateConceptText = useCallback(
+    async (conceptId, text) => {
+      if (!isEnabled || !sessionId || !participantReady || !conceptId || !currentParticipantId) {
+        return;
+      }
+
+      if (!conceptsById[conceptId]) return;
+
+      try {
+        await updateMindMappingConcept(sessionId, conceptId, { text });
+      } catch (error) {
+        console.error("Impossible de mettre a jour le concept:", error);
+        setSessionError("Le concept n'a pas pu etre mis a jour.");
+      }
+    },
+    [
+      conceptsById,
+      currentParticipantId,
+      isEnabled,
+      participantReady,
+      sessionId,
+      setSessionError,
+    ]
+  );
+
+  const removeConcept = useCallback(
+    async (conceptId) => {
+      if (!isEnabled || !sessionId || !participantReady || !conceptId || !currentParticipantId) {
+        return;
+      }
+
+      if (!conceptsById[conceptId]) return;
+
+      try {
+        await removeMindMappingConcept(sessionId, conceptId);
+      } catch (error) {
+        console.error("Impossible de supprimer le concept:", error);
+        setSessionError("Le concept n'a pas pu etre supprime.");
+      }
+    },
+    [
+      conceptsById,
+      currentParticipantId,
+      isEnabled,
+      participantReady,
+      sessionId,
+      setSessionError,
+    ]
+  );
+
   const actions = useMemo(
     () => ({
       setStep1Description,
@@ -487,13 +637,19 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
       addComment,
       updateCommentText,
       removeComment,
+      addConcept,
+      updateConceptText,
+      removeConcept,
     }),
     [
+      addConcept,
       addComment,
       addNote,
+      removeConcept,
       removeComment,
       removeNote,
       setStep1Description,
+      updateConceptText,
       updateCommentText,
       updateNoteText,
     ]
@@ -514,6 +670,7 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
     step1Description,
     notes,
     commentsByNote,
+    concepts,
     actions,
   };
 }

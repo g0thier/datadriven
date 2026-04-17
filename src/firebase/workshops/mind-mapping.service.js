@@ -248,3 +248,76 @@ export const removeMindMappingComment = async (sessionId, noteId, commentId) => 
 
   await remove(ref(database, `${toMindMappingPath(sessionId)}/commentsByNote/${noteId}/${commentId}`));
 };
+
+const normalizeConceptEndpoint = (endpoint = {}) => ({
+  noteId: String(endpoint?.noteId || "").trim(),
+  ideaId: String(endpoint?.ideaId || "").trim(),
+});
+
+/**
+ * Adds a concept link between two ideas.
+ * @param {string} sessionId - Workshop session id.
+ * @param {{authorId:string, from:{noteId:string, ideaId:string}, to:{noteId:string, ideaId:string}, text?:string}} [payload={}] - Concept payload.
+ * @returns {Promise<string>} Created concept id.
+ */
+export const addMindMappingConcept = async (sessionId, payload = {}) => {
+  const from = normalizeConceptEndpoint(payload?.from);
+  const to = normalizeConceptEndpoint(payload?.to);
+
+  if (!sessionId || !payload?.authorId || !from.noteId || !from.ideaId || !to.noteId || !to.ideaId) {
+    throw new Error("addMindMappingConcept: parametres manquants");
+  }
+
+  const conceptRef = push(ref(database, `${toMindMappingPath(sessionId)}/concepts`));
+  const conceptId = conceptRef.key;
+  if (!conceptId) {
+    throw new Error("Impossible de generer conceptId");
+  }
+
+  const now = nowIso();
+
+  await set(conceptRef, {
+    id: conceptId,
+    authorId: payload.authorId,
+    text: payload.text ?? "",
+    from,
+    to,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  return conceptId;
+};
+
+/**
+ * Updates a concept text.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} conceptId - Concept id.
+ * @param {{text?:string}} [patch={}] - Concept patch.
+ * @returns {Promise<void>} Update completion.
+ */
+export const updateMindMappingConcept = async (sessionId, conceptId, patch = {}) => {
+  if (!sessionId || !conceptId) return;
+
+  const payload = {
+    updatedAt: nowIso(),
+  };
+
+  if (Object.prototype.hasOwnProperty.call(patch, "text")) {
+    payload.text = patch.text ?? "";
+  }
+
+  await update(ref(database, `${toMindMappingPath(sessionId)}/concepts/${conceptId}`), payload);
+};
+
+/**
+ * Removes a concept.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} conceptId - Concept id.
+ * @returns {Promise<void>} Delete completion.
+ */
+export const removeMindMappingConcept = async (sessionId, conceptId) => {
+  if (!sessionId || !conceptId) return;
+
+  await remove(ref(database, `${toMindMappingPath(sessionId)}/concepts/${conceptId}`));
+};
