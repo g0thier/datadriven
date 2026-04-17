@@ -16,9 +16,11 @@ const MAX_IDEA_RING_RADIUS = Math.min(CENTER_X, CENTER_Y) - 420;
 
 const NOTE_RING_BASE_ITEM_WIDTH = 240;
 const NOTE_RING_THICKNESS = 40;
-const NOTE_RING_GAP = (NOTE_RING_THICKNESS + NOTE_RING_THICKNESS)/2 + 30 ;
+const NOTE_RING_GAP = NOTE_RING_THICKNESS + 30;
 const MIN_NOTE_RING_RADIUS = 100;
 const MAX_NOTE_RING_RADIUS = Math.min(CENTER_X, CENTER_Y) - 150;
+
+const SEGMENT_GAP = 0.02;
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -54,9 +56,10 @@ function describeArcPath({ cx, cy, radius, startAngle, endAngle, sweepFlag }) {
   const start = polarToCartesian(cx, cy, radius, startAngle);
   const end = polarToCartesian(cx, cy, radius, endAngle);
 
-  const delta = sweepFlag === 1
-    ? clockwiseDelta(startAngle, endAngle)
-    : clockwiseDelta(endAngle, startAngle);
+  const delta =
+    sweepFlag === 1
+      ? clockwiseDelta(startAngle, endAngle)
+      : clockwiseDelta(endAngle, startAngle);
 
   const largeArcFlag = delta > Math.PI ? 1 : 0;
 
@@ -85,8 +88,23 @@ function shouldFlipArcText(midAngle) {
   const angle = normalizeAngle(midAngle);
   const tangentX = -Math.sin(angle);
 
-  // On inverse uniquement quand la lecture naturelle irait de droite vers gauche.
   return tangentX < -1e-4;
+}
+
+function getTextDirection(segment) {
+  if (segment.flipText) {
+    return {
+      startAngle: segment.endAngle,
+      endAngle: segment.startAngle,
+      sweepFlag: 0,
+    };
+  }
+
+  return {
+    startAngle: segment.startAngle,
+    endAngle: segment.endAngle,
+    sweepFlag: 1,
+  };
 }
 
 function sanitizeForId(value) {
@@ -147,6 +165,44 @@ function splitLabelIntoLines(label, maxCharsPerLine, maxLines = 3) {
 
   truncated[maxLines - 1] = `${lastLine}…`;
   return truncated;
+}
+
+function buildArcSegments({ items, getWeight, getKey, segmentGap = SEGMENT_GAP }) {
+  if (!items.length) return [];
+
+  const weightedItems = items
+    .map((item, index) => ({
+      item,
+      index,
+      weight: Number(getWeight(item, index)) || 0,
+    }))
+    .filter((entry) => entry.weight > 0);
+
+  if (!weightedItems.length) return [];
+
+  const totalWeight = weightedItems.reduce((sum, entry) => sum + entry.weight, 0);
+  const itemCount = weightedItems.length;
+  const availableAngle = Math.max(2 * Math.PI - itemCount * segmentGap, Math.PI * 0.8);
+
+  let cursor = -Math.PI / 2;
+
+  return weightedItems.map(({ item, index, weight }) => {
+    const span = (weight / totalWeight) * availableAngle;
+    const startAngle = cursor + segmentGap / 2;
+    const endAngle = startAngle + span;
+    const midAngle = startAngle + span / 2;
+
+    cursor = endAngle + segmentGap / 2;
+
+    return {
+      key: getKey(item, index),
+      data: item,
+      span,
+      startAngle,
+      endAngle,
+      flipText: shouldFlipArcText(midAngle),
+    };
+  });
 }
 
 function Step4({ step, sessionTitle, collaboration }) {
@@ -246,73 +302,19 @@ function Step4({ step, sessionTitle, collaboration }) {
   const ideaArcOuterRadius = ideaRingRadius + IDEA_RING_THICKNESS / 2;
 
   const ideaArcSegments = useMemo(() => {
-    if (!ideaNodes.length) return [];
-
-    const totalWeight = ideaNodes.length;
-    const itemCount = ideaNodes.length;
-    const segmentGap = 0.02
-    const availableAngle = Math.max(2 * Math.PI - itemCount * segmentGap, Math.PI * 0.8);
-
-    let cursor = -Math.PI / 2;
-
-    return ideaNodes.map((idea, index) => {
-      const span = availableAngle / totalWeight;
-      const startAngle = cursor + segmentGap / 2;
-      const endAngle = startAngle + span;
-      const midAngle = startAngle + span / 2;
-
-      cursor = endAngle + segmentGap / 2;
-
-      return {
-        key: `${sanitizeForId(idea.noteId)}-${sanitizeForId(idea.id)}-${index}`,
-        idea,
-        startAngle,
-        endAngle,
-        midAngle,
-        flipText: shouldFlipArcText(midAngle),
-      };
+    return buildArcSegments({
+      items: ideaNodes,
+      getWeight: () => 1,
+      getKey: (idea, index) =>
+        `${sanitizeForId(idea.noteId)}-${sanitizeForId(idea.id)}-${index}`,
     });
   }, [ideaNodes]);
 
   const noteArcSegments = useMemo(() => {
-    if (!notesWithIdeas.length) return [];
-
-    const weights = notesWithIdeas.map((note) => {
-      const ideaCount = ideaCountByNote[note.id] || 0;
-      const weight = ideaCount;
-
-      return {
-        note,
-        ideaCount,
-        weight,
-      };
-    });
-
-    const totalWeight = weights.reduce((sum, item) => sum + item.weight, 0) || 1;
-    const noteCount = weights.length;
-    const segmentGap = 0.02;
-    const availableAngle = Math.max(2 * Math.PI - noteCount * segmentGap, Math.PI * 0.8);
-
-    let cursor = -Math.PI / 2;
-
-    return weights.map((item, index) => {
-      const span = (item.weight / totalWeight) * availableAngle;
-      const startAngle = cursor + segmentGap / 2;
-      const endAngle = startAngle + span;
-      const midAngle = startAngle + span / 2;
-
-      cursor = endAngle + segmentGap / 2;
-
-      return {
-        key: `${sanitizeForId(item.note.id)}-${index}`,
-        index,
-        note: item.note,
-        ideaCount: item.ideaCount,
-        startAngle,
-        endAngle,
-        midAngle,
-        flipText: shouldFlipArcText(midAngle),
-      };
+    return buildArcSegments({
+      items: notesWithIdeas,
+      getWeight: (note) => ideaCountByNote[note.id] || 0,
+      getKey: (note, index) => `${sanitizeForId(note.id)}-${index}`,
     });
   }, [ideaCountByNote, notesWithIdeas]);
 
@@ -432,13 +434,16 @@ function Step4({ step, sessionTitle, collaboration }) {
                   endAngle: segment.endAngle,
                 });
 
-                const label = String(segment.idea.text || "").trim();
-                const span = clockwiseDelta(segment.startAngle, segment.endAngle);
+                const label = String(segment.data.text || "").trim();
                 const centerRadius = ideaArcInnerRadius + IDEA_RING_THICKNESS / 2;
-                const arcLength = centerRadius * span;
-                const maxCharsPerLine = Math.max(8, Math.floor(arcLength / (IDEA_FONT_SIZE * 0.58)));
+                const arcLength = centerRadius * segment.span;
+                const maxCharsPerLine = Math.max(
+                  8,
+                  Math.floor(arcLength / (IDEA_FONT_SIZE * 0.58))
+                );
                 const lines = splitLabelIntoLines(label, maxCharsPerLine, 3);
                 const linesForDisplay = segment.flipText ? lines : [...lines].reverse();
+                const direction = getTextDirection(segment);
 
                 return (
                   <g key={segment.key}>
@@ -457,9 +462,9 @@ function Step4({ step, sessionTitle, collaboration }) {
                         cx: CENTER_X * scale,
                         cy: CENTER_Y * scale,
                         radius: lineRadius * scale,
-                        startAngle: segment.flipText ? segment.endAngle : segment.startAngle,
-                        endAngle: segment.flipText ? segment.startAngle : segment.endAngle,
-                        sweepFlag: segment.flipText ? 0 : 1,
+                        startAngle: direction.startAngle,
+                        endAngle: direction.endAngle,
+                        sweepFlag: direction.sweepFlag,
                       });
 
                       const linePathId = `mindmap-idea-arc-${segment.key}-line-${lineIndex}`;
@@ -498,18 +503,20 @@ function Step4({ step, sessionTitle, collaboration }) {
                 });
 
                 const textRadius = (noteArcInnerRadius + noteArcOuterRadius) / 2;
+                const direction = getTextDirection(segment);
 
                 const textPath = describeArcPath({
                   cx: CENTER_X * scale,
                   cy: CENTER_Y * scale,
                   radius: textRadius * scale,
-                  startAngle: segment.flipText ? segment.endAngle : segment.startAngle,
-                  endAngle: segment.flipText ? segment.startAngle : segment.endAngle,
-                  sweepFlag: segment.flipText ? 0 : 1,
+                  startAngle: direction.startAngle,
+                  endAngle: direction.endAngle,
+                  sweepFlag: direction.sweepFlag,
                 });
 
                 const textPathId = `mindmap-note-arc-${segment.key}`;
-                const label = String(segment.note.text || "").trim() || "Note vide";
+                const label = String(segment.data.text || "").trim() || "Note vide";
+                const ideaCount = ideaCountByNote[segment.data.id] || 0;
 
                 return (
                   <g key={segment.key}>
@@ -529,7 +536,7 @@ function Step4({ step, sessionTitle, collaboration }) {
                       textAnchor="middle"
                     >
                       <textPath href={`#${textPathId}`} startOffset="50%">
-                        {label} ({segment.ideaCount})
+                        {label} ({ideaCount})
                       </textPath>
                     </text>
                   </g>
@@ -549,8 +556,8 @@ function Step4({ step, sessionTitle, collaboration }) {
               <div className="bg-white border border-slate-200 rounded-2xl shadow-md p-5 min-h-36">
                 <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">Sujet</p>
                 <p className="text-gray-700 text-sm whitespace-pre-wrap">{challenge}</p>
-                </div>
               </div>
+            </div>
           </div>
         </div>
       </div>
