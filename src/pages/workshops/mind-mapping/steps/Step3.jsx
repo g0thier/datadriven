@@ -12,14 +12,14 @@ const NOTE_WIDTH = 230;
 const NOTE_HEIGHT = 160;
 const NOTE_GAP = 44;
 
-const SUBNOTE_WIDTH = 170;
+const SUBNOTE_WIDTH = 120;
 const SUBNOTE_HEIGHT = 120;
-const SUBNOTE_GAP = 24;
+const SUBNOTE_GAP = 48;
 
 const MIN_NOTE_RING_RADIUS = 340;
 const MAX_NOTE_RING_RADIUS = Math.min(CENTER_X, CENTER_Y) - 240;
 
-const MIN_SUBNOTE_RING_RADIUS = 140;
+const MIN_SUBNOTE_RING_RADIUS = 170;
 const MAX_SUBNOTE_RING_RADIUS = 300;
 
 function computeRingRadius({
@@ -164,7 +164,7 @@ function Step3({ step, sessionTitle, collaboration }) {
       <div className="bg-white rounded-2xl shadow-md p-4">
         <div className="flex items-center justify-between mb-3">
           <p className="text-sm text-gray-600">
-            {notes.length} categories • {totalSubnotes} sous-notes
+            {notes.length} categories • {totalSubnotes} idées
           </p>
 
           <div className="flex items-center gap-3">
@@ -210,11 +210,12 @@ function Step3({ step, sessionTitle, collaboration }) {
                 transformOrigin: "top left",
                 width: noteRingDiameter,
                 height: noteRingDiameter,
+                zIndex: 0,
               }}
             />
 
             <div
-              className="absolute select-none touch-none"
+              className="absolute select-none touch-none z-30 hover:z-50"
               style={{
                 transform: `translate(${(CENTER_X - CHALLENGE_WIDTH / 2) * scale}px, ${(CENTER_Y - 90) *
                   scale}px) scale(${scale})`,
@@ -254,6 +255,7 @@ function Step3({ step, sessionTitle, collaboration }) {
                         transformOrigin: "top left",
                         width: subnoteRingDiameter,
                         height: subnoteRingDiameter,
+                        zIndex: 5,
                       }}
                     />
                   )}
@@ -272,7 +274,7 @@ function Step3({ step, sessionTitle, collaboration }) {
                     return (
                       <div
                         key={comment.id}
-                        className="absolute select-none touch-none"
+                        className="absolute select-none touch-none z-10 hover:z-50 focus-within:z-50"
                         style={{
                           transform: `translate(${displayPosition.x * scale}px, ${displayPosition.y *
                             scale}px) scale(${scale})`,
@@ -283,7 +285,7 @@ function Step3({ step, sessionTitle, collaboration }) {
                         <div className="relative bg-blue-100 border border-blue-200 rounded-lg shadow-sm p-3 h-30 flex flex-col">
                           <textarea
                             className="flex-1 bg-transparent resize-none focus:outline-none text-gray-800 text-xs"
-                            placeholder="Ecrivez une sous-note..."
+                            placeholder="Ecrivez une idée..."
                             value={comment.text || ""}
                             onChange={(event) =>
                               updateComment(note.id, comment.id, event.target.value)
@@ -294,7 +296,7 @@ function Step3({ step, sessionTitle, collaboration }) {
                             type="button"
                             onClick={() => removeComment(note.id, comment.id)}
                             className="absolute top-1.5 right-1.5 text-gray-400 hover:text-red-500 text-xs"
-                            aria-label="Supprimer la sous-note"
+                            aria-label="Supprimer la idée"
                           >
                             x
                           </button>
@@ -304,7 +306,7 @@ function Step3({ step, sessionTitle, collaboration }) {
                   })}
 
                   <div
-                    className="absolute select-none touch-none"
+                    className="absolute select-none touch-none z-20 hover:z-50 focus-within:z-50"
                     style={{
                       transform: `translate(${note.displayPosition.x * scale}px, ${note.displayPosition.y *
                         scale}px) scale(${scale})`,
@@ -322,7 +324,7 @@ function Step3({ step, sessionTitle, collaboration }) {
                         onClick={() => addComment(note.id)}
                         disabled={isLoading}
                         className="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-violet-500 text-white text-sm flex items-center justify-center shadow-md hover:bg-violet-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                        aria-label="Ajouter une sous-note"
+                        aria-label="Ajouter une idée"
                       >
                         +
                       </button>
