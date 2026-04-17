@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import WorkshopStepLayout from "../../WorkshopStepLayout.jsx";
+import MaterialIcon from "../../../../components/MaterialIcon.jsx";
 
 const CANVAS_WIDTH = 3600;
 const CANVAS_HEIGHT = 2400;
 const CENTER_X = CANVAS_WIDTH / 2;
 const CENTER_Y = CANVAS_HEIGHT / 2;
-
-const CHALLENGE_WIDTH = 260;
 
 const IDEA_WIDTH = 120;
 const IDEA_RING_THICKNESS = 85;
@@ -649,6 +648,10 @@ function Step4({ step, sessionTitle, collaboration }) {
       stepLabel={step.label}
       description={step.description}
     >
+      <div className="bg-white rounded-2xl shadow-md p-6 mb-4">
+        <p className="text-gray-600 mb-1 text-sm">{challenge}</p>
+      </div>
+
       {!!syncError && (
         <p className="mb-3 text-sm text-red-600" role="alert">
           {syncError}
@@ -858,21 +861,6 @@ function Step4({ step, sessionTitle, collaboration }) {
               )}
             </svg>
 
-            <div
-              className="absolute z-40"
-              style={{
-                transform: `translate(${(CENTER_X - CHALLENGE_WIDTH / 2) * scale}px, ${(CENTER_Y - 85) *
-                  scale}px) scale(${scale})`,
-                transformOrigin: "top left",
-                width: CHALLENGE_WIDTH,
-              }}
-            >
-              <div className="bg-white border border-slate-200 rounded-2xl shadow-md p-5 min-h-36">
-                <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">Sujet</p>
-                <p className="text-gray-700 text-sm whitespace-pre-wrap">{challenge}</p>
-              </div>
-            </div>
-
             {conceptCurves.map((curve) => (
               <div
                 key={`concept-card-${curve.concept.id}`}
@@ -896,7 +884,7 @@ function Step4({ step, sessionTitle, collaboration }) {
                   onPointerDown={(event) => event.stopPropagation()}
                   onClick={(event) => event.stopPropagation()}
                 >
-                  ?
+                  <MaterialIcon name="emoji_objects" size={16} fill={1} className="text-white" />
                 </button>
 
                 <div
