@@ -21,6 +21,14 @@ const MAX_NOTE_RING_RADIUS = Math.min(CENTER_X, CENTER_Y) - 240;
 
 const MIN_SUBNOTE_RING_RADIUS = 170;
 const MAX_SUBNOTE_RING_RADIUS = 300;
+const CHALLENGE_ESTIMATED_HEIGHT = 160;
+const MAIN_RING_PAIR_GAP = 24;
+const MAIN_RING_CHALLENGE_GAP = 28;
+const SUBNOTE_CLUSTER_PADDING = 0;
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
 
 function computeRingRadius({
   itemCount,
@@ -61,6 +69,36 @@ function buildRadialPosition({
   };
 }
 
+function computeMainRingRadius({
+  noteCount,
+  noteFootprints = [],
+  baseRadius,
+  minRadius,
+  maxRadius,
+  challengeHalfDiagonal,
+}) {
+  if (noteCount <= 0) return minRadius;
+
+  const maxFootprint = noteFootprints.reduce((maxValue, value) => Math.max(maxValue, value), 0);
+  const requiredByChallenge = challengeHalfDiagonal + maxFootprint + MAIN_RING_CHALLENGE_GAP;
+
+  let requiredByPairs = minRadius;
+  if (noteCount > 1) {
+    const denominator = 2 * Math.sin(Math.PI / noteCount);
+
+    if (denominator > 0) {
+      for (let index = 0; index < noteCount; index += 1) {
+        const nextIndex = (index + 1) % noteCount;
+        const required = (noteFootprints[index] + noteFootprints[nextIndex] + MAIN_RING_PAIR_GAP) / denominator;
+        requiredByPairs = Math.max(requiredByPairs, required);
+      }
+    }
+  }
+
+  const required = Math.max(baseRadius, requiredByChallenge, requiredByPairs, minRadius);
+  return clamp(required, minRadius, maxRadius);
+}
+
 function Step3({ step, sessionTitle, collaboration }) {
   const notes = useMemo(() => collaboration?.notes ?? [], [collaboration?.notes]);
   const commentsByNote = useMemo(
@@ -92,15 +130,51 @@ function Step3({ step, sessionTitle, collaboration }) {
   }, [scale]);
 
   const noteRingRadius = useMemo(
-    () =>
-      computeRingRadius({
-        itemCount: notes.length,
+    () => {
+      const noteCount = notes.length;
+
+      const baseRadius = computeRingRadius({
+        itemCount: noteCount,
         itemWidth: NOTE_WIDTH,
         gap: NOTE_GAP,
         minRadius: MIN_NOTE_RING_RADIUS,
         maxRadius: MAX_NOTE_RING_RADIUS,
-      }),
-    [notes.length]
+      });
+
+      const subnoteHalfDiagonal = Math.hypot(SUBNOTE_WIDTH / 2, SUBNOTE_HEIGHT / 2);
+      const noteHalfDiagonal = Math.hypot(NOTE_WIDTH / 2, NOTE_HEIGHT / 2);
+
+      const noteFootprints = notes.map((note) => {
+        const comments = commentsByNote[note.id] || [];
+        const subnoteRingRadius = computeRingRadius({
+          itemCount: comments.length,
+          itemWidth: SUBNOTE_WIDTH,
+          gap: SUBNOTE_GAP,
+          minRadius: MIN_SUBNOTE_RING_RADIUS,
+          maxRadius: MAX_SUBNOTE_RING_RADIUS,
+        });
+
+        const subnoteClusterFootprint =
+          subnoteRingRadius + subnoteHalfDiagonal + SUBNOTE_CLUSTER_PADDING;
+
+        return Math.max(noteHalfDiagonal, subnoteClusterFootprint);
+      });
+
+      const challengeHalfDiagonal = Math.hypot(
+        CHALLENGE_WIDTH / 2,
+        CHALLENGE_ESTIMATED_HEIGHT / 2
+      );
+
+      return computeMainRingRadius({
+        noteCount,
+        noteFootprints,
+        baseRadius,
+        minRadius: MIN_NOTE_RING_RADIUS,
+        maxRadius: MAX_NOTE_RING_RADIUS,
+        challengeHalfDiagonal,
+      });
+    },
+    [commentsByNote, notes]
   );
   const noteRingDiameter = noteRingRadius * 2;
 
