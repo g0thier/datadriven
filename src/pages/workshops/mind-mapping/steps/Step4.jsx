@@ -205,6 +205,13 @@ function buildArcSegments({ items, getWeight, getKey, segmentGap = SEGMENT_GAP }
   });
 }
 
+function computeNoteAngularWeight({ ideaCount, totalIdeas, segmentGap = SEGMENT_GAP }) {
+  if (ideaCount <= 0 || totalIdeas <= 0) return 0;
+
+  const ideaSliceAngle = (2 * Math.PI) / totalIdeas;
+  return Math.max(ideaCount * ideaSliceAngle - segmentGap, 0);
+}
+
 function Step4({ step, sessionTitle, collaboration }) {
   const notes = useMemo(() => collaboration?.notes ?? [], [collaboration?.notes]);
   const commentsByNote = useMemo(
@@ -313,10 +320,14 @@ function Step4({ step, sessionTitle, collaboration }) {
   const noteArcSegments = useMemo(() => {
     return buildArcSegments({
       items: notesWithIdeas,
-      getWeight: (note) => ideaCountByNote[note.id] || 0,
+      getWeight: (note) =>
+        computeNoteAngularWeight({
+          ideaCount: ideaCountByNote[note.id] || 0,
+          totalIdeas,
+        }),
       getKey: (note, index) => `${sanitizeForId(note.id)}-${index}`,
     });
-  }, [ideaCountByNote, notesWithIdeas]);
+  }, [ideaCountByNote, notesWithIdeas, totalIdeas]);
 
   const startPan = (event) => {
     if (event.button !== 0) return;
