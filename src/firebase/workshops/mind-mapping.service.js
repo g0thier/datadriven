@@ -1,4 +1,4 @@
-import { onValue, ref, runTransaction } from "firebase/database";
+import { onValue, push, ref, remove, runTransaction, set, update } from "firebase/database";
 import { database } from "../index";
 
 /**
@@ -110,4 +110,67 @@ export const setMindMappingStep1Description = async (
       updatedBy: participantId || "",
     };
   });
+};
+
+/**
+ * Creates a Mind Mapping note.
+ * @param {string} sessionId - Workshop session id.
+ * @param {{authorId:string, text?:string}} [payload={}] - Note payload.
+ * @returns {Promise<string>} Created note id.
+ */
+export const createMindMappingNote = async (sessionId, payload = {}) => {
+  if (!sessionId || !payload?.authorId) {
+    throw new Error("createMindMappingNote: sessionId ou authorId manquant");
+  }
+
+  const noteRef = push(ref(database, `${toMindMappingPath(sessionId)}/notes`));
+  const noteId = noteRef.key;
+  if (!noteId) {
+    throw new Error("Impossible de generer noteId");
+  }
+
+  const now = nowIso();
+
+  await set(noteRef, {
+    id: noteId,
+    authorId: payload.authorId,
+    text: payload.text ?? "",
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  return noteId;
+};
+
+/**
+ * Updates a Mind Mapping note text.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Note id.
+ * @param {{text?:string}} [patch={}] - Note patch.
+ * @returns {Promise<void>} Update completion.
+ */
+export const updateMindMappingNote = async (sessionId, noteId, patch = {}) => {
+  if (!sessionId || !noteId) return;
+
+  const payload = {
+    updatedAt: nowIso(),
+  };
+
+  if (Object.prototype.hasOwnProperty.call(patch, "text")) {
+    payload.text = patch.text ?? "";
+  }
+
+  await update(ref(database, `${toMindMappingPath(sessionId)}/notes/${noteId}`), payload);
+};
+
+/**
+ * Removes a Mind Mapping note.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Note id.
+ * @returns {Promise<void>} Delete completion.
+ */
+export const removeMindMappingNote = async (sessionId, noteId) => {
+  if (!sessionId || !noteId) return;
+
+  await remove(ref(database, `${toMindMappingPath(sessionId)}/notes/${noteId}`));
 };

@@ -1,13 +1,27 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { auth, onAuthStateChangedListener } from "../../../firebase";
 import {
+  createMindMappingNote,
+  removeMindMappingNote,
   setMindMappingStep1Description,
   subscribeMindMappingSession,
+  updateMindMappingNote,
   upsertMindMappingParticipant,
 } from "../../../firebase/workshops/mind-mapping.service";
 
 const EMPTY_OBJECT = Object.freeze({});
 const EMPTY_ARRAY = Object.freeze([]);
+
+const sortByCreatedAt = (a, b) => {
+  const createdA = a?.createdAt || "";
+  const createdB = b?.createdAt || "";
+
+  if (createdA !== createdB) {
+    return createdA.localeCompare(createdB);
+  }
+
+  return String(a?.id || "").localeCompare(String(b?.id || ""));
+};
 
 const resolveGuestName = (guest = {}) => {
   const firstName = String(guest?.firstName || "").trim();
@@ -121,6 +135,32 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
     isEnabled && lastSnapshotSessionId === sessionId ? mindMappingState : null;
   const rawStep1Description = String(activeMindMappingState?.step1?.description || "");
 
+  const rawNotes =
+    activeMindMappingState?.notes && typeof activeMindMappingState.notes === "object"
+      ? activeMindMappingState.notes
+      : EMPTY_OBJECT;
+
+  const notes = useMemo(() => {
+    return Object.entries(rawNotes)
+      .map(([noteId, data]) => ({
+        id: String(data?.id || noteId),
+        authorId: String(data?.authorId || ""),
+        text: data?.text ?? "",
+        createdAt: data?.createdAt || "",
+        updatedAt: data?.updatedAt || "",
+      }))
+      .sort(sortByCreatedAt);
+  }, [rawNotes]);
+
+  const notesById = useMemo(
+    () =>
+      notes.reduce((accumulator, note) => {
+        accumulator[note.id] = note;
+        return accumulator;
+      }, {}),
+    [notes]
+  );
+
   useEffect(() => {
     if (!isEnabled || !sessionId || !participantReady || !participant?.id) return () => {};
 
@@ -192,6 +232,10 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
       });
     });
 
+    notes.forEach((note) => {
+      addParticipant(note.authorId);
+    });
+
     if (participant?.id) {
       addParticipant(participant.id, participant);
     }
@@ -199,7 +243,7 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
     return Array.from(participantMap.values()).sort((a, b) =>
       String(a.name || "").localeCompare(String(b.name || ""), "fr")
     );
-  }, [participant, remoteParticipants, sessionGuests]);
+  }, [notes, participant, remoteParticipants, sessionGuests]);
 
   const participantById = useMemo(() => {
     return participants.reduce((accumulator, currentParticipant) => {
@@ -242,11 +286,84 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
     ]
   );
 
+  const addNote = useCallback(
+    async (options = {}) => {
+      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return null;
+
+      const text = options?.text ?? "";
+
+      try {
+        return await createMindMappingNote(sessionId, {
+          authorId: currentParticipantId,
+          text,
+        });
+      } catch (error) {
+        console.error("Impossible d'ajouter la note:", error);
+        setSessionError("La note n'a pas pu etre ajoutee.");
+        return null;
+      }
+    },
+    [currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]
+  );
+
+  const updateNoteText = useCallback(
+    async (noteId, text) => {
+      if (!isEnabled || !sessionId || !participantReady || !noteId || !currentParticipantId) {
+        return;
+      }
+
+      if (!notesById[noteId]) return;
+
+      try {
+        await updateMindMappingNote(sessionId, noteId, { text });
+      } catch (error) {
+        console.error("Impossible de mettre a jour la note:", error);
+        setSessionError("La note n'a pas pu etre mise a jour.");
+      }
+    },
+    [
+      currentParticipantId,
+      isEnabled,
+      notesById,
+      participantReady,
+      sessionId,
+      setSessionError,
+    ]
+  );
+
+  const removeNote = useCallback(
+    async (noteId) => {
+      if (!isEnabled || !sessionId || !participantReady || !noteId || !currentParticipantId) {
+        return;
+      }
+
+      if (!notesById[noteId]) return;
+
+      try {
+        await removeMindMappingNote(sessionId, noteId);
+      } catch (error) {
+        console.error("Impossible de supprimer la note:", error);
+        setSessionError("La note n'a pas pu etre supprimee.");
+      }
+    },
+    [
+      currentParticipantId,
+      isEnabled,
+      notesById,
+      participantReady,
+      sessionId,
+      setSessionError,
+    ]
+  );
+
   const actions = useMemo(
     () => ({
       setStep1Description,
+      addNote,
+      updateNoteText,
+      removeNote,
     }),
-    [setStep1Description]
+    [addNote, removeNote, setStep1Description, updateNoteText]
   );
 
   const effectiveSyncError = isEnabled && syncErrorSessionId === sessionId ? syncError : "";
@@ -262,6 +379,7 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
     participants,
     getParticipantLabel,
     step1Description,
+    notes,
     actions,
   };
 }
