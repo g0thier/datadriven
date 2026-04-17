@@ -11,6 +11,8 @@ const CHALLENGE_WIDTH = 260;
 const IDEA_WIDTH = 120;
 const IDEA_HEIGHT = 120;
 const IDEA_GAP = 24;
+const IDEA_RING_THICKNESS = 84;
+const IDEA_FONT_SIZE = 10;
 const MIN_IDEA_RING_RADIUS = 280;
 const MAX_IDEA_RING_RADIUS = Math.min(CENTER_X, CENTER_Y) - 420;
 
@@ -33,30 +35,6 @@ function computeRingRadius({ itemCount, itemWidth, gap, minRadius, maxRadius }) 
   const adaptiveRadius = requiredCircumference / (2 * Math.PI);
 
   return clamp(adaptiveRadius, minRadius, maxRadius);
-}
-
-function buildRadialPosition({
-  index,
-  total,
-  radius,
-  centerX,
-  centerY,
-  itemWidth,
-  itemHeight,
-}) {
-  if (total <= 0) {
-    return {
-      x: centerX - itemWidth / 2,
-      y: centerY - itemHeight / 2,
-    };
-  }
-
-  const angle = -Math.PI / 2 + (2 * Math.PI * index) / total;
-
-  return {
-    x: centerX + radius * Math.cos(angle) - itemWidth / 2,
-    y: centerY + radius * Math.sin(angle) - itemHeight / 2,
-  };
 }
 
 function polarToCartesian(cx, cy, radius, angle) {
@@ -117,6 +95,62 @@ function shouldFlipArcText(midAngle) {
 
 function sanitizeForId(value) {
   return String(value || "note").replace(/[^a-zA-Z0-9_-]/g, "-");
+}
+
+function splitLabelIntoLines(label, maxCharsPerLine, maxLines = 3) {
+  const safeMaxChars = Math.max(6, maxCharsPerLine);
+  const words = String(label || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (!words.length) {
+    return ["Idée vide"];
+  }
+
+  const lines = [];
+  let currentLine = "";
+
+  words.forEach((word) => {
+    if (!currentLine) {
+      currentLine = word;
+      return;
+    }
+
+    const candidate = `${currentLine} ${word}`;
+    if (candidate.length <= safeMaxChars) {
+      currentLine = candidate;
+      return;
+    }
+
+    lines.push(currentLine);
+    currentLine = word;
+  });
+
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  if (lines.length <= maxLines) {
+    return lines;
+  }
+
+  const truncated = lines.slice(0, maxLines);
+  let lastLine = truncated[maxLines - 1];
+  const remainingWords = lines
+    .slice(maxLines)
+    .join(" ")
+    .split(/\s+/)
+    .filter(Boolean);
+
+  for (const word of remainingWords) {
+    const candidate = `${lastLine} ${word}`;
+    if (candidate.length > safeMaxChars - 1) break;
+    lastLine = candidate;
+  }
+
+  truncated[maxLines - 1] = `${lastLine}…`;
+  return truncated;
 }
 
 function Step4({ step, sessionTitle, collaboration }) {
@@ -209,21 +243,39 @@ function Step4({ step, sessionTitle, collaboration }) {
 
   const noteArcInnerRadius = noteRingRadius - NOTE_RING_THICKNESS / 2;
   const noteArcOuterRadius = noteRingRadius + NOTE_RING_THICKNESS / 2;
+  const ideaArcInnerRadius = ideaRingRadius - IDEA_RING_THICKNESS / 2;
+  const ideaArcOuterRadius = ideaRingRadius + IDEA_RING_THICKNESS / 2;
 
-  const ideasWithDisplayPosition = useMemo(() => {
-    return ideaNodes.map((idea, index) => ({
-      ...idea,
-      displayPosition: buildRadialPosition({
-        index,
-        total: ideaNodes.length,
-        radius: ideaRingRadius,
-        centerX: CENTER_X,
-        centerY: CENTER_Y,
-        itemWidth: IDEA_WIDTH,
-        itemHeight: IDEA_HEIGHT,
-      }),
-    }));
-  }, [ideaNodes, ideaRingRadius]);
+  const ideaArcSegments = useMemo(() => {
+    if (!ideaNodes.length) return [];
+
+    const totalWeight = ideaNodes.length;
+    const itemCount = ideaNodes.length;
+    const preferredGap = 0.014;
+    const maximumGap = (2 * Math.PI) / (itemCount * 3);
+    const segmentGap = Math.min(preferredGap, maximumGap);
+    const availableAngle = Math.max(2 * Math.PI - itemCount * segmentGap, Math.PI * 0.8);
+
+    let cursor = -Math.PI / 2;
+
+    return ideaNodes.map((idea, index) => {
+      const span = availableAngle / totalWeight;
+      const startAngle = cursor + segmentGap / 2;
+      const endAngle = startAngle + span;
+      const midAngle = startAngle + span / 2;
+
+      cursor = endAngle + segmentGap / 2;
+
+      return {
+        key: `${sanitizeForId(idea.noteId)}-${sanitizeForId(idea.id)}-${index}`,
+        idea,
+        startAngle,
+        endAngle,
+        midAngle,
+        flipText: shouldFlipArcText(midAngle),
+      };
+    });
+  }, [ideaNodes]);
 
   const noteArcSegments = useMemo(() => {
     if (!notes.length) return [];
@@ -377,6 +429,70 @@ function Step4({ step, sessionTitle, collaboration }) {
               width={CANVAS_WIDTH * scale}
               height={CANVAS_HEIGHT * scale}
             >
+              {ideaArcSegments.map((segment) => {
+                const arcPath = describeDonutArc({
+                  cx: CENTER_X * scale,
+                  cy: CENTER_Y * scale,
+                  innerRadius: ideaArcInnerRadius * scale,
+                  outerRadius: ideaArcOuterRadius * scale,
+                  startAngle: segment.startAngle,
+                  endAngle: segment.endAngle,
+                });
+
+                const label = String(segment.idea.text || "").trim();
+                const span = clockwiseDelta(segment.startAngle, segment.endAngle);
+                const centerRadius = ideaArcInnerRadius + IDEA_RING_THICKNESS / 2;
+                const arcLength = centerRadius * span;
+                const maxCharsPerLine = Math.max(8, Math.floor(arcLength / (IDEA_FONT_SIZE * 0.58)));
+                const lines = splitLabelIntoLines(label, maxCharsPerLine, 3);
+
+                return (
+                  <g key={segment.key}>
+                    <path
+                      d={arcPath}
+                      className="fill-sky-50 stroke-sky-200"
+                      strokeWidth={1.2 * scale}
+                    />
+
+                    {lines.map((line, lineIndex) => {
+                      const lineRadius =
+                        ideaArcInnerRadius +
+                        (IDEA_RING_THICKNESS * (lineIndex + 1)) / (lines.length + 1);
+
+                      const linePath = describeArcPath({
+                        cx: CENTER_X * scale,
+                        cy: CENTER_Y * scale,
+                        radius: lineRadius * scale,
+                        startAngle: segment.flipText ? segment.endAngle : segment.startAngle,
+                        endAngle: segment.flipText ? segment.startAngle : segment.endAngle,
+                        sweepFlag: segment.flipText ? 0 : 1,
+                      });
+
+                      const linePathId = `mindmap-idea-arc-${segment.key}-line-${lineIndex}`;
+
+                      return (
+                        <g key={linePathId}>
+                          <path id={linePathId} d={linePath} fill="none" />
+
+                          <text
+                            className="fill-sky-700 font-medium"
+                            style={{
+                              fontSize: `${IDEA_FONT_SIZE * scale}px`,
+                              letterSpacing: `${0.01 * scale}em`,
+                            }}
+                            textAnchor="middle"
+                          >
+                            <textPath href={`#${linePathId}`} startOffset="50%">
+                              {line}
+                            </textPath>
+                          </text>
+                        </g>
+                      );
+                    })}
+                  </g>
+                );
+              })}
+
               {noteArcSegments.map((segment) => {
                 const arcPath = describeDonutArc({
                   cx: CENTER_X * scale,
@@ -439,30 +555,8 @@ function Step4({ step, sessionTitle, collaboration }) {
               <div className="bg-white border border-slate-200 rounded-2xl shadow-md p-5 min-h-36">
                 <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">Sujet</p>
                 <p className="text-gray-700 text-sm whitespace-pre-wrap">{challenge}</p>
-              </div>
-            </div>
-
-            <div className="pointer-events-none">
-              {ideasWithDisplayPosition.map((idea) => (
-                <div
-                  key={idea.key}
-                  className="absolute z-20"
-                  style={{
-                    transform: `translate(${idea.displayPosition.x * scale}px, ${idea.displayPosition.y *
-                      scale}px) scale(${scale})`,
-                    transformOrigin: "top left",
-                    width: IDEA_WIDTH,
-                    height: IDEA_HEIGHT,
-                  }}
-                >
-                  <div className="bg-sky-50 border border-sky-200 rounded-xl shadow-sm px-3 py-3 h-[120px] flex items-start">
-                    <p className="text-slate-700 text-xs font-medium leading-4 whitespace-pre-wrap">
-                      {idea.text || <span className="text-slate-400">Idée vide</span>}
-                    </p>
-                  </div>
                 </div>
-              ))}
-            </div>
+              </div>
           </div>
         </div>
       </div>
