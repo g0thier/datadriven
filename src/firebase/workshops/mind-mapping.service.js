@@ -174,3 +174,77 @@ export const removeMindMappingNote = async (sessionId, noteId) => {
 
   await remove(ref(database, `${toMindMappingPath(sessionId)}/notes/${noteId}`));
 };
+
+/**
+ * Adds a sub-note (comment) to a note.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Parent note id.
+ * @param {{authorId:string, text?:string}} [payload={}] - Comment payload.
+ * @returns {Promise<string>} Created comment id.
+ */
+export const addMindMappingComment = async (sessionId, noteId, payload = {}) => {
+  if (!sessionId || !noteId || !payload?.authorId) {
+    throw new Error("addMindMappingComment: sessionId, noteId ou authorId manquant");
+  }
+
+  const commentRef = push(ref(database, `${toMindMappingPath(sessionId)}/commentsByNote/${noteId}`));
+  const commentId = commentRef.key;
+  if (!commentId) {
+    throw new Error("Impossible de generer commentId");
+  }
+
+  const now = nowIso();
+
+  await set(commentRef, {
+    id: commentId,
+    authorId: payload.authorId,
+    text: payload.text ?? "",
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  return commentId;
+};
+
+/**
+ * Updates a sub-note (comment) text.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Parent note id.
+ * @param {string} commentId - Comment id.
+ * @param {{text?:string}} [patch={}] - Comment patch.
+ * @returns {Promise<void>} Update completion.
+ */
+export const updateMindMappingComment = async (
+  sessionId,
+  noteId,
+  commentId,
+  patch = {}
+) => {
+  if (!sessionId || !noteId || !commentId) return;
+
+  const payload = {
+    updatedAt: nowIso(),
+  };
+
+  if (Object.prototype.hasOwnProperty.call(patch, "text")) {
+    payload.text = patch.text ?? "";
+  }
+
+  await update(
+    ref(database, `${toMindMappingPath(sessionId)}/commentsByNote/${noteId}/${commentId}`),
+    payload
+  );
+};
+
+/**
+ * Removes a sub-note (comment).
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Parent note id.
+ * @param {string} commentId - Comment id.
+ * @returns {Promise<void>} Delete completion.
+ */
+export const removeMindMappingComment = async (sessionId, noteId, commentId) => {
+  if (!sessionId || !noteId || !commentId) return;
+
+  await remove(ref(database, `${toMindMappingPath(sessionId)}/commentsByNote/${noteId}/${commentId}`));
+};

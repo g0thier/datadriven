@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { auth, onAuthStateChangedListener } from "../../../firebase";
 import {
+  addMindMappingComment,
   createMindMappingNote,
+  removeMindMappingComment,
   removeMindMappingNote,
   setMindMappingStep1Description,
   subscribeMindMappingSession,
+  updateMindMappingComment,
   updateMindMappingNote,
   upsertMindMappingParticipant,
 } from "../../../firebase/workshops/mind-mapping.service";
@@ -160,6 +163,32 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
       }, {}),
     [notes]
   );
+
+  const rawCommentsByNote =
+    activeMindMappingState?.commentsByNote &&
+    typeof activeMindMappingState.commentsByNote === "object"
+      ? activeMindMappingState.commentsByNote
+      : EMPTY_OBJECT;
+
+  const commentsByNote = useMemo(() => {
+    const normalizedComments = {};
+
+    Object.entries(rawCommentsByNote).forEach(([noteId, comments]) => {
+      if (!comments || typeof comments !== "object") return;
+
+      normalizedComments[noteId] = Object.entries(comments)
+        .map(([commentId, data]) => ({
+          id: String(data?.id || commentId),
+          authorId: String(data?.authorId || ""),
+          text: data?.text ?? "",
+          createdAt: data?.createdAt || "",
+          updatedAt: data?.updatedAt || "",
+        }))
+        .sort(sortByCreatedAt);
+    });
+
+    return normalizedComments;
+  }, [rawCommentsByNote]);
 
   useEffect(() => {
     if (!isEnabled || !sessionId || !participantReady || !participant?.id) return () => {};
@@ -356,14 +385,118 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
     ]
   );
 
+  const addComment = useCallback(
+    async (noteId, text = "") => {
+      if (!isEnabled || !sessionId || !participantReady || !noteId || !currentParticipantId) {
+        return null;
+      }
+
+      if (!notesById[noteId]) return null;
+
+      try {
+        return await addMindMappingComment(sessionId, noteId, {
+          authorId: currentParticipantId,
+          text,
+        });
+      } catch (error) {
+        console.error("Impossible d'ajouter la sous-note:", error);
+        setSessionError("La sous-note n'a pas pu etre ajoutee.");
+        return null;
+      }
+    },
+    [
+      currentParticipantId,
+      isEnabled,
+      notesById,
+      participantReady,
+      sessionId,
+      setSessionError,
+    ]
+  );
+
+  const updateCommentText = useCallback(
+    async (noteId, commentId, text) => {
+      if (
+        !isEnabled ||
+        !sessionId ||
+        !participantReady ||
+        !noteId ||
+        !commentId ||
+        !currentParticipantId
+      ) {
+        return;
+      }
+
+      if (!notesById[noteId]) return;
+
+      try {
+        await updateMindMappingComment(sessionId, noteId, commentId, { text });
+      } catch (error) {
+        console.error("Impossible de mettre a jour la sous-note:", error);
+        setSessionError("La sous-note n'a pas pu etre mise a jour.");
+      }
+    },
+    [
+      currentParticipantId,
+      isEnabled,
+      notesById,
+      participantReady,
+      sessionId,
+      setSessionError,
+    ]
+  );
+
+  const removeComment = useCallback(
+    async (noteId, commentId) => {
+      if (
+        !isEnabled ||
+        !sessionId ||
+        !participantReady ||
+        !noteId ||
+        !commentId ||
+        !currentParticipantId
+      ) {
+        return;
+      }
+
+      if (!notesById[noteId]) return;
+
+      try {
+        await removeMindMappingComment(sessionId, noteId, commentId);
+      } catch (error) {
+        console.error("Impossible de supprimer la sous-note:", error);
+        setSessionError("La sous-note n'a pas pu etre supprimee.");
+      }
+    },
+    [
+      currentParticipantId,
+      isEnabled,
+      notesById,
+      participantReady,
+      sessionId,
+      setSessionError,
+    ]
+  );
+
   const actions = useMemo(
     () => ({
       setStep1Description,
       addNote,
       updateNoteText,
       removeNote,
+      addComment,
+      updateCommentText,
+      removeComment,
     }),
-    [addNote, removeNote, setStep1Description, updateNoteText]
+    [
+      addComment,
+      addNote,
+      removeComment,
+      removeNote,
+      setStep1Description,
+      updateCommentText,
+      updateNoteText,
+    ]
   );
 
   const effectiveSyncError = isEnabled && syncErrorSessionId === sessionId ? syncError : "";
@@ -380,6 +513,7 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
     getParticipantLabel,
     step1Description,
     notes,
+    commentsByNote,
     actions,
   };
 }

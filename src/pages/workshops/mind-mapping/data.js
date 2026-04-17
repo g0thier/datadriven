@@ -10,8 +10,8 @@ import mindMappingImg from "../../../assets/workshops/mind-mapping.png";
 
 import Step1 from "./steps/Step1.jsx";
 import Step2 from "./steps/Step2.jsx";
-/*
 import Step3 from "./steps/Step3.jsx";
+/*
 import Step4 from "./steps/Step4.jsx";
 import Step5 from "./steps/Step5.jsx";
 import Step6 from "./steps/Step6.jsx";
@@ -75,15 +75,15 @@ export const mindMapping = {
     },
     {
       label: "Branches principales",
-      duration: 500,
+      duration: 5,
       component: Step2,
       description: description2,
       audioEnabled: false,
     },
     {
       label: "Développement des idées",
-      duration: 10,
-      //component: Step3,
+      duration: 1000,
+      component: Step3,
       description: description3,
       audioEnabled: false,
     },
