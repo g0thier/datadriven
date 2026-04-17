@@ -9,29 +9,25 @@ const CENTER_Y = CANVAS_HEIGHT / 2;
 const CHALLENGE_WIDTH = 260;
 
 const IDEA_WIDTH = 120;
-const IDEA_HEIGHT = 120;
-const IDEA_GAP = 24;
-const IDEA_RING_THICKNESS = 84;
-const IDEA_FONT_SIZE = 10;
-const MIN_IDEA_RING_RADIUS = 280;
+const IDEA_RING_THICKNESS = 85;
+const IDEA_FONT_SIZE = 12;
+const MIN_IDEA_RING_RADIUS = 300;
 const MAX_IDEA_RING_RADIUS = Math.min(CENTER_X, CENTER_Y) - 420;
 
 const NOTE_RING_BASE_ITEM_WIDTH = 240;
-const NOTE_RING_BASE_GAP = 52;
 const NOTE_RING_THICKNESS = 40;
-const NOTE_RING_GAP = 180;
-const MIN_NOTE_RING_RADIUS = 520;
+const NOTE_RING_GAP = (NOTE_RING_THICKNESS + NOTE_RING_THICKNESS)/2 + 30 ;
+const MIN_NOTE_RING_RADIUS = 100;
 const MAX_NOTE_RING_RADIUS = Math.min(CENTER_X, CENTER_Y) - 150;
-const MIN_EMPTY_NOTE_WEIGHT = 0.25;
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
-function computeRingRadius({ itemCount, itemWidth, gap, minRadius, maxRadius }) {
+function computeRingRadius({ itemCount, itemWidth, minRadius, maxRadius }) {
   if (itemCount <= 1) return minRadius;
 
-  const requiredCircumference = itemCount * (itemWidth + gap);
+  const requiredCircumference = itemCount * itemWidth;
   const adaptiveRadius = requiredCircumference / (2 * Math.PI);
 
   return clamp(adaptiveRadius, minRadius, maxRadius);
@@ -213,12 +209,16 @@ function Step4({ step, sessionTitle, collaboration }) {
     }, {});
   }, [commentsByNote, notes]);
 
+  const notesWithIdeas = useMemo(
+    () => notes.filter((note) => (ideaCountByNote[note.id] || 0) > 0),
+    [ideaCountByNote, notes]
+  );
+
   const ideaRingRadius = useMemo(
     () =>
       computeRingRadius({
         itemCount: ideaNodes.length,
         itemWidth: IDEA_WIDTH,
-        gap: IDEA_GAP,
         minRadius: MIN_IDEA_RING_RADIUS,
         maxRadius: MAX_IDEA_RING_RADIUS,
       }),
@@ -227,9 +227,8 @@ function Step4({ step, sessionTitle, collaboration }) {
 
   const noteRingRadius = useMemo(() => {
     const baseRadius = computeRingRadius({
-      itemCount: notes.length,
+      itemCount: notesWithIdeas.length,
       itemWidth: NOTE_RING_BASE_ITEM_WIDTH,
-      gap: NOTE_RING_BASE_GAP,
       minRadius: MIN_NOTE_RING_RADIUS,
       maxRadius: MAX_NOTE_RING_RADIUS,
     });
@@ -239,7 +238,7 @@ function Step4({ step, sessionTitle, collaboration }) {
       MIN_NOTE_RING_RADIUS,
       MAX_NOTE_RING_RADIUS
     );
-  }, [ideaRingRadius, notes.length]);
+  }, [ideaRingRadius, notesWithIdeas.length]);
 
   const noteArcInnerRadius = noteRingRadius - NOTE_RING_THICKNESS / 2;
   const noteArcOuterRadius = noteRingRadius + NOTE_RING_THICKNESS / 2;
@@ -251,9 +250,7 @@ function Step4({ step, sessionTitle, collaboration }) {
 
     const totalWeight = ideaNodes.length;
     const itemCount = ideaNodes.length;
-    const preferredGap = 0.014;
-    const maximumGap = (2 * Math.PI) / (itemCount * 3);
-    const segmentGap = Math.min(preferredGap, maximumGap);
+    const segmentGap = 0.02
     const availableAngle = Math.max(2 * Math.PI - itemCount * segmentGap, Math.PI * 0.8);
 
     let cursor = -Math.PI / 2;
@@ -278,11 +275,11 @@ function Step4({ step, sessionTitle, collaboration }) {
   }, [ideaNodes]);
 
   const noteArcSegments = useMemo(() => {
-    if (!notes.length) return [];
+    if (!notesWithIdeas.length) return [];
 
-    const weights = notes.map((note) => {
+    const weights = notesWithIdeas.map((note) => {
       const ideaCount = ideaCountByNote[note.id] || 0;
-      const weight = totalIdeas > 0 ? Math.max(ideaCount, MIN_EMPTY_NOTE_WEIGHT) : 1;
+      const weight = ideaCount;
 
       return {
         note,
@@ -293,11 +290,7 @@ function Step4({ step, sessionTitle, collaboration }) {
 
     const totalWeight = weights.reduce((sum, item) => sum + item.weight, 0) || 1;
     const noteCount = weights.length;
-
-    const preferredGap = 0.02;
-    const maximumGap = (2 * Math.PI) / (noteCount * 3);
-    const segmentGap = Math.min(preferredGap, maximumGap);
-
+    const segmentGap = 0.02;
     const availableAngle = Math.max(2 * Math.PI - noteCount * segmentGap, Math.PI * 0.8);
 
     let cursor = -Math.PI / 2;
@@ -321,7 +314,7 @@ function Step4({ step, sessionTitle, collaboration }) {
         flipText: shouldFlipArcText(midAngle),
       };
     });
-  }, [ideaCountByNote, notes, totalIdeas]);
+  }, [ideaCountByNote, notesWithIdeas]);
 
   const startPan = (event) => {
     if (event.button !== 0) return;
@@ -389,7 +382,7 @@ function Step4({ step, sessionTitle, collaboration }) {
       <div className="bg-white rounded-2xl shadow-md p-4">
         <div className="flex items-center justify-between mb-3 gap-3">
           <p className="text-sm text-gray-600">
-            {notes.length} notes • {totalIdeas} idées
+            {notesWithIdeas.length} notes • {totalIdeas} idées
           </p>
 
           <div className="flex items-center gap-3">
@@ -398,7 +391,7 @@ function Step4({ step, sessionTitle, collaboration }) {
             <input
               type="range"
               min="20"
-              max="130"
+              max="100"
               step="5"
               value={zoom}
               onChange={(event) => setZoom(Number(event.target.value))}
