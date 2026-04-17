@@ -16,14 +16,14 @@ const SUBNOTE_WIDTH = 120;
 const SUBNOTE_HEIGHT = 120;
 const SUBNOTE_GAP = 48;
 
-const MIN_NOTE_RING_RADIUS = 340;
+const MIN_NOTE_RING_RADIUS = 230;
 const MAX_NOTE_RING_RADIUS = Math.min(CENTER_X, CENTER_Y) - 240;
 
-const MIN_SUBNOTE_RING_RADIUS = 170;
+const MIN_SUBNOTE_RING_RADIUS = 200;
 const MAX_SUBNOTE_RING_RADIUS = 300;
 const CHALLENGE_ESTIMATED_HEIGHT = 160;
 const MAIN_RING_PAIR_GAP = 24;
-const MAIN_RING_CHALLENGE_GAP = 28;
+const MAIN_RING_CHALLENGE_GAP = 8;
 const SUBNOTE_CLUSTER_PADDING = 0;
 
 function clamp(value, min, max) {
@@ -319,20 +319,18 @@ function Step3({ step, sessionTitle, collaboration }) {
 
               return (
                 <div key={note.id}>
-                  {!!comments.length && (
-                    <div
-                      className="absolute rounded-full border border-dashed border-blue-300/70 pointer-events-none"
-                      style={{
-                        transform: `translate(${(noteCenterX - subnoteRingRadius) * scale}px, ${(noteCenterY -
-                          subnoteRingRadius) *
-                          scale}px) scale(${scale})`,
-                        transformOrigin: "top left",
-                        width: subnoteRingDiameter,
-                        height: subnoteRingDiameter,
-                        zIndex: 5,
-                      }}
-                    />
-                  )}
+                  <div
+                    className="absolute rounded-full border border-dashed border-blue-300/70 pointer-events-none"
+                    style={{
+                      transform: `translate(${(noteCenterX - subnoteRingRadius) * scale}px, ${(noteCenterY -
+                        subnoteRingRadius) *
+                        scale}px) scale(${scale})`,
+                      transformOrigin: "top left",
+                      width: subnoteRingDiameter,
+                      height: subnoteRingDiameter,
+                      zIndex: 5,
+                    }}
+                  />
 
                   {comments.map((comment, commentIndex) => {
                     const displayPosition = buildRadialPosition({
