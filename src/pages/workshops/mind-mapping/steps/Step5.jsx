@@ -15,21 +15,21 @@ import {
   describeDonutArc,
   describeQuadraticPath,
   getTextDirection,
+  polarToCartesian,
   splitLabelIntoLines,
-} from "./step4Canvas/geometry.js";
-import useMindMapCanvasModel from "./step4Canvas/useMindMapCanvasModel.js";
-import useMindMapCanvasInteractions from "./step4Canvas/useMindMapCanvasInteractions.js";
+} from "./mindMapCanvas/geometry.js";
+import useMindMapCanvasModel from "./mindMapCanvas/useMindMapCanvasModel.js";
+import useMindMapCanvasInteractions from "./mindMapCanvas/useMindMapCanvasInteractions.js";
 
-const VOTE_RING_POSITIONS = [
-  { x: 0, y: -22 },
-  { x: 16, y: -16 },
-  { x: 22, y: 0 },
-  { x: 16, y: 16 },
-  { x: 0, y: 22 },
-  { x: -16, y: 16 },
-  { x: -22, y: 0 },
-  { x: -16, y: -16 },
-];
+function buildCircularOffsets({ count, radius, startAngle = -Math.PI / 2 }) {
+  if (!count || count <= 0) return [];
+
+  return Array.from({ length: count }).map((_, index) => {
+    const angle = startAngle + (2 * Math.PI * index) / count;
+    const point = polarToCartesian(0, 0, radius, angle);
+    return { x: point.x, y: point.y };
+  });
+}
 
 function Step5({ step, sessionTitle, collaboration }) {
   const notes = useMemo(() => collaboration?.notes ?? [], [collaboration?.notes]);
@@ -318,13 +318,18 @@ function Step5({ step, sessionTitle, collaboration }) {
                 ...(hasMine ? [{ mine: true }] : []),
                 ...Array.from({ length: otherCount }).map(() => ({ mine: false })),
               ];
+              const visibleVoteDots = voteDots.slice(0, 8);
+              const voteRingPositions = buildCircularOffsets({
+                count: visibleVoteDots.length,
+                radius: 22,
+              });
               const visibleOtherCount = Math.min(otherCount, 4);
 
               return (
                 <div
                   key={`mindmap-step5-concept-card-${curve.concept.id}`}
                   data-mindmap-interactive="true"
-                  className="group absolute z-[80] hover:z-[150] focus-within:z-[150]"
+                  className="group absolute z-80 hover:z-150 focus-within:z-150"
                   style={{
                     transform: `translate(${(curve.cardCenter.x - IDEA_LINK_BUTTON_SIZE / 2) * scale}px, ${(curve
                       .cardCenter.y - IDEA_LINK_BUTTON_SIZE / 2) * scale}px) scale(${scale})`,
@@ -336,8 +341,8 @@ function Step5({ step, sessionTitle, collaboration }) {
                   onClick={(event) => event.stopPropagation()}
                 >
                   <div className="absolute inset-0 pointer-events-none">
-                    {voteDots.slice(0, VOTE_RING_POSITIONS.length).map((dot, index) => {
-                      const position = VOTE_RING_POSITIONS[index];
+                    {visibleVoteDots.map((dot, index) => {
+                      const position = voteRingPositions[index];
                       return (
                         <div
                           key={`mindmap-step5-vote-ring-${curve.concept.id}-${index}`}
@@ -428,7 +433,7 @@ function Step5({ step, sessionTitle, collaboration }) {
             {ideaAnchors.map((anchor) => (
               <div
                 key={`mindmap-step5-idea-anchor-${anchor.ideaKey}`}
-                className="absolute z-[60] pointer-events-none"
+                className="absolute z-60 pointer-events-none"
                 style={{
                   transform: `translate(${(anchor.x - IDEA_LINK_BUTTON_SIZE / 2) * scale}px, ${(anchor.y -
                     IDEA_LINK_BUTTON_SIZE / 2) * scale}px) scale(${scale})`,

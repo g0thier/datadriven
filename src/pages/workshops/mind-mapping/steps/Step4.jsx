@@ -16,9 +16,9 @@ import {
   describeQuadraticPath,
   getTextDirection,
   splitLabelIntoLines,
-} from "./step4Canvas/geometry.js";
-import useMindMapCanvasModel from "./step4Canvas/useMindMapCanvasModel.js";
-import useMindMapCanvasInteractions from "./step4Canvas/useMindMapCanvasInteractions.js";
+} from "./mindMapCanvas/geometry.js";
+import useMindMapCanvasModel from "./mindMapCanvas/useMindMapCanvasModel.js";
+import useMindMapCanvasInteractions from "./mindMapCanvas/useMindMapCanvasInteractions.js";
 
 function Step4({ step, sessionTitle, collaboration }) {
   const notes = useMemo(() => collaboration?.notes ?? [], [collaboration?.notes]);
@@ -301,7 +301,7 @@ function Step4({ step, sessionTitle, collaboration }) {
               <div
                 key={`concept-card-${curve.concept.id}`}
                 data-mindmap-interactive="true"
-                className="group absolute z-[80] hover:z-[150] focus-within:z-[150]"
+                className="group absolute z-80 hover:z-150 focus-within:z-150"
                 style={{
                   transform: `translate(${(curve.cardCenter.x - IDEA_LINK_BUTTON_SIZE / 2) * scale}px, ${(curve
                     .cardCenter.y - IDEA_LINK_BUTTON_SIZE / 2) * scale}px) scale(${scale})`,
@@ -375,7 +375,7 @@ function Step4({ step, sessionTitle, collaboration }) {
                   type="button"
                   data-mindmap-interactive="true"
                   disabled={isLoading}
-                  className={`absolute z-[70] w-7 h-7 rounded-full text-sm font-semibold flex items-center justify-center shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed ${buttonClass} ${
+                  className={`absolute z-70 w-7 h-7 rounded-full text-sm font-semibold flex items-center justify-center shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed ${buttonClass} ${
                     isLinking && !isSource ? "border border-orange-300" : "text-white"
                   }`}
                   style={{
