@@ -101,82 +101,88 @@ function Step6({ step, sessionTitle, collaboration }) {
     setReformulationAction?.(conceptId, nextText);
   };
 
+  const votedConceptCount = rankedConceptCards.length;
+
   return (
     <WorkshopStepLayout
       title={sessionTitle}
       stepLabel={step.label}
       description={step.description}
     >
-      <div className="bg-white rounded-2xl shadow-md p-6 mb-4">
-        <p className="text-gray-600 mb-1 text-sm">{challenge}</p>
+      <div className="space-y-6">
+        <div className="bg-white rounded-2xl shadow-md p-6">
+          <h2 className="text-lg font-semibold text-gray-700 mb-2">Demande formulee</h2>
+          <p className="text-gray-600 whitespace-pre-wrap">{challenge}</p>
+        </div>
+
+        {!!syncError && (
+          <p className="text-sm text-red-600" role="alert">
+            {syncError}
+          </p>
+        )}
+
+        {votedConceptCount === 0 ? (
+          <div className="bg-white rounded-2xl shadow-md p-8 text-center text-gray-500">
+            Aucun concept avec gommette n'est disponible pour le moment.
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {rankedConceptCards.map((item, index) => (
+              <article key={item.concept.id} className="bg-white rounded-2xl shadow-md p-6">
+                <div className="flex items-center justify-between mb-4 gap-3">
+                  <h3 className="text-base font-semibold text-gray-800">Concept #{index + 1}</h3>
+                  <span className="text-xs text-gray-500">
+                    {item.voteCount} vote{item.voteCount > 1 ? "s" : ""}
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 xl:grid-cols-5 gap-3">
+                    <section className="rounded-xl border border-yellow-200 bg-yellow-50 p-3">
+                      <p className="text-xs uppercase tracking-wide text-yellow-700 mb-1">Note 1</p>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{item.fromNoteText}</p>
+                    </section>
+
+                    <section className="rounded-xl border border-blue-200 bg-blue-50 p-3">
+                      <p className="text-xs uppercase tracking-wide text-blue-700 mb-1">Idee 1</p>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{item.fromIdeaText}</p>
+                    </section>
+
+                    <section className="rounded-xl border border-orange-200 bg-orange-50 p-3">
+                      <p className="text-xs uppercase tracking-wide text-orange-700 mb-1">Concept</p>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{item.conceptText}</p>
+                    </section>
+
+                    <section className="rounded-xl border border-blue-200 bg-blue-50 p-3">
+                      <p className="text-xs uppercase tracking-wide text-blue-700 mb-1">Idee 2</p>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{item.toIdeaText}</p>
+                    </section>
+
+                    <section className="rounded-xl border border-yellow-200 bg-yellow-50 p-3">
+                      <p className="text-xs uppercase tracking-wide text-yellow-700 mb-1">Note 2</p>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{item.toNoteText}</p>
+                    </section>
+                  </div>
+
+                  <textarea
+                    className="w-full h-28 p-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Reformuler l'idee finale..."
+                    value={item.reformulationText}
+                    onChange={(event) =>
+                      handleReformulationChange(
+                        item.concept.id,
+                        event.target.value,
+                        item.reformulationText
+                      )
+                    }
+                    disabled={isLoading}
+                  />
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
       </div>
-
-      {!!syncError && (
-        <p className="mb-3 text-sm text-red-600" role="alert">
-          {syncError}
-        </p>
-      )}
-
-      {rankedConceptCards.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-md p-8 text-center text-gray-500">
-          Aucun concept avec gommette pour le moment.
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {rankedConceptCards.map((item) => (
-            <article key={item.concept.id} className="bg-white rounded-2xl shadow-md p-4">
-              <div className="flex items-center justify-between gap-3 mb-4">
-                <h3 className="text-sm font-semibold text-gray-800">Concept</h3>
-                <span className="inline-flex items-center rounded-full bg-emerald-100 text-emerald-700 px-3 py-1 text-xs font-semibold">
-                  {item.voteCount} vote{item.voteCount > 1 ? "s" : ""}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 xl:grid-cols-5 gap-3">
-                <section className="rounded-xl border border-yellow-200 bg-yellow-100 p-3">
-                  <p className="text-xs uppercase tracking-wide text-yellow-700 mb-1">Note 1</p>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{item.fromNoteText}</p>
-                </section>
-
-                <section className="rounded-xl border border-blue-200 bg-blue-100 p-3">
-                  <p className="text-xs uppercase tracking-wide text-blue-700 mb-1">Idee 1</p>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{item.fromIdeaText}</p>
-                </section>
-
-                <section className="rounded-xl border border-orange-200 bg-orange-100 p-3">
-                  <p className="text-xs uppercase tracking-wide text-orange-700 mb-1">Concept</p>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{item.conceptText}</p>
-                </section>
-
-                <section className="rounded-xl border border-blue-200 bg-blue-100 p-3">
-                  <p className="text-xs uppercase tracking-wide text-blue-700 mb-1">Idee 2</p>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{item.toIdeaText}</p>
-                </section>
-
-                <section className="rounded-xl border border-yellow-200 bg-yellow-100 p-3">
-                  <p className="text-xs uppercase tracking-wide text-yellow-700 mb-1">Note 2</p>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{item.toNoteText}</p>
-                </section>
-              </div>
-
-              <textarea
-                  className="w-full h-28 p-3 mt-3 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
-                  placeholder="Reformuler l'idee finale..."
-                  value={item.reformulationText}
-                  onChange={(event) =>
-                  handleReformulationChange(
-                      item.concept.id,
-                      event.target.value,
-                      item.reformulationText
-                  )
-                  }
-                  disabled={isLoading}
-              />
-
-            </article>
-          ))}
-        </div>
-      )}
     </WorkshopStepLayout>
   );
 }
