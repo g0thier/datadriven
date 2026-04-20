@@ -9,6 +9,7 @@ import {
   removeMindMappingNote,
   setMindMappingStep1Description,
   subscribeMindMappingSession,
+  toggleMindMappingConceptVote,
   updateMindMappingConcept,
   updateMindMappingComment,
   updateMindMappingNote,
@@ -17,6 +18,7 @@ import {
 
 const EMPTY_OBJECT = Object.freeze({});
 const EMPTY_ARRAY = Object.freeze([]);
+const MAX_STICKERS = 3;
 
 const sortByCreatedAt = (a, b) => {
   const createdA = a?.createdAt || "";
@@ -233,6 +235,7 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
       }, {}),
     [concepts]
   );
+  const conceptIdsSet = useMemo(() => new Set(concepts.map((concept) => concept.id)), [concepts]);
 
   const ideaKeySet = useMemo(() => {
     const keys = new Set();
@@ -351,6 +354,61 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
 
   const currentParticipantId = participant?.id || "";
   const step1Description = rawStep1Description;
+  const rawVotesByParticipant =
+    activeMindMappingState?.votesByParticipant &&
+    typeof activeMindMappingState.votesByParticipant === "object"
+      ? activeMindMappingState.votesByParticipant
+      : EMPTY_OBJECT;
+
+  const votesByParticipant = useMemo(() => {
+    const normalizedVotes = {};
+
+    Object.entries(rawVotesByParticipant).forEach(([participantId, votes]) => {
+      if (!votes || typeof votes !== "object") return;
+
+      const voteMap = {};
+
+      Object.entries(votes).forEach(([conceptId, enabled]) => {
+        if (!enabled) return;
+        if (!conceptIdsSet.has(conceptId)) return;
+        voteMap[conceptId] = true;
+      });
+
+      if (Object.keys(voteMap).length > 0) {
+        normalizedVotes[participantId] = voteMap;
+      }
+    });
+
+    return normalizedVotes;
+  }, [conceptIdsSet, rawVotesByParticipant]);
+
+  const votesByConcept = useMemo(() => {
+    const groupedVotes = {};
+    concepts.forEach((concept) => {
+      groupedVotes[concept.id] = new Set();
+    });
+
+    Object.entries(votesByParticipant).forEach(([participantId, votes]) => {
+      Object.entries(votes).forEach(([conceptId, enabled]) => {
+        if (!enabled) return;
+        if (!groupedVotes[conceptId]) return;
+        groupedVotes[conceptId].add(participantId);
+      });
+    });
+
+    return groupedVotes;
+  }, [concepts, votesByParticipant]);
+
+  const myVotes = currentParticipantId ? votesByParticipant[currentParticipantId] || EMPTY_OBJECT : EMPTY_OBJECT;
+  const myVoteCount = useMemo(() => {
+    return Object.entries(myVotes).reduce((count, [conceptId, enabled]) => {
+      if (!enabled) return count;
+      if (!conceptIdsSet.has(conceptId)) return count;
+      return count + 1;
+    }, 0);
+  }, [conceptIdsSet, myVotes]);
+
+  const remainingVotes = Math.max(0, MAX_STICKERS - myVoteCount);
 
   const setStep1Description = useCallback(
     async (description, previousDescription = step1Description) => {
@@ -628,6 +686,37 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
     ]
   );
 
+  const toggleConceptVote = useCallback(
+    async (conceptId) => {
+      if (!isEnabled || !sessionId || !participantReady || !conceptId || !currentParticipantId) {
+        return { committed: false, votes: {} };
+      }
+
+      if (!conceptIdsSet.has(conceptId)) {
+        return { committed: false, votes: {} };
+      }
+
+      try {
+        return await toggleMindMappingConceptVote(sessionId, currentParticipantId, conceptId, {
+          maxVotes: MAX_STICKERS,
+          validConceptIds: conceptIdsSet,
+        });
+      } catch (error) {
+        console.error("Impossible de modifier le vote concept:", error);
+        setSessionError("Le vote concept n'a pas pu etre enregistre.");
+        return { committed: false, votes: {} };
+      }
+    },
+    [
+      conceptIdsSet,
+      currentParticipantId,
+      isEnabled,
+      participantReady,
+      sessionId,
+      setSessionError,
+    ]
+  );
+
   const actions = useMemo(
     () => ({
       setStep1Description,
@@ -640,6 +729,7 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
       addConcept,
       updateConceptText,
       removeConcept,
+      toggleConceptVote,
     }),
     [
       addConcept,
@@ -649,6 +739,7 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
       removeComment,
       removeNote,
       setStep1Description,
+      toggleConceptVote,
       updateConceptText,
       updateCommentText,
       updateNoteText,
@@ -671,6 +762,11 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
     notes,
     commentsByNote,
     concepts,
+    votesByParticipant,
+    votesByConcept,
+    myVoteCount,
+    remainingVotes,
+    maxStickers: MAX_STICKERS,
     actions,
   };
 }

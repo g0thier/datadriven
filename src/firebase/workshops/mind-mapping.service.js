@@ -10,6 +10,7 @@ import { database } from "../index";
  */
 
 const nowIso = () => new Date().toISOString();
+const MIND_MAPPING_MAX_STICKERS = 3;
 
 const toMindMappingPath = (sessionId) => `workshopSessions/${sessionId}/mindMapping`;
 
@@ -320,4 +321,61 @@ export const removeMindMappingConcept = async (sessionId, conceptId) => {
   if (!sessionId || !conceptId) return;
 
   await remove(ref(database, `${toMindMappingPath(sessionId)}/concepts/${conceptId}`));
+};
+
+/**
+ * Toggles a participant vote on a concept with optional max-votes guard.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} participantId - Participant id.
+ * @param {string} conceptId - Concept id.
+ * @param {{maxVotes?:number, validConceptIds?:Set<string>}} [options={}] - Voting options.
+ * @returns {Promise<{committed:boolean, votes:Object}>} Transaction result and resulting votes.
+ */
+export const toggleMindMappingConceptVote = async (
+  sessionId,
+  participantId,
+  conceptId,
+  options = {}
+) => {
+  if (!sessionId || !participantId || !conceptId) {
+    return { committed: false, votes: {} };
+  }
+
+  const maxVotes = Number.isFinite(options?.maxVotes)
+    ? options.maxVotes
+    : MIND_MAPPING_MAX_STICKERS;
+  const validConceptIds =
+    options?.validConceptIds instanceof Set ? options.validConceptIds : null;
+
+  const votesRef = ref(
+    database,
+    `${toMindMappingPath(sessionId)}/votesByParticipant/${participantId}`
+  );
+
+  const result = await runTransaction(votesRef, (current) => {
+    const nextVotes = current && typeof current === "object" ? { ...current } : {};
+
+    if (nextVotes[conceptId]) {
+      delete nextVotes[conceptId];
+      return Object.keys(nextVotes).length > 0 ? nextVotes : null;
+    }
+
+    const usedVotes = Object.entries(nextVotes).reduce((count, [id, enabled]) => {
+      if (!enabled) return count;
+      if (validConceptIds && !validConceptIds.has(id)) return count;
+      return count + 1;
+    }, 0);
+
+    if (usedVotes >= maxVotes) {
+      return;
+    }
+
+    nextVotes[conceptId] = true;
+    return nextVotes;
+  });
+
+  return {
+    committed: result.committed,
+    votes: result.snapshot.exists() ? result.snapshot.val() : {},
+  };
 };
