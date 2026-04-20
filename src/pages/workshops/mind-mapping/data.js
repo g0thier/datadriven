@@ -101,7 +101,7 @@ export const mindMapping = {
     },
     {
       label: "Synthèse",
-      duration: 50000,
+      duration: 5,
       component: Step6,
       description: description6,
       audioEnabled: true,
