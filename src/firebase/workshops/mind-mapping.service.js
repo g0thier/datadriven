@@ -324,6 +324,24 @@ export const removeMindMappingConcept = async (sessionId, conceptId) => {
 };
 
 /**
+ * Sets the reformulation text associated with a concept.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} participantId - Editor participant id.
+ * @param {string} conceptId - Concept id.
+ * @param {string} text - Reformulation text.
+ * @returns {Promise<void>} Update completion.
+ */
+export const setReformulation = async (sessionId, participantId, conceptId, text) => {
+  if (!sessionId || !conceptId) return;
+
+  await update(ref(database, `${toMindMappingPath(sessionId)}/reformulationsByConcept/${conceptId}`), {
+    text: text ?? "",
+    updatedAt: nowIso(),
+    updatedBy: participantId || "",
+  });
+};
+
+/**
  * Toggles a participant vote on a concept with optional max-votes guard.
  * @param {string} sessionId - Workshop session id.
  * @param {string} participantId - Participant id.

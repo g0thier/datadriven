@@ -13,9 +13,7 @@ import Step2 from "./steps/Step2.jsx";
 import Step3 from "./steps/Step3.jsx";
 import Step4 from "./steps/Step4.jsx";
 import Step5 from "./steps/Step5.jsx";
-/*
 import Step6 from "./steps/Step6.jsx";
-*/
 
 const description1 = [
   "Le facilitateur définit le sujet central.",
@@ -96,15 +94,15 @@ export const mindMapping = {
     },
     {
       label: "Sélection des concepts",
-      duration: 5000,
+      duration: 5,
       component: Step5,
       description: description5,
       audioEnabled: true,
     },
     {
       label: "Synthèse",
-      duration: 5,
-      //component: Step6,
+      duration: 50000,
+      component: Step6,
       description: description6,
       audioEnabled: true,
     },

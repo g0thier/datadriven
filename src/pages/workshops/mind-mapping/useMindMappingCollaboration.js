@@ -7,6 +7,7 @@ import {
   removeMindMappingConcept,
   removeMindMappingComment,
   removeMindMappingNote,
+  setReformulation as setMindMappingReformulation,
   setMindMappingStep1Description,
   subscribeMindMappingSession,
   toggleMindMappingConceptVote,
@@ -398,6 +399,22 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
 
     return groupedVotes;
   }, [concepts, votesByParticipant]);
+  const rawReformulationsByConcept =
+    activeMindMappingState?.reformulationsByConcept &&
+    typeof activeMindMappingState.reformulationsByConcept === "object"
+      ? activeMindMappingState.reformulationsByConcept
+      : EMPTY_OBJECT;
+
+  const reformulationsByConcept = useMemo(() => {
+    return concepts.reduce((accumulator, concept) => {
+      accumulator[concept.id] = {
+        text: String(rawReformulationsByConcept?.[concept.id]?.text || ""),
+        updatedAt: String(rawReformulationsByConcept?.[concept.id]?.updatedAt || ""),
+        updatedBy: String(rawReformulationsByConcept?.[concept.id]?.updatedBy || ""),
+      };
+      return accumulator;
+    }, {});
+  }, [concepts, rawReformulationsByConcept]);
 
   const myVotes = currentParticipantId ? votesByParticipant[currentParticipantId] || EMPTY_OBJECT : EMPTY_OBJECT;
   const myVoteCount = useMemo(() => {
@@ -717,6 +734,31 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
     ]
   );
 
+  const setReformulation = useCallback(
+    async (conceptId, text) => {
+      if (!isEnabled || !sessionId || !participantReady || !conceptId || !currentParticipantId) {
+        return;
+      }
+
+      if (!conceptsById[conceptId]) return;
+
+      try {
+        await setMindMappingReformulation(sessionId, currentParticipantId, conceptId, text);
+      } catch (error) {
+        console.error("Impossible de mettre a jour la reformulation:", error);
+        setSessionError("La reformulation n'a pas pu etre enregistree.");
+      }
+    },
+    [
+      conceptsById,
+      currentParticipantId,
+      isEnabled,
+      participantReady,
+      sessionId,
+      setSessionError,
+    ]
+  );
+
   const actions = useMemo(
     () => ({
       setStep1Description,
@@ -730,6 +772,7 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
       updateConceptText,
       removeConcept,
       toggleConceptVote,
+      setReformulation,
     }),
     [
       addConcept,
@@ -739,6 +782,7 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
       removeComment,
       removeNote,
       setStep1Description,
+      setReformulation,
       toggleConceptVote,
       updateConceptText,
       updateCommentText,
@@ -764,6 +808,7 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
     concepts,
     votesByParticipant,
     votesByConcept,
+    reformulationsByConcept,
     myVoteCount,
     remainingVotes,
     maxStickers: MAX_STICKERS,
