@@ -9,14 +9,28 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { auth, onAuthStateChangedListener } from "../../../firebase";
 import {
+  createSpeedBoatBrakeNote,
+  removeSpeedBoatBrakeNote,
   setSpeedBoatStep1Description,
   setSpeedBoatStep2Objective,
   subscribeSpeedBoatSession,
+  updateSpeedBoatBrakeNote,
   upsertSpeedBoatParticipant,
 } from "../../../firebase/workshops/speed-boat.service";
 
 const EMPTY_OBJECT = Object.freeze({});
 const EMPTY_ARRAY = Object.freeze([]);
+
+const sortByCreatedAt = (a, b) => {
+  const createdA = a?.createdAt || "";
+  const createdB = b?.createdAt || "";
+
+  if (createdA !== createdB) {
+    return createdA.localeCompare(createdB);
+  }
+
+  return String(a?.id || "").localeCompare(String(b?.id || ""));
+};
 
 const resolveGuestName = (guest = {}) => {
   const firstName = String(guest?.firstName || "").trim();
@@ -139,6 +153,11 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
     isEnabled && lastSnapshotSessionId === sessionId ? speedBoatState : null;
   const rawStep1Description = String(activeSpeedBoatState?.step1?.description || "");
   const rawStep2Objective = String(activeSpeedBoatState?.step2?.objective || "");
+  const rawBrakeNotes =
+    activeSpeedBoatState?.notesByType?.brakes &&
+    typeof activeSpeedBoatState.notesByType.brakes === "object"
+      ? activeSpeedBoatState.notesByType.brakes
+      : EMPTY_OBJECT;
 
   useEffect(() => {
     if (!isEnabled || !sessionId || !participantReady || !participant?.id) return () => {};
@@ -168,6 +187,27 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
     typeof activeSpeedBoatState.participants === "object"
       ? activeSpeedBoatState.participants
       : EMPTY_OBJECT;
+
+  const brakeNotes = useMemo(() => {
+    return Object.entries(rawBrakeNotes)
+      .map(([noteId, data]) => ({
+        id: String(data?.id || noteId),
+        authorId: String(data?.authorId || ""),
+        text: data?.text ?? "",
+        createdAt: data?.createdAt || "",
+        updatedAt: data?.updatedAt || "",
+      }))
+      .sort(sortByCreatedAt);
+  }, [rawBrakeNotes]);
+
+  const brakeNotesById = useMemo(
+    () =>
+      brakeNotes.reduce((accumulator, note) => {
+        accumulator[note.id] = note;
+        return accumulator;
+      }, {}),
+    [brakeNotes]
+  );
 
   const participants = useMemo(() => {
     const participantMap = new Map();
@@ -212,6 +252,10 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
       });
     });
 
+    brakeNotes.forEach((note) => {
+      addParticipant(note.authorId);
+    });
+
     if (participant?.id) {
       addParticipant(participant.id, participant);
     }
@@ -219,7 +263,7 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
     return Array.from(participantMap.values()).sort((a, b) =>
       String(a.name || "").localeCompare(String(b.name || ""), "fr")
     );
-  }, [participant, remoteParticipants, sessionGuests]);
+  }, [brakeNotes, participant, remoteParticipants, sessionGuests]);
 
   const participantById = useMemo(() => {
     return participants.reduce((accumulator, currentParticipant) => {
@@ -240,6 +284,10 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
   const currentParticipantId = participant?.id || "";
   const step1Description = rawStep1Description;
   const step2Objective = rawStep2Objective;
+  const myBrakeNotes = useMemo(
+    () => brakeNotes.filter((note) => note.authorId === currentParticipantId),
+    [brakeNotes, currentParticipantId]
+  );
 
   const setStep1Description = useCallback(
     async (description, previousDescription = step1Description) => {
@@ -287,12 +335,85 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
     ]
   );
 
+  const addBrakeNote = useCallback(
+    async (options = {}) => {
+      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return null;
+
+      try {
+        return await createSpeedBoatBrakeNote(sessionId, {
+          authorId: currentParticipantId,
+          text: options?.text ?? "",
+        });
+      } catch (error) {
+        console.error("Impossible d'ajouter le frein:", error);
+        setSessionError("Le frein n'a pas pu être ajouté.");
+        return null;
+      }
+    },
+    [currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]
+  );
+
+  const updateBrakeNoteText = useCallback(
+    async (noteId, text) => {
+      if (!isEnabled || !sessionId || !participantReady || !noteId || !currentParticipantId) {
+        return;
+      }
+
+      const note = brakeNotesById[noteId];
+      if (!note || note.authorId !== currentParticipantId) return;
+
+      try {
+        await updateSpeedBoatBrakeNote(sessionId, noteId, { text });
+      } catch (error) {
+        console.error("Impossible de mettre à jour le frein:", error);
+        setSessionError("Le frein n'a pas pu être mis à jour.");
+      }
+    },
+    [
+      brakeNotesById,
+      currentParticipantId,
+      isEnabled,
+      participantReady,
+      sessionId,
+      setSessionError,
+    ]
+  );
+
+  const removeBrakeNote = useCallback(
+    async (noteId) => {
+      if (!isEnabled || !sessionId || !participantReady || !noteId || !currentParticipantId) {
+        return;
+      }
+
+      const note = brakeNotesById[noteId];
+      if (!note || note.authorId !== currentParticipantId) return;
+
+      try {
+        await removeSpeedBoatBrakeNote(sessionId, noteId);
+      } catch (error) {
+        console.error("Impossible de supprimer le frein:", error);
+        setSessionError("Le frein n'a pas pu être supprimé.");
+      }
+    },
+    [
+      brakeNotesById,
+      currentParticipantId,
+      isEnabled,
+      participantReady,
+      sessionId,
+      setSessionError,
+    ]
+  );
+
   const actions = useMemo(
     () => ({
       setStep1Description,
       setStep2Objective,
+      addBrakeNote,
+      updateBrakeNoteText,
+      removeBrakeNote,
     }),
-    [setStep1Description, setStep2Objective]
+    [addBrakeNote, removeBrakeNote, setStep1Description, setStep2Objective, updateBrakeNoteText]
   );
 
   const effectiveSyncError =
@@ -311,6 +432,8 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
     getParticipantLabel,
     step1Description,
     step2Objective,
+    brakeNotes,
+    myBrakeNotes,
     actions,
   };
 }

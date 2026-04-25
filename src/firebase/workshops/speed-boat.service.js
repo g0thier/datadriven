@@ -1,4 +1,4 @@
-import { onValue, ref, runTransaction } from "firebase/database";
+import { onValue, push, ref, runTransaction, set, update } from "firebase/database";
 import { database } from "../index";
 
 /**
@@ -185,5 +185,73 @@ export const setSpeedBoatStep2Objective = async (
       updatedAt: nowIso(),
       updatedBy: participantId || "",
     };
+  });
+};
+
+/**
+ * Creates a Speed Boat brake note in notesByType/brakes.
+ * @param {string} sessionId - Workshop session id.
+ * @param {{authorId:string, text?:string}} [payload={}] - Brake note payload.
+ * @returns {Promise<string>} Created note id.
+ */
+export const createSpeedBoatBrakeNote = async (sessionId, payload = {}) => {
+  if (!sessionId || !payload?.authorId) {
+    throw new Error("createSpeedBoatBrakeNote: sessionId ou authorId manquant");
+  }
+
+  const noteRef = push(ref(database, `${toSpeedBoatPath(sessionId)}/notesByType/brakes`));
+  const noteId = noteRef.key;
+  if (!noteId) {
+    throw new Error("Impossible de générer noteId");
+  }
+
+  const now = nowIso();
+
+  await set(noteRef, {
+    id: noteId,
+    authorId: payload.authorId,
+    text: payload.text ?? "",
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  return noteId;
+};
+
+/**
+ * Updates a Speed Boat brake note.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Brake note id.
+ * @param {{text?:string}} [patch={}] - Brake note patch.
+ * @returns {Promise<void>} Update completion.
+ */
+export const updateSpeedBoatBrakeNote = async (sessionId, noteId, patch = {}) => {
+  if (!sessionId || !noteId) return;
+
+  const payload = {
+    updatedAt: nowIso(),
+  };
+
+  if (Object.prototype.hasOwnProperty.call(patch, "text")) {
+    payload.text = patch.text ?? "";
+  }
+
+  await update(
+    ref(database, `${toSpeedBoatPath(sessionId)}/notesByType/brakes/${noteId}`),
+    payload
+  );
+};
+
+/**
+ * Removes a Speed Boat brake note.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Brake note id.
+ * @returns {Promise<void>} Delete completion.
+ */
+export const removeSpeedBoatBrakeNote = async (sessionId, noteId) => {
+  if (!sessionId || !noteId) return;
+
+  await update(ref(database), {
+    [`${toSpeedBoatPath(sessionId)}/notesByType/brakes/${noteId}`]: null,
   });
 };
