@@ -135,3 +135,55 @@ export const setSpeedBoatStep1Description = async (
     };
   });
 };
+
+/**
+ * Sets step-2 objective for the session board.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} participantId - Editor participant id.
+ * @param {string} objective - Step objective text.
+ * @param {{expectedPreviousObjective?:string}} [options={}] - Concurrency guards.
+ * @returns {Promise<void>} Update completion.
+ */
+export const setSpeedBoatStep2Objective = async (
+  sessionId,
+  participantId,
+  objective,
+  options = {}
+) => {
+  if (!sessionId) return;
+
+  const nextObjective = String(objective ?? "");
+  const hasExpectedPreviousObjective = Object.prototype.hasOwnProperty.call(
+    options,
+    "expectedPreviousObjective"
+  );
+  const expectedPreviousObjective = hasExpectedPreviousObjective
+    ? String(options.expectedPreviousObjective ?? "")
+    : null;
+
+  await runTransaction(ref(database, `${toSpeedBoatPath(sessionId)}/step2`), (current) => {
+    const currentData = current && typeof current === "object" ? current : {};
+    const currentObjective = String(currentData.objective ?? "");
+
+    // Prevent non-empty objectives from being cleared by stale or implicit client writes.
+    if (nextObjective === "" && currentObjective !== "") {
+      return;
+    }
+
+    const shouldRejectStaleClear =
+      nextObjective === "" &&
+      expectedPreviousObjective !== null &&
+      expectedPreviousObjective !== currentObjective &&
+      currentObjective !== "";
+
+    if (shouldRejectStaleClear) {
+      return;
+    }
+
+    return {
+      objective: nextObjective,
+      updatedAt: nowIso(),
+      updatedBy: participantId || "",
+    };
+  });
+};

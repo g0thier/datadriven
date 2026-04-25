@@ -10,6 +10,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { auth, onAuthStateChangedListener } from "../../../firebase";
 import {
   setSpeedBoatStep1Description,
+  setSpeedBoatStep2Objective,
   subscribeSpeedBoatSession,
   upsertSpeedBoatParticipant,
 } from "../../../firebase/workshops/speed-boat.service";
@@ -137,6 +138,7 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
   const activeSpeedBoatState =
     isEnabled && lastSnapshotSessionId === sessionId ? speedBoatState : null;
   const rawStep1Description = String(activeSpeedBoatState?.step1?.description || "");
+  const rawStep2Objective = String(activeSpeedBoatState?.step2?.objective || "");
 
   useEffect(() => {
     if (!isEnabled || !sessionId || !participantReady || !participant?.id) return () => {};
@@ -237,6 +239,7 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
 
   const currentParticipantId = participant?.id || "";
   const step1Description = rawStep1Description;
+  const step2Objective = rawStep2Objective;
 
   const setStep1Description = useCallback(
     async (description, previousDescription = step1Description) => {
@@ -261,11 +264,35 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
     ]
   );
 
+  const setStep2Objective = useCallback(
+    async (objective, previousObjective = step2Objective) => {
+      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
+
+      try {
+        await setSpeedBoatStep2Objective(sessionId, currentParticipantId, objective, {
+          expectedPreviousObjective: previousObjective,
+        });
+      } catch (error) {
+        console.error("Impossible de mettre à jour l'objectif:", error);
+        setSessionError("L'objectif n'a pas pu être enregistré.");
+      }
+    },
+    [
+      currentParticipantId,
+      isEnabled,
+      participantReady,
+      sessionId,
+      setSessionError,
+      step2Objective,
+    ]
+  );
+
   const actions = useMemo(
     () => ({
       setStep1Description,
+      setStep2Objective,
     }),
-    [setStep1Description]
+    [setStep1Description, setStep2Objective]
   );
 
   const effectiveSyncError =
@@ -283,6 +310,7 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
     participants,
     getParticipantLabel,
     step1Description,
+    step2Objective,
     actions,
   };
 }
