@@ -7,9 +7,9 @@
  */
 
 import speedBoatImg from "../../../assets/workshops/speed-boat.png";
+import Step1 from "./steps/Step1.jsx";
 
 /*
-import Step1 from "./steps/Step1.jsx";
 import Step2 from "./steps/Step2.jsx";
 import Step3 from "./steps/Step3.jsx";
 import Step4 from "./steps/Step4.jsx";
@@ -76,7 +76,7 @@ export const speedBoat = {
     {
       label: "Introduction du défi",
       duration: 5,
-      //component: Step1,
+      component: Step1,
       description: description1,
       audioEnabled: true,
     },
