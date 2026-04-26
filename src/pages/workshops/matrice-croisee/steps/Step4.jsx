@@ -388,7 +388,7 @@ export default function Step4({ step, sessionTitle, collaboration, session }) {
                                         ))}
                                       </div>
 
-                                      <p className="text-gray-700 text-xs whitespace-pre-wrap break-words">
+                                      <p className="text-gray-700 text-xs whitespace-pre-wrap wrap-break-word">
                                         {note.text || <span className="text-gray-400">—</span>}
                                       </p>
                                     </article>
