@@ -220,7 +220,7 @@ export default function Step8({ step, sessionTitle, collaboration }) {
             {rankedBrakes.map((brake, index) => (
               <article key={brake.id} className="rounded-xl border border-red-200 bg-red-50 p-4">
                 <div className="flex items-start justify-between gap-3 mb-2">
-                  <span className="text-sm font-semibold text-gray-700">FREIN #{index + 1}</span>
+                  <span className="text-sm font-semibold text-gray-700">FREIN {index + 1}</span>
                   <span className="text-xs text-gray-500">
                     {brake.voteCount} vote{brake.voteCount > 1 ? "s" : ""}
                   </span>
