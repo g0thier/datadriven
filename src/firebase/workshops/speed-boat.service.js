@@ -255,3 +255,38 @@ export const removeSpeedBoatBrakeNote = async (sessionId, noteId) => {
     [`${toSpeedBoatPath(sessionId)}/notesByType/brakes/${noteId}`]: null,
   });
 };
+
+/**
+ * Normalizes note position with numeric fallback coordinates.
+ * @param {{x?:number, y?:number}} [position={}] - Raw position.
+ * @param {{x:number, y:number}} [fallback={x:40,y:40}] - Fallback coordinates.
+ * @returns {{x:number, y:number}} Normalized position.
+ */
+const normalizePosition = (position = {}, fallback = { x: 40, y: 40 }) => {
+  const x = Number(position?.x);
+  const y = Number(position?.y);
+
+  return {
+    x: Number.isFinite(x) ? x : fallback.x,
+    y: Number.isFinite(y) ? y : fallback.y,
+  };
+};
+
+/**
+ * Sets the position of a Speed Boat brake note.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Brake note id.
+ * @param {{x?:number,y?:number}} [position={}] - Next note position.
+ * @returns {Promise<void>} Update completion.
+ */
+export const setSpeedBoatBrakeNotePosition = async (sessionId, noteId, position = {}) => {
+  if (!sessionId || !noteId) return;
+
+  await update(
+    ref(database, `${toSpeedBoatPath(sessionId)}/notesByType/brakes/${noteId}`),
+    {
+      position: normalizePosition(position),
+      updatedAt: nowIso(),
+    }
+  );
+};

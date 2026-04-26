@@ -11,6 +11,7 @@ import { auth, onAuthStateChangedListener } from "../../../firebase";
 import {
   createSpeedBoatBrakeNote,
   removeSpeedBoatBrakeNote,
+  setSpeedBoatBrakeNotePosition,
   setSpeedBoatStep1Description,
   setSpeedBoatStep2Objective,
   subscribeSpeedBoatSession,
@@ -30,6 +31,26 @@ const sortByCreatedAt = (a, b) => {
   }
 
   return String(a?.id || "").localeCompare(String(b?.id || ""));
+};
+
+const buildGridPosition = (index = 0) => {
+  const col = index % 5;
+  const row = Math.floor(index / 5);
+
+  return {
+    x: 40 + col * 290,
+    y: 40 + row * 220,
+  };
+};
+
+const normalizePosition = (position = {}, fallback = buildGridPosition(0)) => {
+  const x = Number(position?.x);
+  const y = Number(position?.y);
+
+  return {
+    x: Number.isFinite(x) ? x : fallback.x,
+    y: Number.isFinite(y) ? y : fallback.y,
+  };
 };
 
 const resolveGuestName = (guest = {}) => {
@@ -190,10 +211,11 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
 
   const brakeNotes = useMemo(() => {
     return Object.entries(rawBrakeNotes)
-      .map(([noteId, data]) => ({
+      .map(([noteId, data], index) => ({
         id: String(data?.id || noteId),
         authorId: String(data?.authorId || ""),
         text: data?.text ?? "",
+        position: normalizePosition(data?.position, buildGridPosition(index)),
         createdAt: data?.createdAt || "",
         updatedAt: data?.updatedAt || "",
       }))
@@ -405,6 +427,20 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
     ]
   );
 
+  const setBrakeNotePosition = useCallback(
+    async (noteId, position) => {
+      if (!isEnabled || !sessionId || !participantReady || !noteId) return;
+
+      try {
+        await setSpeedBoatBrakeNotePosition(sessionId, noteId, position);
+      } catch (error) {
+        console.error("Impossible de déplacer le frein:", error);
+        setSessionError("La position du frein n'a pas pu être enregistrée.");
+      }
+    },
+    [isEnabled, participantReady, sessionId, setSessionError]
+  );
+
   const actions = useMemo(
     () => ({
       setStep1Description,
@@ -412,8 +448,16 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
       addBrakeNote,
       updateBrakeNoteText,
       removeBrakeNote,
+      setBrakeNotePosition,
     }),
-    [addBrakeNote, removeBrakeNote, setStep1Description, setStep2Objective, updateBrakeNoteText]
+    [
+      addBrakeNote,
+      removeBrakeNote,
+      setBrakeNotePosition,
+      setStep1Description,
+      setStep2Objective,
+      updateBrakeNoteText,
+    ]
   );
 
   const effectiveSyncError =
