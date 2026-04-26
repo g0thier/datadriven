@@ -1,4 +1,4 @@
-import { onValue, push, ref, runTransaction, set } from "firebase/database";
+import { onValue, push, ref, runTransaction, set, update } from "firebase/database";
 import { database } from "../index";
 
 /**
@@ -274,6 +274,23 @@ export const setMatriceCroiseeStep1Description = async (
       updatedAt: nowIso(),
       updatedBy: participantId || "",
     };
+  });
+};
+
+/**
+ * Sets the step-5 concept text for the session board.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} participantId - Editor participant id.
+ * @param {string} text - Concept text.
+ * @returns {Promise<void>} Update completion.
+ */
+export const setMatriceCroiseeConcept = async (sessionId, participantId, text) => {
+  if (!sessionId) return;
+
+  await update(ref(database, `${toMatriceCroiseePath(sessionId)}/step5/concept`), {
+    text: String(text ?? ""),
+    updatedAt: nowIso(),
+    updatedBy: participantId || "",
   });
 };
 

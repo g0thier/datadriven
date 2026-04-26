@@ -11,11 +11,7 @@ import Step1 from "./steps/Step1.jsx";
 import Step2 from "./steps/Step2.jsx";
 import Step3 from "./steps/Step3.jsx";
 import Step4 from "./steps/Step4.jsx";
-
-/*
 import Step5 from "./steps/Step5.jsx";
-import Step6 from "./steps/Step6.jsx";
-*/
 
 const description1 = [
   "Le facilitateur présente le défi.",
@@ -48,12 +44,6 @@ const description5 = [
   "- Bénéfices",
   "- Cible",
   "👉 On transforme l’idée en concept."
-];
-
-const description6 = [
-  "Chaque groupe présente son idée.",
-  "Pitch rapide ou mise en situation.",
-  "👉 Objectif : partager et tester les concepts."
 ];
 
 export const matriceCroisee = {
@@ -100,16 +90,9 @@ export const matriceCroisee = {
     {
       label: "Développement du concept",
       duration: 10,
-      //component: Step5,
+      component: Step5,
       description: description5,
       audioEnabled: true,
-    },
-    {
-      label: "Pitch / restitution",
-      duration: 5,
-      //component: Step6,
-      description: description6,
-      audioEnabled: true,
-    },
+    }
   ],
 };

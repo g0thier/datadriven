@@ -17,6 +17,7 @@ import {
   removeMatriceCroiseeCellNote,
   removeMatriceCroiseeColumnItem,
   removeMatriceCroiseeRowItem,
+  setMatriceCroiseeConcept,
   setMatriceCroiseeStep1Description,
   subscribeMatriceCroiseeSession,
   toggleMatriceCroiseeVote,
@@ -163,6 +164,7 @@ export function useMatriceCroiseeCollaboration({ sessionId, session, workshopId 
   const activeMatriceCroiseeState =
     isEnabled && lastSnapshotSessionId === sessionId ? matriceCroiseeState : null;
   const rawStep1Description = String(activeMatriceCroiseeState?.step1?.description || "");
+  const rawConcept = String(activeMatriceCroiseeState?.step5?.concept?.text || "");
   const rawColumnItems =
     activeMatriceCroiseeState?.step2?.itemsColumns &&
     typeof activeMatriceCroiseeState.step2.itemsColumns === "object"
@@ -341,6 +343,77 @@ export function useMatriceCroiseeCollaboration({ sessionId, session, workshopId 
     return byNote;
   }, [noteIdsSet, votesByParticipant]);
 
+  const selectedTopIdea = useMemo(() => {
+    const rankedNotes = [];
+
+    rowItems.forEach((rowItem, rowIndex) => {
+      columnItems.forEach((columnItem, columnIndex) => {
+        const cellKey = buildMatriceCroiseeCellKey(rowItem.id, columnItem.id);
+        if (!cellKey) return;
+
+        const notes = Array.isArray(cellNotesByKey[cellKey]) ? cellNotesByKey[cellKey] : EMPTY_ARRAY;
+
+        notes.forEach((note, noteIndex) => {
+          const noteId = String(note?.id || "").trim();
+          if (!noteId) return;
+
+          const voteSet = votesByNote[noteId];
+          const voteCount = voteSet instanceof Set ? voteSet.size : 0;
+          if (voteCount <= 0) return;
+
+          rankedNotes.push({
+            noteId,
+            noteText: String(note?.text || ""),
+            rowId: rowItem.id,
+            rowText: String(rowItem?.text || ""),
+            columnId: columnItem.id,
+            columnText: String(columnItem?.text || ""),
+            voteCount,
+            rowIndex,
+            columnIndex,
+            noteIndex,
+          });
+        });
+      });
+    });
+
+    if (rankedNotes.length === 0) return null;
+
+    rankedNotes.sort((a, b) => {
+      if (b.voteCount !== a.voteCount) {
+        return b.voteCount - a.voteCount;
+      }
+
+      if (a.rowIndex !== b.rowIndex) {
+        return a.rowIndex - b.rowIndex;
+      }
+
+      if (a.columnIndex !== b.columnIndex) {
+        return a.columnIndex - b.columnIndex;
+      }
+
+      if (a.noteIndex !== b.noteIndex) {
+        return a.noteIndex - b.noteIndex;
+      }
+
+      return a.noteId.localeCompare(b.noteId);
+    });
+
+    const winner = rankedNotes[0];
+
+    return {
+      noteId: winner.noteId,
+      noteText: winner.noteText,
+      rowId: winner.rowId,
+      rowText: winner.rowText,
+      rowIndex: winner.rowIndex,
+      columnId: winner.columnId,
+      columnText: winner.columnText,
+      columnIndex: winner.columnIndex,
+      voteCount: winner.voteCount,
+    };
+  }, [cellNotesByKey, columnItems, rowItems, votesByNote]);
+
   const remoteParticipants =
     activeMatriceCroiseeState?.participants &&
     typeof activeMatriceCroiseeState.participants === "object"
@@ -420,6 +493,7 @@ export function useMatriceCroiseeCollaboration({ sessionId, session, workshopId 
 
   const currentParticipantId = participant?.id || "";
   const step1Description = rawStep1Description || lastNonEmptyStep1Description;
+  const concept = rawConcept;
   const myVotes = useMemo(() => {
     if (!currentParticipantId) return EMPTY_OBJECT;
     return votesByParticipant[currentParticipantId] || EMPTY_OBJECT;
@@ -516,6 +590,20 @@ export function useMatriceCroiseeCollaboration({ sessionId, session, workshopId 
       setSessionError,
       step1Description,
     ]
+  );
+
+  const setConcept = useCallback(
+    async (text) => {
+      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
+
+      try {
+        await setMatriceCroiseeConcept(sessionId, currentParticipantId, text);
+      } catch (error) {
+        console.error("Impossible d'enregistrer le concept:", error);
+        setSessionError("Le concept n'a pas pu être enregistré.");
+      }
+    },
+    [currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]
   );
 
   const initializeStructure = useCallback(async () => {
@@ -792,6 +880,7 @@ export function useMatriceCroiseeCollaboration({ sessionId, session, workshopId 
     () => ({
       initializeStructure,
       setStep1Description,
+      setConcept,
       addColumnItem,
       updateColumnItemText,
       removeColumnItem,
@@ -811,6 +900,7 @@ export function useMatriceCroiseeCollaboration({ sessionId, session, workshopId 
       removeCellNote,
       removeColumnItem,
       removeRowItem,
+      setConcept,
       setStep1Description,
       toggleVote,
       updateCellNoteText,
@@ -832,11 +922,13 @@ export function useMatriceCroiseeCollaboration({ sessionId, session, workshopId 
     participants,
     getParticipantLabel,
     step1Description,
+    concept,
     columnItems,
     rowItems,
     cellNotesByKey,
     votesByParticipant,
     votesByNote,
+    selectedTopIdea,
     remainingVotes,
     maxStickers: MAX_STICKERS,
     buildCellKey: buildMatriceCroiseeCellKey,
