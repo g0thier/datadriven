@@ -9,6 +9,8 @@ import { database } from "../index";
  * @license proprietary
  */
 
+const SPEED_BOAT_MAX_STICKERS = 3;
+
 /**
  * Returns current time in ISO format.
  * @returns {string} ISO datetime.
@@ -376,4 +378,61 @@ export const setSpeedBoatLeverNotePosition = async (sessionId, noteId, position 
       updatedAt: nowIso(),
     }
   );
+};
+
+/**
+ * Toggles a participant vote on a brake note with optional max-votes guard.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} participantId - Participant id.
+ * @param {string} noteId - Brake note id.
+ * @param {{maxVotes?:number, validNoteIds?:Set<string>}} [options={}] - Voting options.
+ * @returns {Promise<{committed:boolean, votes:Object}>} Transaction result and resulting votes.
+ */
+export const toggleSpeedBoatBrakeVote = async (
+  sessionId,
+  participantId,
+  noteId,
+  options = {}
+) => {
+  if (!sessionId || !participantId || !noteId) {
+    return { committed: false, votes: {} };
+  }
+
+  const maxVotes = Number.isFinite(options?.maxVotes)
+    ? options.maxVotes
+    : SPEED_BOAT_MAX_STICKERS;
+  const validNoteIds =
+    options?.validNoteIds instanceof Set ? options.validNoteIds : null;
+
+  const votesRef = ref(
+    database,
+    `${toSpeedBoatPath(sessionId)}/votesByParticipant/${participantId}`
+  );
+
+  const result = await runTransaction(votesRef, (current) => {
+    const nextVotes = current && typeof current === "object" ? { ...current } : {};
+
+    if (nextVotes[noteId]) {
+      delete nextVotes[noteId];
+      return Object.keys(nextVotes).length > 0 ? nextVotes : null;
+    }
+
+    const usedVotes = Object.entries(nextVotes).reduce((count, [id, enabled]) => {
+      if (!enabled) return count;
+      if (validNoteIds && !validNoteIds.has(id)) return count;
+      return count + 1;
+    }, 0);
+
+    if (usedVotes >= maxVotes) {
+      return;
+    }
+
+    nextVotes[noteId] = true;
+    return nextVotes;
+  });
+
+  return {
+    committed: result.committed,
+    votes: result.snapshot.exists() ? result.snapshot.val() : {},
+  };
 };

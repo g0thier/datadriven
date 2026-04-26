@@ -13,9 +13,9 @@ import Step3 from "./steps/Step3.jsx";
 import Step4 from "./steps/Step4.jsx";
 import Step5 from "./steps/Step5.jsx";
 import Step6 from "./steps/Step6.jsx";
+import Step7 from "./steps/Step7.jsx";
 
 /*
-import Step7 from "./steps/Step7.jsx";
 import Step8 from "./steps/Step7.jsx";
 */
 
@@ -125,7 +125,7 @@ export const speedBoat = {
     {
       label: "Priorisation",
       duration: 5,
-      //component: Step7,
+      component: Step7,
       description: description7,
       audioEnabled: true,
     },
