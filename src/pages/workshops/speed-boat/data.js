@@ -14,10 +14,7 @@ import Step4 from "./steps/Step4.jsx";
 import Step5 from "./steps/Step5.jsx";
 import Step6 from "./steps/Step6.jsx";
 import Step7 from "./steps/Step7.jsx";
-
-/*
-import Step8 from "./steps/Step7.jsx";
-*/
+import Step8 from "./steps/Step8.jsx";
 
 const description1 = [
   "Le facilitateur présente le défi et le support visuel du bateau.",
@@ -131,8 +128,8 @@ export const speedBoat = {
     },
     {
       label: "Plan d’action",
-      duration: 10,
-      //component: Step8,
+      duration: 10000000,
+      component: Step8,
       description: description8,
       audioEnabled: true,
     },
