@@ -16,6 +16,7 @@ import Step5 from "./steps/Step5.jsx";
 /*
 import Step6 from "./steps/Step6.jsx";
 import Step7 from "./steps/Step7.jsx";
+import Step8 from "./steps/Step7.jsx";
 */
 
 const description1 = [
@@ -49,12 +50,18 @@ const description5 = [
 ];
 
 const description6 = [
+  "Le groupe met en commun les freins identifiés.",
+  "Les post-it sont regroupés par grandes catégories.",
+  "👉 Objectif : clarifier les principaux blocages."
+];
+
+const description7 = [
   "Le groupe priorise les freins à traiter.",
   "Les participants sélectionnent les ancres les plus critiques.",
   "👉 Objectif : concentrer l’énergie sur les vrais sujets."
 ];
 
-const description7 = [
+const description8 = [
   "Le groupe transforme les freins prioritaires en actions concrètes.",
   "Il précise les premières décisions ou étapes à lancer.",
   "👉 Objectif : passer du constat au plan d’action."
@@ -89,7 +96,7 @@ export const speedBoat = {
     },
     {
       label: "Identification des freins",
-      duration: 10,
+      duration: 5,
       component: Step3,
       description: description3,
       audioEnabled: false,
@@ -103,23 +110,30 @@ export const speedBoat = {
     },
     {
       label: "Identification des leviers",
-      duration: 10,
+      duration: 5,
       component: Step5,
       description: description5,
       audioEnabled: false,
     },
     {
+      label: "Mise en commun",
+      duration: 10,
+      // component: Step6,
+      description: description6,
+      audioEnabled: true,
+    },
+    {
       label: "Priorisation",
       duration: 5,
-      //component: Step6,
-      description: description6,
+      //component: Step7,
+      description: description7,
       audioEnabled: true,
     },
     {
       label: "Plan d’action",
       duration: 10,
-      //component: Step7,
-      description: description7,
+      //component: Step8,
+      description: description8,
       audioEnabled: true,
     },
   ],
