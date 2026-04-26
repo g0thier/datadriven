@@ -12,6 +12,7 @@ import DefectuologieSummary from "./defectuologie/DefectuologieSummary.jsx";
 import SixHatsSummary from "./six-hats/SixHatsSummary.jsx";
 import MindMappingSummary from "./mind-mapping/MindMappingSummary.jsx";
 import SpeedBoatSummary from "./speed-boat/SpeedBoatSummary.jsx";
+import MatriceCroiseeSummary from "./matrice-croisee/MatriceCroiseeSummary.jsx";
 
 function GenericWorkshopSummary({ sessionTitle }) {
   return (
@@ -83,6 +84,15 @@ export default function WorkshopSummaryPage({ workshopId, sessionTitle, collabor
   if (workshopId === "speed-boat") {
     return (
       <SpeedBoatSummary
+        sessionTitle={sessionTitle}
+        collaboration={collaboration}
+      />
+    );
+  }
+
+  if (workshopId === "matrice-croisee") {
+    return (
+      <MatriceCroiseeSummary
         sessionTitle={sessionTitle}
         collaboration={collaboration}
       />
