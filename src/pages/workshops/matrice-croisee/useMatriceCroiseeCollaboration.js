@@ -9,13 +9,31 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { auth, onAuthStateChangedListener } from "../../../firebase";
 import {
+  createMatriceCroiseeColumnItem,
+  createMatriceCroiseeRowItem,
+  initializeMatriceCroiseeStructure,
+  removeMatriceCroiseeColumnItem,
+  removeMatriceCroiseeRowItem,
   setMatriceCroiseeStep1Description,
   subscribeMatriceCroiseeSession,
+  updateMatriceCroiseeColumnItem,
+  updateMatriceCroiseeRowItem,
   upsertMatriceCroiseeParticipant,
 } from "../../../firebase/workshops/matrice-croisee.service";
 
 const EMPTY_OBJECT = Object.freeze({});
 const EMPTY_ARRAY = Object.freeze([]);
+
+const sortByCreatedAt = (a, b) => {
+  const createdA = a?.createdAt || "";
+  const createdB = b?.createdAt || "";
+
+  if (createdA !== createdB) {
+    return createdA.localeCompare(createdB);
+  }
+
+  return String(a?.id || "").localeCompare(String(b?.id || ""));
+};
 
 const resolveGuestName = (guest = {}) => {
   const firstName = String(guest?.firstName || "").trim();
@@ -138,6 +156,16 @@ export function useMatriceCroiseeCollaboration({ sessionId, session, workshopId 
   const activeMatriceCroiseeState =
     isEnabled && lastSnapshotSessionId === sessionId ? matriceCroiseeState : null;
   const rawStep1Description = String(activeMatriceCroiseeState?.step1?.description || "");
+  const rawColumnItems =
+    activeMatriceCroiseeState?.step2?.itemsColumns &&
+    typeof activeMatriceCroiseeState.step2.itemsColumns === "object"
+      ? activeMatriceCroiseeState.step2.itemsColumns
+      : EMPTY_OBJECT;
+  const rawRowItems =
+    activeMatriceCroiseeState?.step2?.itemsRows &&
+    typeof activeMatriceCroiseeState.step2.itemsRows === "object"
+      ? activeMatriceCroiseeState.step2.itemsRows
+      : EMPTY_OBJECT;
 
   useEffect(() => {
     setLastNonEmptyStep1Description("");
@@ -174,6 +202,50 @@ export function useMatriceCroiseeCollaboration({ sessionId, session, workshopId 
       clearInterval(intervalId);
     };
   }, [isEnabled, participant, participantReady, sessionId]);
+
+  const columnItems = useMemo(() => {
+    return Object.entries(rawColumnItems)
+      .map(([itemId, data]) => ({
+        id: String(data?.id || itemId),
+        text: data?.text ?? "",
+        createdAt: String(data?.createdAt || ""),
+        updatedAt: String(data?.updatedAt || ""),
+        createdBy: String(data?.createdBy || ""),
+        updatedBy: String(data?.updatedBy || ""),
+      }))
+      .sort(sortByCreatedAt);
+  }, [rawColumnItems]);
+
+  const rowItems = useMemo(() => {
+    return Object.entries(rawRowItems)
+      .map(([itemId, data]) => ({
+        id: String(data?.id || itemId),
+        text: data?.text ?? "",
+        createdAt: String(data?.createdAt || ""),
+        updatedAt: String(data?.updatedAt || ""),
+        createdBy: String(data?.createdBy || ""),
+        updatedBy: String(data?.updatedBy || ""),
+      }))
+      .sort(sortByCreatedAt);
+  }, [rawRowItems]);
+
+  const columnItemsById = useMemo(
+    () =>
+      columnItems.reduce((accumulator, item) => {
+        accumulator[item.id] = item;
+        return accumulator;
+      }, {}),
+    [columnItems]
+  );
+
+  const rowItemsById = useMemo(
+    () =>
+      rowItems.reduce((accumulator, item) => {
+        accumulator[item.id] = item;
+        return accumulator;
+      }, {}),
+    [rowItems]
+  );
 
   const remoteParticipants =
     activeMatriceCroiseeState?.participants &&
@@ -256,6 +328,28 @@ export function useMatriceCroiseeCollaboration({ sessionId, session, workshopId 
   const step1Description = rawStep1Description || lastNonEmptyStep1Description;
 
   useEffect(() => {
+    if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return () => {};
+
+    let cancelled = false;
+
+    const seedStructure = async () => {
+      try {
+        await initializeMatriceCroiseeStructure(sessionId, currentParticipantId);
+      } catch (error) {
+        if (cancelled) return;
+        console.error("Impossible d'initialiser la matrice:", error);
+        setSessionError("La matrice n'a pas pu être initialisée.");
+      }
+    };
+
+    seedStructure();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]);
+
+  useEffect(() => {
     if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
     if (rawStep1Description || !lastNonEmptyStep1Description) return;
     if (step1RestoreInFlightRef.current) return;
@@ -318,11 +412,174 @@ export function useMatriceCroiseeCollaboration({ sessionId, session, workshopId 
     ]
   );
 
+  const initializeStructure = useCallback(async () => {
+    if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) {
+      return false;
+    }
+
+    try {
+      await initializeMatriceCroiseeStructure(sessionId, currentParticipantId);
+      return true;
+    } catch (error) {
+      console.error("Impossible d'initialiser la matrice:", error);
+      setSessionError("La matrice n'a pas pu être initialisée.");
+      return false;
+    }
+  }, [currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]);
+
+  const addColumnItem = useCallback(
+    async (options = {}) => {
+      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return null;
+
+      try {
+        return await createMatriceCroiseeColumnItem(sessionId, currentParticipantId, {
+          text: options?.text ?? "",
+        });
+      } catch (error) {
+        console.error("Impossible d'ajouter une colonne:", error);
+        setSessionError("La colonne n'a pas pu être ajoutée.");
+        return null;
+      }
+    },
+    [currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]
+  );
+
+  const updateColumnItemText = useCallback(
+    async (itemId, text, previousText) => {
+      if (!isEnabled || !sessionId || !participantReady || !itemId || !currentParticipantId) {
+        return;
+      }
+
+      const currentText = String(columnItemsById[itemId]?.text || "");
+      const nextText = String(text ?? "");
+      if (currentText === nextText) return;
+
+      const expectedPreviousText =
+        previousText === undefined ? currentText : String(previousText ?? "");
+
+      try {
+        await updateMatriceCroiseeColumnItem(
+          sessionId,
+          currentParticipantId,
+          itemId,
+          nextText,
+          { expectedPreviousText }
+        );
+      } catch (error) {
+        console.error("Impossible de mettre à jour la colonne:", error);
+        setSessionError("La colonne n'a pas pu être mise à jour.");
+      }
+    },
+    [
+      columnItemsById,
+      currentParticipantId,
+      isEnabled,
+      participantReady,
+      sessionId,
+      setSessionError,
+    ]
+  );
+
+  const removeColumnItem = useCallback(
+    async (itemId) => {
+      if (!isEnabled || !sessionId || !participantReady || !itemId) return;
+      if (columnItems.length <= 1) return;
+
+      try {
+        await removeMatriceCroiseeColumnItem(sessionId, itemId);
+      } catch (error) {
+        console.error("Impossible de supprimer la colonne:", error);
+        setSessionError("La colonne n'a pas pu être supprimée.");
+      }
+    },
+    [columnItems.length, isEnabled, participantReady, sessionId, setSessionError]
+  );
+
+  const addRowItem = useCallback(
+    async (options = {}) => {
+      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return null;
+
+      try {
+        return await createMatriceCroiseeRowItem(sessionId, currentParticipantId, {
+          text: options?.text ?? "",
+        });
+      } catch (error) {
+        console.error("Impossible d'ajouter un rang:", error);
+        setSessionError("Le rang n'a pas pu être ajouté.");
+        return null;
+      }
+    },
+    [currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]
+  );
+
+  const updateRowItemText = useCallback(
+    async (itemId, text, previousText) => {
+      if (!isEnabled || !sessionId || !participantReady || !itemId || !currentParticipantId) {
+        return;
+      }
+
+      const currentText = String(rowItemsById[itemId]?.text || "");
+      const nextText = String(text ?? "");
+      if (currentText === nextText) return;
+
+      const expectedPreviousText =
+        previousText === undefined ? currentText : String(previousText ?? "");
+
+      try {
+        await updateMatriceCroiseeRowItem(sessionId, currentParticipantId, itemId, nextText, {
+          expectedPreviousText,
+        });
+      } catch (error) {
+        console.error("Impossible de mettre à jour le rang:", error);
+        setSessionError("Le rang n'a pas pu être mis à jour.");
+      }
+    },
+    [
+      currentParticipantId,
+      isEnabled,
+      participantReady,
+      rowItemsById,
+      sessionId,
+      setSessionError,
+    ]
+  );
+
+  const removeRowItem = useCallback(
+    async (itemId) => {
+      if (!isEnabled || !sessionId || !participantReady || !itemId) return;
+      if (rowItems.length <= 1) return;
+
+      try {
+        await removeMatriceCroiseeRowItem(sessionId, itemId);
+      } catch (error) {
+        console.error("Impossible de supprimer le rang:", error);
+        setSessionError("Le rang n'a pas pu être supprimé.");
+      }
+    },
+    [isEnabled, participantReady, rowItems.length, sessionId, setSessionError]
+  );
+
   const actions = useMemo(
     () => ({
+      initializeStructure,
       setStep1Description,
+      addColumnItem,
+      updateColumnItemText,
+      removeColumnItem,
+      addRowItem,
+      updateRowItemText,
+      removeRowItem,
     }),
-    [setStep1Description]
+    [
+      addColumnItem,
+      addRowItem,
+      initializeStructure,
+      removeColumnItem,
+      removeRowItem,
+      setStep1Description,
+      updateColumnItemText,
+      updateRowItemText,
+    ]
   );
 
   const effectiveSyncError = isEnabled && syncErrorSessionId === sessionId ? syncError : "";
@@ -338,6 +595,8 @@ export function useMatriceCroiseeCollaboration({ sessionId, session, workshopId 
     participants,
     getParticipantLabel,
     step1Description,
+    columnItems,
+    rowItems,
     actions,
   };
 }

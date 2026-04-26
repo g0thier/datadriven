@@ -8,9 +8,9 @@
 
 import matricesImg from "../../../assets/workshops/matrice-croisee.png";
 import Step1 from "./steps/Step1.jsx";
+import Step2 from "./steps/Step2.jsx";
 
 /*
-import Step2 from "./steps/Step2.jsx";
 import Step3 from "./steps/Step3.jsx";
 import Step4 from "./steps/Step4.jsx";
 import Step5 from "./steps/Step5.jsx";
@@ -79,9 +79,9 @@ export const matriceCroisee = {
     {
       label: "Construction de la matrice",
       duration: 5,
-      //component: Step2,
+      component: Step2,
       description: description2,
-      audioEnabled: false,
+      audioEnabled: true,
     },
     {
       label: "Exploration des combinaisons",

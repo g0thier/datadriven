@@ -1,4 +1,4 @@
-import { onValue, ref, runTransaction } from "firebase/database";
+import { onValue, push, ref, runTransaction, set } from "firebase/database";
 import { database } from "../index";
 
 /**
@@ -14,6 +14,8 @@ import { database } from "../index";
  * @returns {string} ISO datetime.
  */
 const nowIso = () => new Date().toISOString();
+const STEP2_COLUMN_SEED_IDS = ["column-1", "column-2", "column-3"];
+const STEP2_ROW_SEED_IDS = ["row-1", "row-2", "row-3"];
 
 /**
  * Builds the matrice-croisee root path for a session.
@@ -21,6 +23,115 @@ const nowIso = () => new Date().toISOString();
  * @returns {string} Matrice croisee root path.
  */
 const toMatriceCroiseePath = (sessionId) => `workshopSessions/${sessionId}/matriceCroisee`;
+const toMatriceCroiseeStep2Path = (sessionId) => `${toMatriceCroiseePath(sessionId)}/step2`;
+const toMatriceCroiseeItemsColumnsPath = (sessionId) =>
+  `${toMatriceCroiseeStep2Path(sessionId)}/itemsColumns`;
+const toMatriceCroiseeItemsRowsPath = (sessionId) => `${toMatriceCroiseeStep2Path(sessionId)}/itemsRows`;
+
+const makeSeedItems = (seedIds = [], participantId = "", now = nowIso()) => {
+  return seedIds.reduce((accumulator, itemId) => {
+    accumulator[itemId] = {
+      id: itemId,
+      text: "",
+      createdAt: now,
+      updatedAt: now,
+      createdBy: participantId || "",
+      updatedBy: participantId || "",
+    };
+    return accumulator;
+  }, {});
+};
+
+const createMatriceCroiseeItem = async (sessionId, participantId, targetPath, text = "") => {
+  if (!sessionId || !participantId) {
+    throw new Error("createMatriceCroiseeItem: sessionId ou participantId manquant");
+  }
+
+  const itemRef = push(ref(database, targetPath(sessionId)));
+  const itemId = itemRef.key;
+  if (!itemId) {
+    throw new Error("Impossible de générer itemId");
+  }
+
+  const now = nowIso();
+
+  await set(itemRef, {
+    id: itemId,
+    text: String(text ?? ""),
+    createdAt: now,
+    updatedAt: now,
+    createdBy: participantId,
+    updatedBy: participantId,
+  });
+
+  return itemId;
+};
+
+const updateMatriceCroiseeItemText = async (
+  sessionId,
+  participantId,
+  itemId,
+  text,
+  options = {},
+  targetPath
+) => {
+  if (!sessionId || !itemId) return;
+
+  const nextText = String(text ?? "");
+  const hasExpectedPreviousText = Object.prototype.hasOwnProperty.call(
+    options,
+    "expectedPreviousText"
+  );
+  const expectedPreviousText = hasExpectedPreviousText
+    ? String(options.expectedPreviousText ?? "")
+    : null;
+
+  await runTransaction(ref(database, `${targetPath(sessionId)}/${itemId}`), (current) => {
+    if (!current || typeof current !== "object") return current;
+
+    const currentData = current;
+    const currentText = String(currentData.text ?? "");
+
+    const shouldRejectStaleClear =
+      nextText === "" &&
+      expectedPreviousText !== null &&
+      expectedPreviousText !== currentText &&
+      currentText !== "";
+
+    if (shouldRejectStaleClear) {
+      return currentData;
+    }
+
+    return {
+      ...currentData,
+      id: String(currentData.id || itemId),
+      text: nextText,
+      updatedAt: nowIso(),
+      updatedBy: participantId || String(currentData.updatedBy || ""),
+      createdAt: String(currentData.createdAt || nowIso()),
+      createdBy: String(currentData.createdBy || participantId || ""),
+    };
+  });
+};
+
+const removeMatriceCroiseeItem = async (sessionId, itemId, targetPath) => {
+  if (!sessionId || !itemId) return;
+
+  await runTransaction(ref(database, targetPath(sessionId)), (current) => {
+    if (!current || typeof current !== "object") return current;
+
+    const currentData = current;
+    if (!currentData[itemId]) return currentData;
+
+    const itemIds = Object.keys(currentData);
+    if (itemIds.length <= 1) return currentData;
+
+    const nextData = { ...currentData };
+    delete nextData[itemId];
+
+    return nextData;
+  });
+};
 
 /**
  * Subscribes to a Matrice croisee session payload.
@@ -133,4 +244,155 @@ export const setMatriceCroiseeStep1Description = async (
       updatedBy: participantId || "",
     };
   });
+};
+
+/**
+ * Seeds the Matrice croisee structure (columns and rows) when missing.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} participantId - Participant id creating the seed.
+ * @returns {Promise<void>} Seed completion.
+ */
+export const initializeMatriceCroiseeStructure = async (sessionId, participantId) => {
+  if (!sessionId) return;
+
+  await runTransaction(ref(database, toMatriceCroiseeStep2Path(sessionId)), (current) => {
+    const currentData = current && typeof current === "object" ? current : {};
+    const currentItemsColumns =
+      currentData?.itemsColumns && typeof currentData.itemsColumns === "object"
+        ? currentData.itemsColumns
+        : {};
+    const currentItemsRows =
+      currentData?.itemsRows && typeof currentData.itemsRows === "object"
+        ? currentData.itemsRows
+        : {};
+
+    const hasColumns = Object.keys(currentItemsColumns).length > 0;
+    const hasRows = Object.keys(currentItemsRows).length > 0;
+
+    if (hasColumns && hasRows) {
+      return current;
+    }
+
+    const now = nowIso();
+
+    return {
+      ...currentData,
+      itemsColumns: hasColumns
+        ? currentItemsColumns
+        : makeSeedItems(STEP2_COLUMN_SEED_IDS, participantId, now),
+      itemsRows: hasRows ? currentItemsRows : makeSeedItems(STEP2_ROW_SEED_IDS, participantId, now),
+    };
+  });
+};
+
+/**
+ * Creates a column item in Matrice croisee Step 2.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} participantId - Participant id.
+ * @param {{text?:string}} [payload={}] - Item payload.
+ * @returns {Promise<string>} Created item id.
+ */
+export const createMatriceCroiseeColumnItem = async (
+  sessionId,
+  participantId,
+  payload = {}
+) => {
+  return createMatriceCroiseeItem(
+    sessionId,
+    participantId,
+    toMatriceCroiseeItemsColumnsPath,
+    payload?.text
+  );
+};
+
+/**
+ * Updates a column item text in Matrice croisee Step 2.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} participantId - Participant id.
+ * @param {string} itemId - Column item id.
+ * @param {string} text - New text.
+ * @param {{expectedPreviousText?:string}} [options={}] - Concurrency guards.
+ * @returns {Promise<void>} Update completion.
+ */
+export const updateMatriceCroiseeColumnItem = async (
+  sessionId,
+  participantId,
+  itemId,
+  text,
+  options = {}
+) => {
+  await updateMatriceCroiseeItemText(
+    sessionId,
+    participantId,
+    itemId,
+    text,
+    options,
+    toMatriceCroiseeItemsColumnsPath
+  );
+};
+
+/**
+ * Removes a column item in Matrice croisee Step 2 (keeps at least one).
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} itemId - Column item id.
+ * @returns {Promise<void>} Remove completion.
+ */
+export const removeMatriceCroiseeColumnItem = async (sessionId, itemId) => {
+  await removeMatriceCroiseeItem(sessionId, itemId, toMatriceCroiseeItemsColumnsPath);
+};
+
+/**
+ * Creates a row item in Matrice croisee Step 2.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} participantId - Participant id.
+ * @param {{text?:string}} [payload={}] - Item payload.
+ * @returns {Promise<string>} Created item id.
+ */
+export const createMatriceCroiseeRowItem = async (
+  sessionId,
+  participantId,
+  payload = {}
+) => {
+  return createMatriceCroiseeItem(
+    sessionId,
+    participantId,
+    toMatriceCroiseeItemsRowsPath,
+    payload?.text
+  );
+};
+
+/**
+ * Updates a row item text in Matrice croisee Step 2.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} participantId - Participant id.
+ * @param {string} itemId - Row item id.
+ * @param {string} text - New text.
+ * @param {{expectedPreviousText?:string}} [options={}] - Concurrency guards.
+ * @returns {Promise<void>} Update completion.
+ */
+export const updateMatriceCroiseeRowItem = async (
+  sessionId,
+  participantId,
+  itemId,
+  text,
+  options = {}
+) => {
+  await updateMatriceCroiseeItemText(
+    sessionId,
+    participantId,
+    itemId,
+    text,
+    options,
+    toMatriceCroiseeItemsRowsPath
+  );
+};
+
+/**
+ * Removes a row item in Matrice croisee Step 2 (keeps at least one).
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} itemId - Row item id.
+ * @returns {Promise<void>} Remove completion.
+ */
+export const removeMatriceCroiseeRowItem = async (sessionId, itemId) => {
+  await removeMatriceCroiseeItem(sessionId, itemId, toMatriceCroiseeItemsRowsPath);
 };
