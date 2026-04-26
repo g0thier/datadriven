@@ -27,6 +27,28 @@ const toMatriceCroiseeStep2Path = (sessionId) => `${toMatriceCroiseePath(session
 const toMatriceCroiseeItemsColumnsPath = (sessionId) =>
   `${toMatriceCroiseeStep2Path(sessionId)}/itemsColumns`;
 const toMatriceCroiseeItemsRowsPath = (sessionId) => `${toMatriceCroiseeStep2Path(sessionId)}/itemsRows`;
+const toMatriceCroiseeStep3Path = (sessionId) => `${toMatriceCroiseePath(sessionId)}/step3`;
+const toMatriceCroiseeStep3NotesByCellPath = (sessionId) =>
+  `${toMatriceCroiseeStep3Path(sessionId)}/notesByCell`;
+
+const normalizeCellKeyPart = (value) =>
+  String(value || "")
+    .trim()
+    .replace(/[.#$/[\]]/g, "-");
+
+/**
+ * Builds a deterministic Firebase-safe cell key from row and column ids.
+ * @param {string} rowId - Row item id.
+ * @param {string} columnId - Column item id.
+ * @returns {string} Normalized cell key.
+ */
+export const buildMatriceCroiseeCellKey = (rowId, columnId) => {
+  const normalizedRowId = normalizeCellKeyPart(rowId);
+  const normalizedColumnId = normalizeCellKeyPart(columnId);
+
+  if (!normalizedRowId || !normalizedColumnId) return "";
+  return `${normalizedRowId}__${normalizedColumnId}`;
+};
 
 const makeSeedItems = (seedIds = [], participantId = "", now = nowIso()) => {
   return seedIds.reduce((accumulator, itemId) => {
@@ -131,6 +153,12 @@ const removeMatriceCroiseeItem = async (sessionId, itemId, targetPath) => {
 
     return nextData;
   });
+};
+
+const toMatriceCroiseeCellNotesPath = (sessionId, rowId, columnId) => {
+  const cellKey = buildMatriceCroiseeCellKey(rowId, columnId);
+  if (!cellKey) return "";
+  return `${toMatriceCroiseeStep3NotesByCellPath(sessionId)}/${cellKey}`;
 };
 
 /**
@@ -395,4 +423,133 @@ export const updateMatriceCroiseeRowItem = async (
  */
 export const removeMatriceCroiseeRowItem = async (sessionId, itemId) => {
   await removeMatriceCroiseeItem(sessionId, itemId, toMatriceCroiseeItemsRowsPath);
+};
+
+/**
+ * Creates a note in a Matrice croisee Step 3 matrix cell.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} participantId - Participant id.
+ * @param {string} rowId - Row id.
+ * @param {string} columnId - Column id.
+ * @param {{text?:string}} [payload={}] - Note payload.
+ * @returns {Promise<string>} Created note id.
+ */
+export const createMatriceCroiseeCellNote = async (
+  sessionId,
+  participantId,
+  rowId,
+  columnId,
+  payload = {}
+) => {
+  if (!sessionId || !participantId || !rowId || !columnId) {
+    throw new Error("createMatriceCroiseeCellNote: paramètres manquants");
+  }
+
+  const cellNotesPath = toMatriceCroiseeCellNotesPath(sessionId, rowId, columnId);
+  if (!cellNotesPath) {
+    throw new Error("createMatriceCroiseeCellNote: cellule invalide");
+  }
+
+  const noteRef = push(ref(database, cellNotesPath));
+  const noteId = noteRef.key;
+  if (!noteId) {
+    throw new Error("Impossible de générer noteId");
+  }
+
+  const now = nowIso();
+
+  await set(noteRef, {
+    id: noteId,
+    text: String(payload?.text ?? ""),
+    createdAt: now,
+    updatedAt: now,
+    createdBy: participantId,
+    updatedBy: participantId,
+  });
+
+  return noteId;
+};
+
+/**
+ * Updates a note text in a Matrice croisee Step 3 matrix cell.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} participantId - Participant id.
+ * @param {string} rowId - Row id.
+ * @param {string} columnId - Column id.
+ * @param {string} noteId - Note id.
+ * @param {string} text - New text.
+ * @param {{expectedPreviousText?:string}} [options={}] - Concurrency guards.
+ * @returns {Promise<void>} Update completion.
+ */
+export const updateMatriceCroiseeCellNote = async (
+  sessionId,
+  participantId,
+  rowId,
+  columnId,
+  noteId,
+  text,
+  options = {}
+) => {
+  if (!sessionId || !noteId || !rowId || !columnId) return;
+
+  const cellNotesPath = toMatriceCroiseeCellNotesPath(sessionId, rowId, columnId);
+  if (!cellNotesPath) return;
+
+  const nextText = String(text ?? "");
+  const hasExpectedPreviousText = Object.prototype.hasOwnProperty.call(
+    options,
+    "expectedPreviousText"
+  );
+  const expectedPreviousText = hasExpectedPreviousText
+    ? String(options.expectedPreviousText ?? "")
+    : null;
+
+  await runTransaction(ref(database, `${cellNotesPath}/${noteId}`), (current) => {
+    if (!current || typeof current !== "object") return current;
+
+    const currentData = current;
+    const currentText = String(currentData.text ?? "");
+
+    const shouldRejectStaleClear =
+      nextText === "" &&
+      expectedPreviousText !== null &&
+      expectedPreviousText !== currentText &&
+      currentText !== "";
+
+    if (shouldRejectStaleClear) {
+      return currentData;
+    }
+
+    return {
+      ...currentData,
+      id: String(currentData.id || noteId),
+      text: nextText,
+      updatedAt: nowIso(),
+      updatedBy: participantId || String(currentData.updatedBy || ""),
+      createdAt: String(currentData.createdAt || nowIso()),
+      createdBy: String(currentData.createdBy || participantId || ""),
+    };
+  });
+};
+
+/**
+ * Removes a note from a Matrice croisee Step 3 matrix cell.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} rowId - Row id.
+ * @param {string} columnId - Column id.
+ * @param {string} noteId - Note id.
+ * @returns {Promise<void>} Remove completion.
+ */
+export const removeMatriceCroiseeCellNote = async (
+  sessionId,
+  rowId,
+  columnId,
+  noteId
+) => {
+  if (!sessionId || !rowId || !columnId || !noteId) return;
+
+  const cellNotesPath = toMatriceCroiseeCellNotesPath(sessionId, rowId, columnId);
+  if (!cellNotesPath) return;
+
+  await set(ref(database, `${cellNotesPath}/${noteId}`), null);
 };

@@ -9,13 +9,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { auth, onAuthStateChangedListener } from "../../../firebase";
 import {
+  buildMatriceCroiseeCellKey,
+  createMatriceCroiseeCellNote,
   createMatriceCroiseeColumnItem,
   createMatriceCroiseeRowItem,
   initializeMatriceCroiseeStructure,
+  removeMatriceCroiseeCellNote,
   removeMatriceCroiseeColumnItem,
   removeMatriceCroiseeRowItem,
   setMatriceCroiseeStep1Description,
   subscribeMatriceCroiseeSession,
+  updateMatriceCroiseeCellNote,
   updateMatriceCroiseeColumnItem,
   updateMatriceCroiseeRowItem,
   upsertMatriceCroiseeParticipant,
@@ -166,6 +170,11 @@ export function useMatriceCroiseeCollaboration({ sessionId, session, workshopId 
     typeof activeMatriceCroiseeState.step2.itemsRows === "object"
       ? activeMatriceCroiseeState.step2.itemsRows
       : EMPTY_OBJECT;
+  const rawCellNotesByCell =
+    activeMatriceCroiseeState?.step3?.notesByCell &&
+    typeof activeMatriceCroiseeState.step3.notesByCell === "object"
+      ? activeMatriceCroiseeState.step3.notesByCell
+      : EMPTY_OBJECT;
 
   useEffect(() => {
     setLastNonEmptyStep1Description("");
@@ -246,6 +255,29 @@ export function useMatriceCroiseeCollaboration({ sessionId, session, workshopId 
       }, {}),
     [rowItems]
   );
+
+  const cellNotesByKey = useMemo(() => {
+    const normalizedByKey = {};
+
+    Object.entries(rawCellNotesByCell).forEach(([cellKey, notes]) => {
+      if (!notes || typeof notes !== "object") return;
+
+      const normalizedNotes = Object.entries(notes)
+        .map(([noteId, data]) => ({
+          id: String(data?.id || noteId),
+          text: data?.text ?? "",
+          createdAt: String(data?.createdAt || ""),
+          updatedAt: String(data?.updatedAt || ""),
+          createdBy: String(data?.createdBy || ""),
+          updatedBy: String(data?.updatedBy || ""),
+        }))
+        .sort(sortByCreatedAt);
+
+      normalizedByKey[cellKey] = normalizedNotes;
+    });
+
+    return normalizedByKey;
+  }, [rawCellNotesByCell]);
 
   const remoteParticipants =
     activeMatriceCroiseeState?.participants &&
@@ -559,6 +591,95 @@ export function useMatriceCroiseeCollaboration({ sessionId, session, workshopId 
     [isEnabled, participantReady, rowItems.length, sessionId, setSessionError]
   );
 
+  const addCellNote = useCallback(
+    async (rowId, columnId, options = {}) => {
+      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return null;
+      if (!rowId || !columnId) return null;
+
+      try {
+        return await createMatriceCroiseeCellNote(
+          sessionId,
+          currentParticipantId,
+          rowId,
+          columnId,
+          { text: options?.text ?? "" }
+        );
+      } catch (error) {
+        console.error("Impossible d'ajouter un post-it:", error);
+        setSessionError("Le post-it n'a pas pu être ajouté.");
+        return null;
+      }
+    },
+    [currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]
+  );
+
+  const updateCellNoteText = useCallback(
+    async (rowId, columnId, noteId, text, previousText) => {
+      if (
+        !isEnabled ||
+        !sessionId ||
+        !participantReady ||
+        !currentParticipantId ||
+        !rowId ||
+        !columnId ||
+        !noteId
+      ) {
+        return;
+      }
+
+      const cellKey = buildMatriceCroiseeCellKey(rowId, columnId);
+      const currentNotes = Array.isArray(cellNotesByKey[cellKey]) ? cellNotesByKey[cellKey] : EMPTY_ARRAY;
+      const currentText = String(
+        currentNotes.find((note) => String(note?.id || "") === String(noteId))?.text || ""
+      );
+      const nextText = String(text ?? "");
+
+      if (currentText === nextText) return;
+
+      const expectedPreviousText =
+        previousText === undefined ? currentText : String(previousText ?? "");
+
+      try {
+        await updateMatriceCroiseeCellNote(
+          sessionId,
+          currentParticipantId,
+          rowId,
+          columnId,
+          noteId,
+          nextText,
+          { expectedPreviousText }
+        );
+      } catch (error) {
+        console.error("Impossible de mettre à jour le post-it:", error);
+        setSessionError("Le post-it n'a pas pu être mis à jour.");
+      }
+    },
+    [
+      cellNotesByKey,
+      currentParticipantId,
+      isEnabled,
+      participantReady,
+      sessionId,
+      setSessionError,
+    ]
+  );
+
+  const removeCellNote = useCallback(
+    async (rowId, columnId, noteId) => {
+      if (!isEnabled || !sessionId || !participantReady || !rowId || !columnId || !noteId) {
+        return;
+      }
+
+      try {
+        await removeMatriceCroiseeCellNote(sessionId, rowId, columnId, noteId);
+      } catch (error) {
+        console.error("Impossible de supprimer le post-it:", error);
+        setSessionError("Le post-it n'a pas pu être supprimé.");
+      }
+    },
+    [isEnabled, participantReady, sessionId, setSessionError]
+  );
+
   const actions = useMemo(
     () => ({
       initializeStructure,
@@ -569,14 +690,20 @@ export function useMatriceCroiseeCollaboration({ sessionId, session, workshopId 
       addRowItem,
       updateRowItemText,
       removeRowItem,
+      addCellNote,
+      updateCellNoteText,
+      removeCellNote,
     }),
     [
+      addCellNote,
       addColumnItem,
       addRowItem,
       initializeStructure,
+      removeCellNote,
       removeColumnItem,
       removeRowItem,
       setStep1Description,
+      updateCellNoteText,
       updateColumnItemText,
       updateRowItemText,
     ]
@@ -597,6 +724,8 @@ export function useMatriceCroiseeCollaboration({ sessionId, session, workshopId 
     step1Description,
     columnItems,
     rowItems,
+    cellNotesByKey,
+    buildCellKey: buildMatriceCroiseeCellKey,
     actions,
   };
 }
