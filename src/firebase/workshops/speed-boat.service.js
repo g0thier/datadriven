@@ -257,6 +257,74 @@ export const removeSpeedBoatBrakeNote = async (sessionId, noteId) => {
 };
 
 /**
+ * Creates a Speed Boat lever note in notesByType/levers.
+ * @param {string} sessionId - Workshop session id.
+ * @param {{authorId:string, text?:string}} [payload={}] - Lever note payload.
+ * @returns {Promise<string>} Created note id.
+ */
+export const createSpeedBoatLeverNote = async (sessionId, payload = {}) => {
+  if (!sessionId || !payload?.authorId) {
+    throw new Error("createSpeedBoatLeverNote: sessionId ou authorId manquant");
+  }
+
+  const noteRef = push(ref(database, `${toSpeedBoatPath(sessionId)}/notesByType/levers`));
+  const noteId = noteRef.key;
+  if (!noteId) {
+    throw new Error("Impossible de générer noteId");
+  }
+
+  const now = nowIso();
+
+  await set(noteRef, {
+    id: noteId,
+    authorId: payload.authorId,
+    text: payload.text ?? "",
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  return noteId;
+};
+
+/**
+ * Updates a Speed Boat lever note.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Lever note id.
+ * @param {{text?:string}} [patch={}] - Lever note patch.
+ * @returns {Promise<void>} Update completion.
+ */
+export const updateSpeedBoatLeverNote = async (sessionId, noteId, patch = {}) => {
+  if (!sessionId || !noteId) return;
+
+  const payload = {
+    updatedAt: nowIso(),
+  };
+
+  if (Object.prototype.hasOwnProperty.call(patch, "text")) {
+    payload.text = patch.text ?? "";
+  }
+
+  await update(
+    ref(database, `${toSpeedBoatPath(sessionId)}/notesByType/levers/${noteId}`),
+    payload
+  );
+};
+
+/**
+ * Removes a Speed Boat lever note.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Lever note id.
+ * @returns {Promise<void>} Delete completion.
+ */
+export const removeSpeedBoatLeverNote = async (sessionId, noteId) => {
+  if (!sessionId || !noteId) return;
+
+  await update(ref(database), {
+    [`${toSpeedBoatPath(sessionId)}/notesByType/levers/${noteId}`]: null,
+  });
+};
+
+/**
  * Normalizes note position with numeric fallback coordinates.
  * @param {{x?:number, y?:number}} [position={}] - Raw position.
  * @param {{x:number, y:number}} [fallback={x:40,y:40}] - Fallback coordinates.

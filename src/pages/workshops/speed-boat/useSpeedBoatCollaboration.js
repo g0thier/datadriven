@@ -10,12 +10,15 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { auth, onAuthStateChangedListener } from "../../../firebase";
 import {
   createSpeedBoatBrakeNote,
+  createSpeedBoatLeverNote,
   removeSpeedBoatBrakeNote,
+  removeSpeedBoatLeverNote,
   setSpeedBoatBrakeNotePosition,
   setSpeedBoatStep1Description,
   setSpeedBoatStep2Objective,
   subscribeSpeedBoatSession,
   updateSpeedBoatBrakeNote,
+  updateSpeedBoatLeverNote,
   upsertSpeedBoatParticipant,
 } from "../../../firebase/workshops/speed-boat.service";
 
@@ -179,6 +182,11 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
     typeof activeSpeedBoatState.notesByType.brakes === "object"
       ? activeSpeedBoatState.notesByType.brakes
       : EMPTY_OBJECT;
+  const rawLeverNotes =
+    activeSpeedBoatState?.notesByType?.levers &&
+    typeof activeSpeedBoatState.notesByType.levers === "object"
+      ? activeSpeedBoatState.notesByType.levers
+      : EMPTY_OBJECT;
 
   useEffect(() => {
     if (!isEnabled || !sessionId || !participantReady || !participant?.id) return () => {};
@@ -222,6 +230,18 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
       .sort(sortByCreatedAt);
   }, [rawBrakeNotes]);
 
+  const leverNotes = useMemo(() => {
+    return Object.entries(rawLeverNotes)
+      .map(([noteId, data]) => ({
+        id: String(data?.id || noteId),
+        authorId: String(data?.authorId || ""),
+        text: data?.text ?? "",
+        createdAt: data?.createdAt || "",
+        updatedAt: data?.updatedAt || "",
+      }))
+      .sort(sortByCreatedAt);
+  }, [rawLeverNotes]);
+
   const brakeNotesById = useMemo(
     () =>
       brakeNotes.reduce((accumulator, note) => {
@@ -229,6 +249,15 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
         return accumulator;
       }, {}),
     [brakeNotes]
+  );
+
+  const leverNotesById = useMemo(
+    () =>
+      leverNotes.reduce((accumulator, note) => {
+        accumulator[note.id] = note;
+        return accumulator;
+      }, {}),
+    [leverNotes]
   );
 
   const participants = useMemo(() => {
@@ -278,6 +307,10 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
       addParticipant(note.authorId);
     });
 
+    leverNotes.forEach((note) => {
+      addParticipant(note.authorId);
+    });
+
     if (participant?.id) {
       addParticipant(participant.id, participant);
     }
@@ -285,7 +318,7 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
     return Array.from(participantMap.values()).sort((a, b) =>
       String(a.name || "").localeCompare(String(b.name || ""), "fr")
     );
-  }, [brakeNotes, participant, remoteParticipants, sessionGuests]);
+  }, [brakeNotes, leverNotes, participant, remoteParticipants, sessionGuests]);
 
   const participantById = useMemo(() => {
     return participants.reduce((accumulator, currentParticipant) => {
@@ -309,6 +342,10 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
   const myBrakeNotes = useMemo(
     () => brakeNotes.filter((note) => note.authorId === currentParticipantId),
     [brakeNotes, currentParticipantId]
+  );
+  const myLeverNotes = useMemo(
+    () => leverNotes.filter((note) => note.authorId === currentParticipantId),
+    [leverNotes, currentParticipantId]
   );
 
   const setStep1Description = useCallback(
@@ -441,6 +478,76 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
     [isEnabled, participantReady, sessionId, setSessionError]
   );
 
+  const addLeverNote = useCallback(
+    async (options = {}) => {
+      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return null;
+
+      try {
+        return await createSpeedBoatLeverNote(sessionId, {
+          authorId: currentParticipantId,
+          text: options?.text ?? "",
+        });
+      } catch (error) {
+        console.error("Impossible d'ajouter le levier:", error);
+        setSessionError("Le levier n'a pas pu être ajouté.");
+        return null;
+      }
+    },
+    [currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]
+  );
+
+  const updateLeverNoteText = useCallback(
+    async (noteId, text) => {
+      if (!isEnabled || !sessionId || !participantReady || !noteId || !currentParticipantId) {
+        return;
+      }
+
+      const note = leverNotesById[noteId];
+      if (!note || note.authorId !== currentParticipantId) return;
+
+      try {
+        await updateSpeedBoatLeverNote(sessionId, noteId, { text });
+      } catch (error) {
+        console.error("Impossible de mettre à jour le levier:", error);
+        setSessionError("Le levier n'a pas pu être mis à jour.");
+      }
+    },
+    [
+      currentParticipantId,
+      isEnabled,
+      leverNotesById,
+      participantReady,
+      sessionId,
+      setSessionError,
+    ]
+  );
+
+  const removeLeverNote = useCallback(
+    async (noteId) => {
+      if (!isEnabled || !sessionId || !participantReady || !noteId || !currentParticipantId) {
+        return;
+      }
+
+      const note = leverNotesById[noteId];
+      if (!note || note.authorId !== currentParticipantId) return;
+
+      try {
+        await removeSpeedBoatLeverNote(sessionId, noteId);
+      } catch (error) {
+        console.error("Impossible de supprimer le levier:", error);
+        setSessionError("Le levier n'a pas pu être supprimé.");
+      }
+    },
+    [
+      currentParticipantId,
+      isEnabled,
+      leverNotesById,
+      participantReady,
+      sessionId,
+      setSessionError,
+    ]
+  );
+
   const actions = useMemo(
     () => ({
       setStep1Description,
@@ -449,13 +556,19 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
       updateBrakeNoteText,
       removeBrakeNote,
       setBrakeNotePosition,
+      addLeverNote,
+      updateLeverNoteText,
+      removeLeverNote,
     }),
     [
+      addLeverNote,
       addBrakeNote,
+      removeLeverNote,
       removeBrakeNote,
       setBrakeNotePosition,
       setStep1Description,
       setStep2Objective,
+      updateLeverNoteText,
       updateBrakeNoteText,
     ]
   );
@@ -478,6 +591,8 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
     step2Objective,
     brakeNotes,
     myBrakeNotes,
+    leverNotes,
+    myLeverNotes,
     actions,
   };
 }
