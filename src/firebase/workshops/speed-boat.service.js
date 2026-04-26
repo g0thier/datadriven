@@ -358,3 +358,22 @@ export const setSpeedBoatBrakeNotePosition = async (sessionId, noteId, position 
     }
   );
 };
+
+/**
+ * Sets the position of a Speed Boat lever note.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Lever note id.
+ * @param {{x?:number,y?:number}} [position={}] - Next note position.
+ * @returns {Promise<void>} Update completion.
+ */
+export const setSpeedBoatLeverNotePosition = async (sessionId, noteId, position = {}) => {
+  if (!sessionId || !noteId) return;
+
+  await update(
+    ref(database, `${toSpeedBoatPath(sessionId)}/notesByType/levers/${noteId}`),
+    {
+      position: normalizePosition(position),
+      updatedAt: nowIso(),
+    }
+  );
+};

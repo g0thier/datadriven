@@ -14,6 +14,7 @@ import {
   removeSpeedBoatBrakeNote,
   removeSpeedBoatLeverNote,
   setSpeedBoatBrakeNotePosition,
+  setSpeedBoatLeverNotePosition,
   setSpeedBoatStep1Description,
   setSpeedBoatStep2Objective,
   subscribeSpeedBoatSession,
@@ -232,10 +233,11 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
 
   const leverNotes = useMemo(() => {
     return Object.entries(rawLeverNotes)
-      .map(([noteId, data]) => ({
+      .map(([noteId, data], index) => ({
         id: String(data?.id || noteId),
         authorId: String(data?.authorId || ""),
         text: data?.text ?? "",
+        position: normalizePosition(data?.position, buildGridPosition(index)),
         createdAt: data?.createdAt || "",
         updatedAt: data?.updatedAt || "",
       }))
@@ -548,6 +550,20 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
     ]
   );
 
+  const setLeverNotePosition = useCallback(
+    async (noteId, position) => {
+      if (!isEnabled || !sessionId || !participantReady || !noteId) return;
+
+      try {
+        await setSpeedBoatLeverNotePosition(sessionId, noteId, position);
+      } catch (error) {
+        console.error("Impossible de déplacer le levier:", error);
+        setSessionError("La position du levier n'a pas pu être enregistrée.");
+      }
+    },
+    [isEnabled, participantReady, sessionId, setSessionError]
+  );
+
   const actions = useMemo(
     () => ({
       setStep1Description,
@@ -559,6 +575,7 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
       addLeverNote,
       updateLeverNoteText,
       removeLeverNote,
+      setLeverNotePosition,
     }),
     [
       addLeverNote,
@@ -566,6 +583,7 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
       removeLeverNote,
       removeBrakeNote,
       setBrakeNotePosition,
+      setLeverNotePosition,
       setStep1Description,
       setStep2Objective,
       updateLeverNoteText,

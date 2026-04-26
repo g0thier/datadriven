@@ -12,9 +12,9 @@ import Step2 from "./steps/Step2.jsx";
 import Step3 from "./steps/Step3.jsx";
 import Step4 from "./steps/Step4.jsx";
 import Step5 from "./steps/Step5.jsx";
+import Step6 from "./steps/Step6.jsx";
 
 /*
-import Step6 from "./steps/Step6.jsx";
 import Step7 from "./steps/Step7.jsx";
 import Step8 from "./steps/Step7.jsx";
 */
@@ -50,9 +50,9 @@ const description5 = [
 ];
 
 const description6 = [
-  "Le groupe met en commun les freins identifiés.",
+  "Le groupe met en commun les leviers identifiés.",
   "Les post-it sont regroupés par grandes catégories.",
-  "👉 Objectif : clarifier les principaux blocages."
+  "👉 Objectif : clarifier les principaux moteurs d’action."
 ];
 
 const description7 = [
@@ -118,7 +118,7 @@ export const speedBoat = {
     {
       label: "Mise en commun",
       duration: 10,
-      // component: Step6,
+      component: Step6,
       description: description6,
       audioEnabled: true,
     },
