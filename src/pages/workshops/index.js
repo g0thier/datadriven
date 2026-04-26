@@ -9,7 +9,7 @@
 import { continueArreteTente } from "./continue-stop-try/data.js";
 import { defectuologie } from "./defectuologie/data.js";
 import { designThinking } from "./design-thinking/data.js";
-import { matricesCroisees } from "./matrices-croisees/data.js";
+import { matriceCroisee } from "./matrice-croisee/data.js";
 import { mindMapping } from "./mind-mapping/data.js";
 import { paperBrain } from "./paper-brain/data.js";
 import { sixChapeauxBono } from "./six-hats/data.js";
@@ -33,7 +33,7 @@ export const WORKSHOPS = {
   "continue-arrete-tente": continueArreteTente,
   "defectuologie": defectuologie,
   "speed-boat": speedBoat,
-  "matrices-croisees": matricesCroisees,
+  "matrice-croisee": matriceCroisee,
   "mind-mapping": mindMapping,
   "six-chapeaux-bono": sixChapeauxBono,
   "design-thinking": designThinking,

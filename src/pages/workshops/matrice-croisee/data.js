@@ -1,12 +1,12 @@
 /**
- * @module workshops/matrices-croisees/data
- * @description Matrices croisées workshop definition and step metadata registry entry.
+ * @module workshops/matrice-croisee/data
+ * @description Matrice croisée workshop definition and step metadata registry entry.
  * @author Gauthier Rammault
  * @version 1.0.0
  * @license proprietary
  */
 
-import matricesImg from "../../../assets/workshops/matrices-croisees.png";
+import matricesImg from "../../../assets/workshops/matrice-croisee.png";
 
 /*
 import Step1 from "./steps/Step1.jsx";
@@ -56,9 +56,9 @@ const description6 = [
   "👉 Objectif : partager et tester les concepts."
 ];
 
-export const matricesCroisees = {
-  id: "matrices-croisees",
-  title: "Matrices croisées",
+export const matriceCroisee = {
+  id: "matrice-croisee",
+  title: "Matrice croisée",
   groupSize: "4 à 8 personnes",
   image: matricesImg,
   benefits: [
