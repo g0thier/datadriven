@@ -15,6 +15,7 @@ import {
   removeSpeedBoatLeverNote,
   setSpeedBoatBrakeNotePosition,
   setSpeedBoatLeverNotePosition,
+  setSpeedBoatStep8BrakeAction,
   setSpeedBoatStep1Description,
   setSpeedBoatStep2Objective,
   subscribeSpeedBoatSession,
@@ -196,6 +197,11 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
     typeof activeSpeedBoatState.votesByParticipant === "object"
       ? activeSpeedBoatState.votesByParticipant
       : EMPTY_OBJECT;
+  const rawStep8ActionsByBrake =
+    activeSpeedBoatState?.step8ActionsByBrake &&
+    typeof activeSpeedBoatState.step8ActionsByBrake === "object"
+      ? activeSpeedBoatState.step8ActionsByBrake
+      : EMPTY_OBJECT;
 
   useEffect(() => {
     if (!isEnabled || !sessionId || !participantReady || !participant?.id) return () => {};
@@ -271,6 +277,16 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
 
     return normalizedVotes;
   }, [rawVotesByParticipant]);
+
+  const step8ActionsByBrake = useMemo(() => {
+    return Object.entries(rawStep8ActionsByBrake).reduce((accumulator, [brakeId, payload]) => {
+      const noteId = String(brakeId || "").trim();
+      if (!noteId) return accumulator;
+
+      accumulator[noteId] = String(payload?.text || "");
+      return accumulator;
+    }, {});
+  }, [rawStep8ActionsByBrake]);
 
   const noteIdsSet = useMemo(() => new Set(brakeNotes.map((note) => note.id)), [brakeNotes]);
 
@@ -652,6 +668,20 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
     ]
   );
 
+  const setStep8BrakeAction = useCallback(
+    async (brakeId, text) => {
+      if (!isEnabled || !sessionId || !participantReady || !brakeId) return;
+
+      try {
+        await setSpeedBoatStep8BrakeAction(sessionId, currentParticipantId, brakeId, text);
+      } catch (error) {
+        console.error("Impossible d'enregistrer l'action du frein:", error);
+        setSessionError("L'action du frein n'a pas pu être enregistrée.");
+      }
+    },
+    [currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]
+  );
+
   const actions = useMemo(
     () => ({
       setStep1Description,
@@ -665,6 +695,7 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
       removeLeverNote,
       setLeverNotePosition,
       toggleBrakeVote,
+      setStep8BrakeAction,
     }),
     [
       addLeverNote,
@@ -673,6 +704,7 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
       removeBrakeNote,
       setBrakeNotePosition,
       setLeverNotePosition,
+      setStep8BrakeAction,
       setStep1Description,
       setStep2Objective,
       toggleBrakeVote,
@@ -704,6 +736,7 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
     myVoteCount,
     remainingVotes,
     maxStickers: MAX_STICKERS,
+    step8ActionsByBrake,
     leverNotes,
     myLeverNotes,
     actions,

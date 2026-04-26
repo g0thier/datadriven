@@ -41,6 +41,16 @@ function normalizePosition(position = {}, fallback = buildGridPosition(0)) {
  */
 export default function Step8({ step, sessionTitle, collaboration }) {
   const notes = useMemo(() => collaboration?.leverNotes ?? [], [collaboration?.leverNotes]);
+  const brakeNotes = useMemo(() => collaboration?.brakeNotes ?? [], [collaboration?.brakeNotes]);
+  const votesByNote = useMemo(
+    () => collaboration?.votesByNote || {},
+    [collaboration?.votesByNote]
+  );
+  const step8ActionsByBrake = useMemo(
+    () => collaboration?.step8ActionsByBrake || {},
+    [collaboration?.step8ActionsByBrake]
+  );
+  const isLoading = Boolean(collaboration?.isLoading);
   const syncError = collaboration?.syncError || "";
 
   const challenge = String(collaboration?.step1Description || "").trim() || "...";
@@ -55,6 +65,40 @@ export default function Step8({ step, sessionTitle, collaboration }) {
       displayPosition: normalizePosition(note.position, buildGridPosition(index)),
     }));
   }, [notes]);
+
+  const rankedBrakes = useMemo(() => {
+    return brakeNotes
+      .map((note) => {
+        const stickerSet = votesByNote[note.id];
+        const voteCount = stickerSet instanceof Set ? stickerSet.size : 0;
+
+        return {
+          ...note,
+          voteCount,
+        };
+      })
+      .filter((note) => note.voteCount > 0)
+      .sort((a, b) => {
+        if (b.voteCount !== a.voteCount) {
+          return b.voteCount - a.voteCount;
+        }
+
+        if (a.createdAt !== b.createdAt) {
+          return String(a.createdAt || "").localeCompare(String(b.createdAt || ""));
+        }
+
+        return String(a.id || "").localeCompare(String(b.id || ""));
+      });
+  }, [brakeNotes, votesByNote]);
+
+  const handleBrakeActionChange = (brakeId, nextValue) => {
+    if (isLoading) return;
+
+    const currentValue = String(step8ActionsByBrake[brakeId] || "");
+    if (currentValue === nextValue) return;
+
+    collaboration?.actions?.setStep8BrakeAction?.(brakeId, nextValue);
+  };
 
   const CANVAS_WIDTH = 2800;
   const CANVAS_HEIGHT = 1600;
@@ -158,6 +202,45 @@ export default function Step8({ step, sessionTitle, collaboration }) {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="mt-6 bg-white rounded-2xl shadow-md p-6">
+        <div className="mb-4">
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">
+            Freins priorisés
+          </p>
+        </div>
+
+        {rankedBrakes.length === 0 ? (
+          <div className="rounded-xl border border-slate-200 p-8 text-center text-gray-500">
+            Aucun frein voté n'est disponible pour définir des actions.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {rankedBrakes.map((brake, index) => (
+              <article key={brake.id} className="rounded-xl border border-red-200 bg-red-50 p-4">
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <span className="text-sm font-semibold text-gray-700">FREIN #{index + 1}</span>
+                  <span className="text-xs text-gray-500">
+                    {brake.voteCount} vote{brake.voteCount > 1 ? "s" : ""}
+                  </span>
+                </div>
+
+                <p className="text-sm text-gray-700 whitespace-pre-wrap mb-3">
+                  {brake.text || <span className="text-gray-400">—</span>}
+                </p>
+
+                <textarea
+                  className="w-full h-28 p-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Définir les actions à mener..."
+                  value={String(step8ActionsByBrake[brake.id] || "")}
+                  onChange={(event) => handleBrakeActionChange(brake.id, event.target.value)}
+                  disabled={isLoading}
+                />
+              </article>
+            ))}
+          </div>
+        )}
       </div>
     </WorkshopStepLayout>
   );

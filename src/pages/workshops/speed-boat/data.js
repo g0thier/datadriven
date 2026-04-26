@@ -60,7 +60,7 @@ const description7 = [
 
 const description8 = [
   "Le groupe transforme les freins prioritaires en actions concrètes.",
-  "Il précise les premières décisions ou étapes à lancer.",
+  "Il précise les premières actions, décisions ou étapes à lancer.",
   "👉 Objectif : passer du constat au plan d’action."
 ];
 
@@ -128,7 +128,7 @@ export const speedBoat = {
     },
     {
       label: "Plan d’action",
-      duration: 10000000,
+      duration: 10,
       component: Step8,
       description: description8,
       audioEnabled: true,

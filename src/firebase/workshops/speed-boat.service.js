@@ -436,3 +436,29 @@ export const toggleSpeedBoatBrakeVote = async (
     votes: result.snapshot.exists() ? result.snapshot.val() : {},
   };
 };
+
+/**
+ * Sets the step-8 action text linked to a brake note.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} participantId - Editor participant id.
+ * @param {string} brakeId - Brake note id.
+ * @param {string} text - Action text.
+ * @returns {Promise<void>} Update completion.
+ */
+export const setSpeedBoatStep8BrakeAction = async (
+  sessionId,
+  participantId,
+  brakeId,
+  text
+) => {
+  if (!sessionId || !brakeId) return;
+
+  await update(
+    ref(database, `${toSpeedBoatPath(sessionId)}/step8ActionsByBrake/${brakeId}`),
+    {
+      text: String(text ?? ""),
+      updatedAt: nowIso(),
+      updatedBy: String(participantId || ""),
+    }
+  );
+};
