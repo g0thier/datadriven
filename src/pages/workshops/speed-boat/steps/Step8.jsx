@@ -56,7 +56,7 @@ export default function Step8({ step, sessionTitle, collaboration }) {
   const challenge = String(collaboration?.step1Description || "").trim() || "...";
   const objective = String(collaboration?.step2Objective || "").trim() || "...";
 
-  const [zoom, setZoom] = useState(20);
+  const [zoom, setZoom] = useState(50);
   const scale = zoom / 100;
 
   const notesWithDisplayPosition = useMemo(() => {
