@@ -218,26 +218,36 @@ export default function Step8({ step, sessionTitle, collaboration }) {
         ) : (
           <div className="space-y-4">
             {rankedBrakes.map((brake, index) => (
-              <article key={brake.id} className="rounded-xl border border-red-200 bg-red-50 p-4">
-                <div className="flex items-start justify-between gap-3 mb-2">
-                  <span className="text-sm font-semibold text-gray-700">FREIN {index + 1}</span>
-                  <span className="text-xs text-gray-500">
-                    {brake.voteCount} vote{brake.voteCount > 1 ? "s" : ""}
-                  </span>
+              <div key={brake.id} className="space-y-3">
+                <article className="rounded-xl border border-red-200 bg-red-50 p-4">
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <span className="text-xs uppercase tracking-wide text-red-700">
+                      FREIN {index + 1}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {brake.voteCount} vote{brake.voteCount > 1 ? "s" : ""}
+                    </span>
+                  </div>
+
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                    {brake.text || <span className="text-gray-400">—</span>}
+                  </p>
+                </article>
+
+                <div className="ml-8 md:ml-12 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+                  <p className="text-xs uppercase tracking-wide text-emerald-700 mb-1">
+                    Action à mener
+                  </p>
+
+                  <textarea
+                    className="w-full h-28 p-3 bg-white border border-emerald-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder="Définir les actions à mener..."
+                    value={String(step8ActionsByBrake[brake.id] || "")}
+                    onChange={(event) => handleBrakeActionChange(brake.id, event.target.value)}
+                    disabled={isLoading}
+                  />
                 </div>
-
-                <p className="text-sm text-gray-700 whitespace-pre-wrap mb-3">
-                  {brake.text || <span className="text-gray-400">—</span>}
-                </p>
-
-                <textarea
-                  className="w-full h-28 p-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Définir les actions à mener..."
-                  value={String(step8ActionsByBrake[brake.id] || "")}
-                  onChange={(event) => handleBrakeActionChange(brake.id, event.target.value)}
-                  disabled={isLoading}
-                />
-              </article>
+              </div>
             ))}
           </div>
         )}
