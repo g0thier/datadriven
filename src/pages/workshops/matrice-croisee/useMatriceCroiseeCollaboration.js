@@ -19,11 +19,14 @@ import {
   removeMatriceCroiseeRowItem,
   setMatriceCroiseeStep1Description,
   subscribeMatriceCroiseeSession,
+  toggleMatriceCroiseeVote,
   updateMatriceCroiseeCellNote,
   updateMatriceCroiseeColumnItem,
   updateMatriceCroiseeRowItem,
   upsertMatriceCroiseeParticipant,
 } from "../../../firebase/workshops/matrice-croisee.service";
+
+const MAX_STICKERS = 1;
 
 const EMPTY_OBJECT = Object.freeze({});
 const EMPTY_ARRAY = Object.freeze([]);
@@ -175,6 +178,11 @@ export function useMatriceCroiseeCollaboration({ sessionId, session, workshopId 
     typeof activeMatriceCroiseeState.step3.notesByCell === "object"
       ? activeMatriceCroiseeState.step3.notesByCell
       : EMPTY_OBJECT;
+  const rawVotesByParticipant =
+    activeMatriceCroiseeState?.votesByParticipant &&
+    typeof activeMatriceCroiseeState.votesByParticipant === "object"
+      ? activeMatriceCroiseeState.votesByParticipant
+      : EMPTY_OBJECT;
 
   useEffect(() => {
     setLastNonEmptyStep1Description("");
@@ -279,6 +287,60 @@ export function useMatriceCroiseeCollaboration({ sessionId, session, workshopId 
     return normalizedByKey;
   }, [rawCellNotesByCell]);
 
+  const votesByParticipant = useMemo(() => {
+    const normalizedVotes = {};
+
+    Object.entries(rawVotesByParticipant).forEach(([participantId, votes]) => {
+      if (!votes || typeof votes !== "object") return;
+
+      const cleanedVotes = Object.entries(votes).reduce((accumulator, [noteId, enabled]) => {
+        if (!enabled) return accumulator;
+        accumulator[noteId] = true;
+        return accumulator;
+      }, {});
+
+      if (Object.keys(cleanedVotes).length > 0) {
+        normalizedVotes[participantId] = cleanedVotes;
+      }
+    });
+
+    return normalizedVotes;
+  }, [rawVotesByParticipant]);
+
+  const noteIdsSet = useMemo(() => {
+    const ids = new Set();
+
+    Object.values(cellNotesByKey).forEach((notes) => {
+      if (!Array.isArray(notes)) return;
+
+      notes.forEach((note) => {
+        const noteId = String(note?.id || "");
+        if (!noteId) return;
+        ids.add(noteId);
+      });
+    });
+
+    return ids;
+  }, [cellNotesByKey]);
+
+  const votesByNote = useMemo(() => {
+    const byNote = {};
+
+    Object.entries(votesByParticipant).forEach(([participantId, votes]) => {
+      Object.keys(votes).forEach((noteId) => {
+        if (!noteIdsSet.has(noteId)) return;
+
+        if (!byNote[noteId]) {
+          byNote[noteId] = new Set();
+        }
+
+        byNote[noteId].add(participantId);
+      });
+    });
+
+    return byNote;
+  }, [noteIdsSet, votesByParticipant]);
+
   const remoteParticipants =
     activeMatriceCroiseeState?.participants &&
     typeof activeMatriceCroiseeState.participants === "object"
@@ -358,6 +420,18 @@ export function useMatriceCroiseeCollaboration({ sessionId, session, workshopId 
 
   const currentParticipantId = participant?.id || "";
   const step1Description = rawStep1Description || lastNonEmptyStep1Description;
+  const myVotes = useMemo(() => {
+    if (!currentParticipantId) return EMPTY_OBJECT;
+    return votesByParticipant[currentParticipantId] || EMPTY_OBJECT;
+  }, [currentParticipantId, votesByParticipant]);
+  const myVoteCount = useMemo(() => {
+    return Object.entries(myVotes).reduce((count, [noteId, enabled]) => {
+      if (!enabled) return count;
+      if (!noteIdsSet.has(noteId)) return count;
+      return count + 1;
+    }, 0);
+  }, [myVotes, noteIdsSet]);
+  const remainingVotes = Math.max(0, MAX_STICKERS - myVoteCount);
 
   useEffect(() => {
     if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return () => {};
@@ -680,6 +754,40 @@ export function useMatriceCroiseeCollaboration({ sessionId, session, workshopId 
     [isEnabled, participantReady, sessionId, setSessionError]
   );
 
+  const toggleVote = useCallback(
+    async (noteId) => {
+      if (
+        !isEnabled ||
+        !sessionId ||
+        !participantReady ||
+        !currentParticipantId ||
+        !noteId ||
+        !noteIdsSet.has(noteId)
+      ) {
+        return { committed: false, votes: {} };
+      }
+
+      try {
+        return await toggleMatriceCroiseeVote(sessionId, currentParticipantId, noteId, {
+          maxVotes: MAX_STICKERS,
+          validNoteIds: noteIdsSet,
+        });
+      } catch (error) {
+        console.error("Impossible de modifier le vote:", error);
+        setSessionError("Le vote n'a pas pu être enregistré.");
+        return { committed: false, votes: {} };
+      }
+    },
+    [
+      currentParticipantId,
+      isEnabled,
+      noteIdsSet,
+      participantReady,
+      sessionId,
+      setSessionError,
+    ]
+  );
+
   const actions = useMemo(
     () => ({
       initializeStructure,
@@ -693,6 +801,7 @@ export function useMatriceCroiseeCollaboration({ sessionId, session, workshopId 
       addCellNote,
       updateCellNoteText,
       removeCellNote,
+      toggleVote,
     }),
     [
       addCellNote,
@@ -703,6 +812,7 @@ export function useMatriceCroiseeCollaboration({ sessionId, session, workshopId 
       removeColumnItem,
       removeRowItem,
       setStep1Description,
+      toggleVote,
       updateCellNoteText,
       updateColumnItemText,
       updateRowItemText,
@@ -725,6 +835,10 @@ export function useMatriceCroiseeCollaboration({ sessionId, session, workshopId 
     columnItems,
     rowItems,
     cellNotesByKey,
+    votesByParticipant,
+    votesByNote,
+    remainingVotes,
+    maxStickers: MAX_STICKERS,
     buildCellKey: buildMatriceCroiseeCellKey,
     actions,
   };

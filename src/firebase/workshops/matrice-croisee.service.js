@@ -14,6 +14,7 @@ import { database } from "../index";
  * @returns {string} ISO datetime.
  */
 const nowIso = () => new Date().toISOString();
+const MATRICE_CROISEE_MAX_STICKERS = 1;
 const STEP2_COLUMN_SEED_IDS = ["column-1", "column-2", "column-3"];
 const STEP2_ROW_SEED_IDS = ["row-1", "row-2", "row-3"];
 
@@ -30,6 +31,8 @@ const toMatriceCroiseeItemsRowsPath = (sessionId) => `${toMatriceCroiseeStep2Pat
 const toMatriceCroiseeStep3Path = (sessionId) => `${toMatriceCroiseePath(sessionId)}/step3`;
 const toMatriceCroiseeStep3NotesByCellPath = (sessionId) =>
   `${toMatriceCroiseeStep3Path(sessionId)}/notesByCell`;
+const toMatriceCroiseeVotesByParticipantPath = (sessionId) =>
+  `${toMatriceCroiseePath(sessionId)}/votesByParticipant`;
 
 const normalizeCellKeyPart = (value) =>
   String(value || "")
@@ -552,4 +555,61 @@ export const removeMatriceCroiseeCellNote = async (
   if (!cellNotesPath) return;
 
   await set(ref(database, `${cellNotesPath}/${noteId}`), null);
+};
+
+/**
+ * Toggles a participant vote on a note with optional max-votes guard.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} participantId - Participant id.
+ * @param {string} noteId - Note id.
+ * @param {{maxVotes?:number, validNoteIds?:Set<string>}} [options={}] - Voting options.
+ * @returns {Promise<{committed:boolean, votes:Object}>} Transaction result and resulting votes.
+ */
+export const toggleMatriceCroiseeVote = async (
+  sessionId,
+  participantId,
+  noteId,
+  options = {}
+) => {
+  if (!sessionId || !participantId || !noteId) {
+    return { committed: false, votes: {} };
+  }
+
+  const maxVotes = Number.isFinite(options?.maxVotes)
+    ? options.maxVotes
+    : MATRICE_CROISEE_MAX_STICKERS;
+  const validNoteIds =
+    options?.validNoteIds instanceof Set ? options.validNoteIds : null;
+
+  const votesRef = ref(
+    database,
+    `${toMatriceCroiseeVotesByParticipantPath(sessionId)}/${participantId}`
+  );
+
+  const result = await runTransaction(votesRef, (current) => {
+    const nextVotes = current && typeof current === "object" ? { ...current } : {};
+
+    if (nextVotes[noteId]) {
+      delete nextVotes[noteId];
+      return Object.keys(nextVotes).length > 0 ? nextVotes : null;
+    }
+
+    const usedVotes = Object.entries(nextVotes).reduce((count, [id, enabled]) => {
+      if (!enabled) return count;
+      if (validNoteIds && !validNoteIds.has(id)) return count;
+      return count + 1;
+    }, 0);
+
+    if (usedVotes >= maxVotes) {
+      return;
+    }
+
+    nextVotes[noteId] = true;
+    return nextVotes;
+  });
+
+  return {
+    committed: result.committed,
+    votes: result.snapshot.exists() ? result.snapshot.val() : {},
+  };
 };
