@@ -14,16 +14,26 @@ import Step2 from "./steps/Step2.jsx";
 import Step3 from "./steps/Step3.jsx";
 import Step4 from "./steps/Step4.jsx";
 import Step5 from "./steps/Step5.jsx";
+import Step6 from "./steps/Step6.jsx";
 */
 
 const description1 = [
+  "Le facilitateur pose une question claire, souvent formulée en « Comment pourrions-nous… ? »",
+  "Exemples :",
+  "- Comment pourrions-nous améliorer l’expérience des utilisateurs ?",
+  "- Comment pourrions-nous réduire les irritants d’un parcours client ?",
+  "- Comment pourrions-nous rendre un service plus simple et plus utile ?",
+  "👉 La question doit être précise mais ouverte."
+];
+
+const description2 = [
   "L’équipe se met à la place des utilisateurs.",
   "Objectifs : comprendre leurs besoins, frustrations et comportements réels.",
   "Méthodes possibles : interviews, observation, immersion terrain.",
   "👉 On cherche à comprendre avant de proposer des solutions."
 ];
 
-const description2 = [
+const description3 = [
   "Synthèse des apprentissages de la phase d’empathie.",
   "Identification des problèmes clés et des insights.",
   "Formulation d’une question claire sous forme de :",
@@ -31,7 +41,7 @@ const description2 = [
   "Exemple : Comment pourrions-nous améliorer l’expérience des utilisateurs ?"
 ];
 
-const description3 = [
+const description4 = [
   "Génération d’un maximum d’idées.",
   "Règles :",
   "- Une idée par post-it",
@@ -41,14 +51,14 @@ const description3 = [
   "👉 Objectif : faire émerger des pistes prometteuses."
 ];
 
-const description4 = [
+const description5 = [
   "Transformation des idées en solutions concrètes.",
   "Création de maquettes simples : croquis, storyboard, prototype papier.",
   "👉 Le but n’est pas la perfection mais la rapidité.",
   "On rend l’idée tangible pour pouvoir la tester."
 ];
 
-const description5 = [
+const description6 = [
   "Test des prototypes auprès des utilisateurs.",
   "Recueil de feedback :",
   "- Ce qui fonctionne",
@@ -75,38 +85,45 @@ export const designThinking = {
   ],
   steps: [
     {
-      label: "Empathie",
-      duration: 50,
+      label: "Définition du défi",
+      duration: 5,
       // component: Step1,
       description: description1,
       audioEnabled: true,
     },
     {
-      label: "Définition du problème",
-      duration: 40,
+      label: "Empathie",
+      duration: 50,
       // component: Step2,
       description: description2,
       audioEnabled: true,
     },
     {
-      label: "Idéation",
+      label: "Définition du problème",
       duration: 40,
       // component: Step3,
       description: description3,
-      audioEnabled: false,
+      audioEnabled: true,
     },
     {
-      label: "Prototypage",
-      duration: 25,
+      label: "Idéation",
+      duration: 40,
       // component: Step4,
       description: description4,
       audioEnabled: false,
     },
     {
-      label: "Test",
+      label: "Prototypage",
       duration: 25,
       // component: Step5,
       description: description5,
+      audioEnabled: false,
+    },
+    {
+      label: "Test",
+      duration: 25,
+      // component: Step6,
+      description: description6,
       audioEnabled: true,
     },
   ],
