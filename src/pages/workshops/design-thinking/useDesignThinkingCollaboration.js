@@ -11,9 +11,11 @@ import { auth, onAuthStateChangedListener } from "../../../firebase";
 import {
   addDesignThinkingIdeationComment,
   createDesignThinkingIdeationNote,
+  createDesignThinkingPrototypeFeedbackNote,
   createDesignThinkingSharedNote,
   removeDesignThinkingIdeationComment,
   removeDesignThinkingIdeationNote,
+  removeDesignThinkingPrototypeFeedbackNote,
   removeDesignThinkingSharedNote,
   setDesignThinkingIdeationNotePosition,
   setDesignThinkingProblemStatement,
@@ -22,6 +24,7 @@ import {
   toggleDesignThinkingIdeationVote,
   updateDesignThinkingIdeationComment,
   updateDesignThinkingIdeationNote,
+  updateDesignThinkingPrototypeFeedbackNote,
   updateDesignThinkingSharedNote,
   upsertDesignThinkingParticipant,
 } from "../../../firebase/workshops/design-thinking.service";
@@ -29,6 +32,32 @@ import {
 const MAX_STICKERS = 3;
 const EMPTY_ARRAY = Object.freeze([]);
 const EMPTY_OBJECT = Object.freeze({});
+const PROTOTYPE_FEEDBACK_COLUMNS = Object.freeze([
+  {
+    id: "works",
+    label: "Ce qui fonctionne",
+    noteBgClass: "bg-green-100",
+    columnBgClass: "bg-green-50/70",
+    borderClass: "border-green-200",
+  },
+  {
+    id: "problems",
+    label: "Ce qui pose problème",
+    noteBgClass: "bg-red-100",
+    columnBgClass: "bg-red-50/70",
+    borderClass: "border-red-200",
+  },
+  {
+    id: "improvements",
+    label: "Ce qui peut être amélioré",
+    noteBgClass: "bg-blue-100",
+    columnBgClass: "bg-blue-50/70",
+    borderClass: "border-blue-200",
+  },
+]);
+const PROTOTYPE_FEEDBACK_COLUMN_IDS_SET = new Set(
+  PROTOTYPE_FEEDBACK_COLUMNS.map((column) => column.id)
+);
 
 const sortByCreatedAt = (a, b) => {
   const createdA = a?.createdAt || "";
@@ -59,6 +88,11 @@ const normalizePosition = (position = {}, fallback = buildGridPosition(0)) => {
     x: Number.isFinite(x) ? x : fallback.x,
     y: Number.isFinite(y) ? y : fallback.y,
   };
+};
+
+const normalizePrototypeFeedbackColumnId = (value) => {
+  const normalized = String(value || "").trim().toLowerCase();
+  return PROTOTYPE_FEEDBACK_COLUMN_IDS_SET.has(normalized) ? normalized : "";
 };
 
 const resolveGuestName = (guest = {}) => {
@@ -258,6 +292,11 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
     typeof activeDesignThinkingState.ideation.votesByParticipant === "object"
       ? activeDesignThinkingState.ideation.votesByParticipant
       : EMPTY_OBJECT;
+  const rawPrototypeFeedbackNotes =
+    activeDesignThinkingState?.prototypeFeedback?.notes &&
+    typeof activeDesignThinkingState.prototypeFeedback.notes === "object"
+      ? activeDesignThinkingState.prototypeFeedback.notes
+      : EMPTY_OBJECT;
 
   const sharedNotes = useMemo(() => {
     return Object.entries(rawSharedNotes)
@@ -277,6 +316,46 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
       return accumulator;
     }, {});
   }, [sharedNotes]);
+
+  const prototypeFeedbackNotes = useMemo(() => {
+    return Object.entries(rawPrototypeFeedbackNotes)
+      .map(([noteId, data]) => {
+        const columnId = normalizePrototypeFeedbackColumnId(data?.columnId);
+        if (!columnId) return null;
+
+        return {
+          id: String(data?.id || noteId),
+          authorId: String(data?.authorId || ""),
+          columnId,
+          text: data?.text ?? "",
+          createdAt: String(data?.createdAt || ""),
+          updatedAt: String(data?.updatedAt || ""),
+        };
+      })
+      .filter(Boolean)
+      .sort(sortByCreatedAt);
+  }, [rawPrototypeFeedbackNotes]);
+
+  const prototypeFeedbackNotesById = useMemo(() => {
+    return prototypeFeedbackNotes.reduce((accumulator, note) => {
+      accumulator[note.id] = note;
+      return accumulator;
+    }, {});
+  }, [prototypeFeedbackNotes]);
+
+  const prototypeFeedbackNotesByColumn = useMemo(() => {
+    const grouped = PROTOTYPE_FEEDBACK_COLUMNS.reduce((accumulator, column) => {
+      accumulator[column.id] = [];
+      return accumulator;
+    }, {});
+
+    prototypeFeedbackNotes.forEach((note) => {
+      if (!grouped[note.columnId]) return;
+      grouped[note.columnId].push(note);
+    });
+
+    return grouped;
+  }, [prototypeFeedbackNotes]);
 
   const notes = useMemo(() => {
     return Object.entries(rawIdeationNotes)
@@ -405,6 +484,10 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
       addParticipant(note.authorId);
     });
 
+    prototypeFeedbackNotes.forEach((note) => {
+      addParticipant(note.authorId);
+    });
+
     notes.forEach((note) => {
       addParticipant(note.authorId);
     });
@@ -416,7 +499,7 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
     return Array.from(participantMap.values()).sort((a, b) =>
       String(a.name || "").localeCompare(String(b.name || ""), "fr")
     );
-  }, [notes, participant, remoteParticipants, sessionGuests, sharedNotes]);
+  }, [notes, participant, prototypeFeedbackNotes, remoteParticipants, sessionGuests, sharedNotes]);
 
   const participantById = useMemo(() => {
     return participants.reduce((accumulator, currentParticipant) => {
@@ -687,6 +770,93 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
     [currentParticipantId, isEnabled, notes.length, participantReady, sessionId, setSessionError]
   );
 
+  const addPrototypeFeedbackNote = useCallback(
+    async (options = {}) => {
+      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return null;
+
+      const columnId = normalizePrototypeFeedbackColumnId(options?.columnId);
+      if (!columnId) return null;
+
+      try {
+        return await createDesignThinkingPrototypeFeedbackNote(sessionId, {
+          authorId: currentParticipantId,
+          columnId,
+          text: options?.text ?? "",
+        });
+      } catch (error) {
+        console.error("Impossible d'ajouter le feedback prototype:", error);
+        setSessionError("Le feedback prototype n'a pas pu être ajouté.");
+        return null;
+      }
+    },
+    [currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]
+  );
+
+  const updatePrototypeFeedbackNoteText = useCallback(
+    async (noteId, text, previousText = null) => {
+      if (!isEnabled || !sessionId || !participantReady || !noteId || !currentParticipantId) {
+        return;
+      }
+
+      const note = prototypeFeedbackNotesById[noteId];
+      if (!note) return;
+
+      const currentText = String(note.text ?? "");
+      const nextText = String(text ?? "");
+      if (currentText === nextText) return;
+
+      const expectedPreviousText =
+        previousText === null || previousText === undefined
+          ? currentText
+          : String(previousText ?? "");
+
+      try {
+        await updateDesignThinkingPrototypeFeedbackNote(
+          sessionId,
+          noteId,
+          { text: nextText },
+          { expectedPreviousText }
+        );
+      } catch (error) {
+        console.error("Impossible de mettre à jour le feedback prototype:", error);
+        setSessionError("Le feedback prototype n'a pas pu être mis à jour.");
+      }
+    },
+    [
+      currentParticipantId,
+      isEnabled,
+      participantReady,
+      prototypeFeedbackNotesById,
+      sessionId,
+      setSessionError,
+    ]
+  );
+
+  const removePrototypeFeedbackNote = useCallback(
+    async (noteId) => {
+      if (!isEnabled || !sessionId || !participantReady || !noteId || !currentParticipantId) {
+        return;
+      }
+
+      if (!prototypeFeedbackNotesById[noteId]) return;
+
+      try {
+        await removeDesignThinkingPrototypeFeedbackNote(sessionId, noteId);
+      } catch (error) {
+        console.error("Impossible de supprimer le feedback prototype:", error);
+        setSessionError("Le feedback prototype n'a pas pu être supprimé.");
+      }
+    },
+    [
+      currentParticipantId,
+      isEnabled,
+      participantReady,
+      prototypeFeedbackNotesById,
+      sessionId,
+      setSessionError,
+    ]
+  );
+
   const updateNoteText = useCallback(
     async (noteId, text) => {
       if (!isEnabled || !sessionId || !participantReady || !noteId || !currentParticipantId) {
@@ -854,6 +1024,9 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
       addSharedNote,
       updateSharedNoteText,
       removeSharedNote,
+      addPrototypeFeedbackNote,
+      updatePrototypeFeedbackNoteText,
+      removePrototypeFeedbackNote,
       addNote,
       updateNoteText,
       removeNote,
@@ -866,9 +1039,11 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
     [
       addComment,
       addNote,
+      addPrototypeFeedbackNote,
       addSharedNote,
       removeComment,
       removeNote,
+      removePrototypeFeedbackNote,
       removeSharedNote,
       setNotePosition,
       setProblemStatement,
@@ -876,6 +1051,7 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
       toggleVote,
       updateCommentText,
       updateNoteText,
+      updatePrototypeFeedbackNoteText,
       updateSharedNoteText,
     ]
   );
@@ -895,6 +1071,9 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
     getParticipantLabel,
     step1Description,
     sharedNotes,
+    prototypeFeedbackColumns: PROTOTYPE_FEEDBACK_COLUMNS,
+    prototypeFeedbackNotes,
+    prototypeFeedbackNotesByColumn,
     problemStatement,
     notes,
     myNotes,

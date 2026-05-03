@@ -15,10 +15,7 @@ import Step5 from "./steps/Step5.jsx";
 import Step6 from "./steps/Step6.jsx";
 import Step7 from "./steps/Step7.jsx";
 import Step8 from "./steps/Step8.jsx";
-
-/*
 import Step9 from "./steps/Step9.jsx";
-*/
 
 const description1 = [
   "Le facilitateur pose une question claire, souvent formulée en « Comment pourrions-nous… ? »",
@@ -163,7 +160,7 @@ export const designThinking = {
     {
       label: "Test",
       duration: 25,
-      // component: Step9,
+      component: Step9,
       description: description9,
       audioEnabled: true,
     },

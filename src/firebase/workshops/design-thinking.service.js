@@ -15,6 +15,11 @@ import { database } from "../index";
  */
 const nowIso = () => new Date().toISOString();
 const DESIGN_THINKING_IDEATION_MAX_STICKERS = 3;
+const DESIGN_THINKING_PROTOTYPE_FEEDBACK_COLUMN_IDS = new Set([
+  "works",
+  "problems",
+  "improvements",
+]);
 
 /**
  * Builds the design-thinking root path for a session.
@@ -23,6 +28,8 @@ const DESIGN_THINKING_IDEATION_MAX_STICKERS = 3;
  */
 const toDesignThinkingPath = (sessionId) => `workshopSessions/${sessionId}/designThinking`;
 const toDesignThinkingIdeationPath = (sessionId) => `${toDesignThinkingPath(sessionId)}/ideation`;
+const toDesignThinkingPrototypeFeedbackPath = (sessionId) =>
+  `${toDesignThinkingPath(sessionId)}/prototypeFeedback`;
 
 const normalizePosition = (position = {}, fallback = { x: 40, y: 40 }) => {
   const x = Number(position?.x);
@@ -32,6 +39,11 @@ const normalizePosition = (position = {}, fallback = { x: 40, y: 40 }) => {
     x: Number.isFinite(x) ? x : fallback.x,
     y: Number.isFinite(y) ? y : fallback.y,
   };
+};
+
+const normalizePrototypeFeedbackColumnId = (columnId) => {
+  const normalized = String(columnId || "").trim().toLowerCase();
+  return DESIGN_THINKING_PROTOTYPE_FEEDBACK_COLUMN_IDS.has(normalized) ? normalized : "";
 };
 
 /**
@@ -300,6 +312,128 @@ export const setDesignThinkingProblemStatement = async (
       updatedAt: nowIso(),
       updatedBy: participantId || "",
     };
+  });
+};
+
+/**
+ * Creates a Design Thinking prototype feedback note.
+ * @param {string} sessionId - Workshop session id.
+ * @param {{authorId:string, columnId:"works"|"problems"|"improvements", text?:string}} [payload={}] - Note payload.
+ * @returns {Promise<string>} Created note id.
+ */
+export const createDesignThinkingPrototypeFeedbackNote = async (sessionId, payload = {}) => {
+  if (!sessionId || !payload?.authorId) {
+    throw new Error(
+      "createDesignThinkingPrototypeFeedbackNote: sessionId ou authorId manquant"
+    );
+  }
+
+  const normalizedColumnId = normalizePrototypeFeedbackColumnId(payload?.columnId);
+  if (!normalizedColumnId) {
+    throw new Error("createDesignThinkingPrototypeFeedbackNote: columnId invalide");
+  }
+
+  const noteRef = push(ref(database, `${toDesignThinkingPrototypeFeedbackPath(sessionId)}/notes`));
+  const noteId = noteRef.key;
+  if (!noteId) {
+    throw new Error("Impossible de générer noteId");
+  }
+
+  const now = nowIso();
+
+  await set(noteRef, {
+    id: noteId,
+    authorId: payload.authorId,
+    columnId: normalizedColumnId,
+    text: payload.text ?? "",
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  return noteId;
+};
+
+/**
+ * Updates a Design Thinking prototype feedback note.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Note id.
+ * @param {{text?:string, columnId?:"works"|"problems"|"improvements"}} [patch={}] - Note patch.
+ * @param {{expectedPreviousText?:string}} [options={}] - Concurrency guards.
+ * @returns {Promise<void>} Update completion.
+ */
+export const updateDesignThinkingPrototypeFeedbackNote = async (
+  sessionId,
+  noteId,
+  patch = {},
+  options = {}
+) => {
+  if (!sessionId || !noteId) return;
+
+  const notePath = `${toDesignThinkingPrototypeFeedbackPath(sessionId)}/notes/${noteId}`;
+  const hasNextText = Object.prototype.hasOwnProperty.call(patch, "text");
+  const hasNextColumnId = Object.prototype.hasOwnProperty.call(patch, "columnId");
+  const normalizedColumnId = hasNextColumnId
+    ? normalizePrototypeFeedbackColumnId(patch.columnId)
+    : "";
+
+  if (hasNextColumnId && !normalizedColumnId) {
+    throw new Error("updateDesignThinkingPrototypeFeedbackNote: columnId invalide");
+  }
+
+  if (!hasNextText) {
+    const payload = { updatedAt: nowIso() };
+    if (hasNextColumnId) {
+      payload.columnId = normalizedColumnId;
+    }
+
+    await update(ref(database, notePath), payload);
+    return;
+  }
+
+  const nextText = String(patch.text ?? "");
+  const hasExpectedPreviousText = Object.prototype.hasOwnProperty.call(
+    options,
+    "expectedPreviousText"
+  );
+  const expectedPreviousText = hasExpectedPreviousText
+    ? String(options.expectedPreviousText ?? "")
+    : null;
+
+  await runTransaction(ref(database, notePath), (current) => {
+    if (!current || typeof current !== "object") return current;
+
+    const currentText = String(current.text ?? "");
+
+    const shouldRejectStaleClear =
+      nextText === "" &&
+      expectedPreviousText !== null &&
+      expectedPreviousText !== currentText &&
+      currentText !== "";
+
+    if (shouldRejectStaleClear) {
+      return;
+    }
+
+    return {
+      ...current,
+      ...(hasNextColumnId ? { columnId: normalizedColumnId } : {}),
+      text: nextText,
+      updatedAt: nowIso(),
+    };
+  });
+};
+
+/**
+ * Removes a Design Thinking prototype feedback note.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Note id.
+ * @returns {Promise<void>} Delete completion.
+ */
+export const removeDesignThinkingPrototypeFeedbackNote = async (sessionId, noteId) => {
+  if (!sessionId || !noteId) return;
+
+  await update(ref(database), {
+    [`${toDesignThinkingPrototypeFeedbackPath(sessionId)}/notes/${noteId}`]: null,
   });
 };
 
