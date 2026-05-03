@@ -1,36 +1,18 @@
 /**
  * @module workshops/design-thinking/steps/Step8
- * @description Design Thinking step 8 screen for read-only prototyping board.
+ * @description Design Thinking step 8 screen for read-only ranked voted notes.
  * @author Gauthier Rammault
  * @version 1.0.0
  * @license proprietary
  */
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import WorkshopStepLayout from "../../WorkshopStepLayout.jsx";
 
-function buildGridPosition(index = 0) {
-  const col = index % 5;
-  const row = Math.floor(index / 5);
-
-  return {
-    x: 40 + col * 290,
-    y: 40 + row * 220,
-  };
-}
-
-function normalizePosition(position = {}, fallback = buildGridPosition(0)) {
-  const x = Number(position?.x);
-  const y = Number(position?.y);
-
-  return {
-    x: Number.isFinite(x) ? x : fallback.x,
-    y: Number.isFinite(y) ? y : fallback.y,
-  };
-}
+const EMPTY_OBJECT = Object.freeze({});
 
 /**
- * Renders Design Thinking step 8 (prototyping) with a read-only board.
+ * Renders Design Thinking step 8 (prototyping) with ranked voted notes.
  *
  * @param {Object} props - Component props.
  * @param {Object} props.step - Step metadata.
@@ -40,8 +22,17 @@ function normalizePosition(position = {}, fallback = buildGridPosition(0)) {
  */
 function Step8({ step, sessionTitle, collaboration }) {
   const notes = useMemo(() => collaboration?.notes ?? [], [collaboration?.notes]);
-  const commentsByNote = collaboration?.commentsByNote || {};
-  const votesByNote = collaboration?.votesByNote || {};
+  const rawCommentsByNote = collaboration?.commentsByNote;
+  const rawVotesByNote = collaboration?.votesByNote;
+
+  const commentsByNote = useMemo(
+    () => (rawCommentsByNote && typeof rawCommentsByNote === "object" ? rawCommentsByNote : EMPTY_OBJECT),
+    [rawCommentsByNote]
+  );
+  const votesByNote = useMemo(
+    () => (rawVotesByNote && typeof rawVotesByNote === "object" ? rawVotesByNote : EMPTY_OBJECT),
+    [rawVotesByNote]
+  );
 
   const currentParticipantId = collaboration?.participant?.id || "";
   const syncError = collaboration?.syncError || "";
@@ -50,18 +41,44 @@ function Step8({ step, sessionTitle, collaboration }) {
     String(collaboration?.problemStatement || "").trim() ||
     "La problématique sera visible ici dès qu'elle est définie à l'étape 3.";
 
-  const [zoom, setZoom] = useState(50);
-  const scale = zoom / 100;
+  const rankedNotes = useMemo(() => {
+    return notes
+      .map((note) => {
+        const stickerSet = votesByNote[note.id];
+        const stickerCount = stickerSet instanceof Set ? stickerSet.size : 0;
+        const hasMine =
+          stickerSet instanceof Set && currentParticipantId
+            ? stickerSet.has(currentParticipantId)
+            : false;
+        const otherCount = Math.max(0, stickerCount - (hasMine ? 1 : 0));
+        const comments = commentsByNote[note.id] || [];
 
-  const notesWithPosition = useMemo(() => {
-    return notes.map((note, index) => ({
-      ...note,
-      displayPosition: normalizePosition(note.position, buildGridPosition(index)),
-    }));
-  }, [notes]);
+        return {
+          ...note,
+          stickerCount,
+          hasMine,
+          otherCount,
+          comments,
+          commentCount: comments.length,
+        };
+      })
+      .filter((note) => note.stickerCount > 0)
+      .sort((a, b) => {
+        if (b.stickerCount !== a.stickerCount) {
+          return b.stickerCount - a.stickerCount;
+        }
 
-  const CANVAS_WIDTH = 2800;
-  const CANVAS_HEIGHT = 1600;
+        if (b.commentCount !== a.commentCount) {
+          return b.commentCount - a.commentCount;
+        }
+
+        if (a.createdAt !== b.createdAt) {
+          return String(a.createdAt || "").localeCompare(String(b.createdAt || ""));
+        }
+
+        return String(a.id || "").localeCompare(String(b.id || ""));
+      });
+  }, [commentsByNote, currentParticipantId, notes, votesByNote]);
 
   return (
     <WorkshopStepLayout
@@ -80,108 +97,60 @@ function Step8({ step, sessionTitle, collaboration }) {
       )}
 
       <div className="bg-white rounded-2xl shadow-md p-4">
-        <div className="flex items-center justify-end mb-3">
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-500 w-12 text-right">{zoom}%</span>
-
-            <input
-              type="range"
-              min="20"
-              max="100"
-              step="5"
-              value={zoom}
-              onChange={(event) => setZoom(Number(event.target.value))}
-              className="w-40 accent-slate-600"
-            />
-          </div>
-        </div>
-
-        {notes.length === 0 ? (
+        {rankedNotes.length === 0 ? (
           <div className="rounded-xl border border-slate-200 p-8 text-center text-gray-500">
-            Les notes apparaîtront ici dès qu'elles seront créées en étape 4.
+            Aucune note n'a reçu de gommette pendant la priorisation.
           </div>
         ) : (
-          <div className="w-full overflow-auto rounded-xl border border-slate-200">
-            <div
-              className="relative origin-top-left"
-              style={{
-                width: CANVAS_WIDTH * scale,
-                height: CANVAS_HEIGHT * scale,
-              }}
-            >
-              <div
-                className="absolute inset-0 pointer-events-none opacity-30"
-                style={{
-                  backgroundImage:
-                    "linear-gradient(to right, rgba(15,23,42,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(15,23,42,0.08) 1px, transparent 1px)",
-                  backgroundSize: `${60 * scale}px ${60 * scale}px`,
-                }}
-              />
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 items-start">
+            {rankedNotes.map((note, index) => (
+              <article
+                key={note.id}
+                className="relative bg-yellow-100 rounded-lg shadow-md p-4 min-h-37.5 flex flex-col"
+              >
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <span className="text-sm font-semibold text-gray-600">#{index + 1}</span>
 
-              {notesWithPosition.map((note) => {
-                const stickerSet = votesByNote[note.id] || new Set();
-                const hasMine = stickerSet.has(currentParticipantId);
-                const otherCount = Math.max(0, stickerSet.size - (hasMine ? 1 : 0));
-                const comments = commentsByNote[note.id] || [];
+                  <div className="flex items-center gap-2 text-xs">
+                    <div className="flex items-center gap-1">
+                      <div
+                        className={`w-3 h-3 rounded-full ${
+                          note.hasMine ? "bg-green-500" : "bg-transparent border border-green-300"
+                        }`}
+                        title={note.hasMine ? "Ta gommette" : "Pas de gommette"}
+                      />
 
-                return (
-                  <div
-                    key={note.id}
-                    className="absolute select-none touch-none"
-                    style={{
-                      transform: `translate(${note.displayPosition.x * scale}px, ${note.displayPosition.y *
-                        scale}px) scale(${scale})`,
-                      transformOrigin: "top left",
-                      width: 260,
-                    }}
-                  >
-                    <div className="relative rounded-lg shadow-md p-4 bg-yellow-100">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <span className="text-xs text-gray-500"></span>
-
-                        <div className="flex items-center gap-1">
-                          <div
-                            className={`w-3 h-3 rounded-full ${
-                              hasMine
-                                ? "bg-green-500"
-                                : "bg-transparent border border-green-300"
-                            }`}
-                            title={hasMine ? "Ta gommette" : "Pas de gommette"}
-                          />
-
-                          {Array.from({ length: otherCount }).map((_, index) => (
-                            <div
-                              key={index}
-                              className="w-3 h-3 rounded-full bg-blue-500"
-                              title="Gommette d'un autre participant"
-                            />
-                          ))}
-                        </div>
-                      </div>
-
-                      <p className="text-gray-700 text-sm whitespace-pre-wrap">
-                        {note.text || <span className="text-gray-400">—</span>}
-                      </p>
-
-                      {!!comments.length && (
-                        <div className="mt-3 space-y-2">
-                          {comments.map((comment) => (
-                            <div
-                              key={comment.id}
-                              className="bg-violet-50 border border-violet-100 rounded-lg p-2"
-                            >
-                              <p className="text-violet-700 text-xs whitespace-pre-wrap">
-                                {comment.text}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      {Array.from({ length: note.otherCount }).map((_, stickerIndex) => (
+                        <div
+                          key={stickerIndex}
+                          className="w-3 h-3 rounded-full bg-blue-500"
+                          title="Gommette d'un autre participant"
+                        />
+                      ))}
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+
+                <p className="text-gray-700 text-sm whitespace-pre-wrap">
+                  {note.text || <span className="text-gray-400">—</span>}
+                </p>
+
+                {!!note.commentCount && (
+                  <div className="mt-3 space-y-2">
+                    {note.comments.map((comment) => (
+                      <div
+                        key={comment.id}
+                        className="bg-violet-50 border border-violet-100 rounded-lg p-2"
+                      >
+                        <p className="text-violet-700 text-xs whitespace-pre-wrap">
+                          {comment.text || <span className="text-violet-300">—</span>}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </article>
+            ))}
           </div>
         )}
 
