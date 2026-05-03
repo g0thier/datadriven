@@ -14,9 +14,9 @@ import Step4 from "./steps/Step4.jsx";
 import Step5 from "./steps/Step5.jsx";
 import Step6 from "./steps/Step6.jsx";
 import Step7 from "./steps/Step7.jsx";
+import Step8 from "./steps/Step8.jsx";
 
 /*
-import Step8 from "./steps/Step8.jsx";
 import Step9 from "./steps/Step9.jsx";
 */
 
@@ -147,7 +147,7 @@ export const designThinking = {
       audioEnabled: true,
     },
     {
-      label: "Idéation - sélection / priorisation",
+      label: "Idéation - sélection",
       duration: 10,
       component: Step7,
       description: description7,
@@ -156,7 +156,7 @@ export const designThinking = {
     {
       label: "Prototypage",
       duration: 25,
-      // component: Step8,
+      component: Step8,
       description: description8,
       audioEnabled: false,
     },
