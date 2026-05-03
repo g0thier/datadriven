@@ -15,6 +15,9 @@ import Step3 from "./steps/Step3.jsx";
 import Step4 from "./steps/Step4.jsx";
 import Step5 from "./steps/Step5.jsx";
 import Step6 from "./steps/Step6.jsx";
+import Step7 from "./steps/Step7.jsx";
+import Step8 from "./steps/Step8.jsx";
+import Step9 from "./steps/Step9.jsx";
 */
 
 const description1 = [
@@ -42,23 +45,40 @@ const description3 = [
 ];
 
 const description4 = [
-  "Génération d’un maximum d’idées.",
-  "Règles :",
+  "Chaque participant note ses idées :",
   "- Une idée par post-it",
-  "- Pas de jugement",
-  "- Encourager les idées audacieuses",
-  "Les idées sont ensuite partagées, enrichies et votées.",
-  "👉 Objectif : faire émerger des pistes prometteuses."
+  "- Sans discussion, ni autocensure",
+  "Objectifs : éviter l’influence, libérer les introvertis et favoriser l’originalité."
 ];
 
 const description5 = [
+  "Les feuilles circulent entre les participants.",
+  "Chacun lit, complète, améliore, combine et ajoute des idées.",
+  "👉 On construit sur les idées existantes.",
+  "La richesse collective émerge."
+];
+
+const description6 = [
+  "Le groupe met les idées en commun :",
+  "- Les post-it sont affichés au mur",
+  "- Les idées similaires sont regroupées",
+  "- Les participants peuvent clarifier certaines propositions",
+  "👉 L’objectif est d’organiser et comprendre les idées, sans les juger."
+];
+
+const description7 = [
+  "On utilise ici un vote à gommettes",
+  "Objectif : transformer la créativité en innovation exploitable."
+];
+
+const description8 = [
   "Transformation des idées en solutions concrètes.",
   "Création de maquettes simples : croquis, storyboard, prototype papier.",
   "👉 Le but n’est pas la perfection mais la rapidité.",
   "On rend l’idée tangible pour pouvoir la tester."
 ];
 
-const description6 = [
+const description9 = [
   "Test des prototypes auprès des utilisateurs.",
   "Recueil de feedback :",
   "- Ce qui fonctionne",
@@ -106,24 +126,45 @@ export const designThinking = {
       audioEnabled: true,
     },
     {
-      label: "Idéation",
-      duration: 40,
+      label: "Idéation - phase individuelle",
+      duration: 5,
       // component: Step4,
       description: description4,
       audioEnabled: false,
     },
     {
-      label: "Prototypage",
-      duration: 25,
+      label: "Idéation - rotation des feuilles",
+      duration: 10,
       // component: Step5,
       description: description5,
       audioEnabled: false,
     },
     {
-      label: "Test",
-      duration: 25,
+      label: "Idéation - mise en commun",
+      duration: 15,
       // component: Step6,
       description: description6,
+      audioEnabled: true,
+    },
+    {
+      label: "Idéation - sélection / priorisation",
+      duration: 10,
+      // component: Step7,
+      description: description7,
+      audioEnabled: true,
+    },
+    {
+      label: "Prototypage",
+      duration: 25,
+      // component: Step8,
+      description: description8,
+      audioEnabled: false,
+    },
+    {
+      label: "Test",
+      duration: 25,
+      // component: Step9,
+      description: description9,
       audioEnabled: true,
     },
   ],
