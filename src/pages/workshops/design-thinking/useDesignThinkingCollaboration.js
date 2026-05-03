@@ -9,15 +9,24 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { auth, onAuthStateChangedListener } from "../../../firebase";
 import {
+  addDesignThinkingIdeationComment,
+  createDesignThinkingIdeationNote,
   createDesignThinkingSharedNote,
+  removeDesignThinkingIdeationComment,
+  removeDesignThinkingIdeationNote,
   removeDesignThinkingSharedNote,
+  setDesignThinkingIdeationNotePosition,
   setDesignThinkingProblemStatement,
   setDesignThinkingStep1Description,
   subscribeDesignThinkingSession,
+  toggleDesignThinkingIdeationVote,
+  updateDesignThinkingIdeationComment,
+  updateDesignThinkingIdeationNote,
   updateDesignThinkingSharedNote,
   upsertDesignThinkingParticipant,
 } from "../../../firebase/workshops/design-thinking.service";
 
+const MAX_STICKERS = 3;
 const EMPTY_ARRAY = Object.freeze([]);
 const EMPTY_OBJECT = Object.freeze({});
 
@@ -30,6 +39,26 @@ const sortByCreatedAt = (a, b) => {
   }
 
   return String(a?.id || "").localeCompare(String(b?.id || ""));
+};
+
+const buildGridPosition = (index = 0) => {
+  const col = index % 5;
+  const row = Math.floor(index / 5);
+
+  return {
+    x: 40 + col * 290,
+    y: 40 + row * 220,
+  };
+};
+
+const normalizePosition = (position = {}, fallback = buildGridPosition(0)) => {
+  const x = Number(position?.x);
+  const y = Number(position?.y);
+
+  return {
+    x: Number.isFinite(x) ? x : fallback.x,
+    y: Number.isFinite(y) ? y : fallback.y,
+  };
 };
 
 const resolveGuestName = (guest = {}) => {
@@ -214,6 +243,21 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
     typeof activeDesignThinkingState.sharedNotes === "object"
       ? activeDesignThinkingState.sharedNotes
       : EMPTY_OBJECT;
+  const rawIdeationNotes =
+    activeDesignThinkingState?.ideation?.notes &&
+    typeof activeDesignThinkingState.ideation.notes === "object"
+      ? activeDesignThinkingState.ideation.notes
+      : EMPTY_OBJECT;
+  const rawIdeationCommentsByNote =
+    activeDesignThinkingState?.ideation?.commentsByNote &&
+    typeof activeDesignThinkingState.ideation.commentsByNote === "object"
+      ? activeDesignThinkingState.ideation.commentsByNote
+      : EMPTY_OBJECT;
+  const rawIdeationVotesByParticipant =
+    activeDesignThinkingState?.ideation?.votesByParticipant &&
+    typeof activeDesignThinkingState.ideation.votesByParticipant === "object"
+      ? activeDesignThinkingState.ideation.votesByParticipant
+      : EMPTY_OBJECT;
 
   const sharedNotes = useMemo(() => {
     return Object.entries(rawSharedNotes)
@@ -233,6 +277,86 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
       return accumulator;
     }, {});
   }, [sharedNotes]);
+
+  const notes = useMemo(() => {
+    return Object.entries(rawIdeationNotes)
+      .map(([noteId, data], index) => ({
+        id: String(data?.id || noteId),
+        authorId: String(data?.authorId || ""),
+        text: data?.text ?? "",
+        position: normalizePosition(data?.position, buildGridPosition(index)),
+        createdAt: String(data?.createdAt || ""),
+        updatedAt: String(data?.updatedAt || ""),
+      }))
+      .sort(sortByCreatedAt);
+  }, [rawIdeationNotes]);
+
+  const notesById = useMemo(() => {
+    return notes.reduce((accumulator, note) => {
+      accumulator[note.id] = note;
+      return accumulator;
+    }, {});
+  }, [notes]);
+
+  const commentsByNote = useMemo(() => {
+    const normalizedComments = {};
+
+    Object.entries(rawIdeationCommentsByNote).forEach(([noteId, comments]) => {
+      if (!comments || typeof comments !== "object") return;
+
+      normalizedComments[noteId] = Object.entries(comments)
+        .map(([commentId, data]) => ({
+          id: String(data?.id || commentId),
+          authorId: String(data?.authorId || ""),
+          text: data?.text ?? "",
+          createdAt: String(data?.createdAt || ""),
+          updatedAt: String(data?.updatedAt || ""),
+        }))
+        .sort(sortByCreatedAt);
+    });
+
+    return normalizedComments;
+  }, [rawIdeationCommentsByNote]);
+
+  const votesByParticipant = useMemo(() => {
+    const normalizedVotes = {};
+
+    Object.entries(rawIdeationVotesByParticipant).forEach(([participantId, votes]) => {
+      if (!votes || typeof votes !== "object") return;
+
+      const cleanedVotes = Object.entries(votes).reduce((accumulator, [noteId, enabled]) => {
+        if (!enabled) return accumulator;
+        accumulator[noteId] = true;
+        return accumulator;
+      }, {});
+
+      if (Object.keys(cleanedVotes).length > 0) {
+        normalizedVotes[participantId] = cleanedVotes;
+      }
+    });
+
+    return normalizedVotes;
+  }, [rawIdeationVotesByParticipant]);
+
+  const noteIdsSet = useMemo(() => new Set(notes.map((note) => note.id)), [notes]);
+
+  const votesByNote = useMemo(() => {
+    const byNote = {};
+
+    Object.entries(votesByParticipant).forEach(([participantId, votes]) => {
+      Object.keys(votes).forEach((noteId) => {
+        if (!noteIdsSet.has(noteId)) return;
+
+        if (!byNote[noteId]) {
+          byNote[noteId] = new Set();
+        }
+
+        byNote[noteId].add(participantId);
+      });
+    });
+
+    return byNote;
+  }, [noteIdsSet, votesByParticipant]);
 
   const participants = useMemo(() => {
     const participantMap = new Map();
@@ -281,6 +405,10 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
       addParticipant(note.authorId);
     });
 
+    notes.forEach((note) => {
+      addParticipant(note.authorId);
+    });
+
     if (participant?.id) {
       addParticipant(participant.id, participant);
     }
@@ -288,7 +416,7 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
     return Array.from(participantMap.values()).sort((a, b) =>
       String(a.name || "").localeCompare(String(b.name || ""), "fr")
     );
-  }, [participant, remoteParticipants, sessionGuests, sharedNotes]);
+  }, [notes, participant, remoteParticipants, sessionGuests, sharedNotes]);
 
   const participantById = useMemo(() => {
     return participants.reduce((accumulator, currentParticipant) => {
@@ -308,6 +436,24 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
   const currentParticipantId = participant?.id || "";
   const step1Description = rawStep1Description || lastNonEmptyStep1Description;
   const problemStatement = rawProblemStatement || lastNonEmptyProblemStatement;
+  const myNotes = useMemo(
+    () => notes.filter((note) => note.authorId === currentParticipantId),
+    [currentParticipantId, notes]
+  );
+
+  const myVotes =
+    currentParticipantId && votesByParticipant[currentParticipantId]
+      ? votesByParticipant[currentParticipantId]
+      : EMPTY_OBJECT;
+
+  const myVoteCount = useMemo(() => {
+    return Object.keys(myVotes).reduce((count, noteId) => {
+      if (!noteIdsSet.has(noteId)) return count;
+      return count + 1;
+    }, 0);
+  }, [myVotes, noteIdsSet]);
+
+  const remainingVotes = Math.max(0, MAX_STICKERS - myVoteCount);
 
   useEffect(() => {
     if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
@@ -518,6 +664,189 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
     ]
   );
 
+  const addNote = useCallback(
+    async (options = {}) => {
+      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return null;
+
+      const fallbackPosition = buildGridPosition(notes.length);
+      const position = normalizePosition(options?.position, fallbackPosition);
+      const text = options?.text ?? "";
+
+      try {
+        return await createDesignThinkingIdeationNote(sessionId, {
+          authorId: currentParticipantId,
+          text,
+          position,
+        });
+      } catch (error) {
+        console.error("Impossible d'ajouter la note:", error);
+        setSessionError("La note n'a pas pu être ajoutée.");
+        return null;
+      }
+    },
+    [currentParticipantId, isEnabled, notes.length, participantReady, sessionId, setSessionError]
+  );
+
+  const updateNoteText = useCallback(
+    async (noteId, text) => {
+      if (!isEnabled || !sessionId || !participantReady || !noteId || !currentParticipantId) {
+        return;
+      }
+
+      const note = notesById[noteId];
+      if (!note || note.authorId !== currentParticipantId) return;
+
+      try {
+        await updateDesignThinkingIdeationNote(sessionId, noteId, { text });
+      } catch (error) {
+        console.error("Impossible de mettre à jour la note:", error);
+        setSessionError("La note n'a pas pu être mise à jour.");
+      }
+    },
+    [currentParticipantId, isEnabled, notesById, participantReady, sessionId, setSessionError]
+  );
+
+  const removeNote = useCallback(
+    async (noteId) => {
+      if (!isEnabled || !sessionId || !participantReady || !noteId || !currentParticipantId) {
+        return;
+      }
+
+      const note = notesById[noteId];
+      if (!note || note.authorId !== currentParticipantId) return;
+
+      try {
+        await removeDesignThinkingIdeationNote(sessionId, noteId);
+      } catch (error) {
+        console.error("Impossible de supprimer la note:", error);
+        setSessionError("La note n'a pas pu être supprimée.");
+      }
+    },
+    [currentParticipantId, isEnabled, notesById, participantReady, sessionId, setSessionError]
+  );
+
+  const addComment = useCallback(
+    async (noteId, text = "") => {
+      if (!isEnabled || !sessionId || !participantReady || !noteId || !currentParticipantId) {
+        return null;
+      }
+
+      const note = notesById[noteId];
+      if (!note || note.authorId === currentParticipantId) return null;
+
+      try {
+        return await addDesignThinkingIdeationComment(sessionId, noteId, {
+          authorId: currentParticipantId,
+          text,
+        });
+      } catch (error) {
+        console.error("Impossible d'ajouter le commentaire:", error);
+        setSessionError("Le commentaire n'a pas pu être ajouté.");
+        return null;
+      }
+    },
+    [currentParticipantId, isEnabled, notesById, participantReady, sessionId, setSessionError]
+  );
+
+  const updateCommentText = useCallback(
+    async (noteId, commentId, text) => {
+      if (
+        !isEnabled ||
+        !sessionId ||
+        !participantReady ||
+        !noteId ||
+        !commentId ||
+        !currentParticipantId
+      ) {
+        return;
+      }
+
+      const comment = (commentsByNote[noteId] || EMPTY_ARRAY).find(
+        (currentComment) => currentComment.id === commentId
+      );
+
+      if (!comment || comment.authorId !== currentParticipantId) return;
+
+      try {
+        await updateDesignThinkingIdeationComment(sessionId, noteId, commentId, { text });
+      } catch (error) {
+        console.error("Impossible de mettre à jour le commentaire:", error);
+        setSessionError("Le commentaire n'a pas pu être mis à jour.");
+      }
+    },
+    [commentsByNote, currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]
+  );
+
+  const removeComment = useCallback(
+    async (noteId, commentId) => {
+      if (
+        !isEnabled ||
+        !sessionId ||
+        !participantReady ||
+        !noteId ||
+        !commentId ||
+        !currentParticipantId
+      ) {
+        return;
+      }
+
+      const comment = (commentsByNote[noteId] || EMPTY_ARRAY).find(
+        (currentComment) => currentComment.id === commentId
+      );
+
+      if (!comment || comment.authorId !== currentParticipantId) return;
+
+      try {
+        await removeDesignThinkingIdeationComment(sessionId, noteId, commentId);
+      } catch (error) {
+        console.error("Impossible de supprimer le commentaire:", error);
+        setSessionError("Le commentaire n'a pas pu être supprimé.");
+      }
+    },
+    [commentsByNote, currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]
+  );
+
+  const setNotePosition = useCallback(
+    async (noteId, position) => {
+      if (!isEnabled || !sessionId || !participantReady || !noteId) return;
+
+      try {
+        await setDesignThinkingIdeationNotePosition(sessionId, noteId, position);
+      } catch (error) {
+        console.error("Impossible de déplacer la note:", error);
+        setSessionError("La position de la note n'a pas pu être enregistrée.");
+      }
+    },
+    [isEnabled, participantReady, sessionId, setSessionError]
+  );
+
+  const toggleVote = useCallback(
+    async (noteId) => {
+      if (!isEnabled || !sessionId || !participantReady || !noteId || !currentParticipantId) {
+        return { committed: false, votes: {} };
+      }
+
+      try {
+        return await toggleDesignThinkingIdeationVote(sessionId, currentParticipantId, noteId, {
+          maxVotes: MAX_STICKERS,
+          validNoteIds: noteIdsSet,
+        });
+      } catch (error) {
+        console.error("Impossible de modifier le vote:", error);
+        setSessionError("Le vote n'a pas pu être enregistré.");
+        return { committed: false, votes: {} };
+      }
+    },
+    [
+      currentParticipantId,
+      isEnabled,
+      noteIdsSet,
+      participantReady,
+      sessionId,
+      setSessionError,
+    ]
+  );
+
   const actions = useMemo(
     () => ({
       setStep1Description,
@@ -525,12 +854,28 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
       addSharedNote,
       updateSharedNoteText,
       removeSharedNote,
+      addNote,
+      updateNoteText,
+      removeNote,
+      addComment,
+      updateCommentText,
+      removeComment,
+      setNotePosition,
+      toggleVote,
     }),
     [
+      addComment,
+      addNote,
       addSharedNote,
+      removeComment,
+      removeNote,
       removeSharedNote,
+      setNotePosition,
       setProblemStatement,
       setStep1Description,
+      toggleVote,
+      updateCommentText,
+      updateNoteText,
       updateSharedNoteText,
     ]
   );
@@ -551,6 +896,14 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
     step1Description,
     sharedNotes,
     problemStatement,
+    notes,
+    myNotes,
+    commentsByNote,
+    votesByParticipant,
+    votesByNote,
+    myVoteCount,
+    remainingVotes,
+    maxStickers: MAX_STICKERS,
     actions,
   };
 }

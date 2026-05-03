@@ -10,12 +10,12 @@ import designThinkingImg from "../../../assets/workshops/design-thinking.png";
 import Step1 from "./steps/Step1.jsx";
 import Step2 from "./steps/Step2.jsx";
 import Step3 from "./steps/Step3.jsx";
-
-/*
 import Step4 from "./steps/Step4.jsx";
 import Step5 from "./steps/Step5.jsx";
 import Step6 from "./steps/Step6.jsx";
 import Step7 from "./steps/Step7.jsx";
+
+/*
 import Step8 from "./steps/Step8.jsx";
 import Step9 from "./steps/Step9.jsx";
 */
@@ -128,28 +128,28 @@ export const designThinking = {
     {
       label: "Idéation - phase individuelle",
       duration: 5,
-      // component: Step4,
+      component: Step4,
       description: description4,
       audioEnabled: false,
     },
     {
       label: "Idéation - rotation des feuilles",
       duration: 10,
-      // component: Step5,
+      component: Step5,
       description: description5,
       audioEnabled: false,
     },
     {
       label: "Idéation - mise en commun",
       duration: 15,
-      // component: Step6,
+      component: Step6,
       description: description6,
       audioEnabled: true,
     },
     {
       label: "Idéation - sélection / priorisation",
       duration: 10,
-      // component: Step7,
+      component: Step7,
       description: description7,
       audioEnabled: true,
     },
