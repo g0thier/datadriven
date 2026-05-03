@@ -238,3 +238,55 @@ export const removeDesignThinkingSharedNote = async (sessionId, noteId) => {
     [`${basePath}/sharedNotes/${noteId}`]: null,
   });
 };
+
+/**
+ * Sets shared problem statement for the session board.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} participantId - Editor participant id.
+ * @param {string} statement - Problem statement text.
+ * @param {{expectedPreviousStatement?:string}} [options={}] - Concurrency guards.
+ * @returns {Promise<void>} Update completion.
+ */
+export const setDesignThinkingProblemStatement = async (
+  sessionId,
+  participantId,
+  statement,
+  options = {}
+) => {
+  if (!sessionId) return;
+
+  const nextStatement = String(statement ?? "");
+  const hasExpectedPreviousStatement = Object.prototype.hasOwnProperty.call(
+    options,
+    "expectedPreviousStatement"
+  );
+  const expectedPreviousStatement = hasExpectedPreviousStatement
+    ? String(options.expectedPreviousStatement ?? "")
+    : null;
+
+  await runTransaction(ref(database, `${toDesignThinkingPath(sessionId)}/problemStatement`), (current) => {
+    const currentData = current && typeof current === "object" ? current : {};
+    const currentStatement = String(currentData.text ?? "");
+
+    // Prevent non-empty statements from being cleared by stale or implicit client writes.
+    if (nextStatement === "" && currentStatement !== "") {
+      return;
+    }
+
+    const shouldRejectStaleClear =
+      nextStatement === "" &&
+      expectedPreviousStatement !== null &&
+      expectedPreviousStatement !== currentStatement &&
+      currentStatement !== "";
+
+    if (shouldRejectStaleClear) {
+      return;
+    }
+
+    return {
+      text: nextStatement,
+      updatedAt: nowIso(),
+      updatedBy: participantId || "",
+    };
+  });
+};

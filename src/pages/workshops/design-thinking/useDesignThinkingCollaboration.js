@@ -11,6 +11,7 @@ import { auth, onAuthStateChangedListener } from "../../../firebase";
 import {
   createDesignThinkingSharedNote,
   removeDesignThinkingSharedNote,
+  setDesignThinkingProblemStatement,
   setDesignThinkingStep1Description,
   subscribeDesignThinkingSession,
   updateDesignThinkingSharedNote,
@@ -100,7 +101,9 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
   const [syncError, setSyncError] = useState("");
   const [syncErrorSessionId, setSyncErrorSessionId] = useState("");
   const [lastNonEmptyStep1Description, setLastNonEmptyStep1Description] = useState("");
+  const [lastNonEmptyProblemStatement, setLastNonEmptyProblemStatement] = useState("");
   const step1RestoreInFlightRef = useRef(false);
+  const problemStatementRestoreInFlightRef = useRef(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChangedListener((nextAuthUser) => {
@@ -153,10 +156,13 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
   const activeDesignThinkingState =
     isEnabled && lastSnapshotSessionId === sessionId ? designThinkingState : null;
   const rawStep1Description = String(activeDesignThinkingState?.step1?.description || "");
+  const rawProblemStatement = String(activeDesignThinkingState?.problemStatement?.text || "");
 
   useEffect(() => {
     setLastNonEmptyStep1Description("");
+    setLastNonEmptyProblemStatement("");
     step1RestoreInFlightRef.current = false;
+    problemStatementRestoreInFlightRef.current = false;
   }, [isEnabled, sessionId]);
 
   useEffect(() => {
@@ -166,6 +172,14 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
       currentValue === rawStep1Description ? currentValue : rawStep1Description
     );
   }, [rawStep1Description]);
+
+  useEffect(() => {
+    if (!rawProblemStatement) return;
+
+    setLastNonEmptyProblemStatement((currentValue) =>
+      currentValue === rawProblemStatement ? currentValue : rawProblemStatement
+    );
+  }, [rawProblemStatement]);
 
   useEffect(() => {
     if (!isEnabled || !sessionId || !participantReady || !participant?.id) return () => {};
@@ -293,6 +307,7 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
 
   const currentParticipantId = participant?.id || "";
   const step1Description = rawStep1Description || lastNonEmptyStep1Description;
+  const problemStatement = rawProblemStatement || lastNonEmptyProblemStatement;
 
   useEffect(() => {
     if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
@@ -334,6 +349,46 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
     sessionId,
   ]);
 
+  useEffect(() => {
+    if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
+    if (rawProblemStatement || !lastNonEmptyProblemStatement) return;
+    if (problemStatementRestoreInFlightRef.current) return;
+
+    let cancelled = false;
+    problemStatementRestoreInFlightRef.current = true;
+
+    const restoreProblemStatement = async () => {
+      try {
+        await setDesignThinkingProblemStatement(
+          sessionId,
+          currentParticipantId,
+          lastNonEmptyProblemStatement,
+          { expectedPreviousStatement: "" }
+        );
+      } catch (error) {
+        if (cancelled) return;
+        console.error("Impossible de restaurer la problématique:", error);
+      } finally {
+        if (!cancelled) {
+          problemStatementRestoreInFlightRef.current = false;
+        }
+      }
+    };
+
+    restoreProblemStatement();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    currentParticipantId,
+    isEnabled,
+    lastNonEmptyProblemStatement,
+    participantReady,
+    rawProblemStatement,
+    sessionId,
+  ]);
+
   const setStep1Description = useCallback(
     async (description, previousDescription = step1Description) => {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
@@ -354,6 +409,29 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
       sessionId,
       setSessionError,
       step1Description,
+    ]
+  );
+
+  const setProblemStatement = useCallback(
+    async (statement, previousStatement = problemStatement) => {
+      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
+
+      try {
+        await setDesignThinkingProblemStatement(sessionId, currentParticipantId, statement, {
+          expectedPreviousStatement: previousStatement,
+        });
+      } catch (error) {
+        console.error("Impossible de mettre à jour la problématique:", error);
+        setSessionError("La problématique n'a pas pu être enregistrée.");
+      }
+    },
+    [
+      currentParticipantId,
+      isEnabled,
+      participantReady,
+      problemStatement,
+      sessionId,
+      setSessionError,
     ]
   );
 
@@ -443,11 +521,18 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
   const actions = useMemo(
     () => ({
       setStep1Description,
+      setProblemStatement,
       addSharedNote,
       updateSharedNoteText,
       removeSharedNote,
     }),
-    [addSharedNote, removeSharedNote, setStep1Description, updateSharedNoteText]
+    [
+      addSharedNote,
+      removeSharedNote,
+      setProblemStatement,
+      setStep1Description,
+      updateSharedNoteText,
+    ]
   );
 
   const effectiveSyncError = isEnabled && syncErrorSessionId === sessionId ? syncError : "";
@@ -465,6 +550,7 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
     getParticipantLabel,
     step1Description,
     sharedNotes,
+    problemStatement,
     actions,
   };
 }
