@@ -316,6 +316,58 @@ export const setDesignThinkingProblemStatement = async (
 };
 
 /**
+ * Sets shared conclusion text for the session board.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} participantId - Editor participant id.
+ * @param {string} conclusion - Conclusion text.
+ * @param {{expectedPreviousConclusion?:string}} [options={}] - Concurrency guards.
+ * @returns {Promise<void>} Update completion.
+ */
+export const setDesignThinkingConclusion = async (
+  sessionId,
+  participantId,
+  conclusion,
+  options = {}
+) => {
+  if (!sessionId) return;
+
+  const nextConclusion = String(conclusion ?? "");
+  const hasExpectedPreviousConclusion = Object.prototype.hasOwnProperty.call(
+    options,
+    "expectedPreviousConclusion"
+  );
+  const expectedPreviousConclusion = hasExpectedPreviousConclusion
+    ? String(options.expectedPreviousConclusion ?? "")
+    : null;
+
+  await runTransaction(ref(database, `${toDesignThinkingPath(sessionId)}/conclusion`), (current) => {
+    const currentData = current && typeof current === "object" ? current : {};
+    const currentConclusion = String(currentData.text ?? "");
+
+    // Prevent non-empty conclusions from being cleared by stale or implicit client writes.
+    if (nextConclusion === "" && currentConclusion !== "") {
+      return;
+    }
+
+    const shouldRejectStaleClear =
+      nextConclusion === "" &&
+      expectedPreviousConclusion !== null &&
+      expectedPreviousConclusion !== currentConclusion &&
+      currentConclusion !== "";
+
+    if (shouldRejectStaleClear) {
+      return;
+    }
+
+    return {
+      text: nextConclusion,
+      updatedAt: nowIso(),
+      updatedBy: participantId || "",
+    };
+  });
+};
+
+/**
  * Creates a Design Thinking prototype feedback note.
  * @param {string} sessionId - Workshop session id.
  * @param {{authorId:string, columnId:"works"|"problems"|"improvements", text?:string}} [payload={}] - Note payload.

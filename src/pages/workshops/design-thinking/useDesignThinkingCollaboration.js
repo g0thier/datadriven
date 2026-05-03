@@ -17,6 +17,7 @@ import {
   removeDesignThinkingIdeationNote,
   removeDesignThinkingPrototypeFeedbackNote,
   removeDesignThinkingSharedNote,
+  setDesignThinkingConclusion,
   setDesignThinkingIdeationNotePosition,
   setDesignThinkingProblemStatement,
   setDesignThinkingStep1Description,
@@ -165,8 +166,10 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
   const [syncErrorSessionId, setSyncErrorSessionId] = useState("");
   const [lastNonEmptyStep1Description, setLastNonEmptyStep1Description] = useState("");
   const [lastNonEmptyProblemStatement, setLastNonEmptyProblemStatement] = useState("");
+  const [lastNonEmptyConclusion, setLastNonEmptyConclusion] = useState("");
   const step1RestoreInFlightRef = useRef(false);
   const problemStatementRestoreInFlightRef = useRef(false);
+  const conclusionRestoreInFlightRef = useRef(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChangedListener((nextAuthUser) => {
@@ -220,12 +223,15 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
     isEnabled && lastSnapshotSessionId === sessionId ? designThinkingState : null;
   const rawStep1Description = String(activeDesignThinkingState?.step1?.description || "");
   const rawProblemStatement = String(activeDesignThinkingState?.problemStatement?.text || "");
+  const rawConclusion = String(activeDesignThinkingState?.conclusion?.text || "");
 
   useEffect(() => {
     setLastNonEmptyStep1Description("");
     setLastNonEmptyProblemStatement("");
+    setLastNonEmptyConclusion("");
     step1RestoreInFlightRef.current = false;
     problemStatementRestoreInFlightRef.current = false;
+    conclusionRestoreInFlightRef.current = false;
   }, [isEnabled, sessionId]);
 
   useEffect(() => {
@@ -243,6 +249,14 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
       currentValue === rawProblemStatement ? currentValue : rawProblemStatement
     );
   }, [rawProblemStatement]);
+
+  useEffect(() => {
+    if (!rawConclusion) return;
+
+    setLastNonEmptyConclusion((currentValue) =>
+      currentValue === rawConclusion ? currentValue : rawConclusion
+    );
+  }, [rawConclusion]);
 
   useEffect(() => {
     if (!isEnabled || !sessionId || !participantReady || !participant?.id) return () => {};
@@ -519,6 +533,7 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
   const currentParticipantId = participant?.id || "";
   const step1Description = rawStep1Description || lastNonEmptyStep1Description;
   const problemStatement = rawProblemStatement || lastNonEmptyProblemStatement;
+  const conclusion = rawConclusion || lastNonEmptyConclusion;
   const myNotes = useMemo(
     () => notes.filter((note) => note.authorId === currentParticipantId),
     [currentParticipantId, notes]
@@ -618,6 +633,46 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
     sessionId,
   ]);
 
+  useEffect(() => {
+    if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
+    if (rawConclusion || !lastNonEmptyConclusion) return;
+    if (conclusionRestoreInFlightRef.current) return;
+
+    let cancelled = false;
+    conclusionRestoreInFlightRef.current = true;
+
+    const restoreConclusion = async () => {
+      try {
+        await setDesignThinkingConclusion(
+          sessionId,
+          currentParticipantId,
+          lastNonEmptyConclusion,
+          { expectedPreviousConclusion: "" }
+        );
+      } catch (error) {
+        if (cancelled) return;
+        console.error("Impossible de restaurer la conclusion:", error);
+      } finally {
+        if (!cancelled) {
+          conclusionRestoreInFlightRef.current = false;
+        }
+      }
+    };
+
+    restoreConclusion();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    currentParticipantId,
+    isEnabled,
+    lastNonEmptyConclusion,
+    participantReady,
+    rawConclusion,
+    sessionId,
+  ]);
+
   const setStep1Description = useCallback(
     async (description, previousDescription = step1Description) => {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
@@ -659,6 +714,34 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
       isEnabled,
       participantReady,
       problemStatement,
+      sessionId,
+      setSessionError,
+    ]
+  );
+
+  const setConclusion = useCallback(
+    async (nextConclusion, previousConclusion = conclusion) => {
+      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
+
+      try {
+        await setDesignThinkingConclusion(
+          sessionId,
+          currentParticipantId,
+          nextConclusion,
+          {
+            expectedPreviousConclusion: previousConclusion,
+          }
+        );
+      } catch (error) {
+        console.error("Impossible de mettre à jour la conclusion:", error);
+        setSessionError("La conclusion n'a pas pu être enregistrée.");
+      }
+    },
+    [
+      conclusion,
+      currentParticipantId,
+      isEnabled,
+      participantReady,
       sessionId,
       setSessionError,
     ]
@@ -1021,6 +1104,7 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
     () => ({
       setStep1Description,
       setProblemStatement,
+      setConclusion,
       addSharedNote,
       updateSharedNoteText,
       removeSharedNote,
@@ -1045,6 +1129,7 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
       removeNote,
       removePrototypeFeedbackNote,
       removeSharedNote,
+      setConclusion,
       setNotePosition,
       setProblemStatement,
       setStep1Description,
@@ -1075,6 +1160,7 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
     prototypeFeedbackNotes,
     prototypeFeedbackNotesByColumn,
     problemStatement,
+    conclusion,
     notes,
     myNotes,
     commentsByNote,

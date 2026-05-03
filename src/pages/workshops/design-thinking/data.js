@@ -16,6 +16,7 @@ import Step6 from "./steps/Step6.jsx";
 import Step7 from "./steps/Step7.jsx";
 import Step8 from "./steps/Step8.jsx";
 import Step9 from "./steps/Step9.jsx";
+import Step10 from "./steps/Step10.jsx";
 
 const description1 = [
   "Le facilitateur pose une question claire, souvent formulée en « Comment pourrions-nous… ? »",
@@ -83,6 +84,12 @@ const description9 = [
   "- Ce qui peut être amélioré",
   "👉 Objectif : apprendre rapidement et améliorer la solution.",
   "Possibilité d’itérer (V1, V2, V3)."
+];
+
+const description10 = [
+  "Le groupe formalise les apprentissages clés de l’atelier.",
+  "Objectif : transformer les retours en décision claire et actionnable.",
+  "👉 Cette conclusion sert de référence pour la prochaine itération."
 ];
 
 /**
@@ -162,6 +169,13 @@ export const designThinking = {
       duration: 25,
       component: Step9,
       description: description9,
+      audioEnabled: true,
+    },
+    {
+      label: "Conclusion",
+      duration: 10,
+      component: Step10,
+      description: description10,
       audioEnabled: true,
     },
   ],
