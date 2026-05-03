@@ -1,4 +1,4 @@
-import { onValue, ref, runTransaction } from "firebase/database";
+import { onValue, push, ref, runTransaction, set, update } from "firebase/database";
 import { database } from "../index";
 
 /**
@@ -133,5 +133,108 @@ export const setDesignThinkingStep1Description = async (
       updatedAt: nowIso(),
       updatedBy: participantId || "",
     };
+  });
+};
+
+/**
+ * Creates a Design Thinking shared note.
+ * @param {string} sessionId - Workshop session id.
+ * @param {{authorId:string, text?:string}} [payload={}] - Shared note payload.
+ * @returns {Promise<string>} Created shared note id.
+ */
+export const createDesignThinkingSharedNote = async (sessionId, payload = {}) => {
+  if (!sessionId || !payload?.authorId) {
+    throw new Error("createDesignThinkingSharedNote: sessionId ou authorId manquant");
+  }
+
+  const noteRef = push(ref(database, `${toDesignThinkingPath(sessionId)}/sharedNotes`));
+  const noteId = noteRef.key;
+  if (!noteId) {
+    throw new Error("Impossible de générer noteId");
+  }
+
+  const now = nowIso();
+
+  await set(noteRef, {
+    id: noteId,
+    authorId: payload.authorId,
+    text: payload.text ?? "",
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  return noteId;
+};
+
+/**
+ * Updates a Design Thinking shared note text.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Shared note id.
+ * @param {{text?:string}} [patch={}] - Shared note patch.
+ * @param {{expectedPreviousText?:string}} [options={}] - Concurrency guards.
+ * @returns {Promise<void>} Update completion.
+ */
+export const updateDesignThinkingSharedNote = async (
+  sessionId,
+  noteId,
+  patch = {},
+  options = {}
+) => {
+  if (!sessionId || !noteId) return;
+
+  const notePath = `${toDesignThinkingPath(sessionId)}/sharedNotes/${noteId}`;
+  const hasNextText = Object.prototype.hasOwnProperty.call(patch, "text");
+
+  if (!hasNextText) {
+    await update(ref(database, notePath), {
+      updatedAt: nowIso(),
+    });
+    return;
+  }
+
+  const nextText = String(patch.text ?? "");
+  const hasExpectedPreviousText = Object.prototype.hasOwnProperty.call(
+    options,
+    "expectedPreviousText"
+  );
+  const expectedPreviousText = hasExpectedPreviousText
+    ? String(options.expectedPreviousText ?? "")
+    : null;
+
+  await runTransaction(ref(database, notePath), (current) => {
+    if (!current || typeof current !== "object") return current;
+
+    const currentText = String(current.text ?? "");
+
+    const shouldRejectStaleClear =
+      nextText === "" &&
+      expectedPreviousText !== null &&
+      expectedPreviousText !== currentText &&
+      currentText !== "";
+
+    if (shouldRejectStaleClear) {
+      return;
+    }
+
+    return {
+      ...current,
+      text: nextText,
+      updatedAt: nowIso(),
+    };
+  });
+};
+
+/**
+ * Removes a Design Thinking shared note.
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} noteId - Shared note id.
+ * @returns {Promise<void>} Delete completion.
+ */
+export const removeDesignThinkingSharedNote = async (sessionId, noteId) => {
+  if (!sessionId || !noteId) return;
+
+  const basePath = toDesignThinkingPath(sessionId);
+  await update(ref(database), {
+    [`${basePath}/sharedNotes/${noteId}`]: null,
   });
 };

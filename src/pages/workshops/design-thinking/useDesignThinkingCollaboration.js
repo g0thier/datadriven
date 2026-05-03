@@ -9,13 +9,27 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { auth, onAuthStateChangedListener } from "../../../firebase";
 import {
+  createDesignThinkingSharedNote,
+  removeDesignThinkingSharedNote,
   setDesignThinkingStep1Description,
   subscribeDesignThinkingSession,
+  updateDesignThinkingSharedNote,
   upsertDesignThinkingParticipant,
 } from "../../../firebase/workshops/design-thinking.service";
 
 const EMPTY_ARRAY = Object.freeze([]);
 const EMPTY_OBJECT = Object.freeze({});
+
+const sortByCreatedAt = (a, b) => {
+  const createdA = a?.createdAt || "";
+  const createdB = b?.createdAt || "";
+
+  if (createdA !== createdB) {
+    return createdA.localeCompare(createdB);
+  }
+
+  return String(a?.id || "").localeCompare(String(b?.id || ""));
+};
 
 const resolveGuestName = (guest = {}) => {
   const firstName = String(guest?.firstName || "").trim();
@@ -181,6 +195,30 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
     typeof activeDesignThinkingState.participants === "object"
       ? activeDesignThinkingState.participants
       : EMPTY_OBJECT;
+  const rawSharedNotes =
+    activeDesignThinkingState?.sharedNotes &&
+    typeof activeDesignThinkingState.sharedNotes === "object"
+      ? activeDesignThinkingState.sharedNotes
+      : EMPTY_OBJECT;
+
+  const sharedNotes = useMemo(() => {
+    return Object.entries(rawSharedNotes)
+      .map(([noteId, data]) => ({
+        id: String(data?.id || noteId),
+        authorId: String(data?.authorId || ""),
+        text: data?.text ?? "",
+        createdAt: String(data?.createdAt || ""),
+        updatedAt: String(data?.updatedAt || ""),
+      }))
+      .sort(sortByCreatedAt);
+  }, [rawSharedNotes]);
+
+  const sharedNotesById = useMemo(() => {
+    return sharedNotes.reduce((accumulator, note) => {
+      accumulator[note.id] = note;
+      return accumulator;
+    }, {});
+  }, [sharedNotes]);
 
   const participants = useMemo(() => {
     const participantMap = new Map();
@@ -225,6 +263,10 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
       });
     });
 
+    sharedNotes.forEach((note) => {
+      addParticipant(note.authorId);
+    });
+
     if (participant?.id) {
       addParticipant(participant.id, participant);
     }
@@ -232,7 +274,7 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
     return Array.from(participantMap.values()).sort((a, b) =>
       String(a.name || "").localeCompare(String(b.name || ""), "fr")
     );
-  }, [participant, remoteParticipants, sessionGuests]);
+  }, [participant, remoteParticipants, sessionGuests, sharedNotes]);
 
   const participantById = useMemo(() => {
     return participants.reduce((accumulator, currentParticipant) => {
@@ -315,11 +357,97 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
     ]
   );
 
+  const addSharedNote = useCallback(
+    async (options = {}) => {
+      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return null;
+
+      try {
+        return await createDesignThinkingSharedNote(sessionId, {
+          authorId: currentParticipantId,
+          text: options?.text ?? "",
+        });
+      } catch (error) {
+        console.error("Impossible d'ajouter la contribution:", error);
+        setSessionError("La contribution n'a pas pu être ajoutée.");
+        return null;
+      }
+    },
+    [currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]
+  );
+
+  const updateSharedNoteText = useCallback(
+    async (noteId, text, previousText = null) => {
+      if (!isEnabled || !sessionId || !participantReady || !noteId || !currentParticipantId) {
+        return;
+      }
+
+      const note = sharedNotesById[noteId];
+      if (!note) return;
+
+      const currentText = String(note.text ?? "");
+      const nextText = String(text ?? "");
+      if (currentText === nextText) return;
+
+      const expectedPreviousText =
+        previousText === null || previousText === undefined
+          ? currentText
+          : String(previousText ?? "");
+
+      try {
+        await updateDesignThinkingSharedNote(
+          sessionId,
+          noteId,
+          { text: nextText },
+          { expectedPreviousText }
+        );
+      } catch (error) {
+        console.error("Impossible de mettre à jour la contribution:", error);
+        setSessionError("La contribution n'a pas pu être mise à jour.");
+      }
+    },
+    [
+      currentParticipantId,
+      isEnabled,
+      participantReady,
+      sessionId,
+      setSessionError,
+      sharedNotesById,
+    ]
+  );
+
+  const removeSharedNote = useCallback(
+    async (noteId) => {
+      if (!isEnabled || !sessionId || !participantReady || !noteId || !currentParticipantId) {
+        return;
+      }
+
+      if (!sharedNotesById[noteId]) return;
+
+      try {
+        await removeDesignThinkingSharedNote(sessionId, noteId);
+      } catch (error) {
+        console.error("Impossible de supprimer la contribution:", error);
+        setSessionError("La contribution n'a pas pu être supprimée.");
+      }
+    },
+    [
+      currentParticipantId,
+      isEnabled,
+      participantReady,
+      sessionId,
+      setSessionError,
+      sharedNotesById,
+    ]
+  );
+
   const actions = useMemo(
     () => ({
       setStep1Description,
+      addSharedNote,
+      updateSharedNoteText,
+      removeSharedNote,
     }),
-    [setStep1Description]
+    [addSharedNote, removeSharedNote, setStep1Description, updateSharedNoteText]
   );
 
   const effectiveSyncError = isEnabled && syncErrorSessionId === sessionId ? syncError : "";
@@ -336,6 +464,7 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
     participants,
     getParticipantLabel,
     step1Description,
+    sharedNotes,
     actions,
   };
 }
