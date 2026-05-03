@@ -8,6 +8,9 @@ vi.mock("../../../src/pages/workshops/paper-brain/PaperBrainSummary.jsx", () => 
 vi.mock("../../../src/pages/workshops/speed-boat/SpeedBoatSummary.jsx", () => ({
   default: ({ sessionTitle }) => <div>SPEED_BOAT_SUMMARY:{sessionTitle}</div>,
 }));
+vi.mock("../../../src/pages/workshops/design-thinking/DesignThinkingSummary.jsx", () => ({
+  default: ({ sessionTitle }) => <div>DESIGN_THINKING_SUMMARY:{sessionTitle}</div>,
+}));
 
 import WorkshopSummaryPage from "../../../src/pages/workshops/WorkshopSummaryPage.jsx";
 
@@ -31,5 +34,13 @@ describe("WorkshopSummaryPage", () => {
     );
 
     expect(screen.getByText("SPEED_BOAT_SUMMARY:Session 3")).toBeInTheDocument();
+  });
+
+  it("renders design thinking summary for design-thinking workshop", () => {
+    render(
+      <WorkshopSummaryPage workshopId="design-thinking" sessionTitle="Session 4" collaboration={{}} />
+    );
+
+    expect(screen.getByText("DESIGN_THINKING_SUMMARY:Session 4")).toBeInTheDocument();
   });
 });
