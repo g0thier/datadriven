@@ -13,6 +13,7 @@ import { useSixHatsCollaboration } from "./six-hats/useSixHatsCollaboration.js";
 import { useMindMappingCollaboration } from "./mind-mapping/useMindMappingCollaboration.js";
 import { useSpeedBoatCollaboration } from "./speed-boat/useSpeedBoatCollaboration.js";
 import { useMatriceCroiseeCollaboration } from "./matrice-croisee/useMatriceCroiseeCollaboration.js";
+import { useDesignThinkingCollaboration } from "./design-thinking/useDesignThinkingCollaboration.js";
 
 /**
  * Paper Brain collaboration bridge.
@@ -161,6 +162,27 @@ function SpeedBoatBridge({ sessionId, session, workshopId, children }) {
   return children(collaboration);
 }
 
+/**
+ * Design Thinking collaboration bridge.
+ *
+ * @param {Object} props - Component props.
+ * @param {string} props.sessionId - Active workshop session id.
+ * @param {Object} props.session - Session payload.
+ * @param {string} props.workshopId - Resolved workshop id.
+ * @param {(collaboration:Object)=>JSX.Element} props.children - Render function receiving collaboration.
+ * @returns {JSX.Element|null} Rendered content.
+ */
+function DesignThinkingBridge({ sessionId, session, workshopId, children }) {
+  const collaboration = useDesignThinkingCollaboration({
+    sessionId,
+    session,
+    workshopId,
+  });
+
+  if (typeof children !== "function") return null;
+  return children(collaboration);
+}
+
 const WORKSHOP_BRIDGES = {
   "paper-brain": PaperBrainBridge,
   "continue-arrete-tente": ContinueStopTryBridge,
@@ -170,6 +192,7 @@ const WORKSHOP_BRIDGES = {
   "mind-mapping": MindMappingBridge,
   "speed-boat": SpeedBoatBridge,
   "matrice-croisee": MatriceCroiseeBridge,
+  "design-thinking": DesignThinkingBridge,
 };
 
 /**
