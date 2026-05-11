@@ -1,4 +1,4 @@
-import { onValue, push, ref, remove, runTransaction, set, update } from "firebase/database";
+import { onValue, push, ref, runTransaction, set, update } from "firebase/database";
 import { database } from "../index";
 
 /**
@@ -167,14 +167,113 @@ export const updateWorldCoffeeDescription = async (
 };
 
 /**
+ * Assigns a facilitator to a description and enforces global uniqueness.
+ * A facilitator can only be assigned to one description at a time.
+ *
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} descriptionId - Description id.
+ * @param {string} facilitatorId - Participant id.
+ * @returns {Promise<void>} Update completion.
+ */
+export const setWorldCoffeeFacilitator = async (
+  sessionId,
+  descriptionId,
+  facilitatorId
+) => {
+  const cleanedDescriptionId = String(descriptionId || "").trim();
+  const cleanedFacilitatorId = String(facilitatorId || "").trim();
+  if (!sessionId || !cleanedDescriptionId || !cleanedFacilitatorId) return;
+
+  await runTransaction(ref(database, toWorldCoffeePath(sessionId)), (current) => {
+    const currentData = current && typeof current === "object" ? current : {};
+    const descriptions =
+      currentData?.descriptions && typeof currentData.descriptions === "object"
+        ? currentData.descriptions
+        : {};
+
+    const targetDescription = descriptions?.[cleanedDescriptionId];
+    if (!targetDescription?.id && !targetDescription) {
+      return current;
+    }
+
+    const rawMapping =
+      currentData?.facilitatorByDescriptionId &&
+      typeof currentData.facilitatorByDescriptionId === "object"
+        ? currentData.facilitatorByDescriptionId
+        : {};
+    const nextMapping = { ...rawMapping };
+
+    Object.entries(nextMapping).forEach(([mappedDescriptionId, mappedFacilitatorId]) => {
+      if (String(mappedFacilitatorId || "").trim() !== cleanedFacilitatorId) return;
+      delete nextMapping[mappedDescriptionId];
+    });
+
+    nextMapping[cleanedDescriptionId] = cleanedFacilitatorId;
+
+    return {
+      ...currentData,
+      facilitatorByDescriptionId: nextMapping,
+    };
+  });
+};
+
+/**
+ * Clears facilitator assignment for a description.
+ *
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} descriptionId - Description id.
+ * @returns {Promise<void>} Update completion.
+ */
+export const clearWorldCoffeeFacilitator = async (sessionId, descriptionId) => {
+  const cleanedDescriptionId = String(descriptionId || "").trim();
+  if (!sessionId || !cleanedDescriptionId) return;
+
+  await runTransaction(ref(database, toWorldCoffeePath(sessionId)), (current) => {
+    const currentData = current && typeof current === "object" ? current : {};
+    const descriptions =
+      currentData?.descriptions && typeof currentData.descriptions === "object"
+        ? currentData.descriptions
+        : {};
+
+    const targetDescription = descriptions?.[cleanedDescriptionId];
+    if (!targetDescription?.id && !targetDescription) {
+      return current;
+    }
+
+    const rawMapping =
+      currentData?.facilitatorByDescriptionId &&
+      typeof currentData.facilitatorByDescriptionId === "object"
+        ? currentData.facilitatorByDescriptionId
+        : {};
+
+    if (!Object.prototype.hasOwnProperty.call(rawMapping, cleanedDescriptionId)) {
+      return current;
+    }
+
+    const nextMapping = { ...rawMapping };
+    delete nextMapping[cleanedDescriptionId];
+
+    return {
+      ...currentData,
+      facilitatorByDescriptionId: nextMapping,
+    };
+  });
+};
+
+/**
  * Removes a World Cafe description line.
  * @param {string} sessionId - Workshop session id.
  * @param {string} descriptionId - Description id.
  * @returns {Promise<void>} Delete completion.
  */
 export const removeWorldCoffeeDescription = async (sessionId, descriptionId) => {
-  if (!sessionId || !descriptionId) return;
+  const cleanedDescriptionId = String(descriptionId || "").trim();
+  if (!sessionId || !cleanedDescriptionId) return;
 
-  await remove(ref(database, `${toWorldCoffeePath(sessionId)}/descriptions/${descriptionId}`));
+  const basePath = toWorldCoffeePath(sessionId);
+
+  await update(ref(database), {
+    [`${basePath}/descriptions/${cleanedDescriptionId}`]: null,
+    [`${basePath}/facilitatorByDescriptionId/${cleanedDescriptionId}`]: null,
+  });
 };
-

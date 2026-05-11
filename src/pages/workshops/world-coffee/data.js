@@ -9,8 +9,8 @@
 import worldCafeImg from "../../../assets/workshops/world-cafe.png";
 
 import Step1 from "./steps/Step1.jsx";
-/*
 import Step2 from "./steps/Step2.jsx";
+/*
 import Step3 from "./steps/Step3.jsx";
 import Step4 from "./steps/Step4.jsx";
 import Step5 from "./steps/Step5.jsx";
@@ -83,7 +83,7 @@ export const worldCafe = {
     {
       label: "Installation des facilitateurs",
       duration: 5,
-      //component: Step2,
+      component: Step2,
       description: description2,
       audioEnabled: true,
     },

@@ -9,8 +9,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { auth, onAuthStateChangedListener } from "../../../firebase";
 import {
+  clearWorldCoffeeFacilitator,
   createWorldCoffeeDescription,
   removeWorldCoffeeDescription,
+  setWorldCoffeeFacilitator,
   subscribeWorldCoffeeSession,
   updateWorldCoffeeDescription,
   upsertWorldCoffeeParticipant,
@@ -209,11 +211,32 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
       const cleanedId = String(participantId || payload?.id || "").trim();
       if (!cleanedId) return;
 
+      const current = participantMap.get(cleanedId) || {
+        id: cleanedId,
+        firstName: "",
+        lastName: "",
+        name: "",
+        label: "",
+        email: "",
+      };
+      const firstName = String(payload?.firstName || "").trim();
+      const lastName = String(payload?.lastName || "").trim();
+      const name = String(payload?.name || "").trim();
+      const label = String(payload?.label || "").trim();
+      const email = String(payload?.email || "").trim();
+
       participantMap.set(cleanedId, {
         id: cleanedId,
+        firstName: firstName || current.firstName,
+        lastName: lastName || current.lastName,
         name:
-          String(payload?.name || "").trim() || makeParticipantFallbackLabel(cleanedId),
-        email: String(payload?.email || "").trim(),
+          name ||
+          label ||
+          current.name ||
+          current.label ||
+          makeParticipantFallbackLabel(cleanedId),
+        label: label || current.label,
+        email: email || current.email,
       });
     };
 
@@ -228,6 +251,9 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
 
       addParticipant(guestId, {
         id: guestId,
+        firstName: String(guest?.firstName || "").trim(),
+        lastName: String(guest?.lastName || "").trim(),
+        label: String(guest?.label || "").trim(),
         name: resolveGuestName(guest),
         email: String(guest?.email || "").trim(),
       });
@@ -258,6 +284,37 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
   );
 
   const currentParticipantId = participant?.id || "";
+  const descriptionIdsSet = useMemo(
+    () => new Set(descriptions.map((description) => description.id)),
+    [descriptions]
+  );
+
+  const rawFacilitatorByDescriptionId =
+    activeState?.facilitatorByDescriptionId &&
+    typeof activeState.facilitatorByDescriptionId === "object"
+      ? activeState.facilitatorByDescriptionId
+      : EMPTY_OBJECT;
+  const facilitatorByDescriptionId = useMemo(() => {
+    const nextMapping = {};
+
+    Object.entries(rawFacilitatorByDescriptionId).forEach(([descriptionId, facilitatorId]) => {
+      const cleanedDescriptionId = String(descriptionId || "").trim();
+      const cleanedFacilitatorId = String(facilitatorId || "").trim();
+      if (!cleanedDescriptionId || !cleanedFacilitatorId) return;
+      if (!descriptionIdsSet.has(cleanedDescriptionId)) return;
+
+      nextMapping[cleanedDescriptionId] = cleanedFacilitatorId;
+    });
+
+    return nextMapping;
+  }, [descriptionIdsSet, rawFacilitatorByDescriptionId]);
+  const facilitatorIdByDescriptionId = facilitatorByDescriptionId;
+  const descriptionsWithoutFacilitatorCount = useMemo(() => {
+    return descriptions.reduce((count, description) => {
+      return facilitatorByDescriptionId[description.id] ? count : count + 1;
+    }, 0);
+  }, [descriptions, facilitatorByDescriptionId]);
+  const hasUnassignedDescriptions = descriptionsWithoutFacilitatorCount > 0;
 
   const addDescription = useCallback(
     async (options = {}) => {
@@ -328,13 +385,70 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
     [isEnabled, participantReady, sessionId, setSessionError]
   );
 
+  const setFacilitator = useCallback(
+    async (descriptionId, facilitatorId) => {
+      if (!isEnabled || !sessionId || !participantReady) return;
+
+      const cleanedDescriptionId = String(descriptionId || "").trim();
+      const cleanedFacilitatorId = String(facilitatorId || "").trim();
+      if (!cleanedDescriptionId || !cleanedFacilitatorId) return;
+      if (!descriptionIdsSet.has(cleanedDescriptionId)) return;
+
+      const isParticipantKnown = participants.some(
+        (currentParticipant) => currentParticipant.id === cleanedFacilitatorId
+      );
+      if (!isParticipantKnown) return;
+
+      try {
+        await setWorldCoffeeFacilitator(sessionId, cleanedDescriptionId, cleanedFacilitatorId);
+      } catch (error) {
+        console.error("Impossible d'attribuer le facilitateur:", error);
+        setSessionError("Le facilitateur n'a pas pu etre attribue.");
+      }
+    },
+    [
+      descriptionIdsSet,
+      isEnabled,
+      participantReady,
+      participants,
+      sessionId,
+      setSessionError,
+    ]
+  );
+
+  const clearFacilitator = useCallback(
+    async (descriptionId) => {
+      if (!isEnabled || !sessionId || !participantReady) return;
+
+      const cleanedDescriptionId = String(descriptionId || "").trim();
+      if (!cleanedDescriptionId) return;
+      if (!descriptionIdsSet.has(cleanedDescriptionId)) return;
+
+      try {
+        await clearWorldCoffeeFacilitator(sessionId, cleanedDescriptionId);
+      } catch (error) {
+        console.error("Impossible de retirer le facilitateur:", error);
+        setSessionError("Le facilitateur n'a pas pu etre retire.");
+      }
+    },
+    [descriptionIdsSet, isEnabled, participantReady, sessionId, setSessionError]
+  );
+
   const actions = useMemo(
     () => ({
       addDescription,
       updateDescription,
       removeDescription,
+      setFacilitator,
+      clearFacilitator,
     }),
-    [addDescription, removeDescription, updateDescription]
+    [
+      addDescription,
+      clearFacilitator,
+      removeDescription,
+      setFacilitator,
+      updateDescription,
+    ]
   );
 
   const effectiveSyncError = isEnabled && syncErrorSessionId === sessionId ? syncError : "";
@@ -350,9 +464,12 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
     participants,
     getParticipantLabel,
     descriptions,
+    facilitatorByDescriptionId,
+    facilitatorIdByDescriptionId,
+    descriptionsWithoutFacilitatorCount,
+    hasUnassignedDescriptions,
     actions,
   };
 }
 
 export default useWorldCoffeeCollaboration;
-
