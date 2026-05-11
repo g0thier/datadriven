@@ -11,10 +11,14 @@ import { auth, onAuthStateChangedListener } from "../../../firebase";
 import {
   clearWorldCoffeeFacilitator,
   createWorldCoffeeDescription,
+  createWorldCoffeeIdea,
+  initializeWorldCoffeeSubgroups,
   removeWorldCoffeeDescription,
+  removeWorldCoffeeIdea,
   setWorldCoffeeFacilitator,
   subscribeWorldCoffeeSession,
   updateWorldCoffeeDescription,
+  updateWorldCoffeeIdea,
   upsertWorldCoffeeParticipant,
 } from "../../../firebase/workshops/world-coffee.service";
 
@@ -50,6 +54,109 @@ const makeParticipantFallbackLabel = (participantId) => {
   const id = String(participantId || "");
   const suffix = id.slice(-4).toUpperCase();
   return suffix ? `Participant ${suffix}` : "Participant";
+};
+
+const parseGroupIndex = (groupId) => {
+  const match = String(groupId || "").match(/group-(\d+)/);
+  return match ? Number(match[1]) : 0;
+};
+
+const normalizeSubgroups = (value = {}) => {
+  if (!value || typeof value !== "object") return EMPTY_ARRAY;
+
+  const normalizeParticipantIds = (participantIds = {}) => {
+    if (!participantIds || typeof participantIds !== "object") return [];
+
+    return Object.entries(participantIds)
+      .filter(([, enabled]) => enabled)
+      .map(([participantId]) => String(participantId || "").trim())
+      .filter(Boolean);
+  };
+
+  return Object.entries(value)
+    .map(([subgroupId, subgroup], index) => {
+      const id = String(subgroup?.id || subgroupId || "").trim();
+      if (!id) return null;
+
+      return {
+        id,
+        label: String(subgroup?.label || `Sous-groupe ${index + 1}`).trim(),
+        descriptionId: String(subgroup?.descriptionId || "").trim(),
+        facilitatorId: String(subgroup?.facilitatorId || "").trim(),
+        participantIds: normalizeParticipantIds(subgroup?.participantIds),
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => {
+      const groupIndexA = parseGroupIndex(a.id);
+      const groupIndexB = parseGroupIndex(b.id);
+
+      if (groupIndexA !== groupIndexB) {
+        return groupIndexA - groupIndexB;
+      }
+
+      return String(a.label || "").localeCompare(String(b.label || ""), "fr");
+    });
+};
+
+const normalizeParticipantToSubgroup = (value = {}) => {
+  if (!value || typeof value !== "object") return {};
+
+  return Object.entries(value).reduce((accumulator, [participantId, subgroupId]) => {
+    const cleanedParticipantId = String(participantId || "").trim();
+    const cleanedSubgroupId = String(subgroupId || "").trim();
+    if (!cleanedParticipantId || !cleanedSubgroupId) return accumulator;
+
+    accumulator[cleanedParticipantId] = cleanedSubgroupId;
+    return accumulator;
+  }, {});
+};
+
+const normalizeIdeasBySubgroup = (value = {}) => {
+  if (!value || typeof value !== "object") {
+    return {
+      ideas: EMPTY_ARRAY,
+      ideasBySubgroup: EMPTY_OBJECT,
+      ideasById: EMPTY_OBJECT,
+    };
+  }
+
+  const ideasBySubgroup = {};
+  const ideas = [];
+
+  Object.entries(value).forEach(([rawSubgroupId, rawIdeas]) => {
+    const subgroupId = String(rawSubgroupId || "").trim();
+    if (!subgroupId) return;
+    if (!rawIdeas || typeof rawIdeas !== "object") return;
+
+    const subgroupIdeas = Object.entries(rawIdeas)
+      .map(([ideaId, idea]) => ({
+        id: String(idea?.id || ideaId || "").trim(),
+        subgroupId,
+        authorId: String(idea?.authorId || "").trim(),
+        text: String(idea?.text ?? ""),
+        roundId: String(idea?.roundId || ""),
+        roundLabel: String(idea?.roundLabel || ""),
+        createdAt: String(idea?.createdAt || ""),
+        updatedAt: String(idea?.updatedAt || ""),
+      }))
+      .filter((idea) => idea.id)
+      .sort(sortByCreatedAt);
+
+    ideasBySubgroup[subgroupId] = subgroupIdeas;
+    ideas.push(...subgroupIdeas);
+  });
+
+  const ideasById = ideas.reduce((accumulator, idea) => {
+    accumulator[idea.id] = idea;
+    return accumulator;
+  }, {});
+
+  return {
+    ideas,
+    ideasBySubgroup,
+    ideasById,
+  };
 };
 
 const resolveParticipantIdentity = ({ sessionGuests, authUser }) => {
@@ -316,6 +423,69 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
   }, [descriptions, facilitatorByDescriptionId]);
   const hasUnassignedDescriptions = descriptionsWithoutFacilitatorCount > 0;
 
+  const rawSubgroups =
+    activeState?.subgroups && typeof activeState.subgroups === "object"
+      ? activeState.subgroups
+      : EMPTY_OBJECT;
+  const subgroups = useMemo(() => normalizeSubgroups(rawSubgroups), [rawSubgroups]);
+  const subgroupById = useMemo(() => {
+    return subgroups.reduce((accumulator, subgroup) => {
+      accumulator[subgroup.id] = subgroup;
+      return accumulator;
+    }, {});
+  }, [subgroups]);
+
+  const rawParticipantToSubgroup =
+    activeState?.participantToSubgroup &&
+    typeof activeState.participantToSubgroup === "object"
+      ? activeState.participantToSubgroup
+      : EMPTY_OBJECT;
+  const participantToSubgroup = useMemo(
+    () => normalizeParticipantToSubgroup(rawParticipantToSubgroup),
+    [rawParticipantToSubgroup]
+  );
+  const subgroupId = String(participantToSubgroup[currentParticipantId] || "").trim();
+  const activeSubgroup = subgroupId ? subgroupById[subgroupId] || null : null;
+  const activeSubgroupDescription = useMemo(() => {
+    if (!activeSubgroup?.descriptionId) return null;
+    return descriptionsById[activeSubgroup.descriptionId] || null;
+  }, [activeSubgroup?.descriptionId, descriptionsById]);
+
+  const rawIdeasBySubgroup =
+    activeState?.ideasBySubgroup && typeof activeState.ideasBySubgroup === "object"
+      ? activeState.ideasBySubgroup
+      : EMPTY_OBJECT;
+  const {
+    ideas,
+    ideasBySubgroup,
+    ideasById,
+  } = useMemo(() => normalizeIdeasBySubgroup(rawIdeasBySubgroup), [rawIdeasBySubgroup]);
+  const activeIdeas = Array.isArray(ideasBySubgroup[subgroupId])
+    ? ideasBySubgroup[subgroupId]
+    : EMPTY_ARRAY;
+
+  useEffect(() => {
+    if (!isEnabled || !sessionId || !participantReady) return;
+    if (descriptions.length === 0) return;
+
+    let cancelled = false;
+
+    const syncSubgroups = async () => {
+      try {
+        await initializeWorldCoffeeSubgroups(sessionId, sessionGuests);
+      } catch (error) {
+        if (cancelled) return;
+        console.error("Impossible de synchroniser les sous-groupes World Cafe:", error);
+      }
+    };
+
+    syncSubgroups();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [descriptions.length, isEnabled, participantReady, sessionGuests, sessionId]);
+
   const addDescription = useCallback(
     async (options = {}) => {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return null;
@@ -434,6 +604,104 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
     [descriptionIdsSet, isEnabled, participantReady, sessionId, setSessionError]
   );
 
+  const addIdea = useCallback(
+    async (options = {}) => {
+      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId || !subgroupId) {
+        return null;
+      }
+
+      try {
+        return await createWorldCoffeeIdea(sessionId, subgroupId, {
+          authorId: currentParticipantId,
+          text: options?.text ?? "",
+          roundId: "round-1",
+          roundLabel: "premier-round",
+        });
+      } catch (error) {
+        console.error("Impossible d'ajouter l'idee:", error);
+        setSessionError("L'idee n'a pas pu etre ajoutee.");
+        return null;
+      }
+    },
+    [
+      currentParticipantId,
+      isEnabled,
+      participantReady,
+      sessionId,
+      setSessionError,
+      subgroupId,
+    ]
+  );
+
+  const updateIdeaText = useCallback(
+    async (ideaId, text, previousText = null) => {
+      if (!isEnabled || !sessionId || !participantReady || !ideaId || !currentParticipantId) return;
+      if (!subgroupId) return;
+
+      const idea = ideasById[ideaId];
+      if (!idea || idea.subgroupId !== subgroupId) return;
+      if (idea.authorId !== currentParticipantId) return;
+
+      const currentText = String(idea.text ?? "");
+      const nextText = String(text ?? "");
+      if (currentText === nextText) return;
+
+      const expectedPreviousText =
+        previousText === null || previousText === undefined
+          ? currentText
+          : String(previousText ?? "");
+
+      try {
+        await updateWorldCoffeeIdea(
+          sessionId,
+          subgroupId,
+          ideaId,
+          { text: nextText },
+          { expectedPreviousText }
+        );
+      } catch (error) {
+        console.error("Impossible de mettre a jour l'idee:", error);
+        setSessionError("L'idee n'a pas pu etre enregistree.");
+      }
+    },
+    [
+      currentParticipantId,
+      ideasById,
+      isEnabled,
+      participantReady,
+      sessionId,
+      setSessionError,
+      subgroupId,
+    ]
+  );
+
+  const removeIdea = useCallback(
+    async (ideaId) => {
+      if (!isEnabled || !sessionId || !participantReady || !ideaId || !currentParticipantId) return;
+      if (!subgroupId) return;
+
+      const idea = ideasById[ideaId];
+      if (!idea || idea.subgroupId !== subgroupId) return;
+      if (idea.authorId !== currentParticipantId) return;
+
+      try {
+        await removeWorldCoffeeIdea(sessionId, subgroupId, ideaId);
+      } catch (error) {
+        console.error("Impossible de supprimer l'idee:", error);
+        setSessionError("L'idee n'a pas pu etre supprimee.");
+      }
+    },
+    [
+      currentParticipantId,
+      ideasById,
+      isEnabled,
+      participantReady,
+      sessionId,
+      setSessionError,
+      subgroupId,
+    ]
+  );
+
   const actions = useMemo(
     () => ({
       addDescription,
@@ -441,12 +709,18 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
       removeDescription,
       setFacilitator,
       clearFacilitator,
+      addIdea,
+      updateIdeaText,
+      removeIdea,
     }),
     [
+      addIdea,
       addDescription,
       clearFacilitator,
+      removeIdea,
       removeDescription,
       setFacilitator,
+      updateIdeaText,
       updateDescription,
     ]
   );
@@ -464,10 +738,18 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
     participants,
     getParticipantLabel,
     descriptions,
+    subgroups,
+    subgroupId,
+    activeSubgroup,
+    participantToSubgroup,
+    activeSubgroupDescription,
     facilitatorByDescriptionId,
     facilitatorIdByDescriptionId,
     descriptionsWithoutFacilitatorCount,
     hasUnassignedDescriptions,
+    ideas,
+    ideasBySubgroup,
+    activeIdeas,
     actions,
   };
 }

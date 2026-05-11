@@ -22,6 +22,138 @@ const nowIso = () => new Date().toISOString();
  */
 const toWorldCoffeePath = (sessionId) => `workshopSessions/${sessionId}/worldCafe`;
 
+const sortByCreatedAt = (a, b) => {
+  const createdA = String(a?.createdAt || "");
+  const createdB = String(b?.createdAt || "");
+
+  if (createdA !== createdB) {
+    return createdA.localeCompare(createdB);
+  }
+
+  return String(a?.id || "").localeCompare(String(b?.id || ""));
+};
+
+const resolveParticipantName = (participant = {}) => {
+  const firstName = String(participant?.firstName || "").trim();
+  const lastName = String(participant?.lastName || "").trim();
+  const fullName = `${firstName} ${lastName}`.trim();
+
+  return (
+    fullName ||
+    String(participant?.name || "").trim() ||
+    String(participant?.label || "").trim() ||
+    String(participant?.email || "").trim() ||
+    ""
+  );
+};
+
+const normalizeInvitedParticipants = (participants = []) => {
+  const mapById = new Map();
+
+  (Array.isArray(participants) ? participants : []).forEach((participant) => {
+    const participantId = String(participant?.id || participant?.uid || "").trim();
+    if (!participantId) return;
+
+    const current = mapById.get(participantId) || {
+      id: participantId,
+      name: "",
+    };
+    const name = resolveParticipantName(participant);
+
+    mapById.set(participantId, {
+      id: participantId,
+      name: name || current.name,
+    });
+  });
+
+  return Array.from(mapById.values()).sort((a, b) => {
+    const nameA = String(a?.name || "").toLocaleLowerCase("fr");
+    const nameB = String(b?.name || "").toLocaleLowerCase("fr");
+
+    if (nameA !== nameB) {
+      return nameA.localeCompare(nameB, "fr");
+    }
+
+    return String(a?.id || "").localeCompare(String(b?.id || ""));
+  });
+};
+
+const normalizeEnabledMap = (value = {}) => {
+  if (!value || typeof value !== "object") return {};
+
+  return Object.entries(value).reduce((accumulator, [id, enabled]) => {
+    const cleanedId = String(id || "").trim();
+    if (!cleanedId || !enabled) return accumulator;
+
+    accumulator[cleanedId] = true;
+    return accumulator;
+  }, {});
+};
+
+const normalizeSubgroups = (value = {}) => {
+  if (!value || typeof value !== "object") return {};
+
+  return Object.entries(value).reduce((accumulator, [subgroupId, subgroup]) => {
+    const cleanedSubgroupId = String(subgroup?.id || subgroupId || "").trim();
+    if (!cleanedSubgroupId) return accumulator;
+
+    accumulator[cleanedSubgroupId] = {
+      id: cleanedSubgroupId,
+      label: String(subgroup?.label || "").trim(),
+      descriptionId: String(subgroup?.descriptionId || "").trim(),
+      facilitatorId: String(subgroup?.facilitatorId || "").trim(),
+      participantIds: normalizeEnabledMap(subgroup?.participantIds),
+    };
+    return accumulator;
+  }, {});
+};
+
+const normalizeParticipantToSubgroup = (value = {}) => {
+  if (!value || typeof value !== "object") return {};
+
+  return Object.entries(value).reduce((accumulator, [participantId, subgroupId]) => {
+    const cleanedParticipantId = String(participantId || "").trim();
+    const cleanedSubgroupId = String(subgroupId || "").trim();
+    if (!cleanedParticipantId || !cleanedSubgroupId) return accumulator;
+
+    accumulator[cleanedParticipantId] = cleanedSubgroupId;
+    return accumulator;
+  }, {});
+};
+
+const parseGroupIndex = (groupId) => {
+  const match = String(groupId || "").match(/group-(\d+)/);
+  return match ? Number(match[1]) : 0;
+};
+
+const countParticipants = (subgroup = {}) => {
+  const participantIds =
+    subgroup?.participantIds && typeof subgroup.participantIds === "object"
+      ? subgroup.participantIds
+      : {};
+
+  return Object.values(participantIds).reduce((count, enabled) => {
+    return enabled ? count + 1 : count;
+  }, 0);
+};
+
+const findSmallestSubgroupId = (subgroups = {}, subgroupIds = []) => {
+  const entries = subgroupIds
+    .map((subgroupId) => {
+      const subgroup = subgroups[subgroupId];
+      return {
+        subgroupId,
+        size: countParticipants(subgroup),
+      };
+    })
+    .sort((a, b) => {
+      if (a.size !== b.size) return a.size - b.size;
+      return parseGroupIndex(a.subgroupId) - parseGroupIndex(b.subgroupId);
+    });
+
+  return entries[0]?.subgroupId || "";
+};
+
 /**
  * Subscribes to a World Cafe session payload.
  * @param {string} sessionId - Workshop session id.
@@ -47,6 +179,146 @@ export const subscribeWorldCoffeeSession = (
     },
     onError
   );
+};
+
+/**
+ * Initializes or reconciles World Cafe subgroups from invited guests and facilitator mapping.
+ *
+ * @param {string} sessionId - Workshop session id.
+ * @param {Array<{id?:string,uid?:string,name?:string,label?:string,firstName?:string,lastName?:string,email?:string}>} [invitedParticipants=[]] - Session invitees (`allGuests`).
+ * @returns {Promise<void>} Transaction completion.
+ */
+export const initializeWorldCoffeeSubgroups = async (
+  sessionId,
+  invitedParticipants = []
+) => {
+  if (!sessionId) return;
+
+  const normalizedInvitedParticipants = normalizeInvitedParticipants(invitedParticipants);
+  const invitedParticipantIds = normalizedInvitedParticipants.map((participant) => participant.id);
+
+  await runTransaction(ref(database, toWorldCoffeePath(sessionId)), (current) => {
+    const currentData = current && typeof current === "object" ? current : {};
+    const descriptions =
+      currentData?.descriptions && typeof currentData.descriptions === "object"
+        ? currentData.descriptions
+        : {};
+    const facilitatorByDescriptionIdRaw =
+      currentData?.facilitatorByDescriptionId &&
+      typeof currentData.facilitatorByDescriptionId === "object"
+        ? currentData.facilitatorByDescriptionId
+        : {};
+
+    const descriptionList = Object.entries(descriptions)
+      .map(([descriptionId, description]) => ({
+        id: String(description?.id || descriptionId || "").trim(),
+        createdAt: String(description?.createdAt || ""),
+      }))
+      .filter((description) => description.id)
+      .sort(sortByCreatedAt);
+
+    const eligibleDescriptions = descriptionList.filter((description) => {
+      const facilitatorId = String(facilitatorByDescriptionIdRaw[description.id] || "").trim();
+      return Boolean(facilitatorId);
+    });
+
+    if (eligibleDescriptions.length === 0) {
+      return {
+        ...currentData,
+        subgroups: {},
+        participantToSubgroup: {},
+      };
+    }
+
+    const normalizedSubgroups = normalizeSubgroups(currentData?.subgroups);
+    const existingParticipantToSubgroup = normalizeParticipantToSubgroup(
+      currentData?.participantToSubgroup
+    );
+
+    const nextSubgroups = {};
+    const nextParticipantToSubgroup = {};
+    const usedGroupIds = new Set();
+
+    const pickGroupId = (descriptionId, fallbackIndex) => {
+      const subgroupWithDescription = Object.values(normalizedSubgroups).find(
+        (subgroup) => String(subgroup?.descriptionId || "").trim() === descriptionId
+      );
+      if (subgroupWithDescription?.id && !usedGroupIds.has(subgroupWithDescription.id)) {
+        usedGroupIds.add(subgroupWithDescription.id);
+        return subgroupWithDescription.id;
+      }
+
+      let candidate = `group-${fallbackIndex + 1}`;
+      if (!usedGroupIds.has(candidate)) {
+        usedGroupIds.add(candidate);
+        return candidate;
+      }
+
+      let sequence = 1;
+      while (usedGroupIds.has(`group-${sequence}`)) {
+        sequence += 1;
+      }
+      candidate = `group-${sequence}`;
+      usedGroupIds.add(candidate);
+      return candidate;
+    };
+
+    eligibleDescriptions.forEach((description, index) => {
+      const facilitatorId = String(facilitatorByDescriptionIdRaw[description.id] || "").trim();
+      if (!facilitatorId) return;
+
+      const subgroupId = pickGroupId(description.id, index);
+      nextSubgroups[subgroupId] = {
+        id: subgroupId,
+        label: `Sous-groupe ${index + 1}`,
+        descriptionId: description.id,
+        facilitatorId,
+        participantIds: {
+          [facilitatorId]: true,
+        },
+      };
+      nextParticipantToSubgroup[facilitatorId] = subgroupId;
+    });
+
+    const targetSubgroupIds = Object.keys(nextSubgroups);
+    const facilitatorIdsSet = new Set(
+      targetSubgroupIds
+        .map((subgroupId) => String(nextSubgroups[subgroupId]?.facilitatorId || "").trim())
+        .filter(Boolean)
+    );
+
+    const distributableParticipantIds = invitedParticipantIds.filter(
+      (participantId) => !facilitatorIdsSet.has(participantId)
+    );
+
+    const pendingAssignment = [];
+
+    distributableParticipantIds.forEach((participantId) => {
+      const previousSubgroupId = String(existingParticipantToSubgroup[participantId] || "").trim();
+      if (previousSubgroupId && nextSubgroups[previousSubgroupId]) {
+        nextSubgroups[previousSubgroupId].participantIds[participantId] = true;
+        nextParticipantToSubgroup[participantId] = previousSubgroupId;
+        return;
+      }
+
+      pendingAssignment.push(participantId);
+    });
+
+    pendingAssignment.forEach((participantId) => {
+      const targetSubgroupId = findSmallestSubgroupId(nextSubgroups, targetSubgroupIds);
+      if (!targetSubgroupId) return;
+
+      nextSubgroups[targetSubgroupId].participantIds[participantId] = true;
+      nextParticipantToSubgroup[participantId] = targetSubgroupId;
+    });
+
+    return {
+      ...currentData,
+      subgroups: nextSubgroups,
+      participantToSubgroup: nextParticipantToSubgroup,
+      subgroupInitializedAt: currentData?.subgroupInitializedAt || nowIso(),
+    };
+  });
 };
 
 /**
@@ -257,6 +529,127 @@ export const clearWorldCoffeeFacilitator = async (sessionId, descriptionId) => {
       ...currentData,
       facilitatorByDescriptionId: nextMapping,
     };
+  });
+};
+
+/**
+ * Creates a World Cafe idea for a subgroup.
+ * The round metadata is always normalized to "premier round".
+ *
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} subgroupId - Subgroup id.
+ * @param {{authorId:string, text?:string, roundId?:string, roundLabel?:string}} [payload={}] - Idea payload.
+ * @returns {Promise<string>} Created idea id.
+ */
+export const createWorldCoffeeIdea = async (sessionId, subgroupId, payload = {}) => {
+  const cleanedSubgroupId = String(subgroupId || "").trim();
+  if (!sessionId || !cleanedSubgroupId || !payload?.authorId) {
+    throw new Error("createWorldCoffeeIdea: sessionId, subgroupId ou authorId manquant");
+  }
+
+  const ideasRef = ref(database, `${toWorldCoffeePath(sessionId)}/ideasBySubgroup/${cleanedSubgroupId}`);
+  const ideaRef = push(ideasRef);
+  const ideaId = ideaRef.key;
+  if (!ideaId) {
+    throw new Error("Impossible de generer ideaId");
+  }
+
+  const now = nowIso();
+
+  await set(ideaRef, {
+    id: ideaId,
+    authorId: String(payload.authorId || "").trim(),
+    text: String(payload.text ?? ""),
+    roundId: "round-1",
+    roundLabel: "premier-round",
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  return ideaId;
+};
+
+/**
+ * Updates a World Cafe idea.
+ *
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} subgroupId - Subgroup id.
+ * @param {string} ideaId - Idea id.
+ * @param {{text?:string}} [patch={}] - Idea patch.
+ * @param {{expectedPreviousText?:string}} [options={}] - Optional concurrency guard.
+ * @returns {Promise<void>} Update completion.
+ */
+export const updateWorldCoffeeIdea = async (
+  sessionId,
+  subgroupId,
+  ideaId,
+  patch = {},
+  options = {}
+) => {
+  const cleanedSubgroupId = String(subgroupId || "").trim();
+  const cleanedIdeaId = String(ideaId || "").trim();
+  if (!sessionId || !cleanedSubgroupId || !cleanedIdeaId) return;
+
+  const hasTextPatch = Object.prototype.hasOwnProperty.call(patch, "text");
+  if (!hasTextPatch) {
+    await update(
+      ref(
+        database,
+        `${toWorldCoffeePath(sessionId)}/ideasBySubgroup/${cleanedSubgroupId}/${cleanedIdeaId}`
+      ),
+      { updatedAt: nowIso() }
+    );
+    return;
+  }
+
+  const nextText = String(patch.text ?? "");
+  const hasExpectedPreviousText = Object.prototype.hasOwnProperty.call(
+    options,
+    "expectedPreviousText"
+  );
+  const expectedPreviousText = hasExpectedPreviousText
+    ? String(options.expectedPreviousText ?? "")
+    : null;
+
+  await runTransaction(
+    ref(
+      database,
+      `${toWorldCoffeePath(sessionId)}/ideasBySubgroup/${cleanedSubgroupId}/${cleanedIdeaId}`
+    ),
+    (current) => {
+      const currentData = current && typeof current === "object" ? current : {};
+      if (!currentData?.id) return current;
+
+      const currentText = String(currentData.text ?? "");
+      const shouldRejectStaleWrite =
+        expectedPreviousText !== null && expectedPreviousText !== currentText;
+      if (shouldRejectStaleWrite) return;
+
+      return {
+        ...currentData,
+        text: nextText,
+        updatedAt: nowIso(),
+      };
+    }
+  );
+};
+
+/**
+ * Removes a World Cafe idea from a subgroup.
+ *
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} subgroupId - Subgroup id.
+ * @param {string} ideaId - Idea id.
+ * @returns {Promise<void>} Delete completion.
+ */
+export const removeWorldCoffeeIdea = async (sessionId, subgroupId, ideaId) => {
+  const cleanedSubgroupId = String(subgroupId || "").trim();
+  const cleanedIdeaId = String(ideaId || "").trim();
+  if (!sessionId || !cleanedSubgroupId || !cleanedIdeaId) return;
+
+  await update(ref(database), {
+    [`${toWorldCoffeePath(sessionId)}/ideasBySubgroup/${cleanedSubgroupId}/${cleanedIdeaId}`]:
+      null,
   });
 };
 
