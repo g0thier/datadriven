@@ -11,6 +11,7 @@ import { auth, onAuthStateChangedListener } from "../../../firebase";
 import {
   addWorldCoffeeCommentReply,
   addWorldCoffeeIdeaComment,
+  applyWorldCoffeeReturnRotation,
   applyWorldCoffeeRound2Rotation,
   applyWorldCoffeeRound3Rotation,
   clearWorldCoffeeFacilitator,
@@ -27,6 +28,7 @@ import {
   updateWorldCoffeeDescription,
   updateWorldCoffeeIdeaComment,
   updateWorldCoffeeIdea,
+  updateWorldCoffeeSubgroupSynthesis,
   upsertWorldCoffeeParticipant,
 } from "../../../firebase/workshops/world-coffee.service";
 
@@ -235,6 +237,23 @@ const normalizeRepliesByComment = (value = {}) => {
   });
 
   return repliesByComment;
+};
+
+const normalizeSynthesisBySubgroup = (value = {}) => {
+  if (!value || typeof value !== "object") return {};
+
+  return Object.entries(value).reduce((accumulator, [subgroupId, synthesis]) => {
+    const cleanedSubgroupId = String(subgroupId || "").trim();
+    if (!cleanedSubgroupId) return accumulator;
+
+    accumulator[cleanedSubgroupId] = {
+      text: String(synthesis?.text ?? ""),
+      authorId: String(synthesis?.authorId || ""),
+      createdAt: String(synthesis?.createdAt || ""),
+      updatedAt: String(synthesis?.updatedAt || ""),
+    };
+    return accumulator;
+  }, {});
 };
 
 const resolveParticipantIdentity = ({ sessionGuests, authUser }) => {
@@ -566,6 +585,15 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
     () => normalizeRepliesByComment(rawRepliesByComment),
     [rawRepliesByComment]
   );
+  const rawSynthesisBySubgroup =
+    activeState?.synthesisBySubgroup && typeof activeState.synthesisBySubgroup === "object"
+      ? activeState.synthesisBySubgroup
+      : EMPTY_OBJECT;
+  const synthesisBySubgroup = useMemo(
+    () => normalizeSynthesisBySubgroup(rawSynthesisBySubgroup),
+    [rawSynthesisBySubgroup]
+  );
+  const activeSubgroupSynthesis = subgroupId ? synthesisBySubgroup[subgroupId] || null : null;
   const activeCommentIds = useMemo(() => {
     const nextCommentIds = new Set();
 
@@ -600,7 +628,12 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
   );
   const round2RotationApplied = Boolean(activeState?.round2RotationAppliedAt);
   const round3RotationApplied = Boolean(activeState?.round3RotationAppliedAt);
-  const activeRound = round3RotationApplied ? "round-3" : "round-2";
+  const returnRotationApplied = Boolean(activeState?.returnRotationAppliedAt);
+  const activeRound = returnRotationApplied
+    ? "round-return"
+    : round3RotationApplied
+      ? "round-3"
+      : "round-2";
 
   useEffect(() => {
     if (!isEnabled || !sessionId || !participantReady) return;
@@ -862,6 +895,57 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
     }
   }, [isEnabled, participantReady, sessionId, setSessionError]);
 
+  const ensureReturnRotation = useCallback(async () => {
+    if (!isEnabled || !sessionId || !participantReady) return;
+
+    try {
+      await applyWorldCoffeeReturnRotation(sessionId);
+    } catch (error) {
+      console.error("Impossible d'appliquer la rotation de retour:", error);
+      setSessionError("Le retour des groupes n'a pas pu etre applique.");
+    }
+  }, [isEnabled, participantReady, sessionId, setSessionError]);
+
+  const updateSubgroupSynthesis = useCallback(
+    async (text, previousText = null) => {
+      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
+      if (!subgroupId) return;
+
+      const currentText = String(activeSubgroupSynthesis?.text ?? "");
+      const nextText = String(text ?? "");
+      if (currentText === nextText) return;
+
+      const expectedPreviousText =
+        previousText === null || previousText === undefined
+          ? currentText
+          : String(previousText ?? "");
+
+      try {
+        await updateWorldCoffeeSubgroupSynthesis(
+          sessionId,
+          subgroupId,
+          {
+            text: nextText,
+            authorId: currentParticipantId,
+          },
+          { expectedPreviousText }
+        );
+      } catch (error) {
+        console.error("Impossible de mettre a jour la synthese:", error);
+        setSessionError("La synthese n'a pas pu etre enregistree.");
+      }
+    },
+    [
+      activeSubgroupSynthesis?.text,
+      currentParticipantId,
+      isEnabled,
+      participantReady,
+      sessionId,
+      setSessionError,
+      subgroupId,
+    ]
+  );
+
   const addIdeaComment = useCallback(
     async (ideaId, text = "") => {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId || !ideaId) {
@@ -1070,12 +1154,14 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
       removeIdea,
       ensureRound2Rotation,
       ensureRound3Rotation,
+      ensureReturnRotation,
       addIdeaComment,
       updateIdeaCommentText,
       removeIdeaComment,
       addCommentReply,
       updateCommentReplyText,
       removeCommentReply,
+      updateSubgroupSynthesis,
     }),
     [
       addCommentReply,
@@ -1083,6 +1169,7 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
       addIdea,
       addDescription,
       clearFacilitator,
+      ensureReturnRotation,
       ensureRound2Rotation,
       ensureRound3Rotation,
       removeCommentReply,
@@ -1090,6 +1177,7 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
       removeIdea,
       removeDescription,
       setFacilitator,
+      updateSubgroupSynthesis,
       updateCommentReplyText,
       updateIdeaCommentText,
       updateIdeaText,
@@ -1124,9 +1212,12 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
     activeIdeas,
     commentsByIdea,
     repliesByComment,
+    synthesisBySubgroup,
+    activeSubgroupSynthesis,
     activeRound,
     round2RotationApplied,
     round3RotationApplied,
+    returnRotationApplied,
     actions,
   };
 }

@@ -523,6 +523,101 @@ export const applyWorldCoffeeRound3Rotation = async (sessionId) => {
 };
 
 /**
+ * Applies the return-to-origin subgroup rotation once (idempotent).
+ * Facilitators stay on their original subject subgroup while members move by -2.
+ *
+ * @param {string} sessionId - Workshop session id.
+ * @returns {Promise<void>} Transaction completion.
+ */
+export const applyWorldCoffeeReturnRotation = async (sessionId) => {
+  if (!sessionId) return;
+
+  await runTransaction(ref(database, toWorldCoffeePath(sessionId)), (current) => {
+    const currentData = current && typeof current === "object" ? current : {};
+    if (currentData?.returnRotationAppliedAt) {
+      return currentData;
+    }
+
+    const normalizedSubgroups = normalizeSubgroups(currentData?.subgroups);
+    const subgroupIds = sortGroupIds(Object.keys(normalizedSubgroups));
+
+    if (subgroupIds.length === 0) {
+      return currentData;
+    }
+
+    const nextSubgroups = subgroupIds.reduce((accumulator, subgroupId) => {
+      const subgroup = normalizedSubgroups[subgroupId] || {};
+      const facilitatorId = String(subgroup?.facilitatorId || "").trim();
+
+      accumulator[subgroupId] = {
+        ...subgroup,
+        participantIds: facilitatorId ? { [facilitatorId]: true } : {},
+      };
+
+      return accumulator;
+    }, {});
+
+    if (subgroupIds.length < 2) {
+      const nextParticipantToSubgroup = {};
+
+      subgroupIds.forEach((subgroupId) => {
+        Object.keys(nextSubgroups[subgroupId]?.participantIds || {}).forEach((participantId) => {
+          nextParticipantToSubgroup[participantId] = subgroupId;
+        });
+      });
+
+      return {
+        ...currentData,
+        subgroups: nextSubgroups,
+        participantToSubgroup: nextParticipantToSubgroup,
+        returnRotationAppliedAt: nowIso(),
+      };
+    }
+
+    const membersBySourceSubgroup = subgroupIds.reduce((accumulator, subgroupId) => {
+      const subgroup = normalizedSubgroups[subgroupId] || {};
+      const facilitatorId = String(subgroup?.facilitatorId || "").trim();
+      const participantIds = Object.keys(subgroup?.participantIds || {});
+
+      accumulator[subgroupId] = participantIds.filter((participantId) => {
+        const cleanedParticipantId = String(participantId || "").trim();
+        if (!cleanedParticipantId) return false;
+        if (facilitatorId && cleanedParticipantId === facilitatorId) return false;
+        return true;
+      });
+
+      return accumulator;
+    }, {});
+
+    subgroupIds.forEach((sourceSubgroupId, index) => {
+      const targetIndex = (index - 2 + subgroupIds.length) % subgroupIds.length;
+      const targetSubgroupId = subgroupIds[targetIndex];
+      const rotatedMembers = membersBySourceSubgroup[sourceSubgroupId] || [];
+
+      rotatedMembers.forEach((participantId) => {
+        nextSubgroups[targetSubgroupId].participantIds[participantId] = true;
+      });
+    });
+
+    const nextParticipantToSubgroup = {};
+    subgroupIds.forEach((subgroupId) => {
+      Object.keys(nextSubgroups[subgroupId]?.participantIds || {}).forEach((participantId) => {
+        const cleanedParticipantId = String(participantId || "").trim();
+        if (!cleanedParticipantId) return;
+        nextParticipantToSubgroup[cleanedParticipantId] = subgroupId;
+      });
+    });
+
+    return {
+      ...currentData,
+      subgroups: nextSubgroups,
+      participantToSubgroup: nextParticipantToSubgroup,
+      returnRotationAppliedAt: nowIso(),
+    };
+  });
+};
+
+/**
  * Upserts a World Cafe participant with presence timestamps.
  * @param {string} sessionId - Workshop session id.
  * @param {{id:string, name?:string, email?:string, isAuthenticated?:boolean}} [participant={}] - Participant payload.
@@ -633,6 +728,56 @@ export const updateWorldCoffeeDescription = async (
       return {
         ...currentData,
         text: nextText,
+        updatedAt: nowIso(),
+      };
+    }
+  );
+};
+
+/**
+ * Updates subgroup synthesis text in the World Cafe session.
+ *
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} subgroupId - Subgroup id.
+ * @param {{text?:string, authorId?:string}} [patch={}] - Synthesis patch.
+ * @param {{expectedPreviousText?:string}} [options={}] - Optional concurrency guard.
+ * @returns {Promise<void>} Update completion.
+ */
+export const updateWorldCoffeeSubgroupSynthesis = async (
+  sessionId,
+  subgroupId,
+  patch = {},
+  options = {}
+) => {
+  const cleanedSubgroupId = String(subgroupId || "").trim();
+  if (!sessionId || !cleanedSubgroupId) return;
+
+  const hasTextPatch = Object.prototype.hasOwnProperty.call(patch, "text");
+  const nextText = hasTextPatch ? String(patch.text ?? "") : null;
+  const nextAuthorId = String(patch?.authorId || "").trim();
+
+  const hasExpectedPreviousText = Object.prototype.hasOwnProperty.call(
+    options,
+    "expectedPreviousText"
+  );
+  const expectedPreviousText = hasExpectedPreviousText
+    ? String(options.expectedPreviousText ?? "")
+    : null;
+
+  await runTransaction(
+    ref(database, `${toWorldCoffeePath(sessionId)}/synthesisBySubgroup/${cleanedSubgroupId}`),
+    (current) => {
+      const currentData = current && typeof current === "object" ? current : {};
+      const currentText = String(currentData?.text ?? "");
+
+      const shouldRejectStaleWrite =
+        expectedPreviousText !== null && expectedPreviousText !== currentText;
+      if (shouldRejectStaleWrite) return;
+
+      return {
+        text: hasTextPatch ? nextText : currentText,
+        authorId: nextAuthorId || String(currentData?.authorId || ""),
+        createdAt: String(currentData?.createdAt || nowIso()),
         updatedAt: nowIso(),
       };
     }

@@ -13,8 +13,8 @@ import Step2 from "./steps/Step2.jsx";
 import Step3 from "./steps/Step3.jsx";
 import Step4 from "./steps/Step4.jsx";
 import Step5 from "./steps/Step5.jsx";
-/*
 import Step6 from "./steps/Step6.jsx";
+/*
 import Step7 from "./steps/Step7.jsx";
 */
 
@@ -114,9 +114,10 @@ export const worldCafe = {
     {
       label: "Retour et synthèse",
       duration: 10,
-      //component: Step6,
+      component: Step6,
       description: description6,
       audioEnabled: true,
+      audioChannel: "subgroup",
     },
     {
       label: "Restitution collective",
