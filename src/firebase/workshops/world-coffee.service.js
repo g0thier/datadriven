@@ -154,6 +154,19 @@ const findSmallestSubgroupId = (subgroups = {}, subgroupIds = []) => {
   return entries[0]?.subgroupId || "";
 };
 
+const sortGroupIds = (groupIds = []) => {
+  return [...groupIds].sort((a, b) => {
+    const groupIndexA = parseGroupIndex(a);
+    const groupIndexB = parseGroupIndex(b);
+
+    if (groupIndexA !== groupIndexB) {
+      return groupIndexA - groupIndexB;
+    }
+
+    return String(a || "").localeCompare(String(b || ""));
+  });
+};
+
 /**
  * Subscribes to a World Cafe session payload.
  * @param {string} sessionId - Workshop session id.
@@ -317,6 +330,100 @@ export const initializeWorldCoffeeSubgroups = async (
       subgroups: nextSubgroups,
       participantToSubgroup: nextParticipantToSubgroup,
       subgroupInitializedAt: currentData?.subgroupInitializedAt || nowIso(),
+    };
+  });
+};
+
+/**
+ * Applies the round-2 subgroup rotation once (idempotent).
+ * Facilitators stay on their original subject subgroup.
+ *
+ * @param {string} sessionId - Workshop session id.
+ * @returns {Promise<void>} Transaction completion.
+ */
+export const applyWorldCoffeeRound2Rotation = async (sessionId) => {
+  if (!sessionId) return;
+
+  await runTransaction(ref(database, toWorldCoffeePath(sessionId)), (current) => {
+    const currentData = current && typeof current === "object" ? current : {};
+    if (currentData?.round2RotationAppliedAt) {
+      return currentData;
+    }
+
+    const normalizedSubgroups = normalizeSubgroups(currentData?.subgroups);
+    const subgroupIds = sortGroupIds(Object.keys(normalizedSubgroups));
+
+    if (subgroupIds.length === 0) {
+      return currentData;
+    }
+
+    const nextSubgroups = subgroupIds.reduce((accumulator, subgroupId) => {
+      const subgroup = normalizedSubgroups[subgroupId] || {};
+      const facilitatorId = String(subgroup?.facilitatorId || "").trim();
+
+      accumulator[subgroupId] = {
+        ...subgroup,
+        participantIds: facilitatorId ? { [facilitatorId]: true } : {},
+      };
+
+      return accumulator;
+    }, {});
+
+    if (subgroupIds.length < 2) {
+      const nextParticipantToSubgroup = {};
+
+      subgroupIds.forEach((subgroupId) => {
+        Object.keys(nextSubgroups[subgroupId]?.participantIds || {}).forEach((participantId) => {
+          nextParticipantToSubgroup[participantId] = subgroupId;
+        });
+      });
+
+      return {
+        ...currentData,
+        subgroups: nextSubgroups,
+        participantToSubgroup: nextParticipantToSubgroup,
+        round2RotationAppliedAt: nowIso(),
+      };
+    }
+
+    const membersBySourceSubgroup = subgroupIds.reduce((accumulator, subgroupId) => {
+      const subgroup = normalizedSubgroups[subgroupId] || {};
+      const facilitatorId = String(subgroup?.facilitatorId || "").trim();
+      const participantIds = Object.keys(subgroup?.participantIds || {});
+
+      accumulator[subgroupId] = participantIds.filter((participantId) => {
+        const cleanedParticipantId = String(participantId || "").trim();
+        if (!cleanedParticipantId) return false;
+        if (facilitatorId && cleanedParticipantId === facilitatorId) return false;
+        return true;
+      });
+
+      return accumulator;
+    }, {});
+
+    subgroupIds.forEach((sourceSubgroupId, index) => {
+      const targetSubgroupId = subgroupIds[(index + 1) % subgroupIds.length];
+      const rotatedMembers = membersBySourceSubgroup[sourceSubgroupId] || [];
+
+      rotatedMembers.forEach((participantId) => {
+        nextSubgroups[targetSubgroupId].participantIds[participantId] = true;
+      });
+    });
+
+    const nextParticipantToSubgroup = {};
+    subgroupIds.forEach((subgroupId) => {
+      Object.keys(nextSubgroups[subgroupId]?.participantIds || {}).forEach((participantId) => {
+        const cleanedParticipantId = String(participantId || "").trim();
+        if (!cleanedParticipantId) return;
+        nextParticipantToSubgroup[cleanedParticipantId] = subgroupId;
+      });
+    });
+
+    return {
+      ...currentData,
+      subgroups: nextSubgroups,
+      participantToSubgroup: nextParticipantToSubgroup,
+      round2RotationAppliedAt: nowIso(),
     };
   });
 };
@@ -650,6 +757,93 @@ export const removeWorldCoffeeIdea = async (sessionId, subgroupId, ideaId) => {
   await update(ref(database), {
     [`${toWorldCoffeePath(sessionId)}/ideasBySubgroup/${cleanedSubgroupId}/${cleanedIdeaId}`]:
       null,
+    [`${toWorldCoffeePath(sessionId)}/commentsByIdea/${cleanedIdeaId}`]: null,
+  });
+};
+
+/**
+ * Adds a comment on an idea for round 2.
+ *
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} ideaId - Idea id.
+ * @param {{authorId:string, text?:string}} [payload={}] - Comment payload.
+ * @returns {Promise<string>} Created comment id.
+ */
+export const addWorldCoffeeIdeaComment = async (sessionId, ideaId, payload = {}) => {
+  const cleanedIdeaId = String(ideaId || "").trim();
+  if (!sessionId || !cleanedIdeaId || !payload?.authorId) {
+    throw new Error("addWorldCoffeeIdeaComment: sessionId, ideaId ou authorId manquant");
+  }
+
+  const commentRef = push(ref(database, `${toWorldCoffeePath(sessionId)}/commentsByIdea/${cleanedIdeaId}`));
+  const commentId = commentRef.key;
+  if (!commentId) {
+    throw new Error("Impossible de generer commentId");
+  }
+
+  const now = nowIso();
+
+  await set(commentRef, {
+    id: commentId,
+    authorId: String(payload.authorId || "").trim(),
+    text: String(payload.text ?? ""),
+    roundId: "round-2",
+    roundLabel: "premier-rotation",
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  return commentId;
+};
+
+/**
+ * Updates a comment attached to a World Cafe idea.
+ *
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} ideaId - Idea id.
+ * @param {string} commentId - Comment id.
+ * @param {{text?:string}} [patch={}] - Comment patch.
+ * @returns {Promise<void>} Update completion.
+ */
+export const updateWorldCoffeeIdeaComment = async (
+  sessionId,
+  ideaId,
+  commentId,
+  patch = {}
+) => {
+  const cleanedIdeaId = String(ideaId || "").trim();
+  const cleanedCommentId = String(commentId || "").trim();
+  if (!sessionId || !cleanedIdeaId || !cleanedCommentId) return;
+
+  const payload = {
+    updatedAt: nowIso(),
+  };
+
+  if (Object.prototype.hasOwnProperty.call(patch, "text")) {
+    payload.text = String(patch.text ?? "");
+  }
+
+  await update(
+    ref(database, `${toWorldCoffeePath(sessionId)}/commentsByIdea/${cleanedIdeaId}/${cleanedCommentId}`),
+    payload
+  );
+};
+
+/**
+ * Removes a comment attached to a World Cafe idea.
+ *
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} ideaId - Idea id.
+ * @param {string} commentId - Comment id.
+ * @returns {Promise<void>} Delete completion.
+ */
+export const removeWorldCoffeeIdeaComment = async (sessionId, ideaId, commentId) => {
+  const cleanedIdeaId = String(ideaId || "").trim();
+  const cleanedCommentId = String(commentId || "").trim();
+  if (!sessionId || !cleanedIdeaId || !cleanedCommentId) return;
+
+  await update(ref(database), {
+    [`${toWorldCoffeePath(sessionId)}/commentsByIdea/${cleanedIdeaId}/${cleanedCommentId}`]: null,
   });
 };
 
