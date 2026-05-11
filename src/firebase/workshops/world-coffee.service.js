@@ -429,6 +429,100 @@ export const applyWorldCoffeeRound2Rotation = async (sessionId) => {
 };
 
 /**
+ * Applies the round-3 subgroup rotation once (idempotent).
+ * Facilitators stay on their original subject subgroup.
+ *
+ * @param {string} sessionId - Workshop session id.
+ * @returns {Promise<void>} Transaction completion.
+ */
+export const applyWorldCoffeeRound3Rotation = async (sessionId) => {
+  if (!sessionId) return;
+
+  await runTransaction(ref(database, toWorldCoffeePath(sessionId)), (current) => {
+    const currentData = current && typeof current === "object" ? current : {};
+    if (currentData?.round3RotationAppliedAt) {
+      return currentData;
+    }
+
+    const normalizedSubgroups = normalizeSubgroups(currentData?.subgroups);
+    const subgroupIds = sortGroupIds(Object.keys(normalizedSubgroups));
+
+    if (subgroupIds.length === 0) {
+      return currentData;
+    }
+
+    const nextSubgroups = subgroupIds.reduce((accumulator, subgroupId) => {
+      const subgroup = normalizedSubgroups[subgroupId] || {};
+      const facilitatorId = String(subgroup?.facilitatorId || "").trim();
+
+      accumulator[subgroupId] = {
+        ...subgroup,
+        participantIds: facilitatorId ? { [facilitatorId]: true } : {},
+      };
+
+      return accumulator;
+    }, {});
+
+    if (subgroupIds.length < 2) {
+      const nextParticipantToSubgroup = {};
+
+      subgroupIds.forEach((subgroupId) => {
+        Object.keys(nextSubgroups[subgroupId]?.participantIds || {}).forEach((participantId) => {
+          nextParticipantToSubgroup[participantId] = subgroupId;
+        });
+      });
+
+      return {
+        ...currentData,
+        subgroups: nextSubgroups,
+        participantToSubgroup: nextParticipantToSubgroup,
+        round3RotationAppliedAt: nowIso(),
+      };
+    }
+
+    const membersBySourceSubgroup = subgroupIds.reduce((accumulator, subgroupId) => {
+      const subgroup = normalizedSubgroups[subgroupId] || {};
+      const facilitatorId = String(subgroup?.facilitatorId || "").trim();
+      const participantIds = Object.keys(subgroup?.participantIds || {});
+
+      accumulator[subgroupId] = participantIds.filter((participantId) => {
+        const cleanedParticipantId = String(participantId || "").trim();
+        if (!cleanedParticipantId) return false;
+        if (facilitatorId && cleanedParticipantId === facilitatorId) return false;
+        return true;
+      });
+
+      return accumulator;
+    }, {});
+
+    subgroupIds.forEach((sourceSubgroupId, index) => {
+      const targetSubgroupId = subgroupIds[(index + 1) % subgroupIds.length];
+      const rotatedMembers = membersBySourceSubgroup[sourceSubgroupId] || [];
+
+      rotatedMembers.forEach((participantId) => {
+        nextSubgroups[targetSubgroupId].participantIds[participantId] = true;
+      });
+    });
+
+    const nextParticipantToSubgroup = {};
+    subgroupIds.forEach((subgroupId) => {
+      Object.keys(nextSubgroups[subgroupId]?.participantIds || {}).forEach((participantId) => {
+        const cleanedParticipantId = String(participantId || "").trim();
+        if (!cleanedParticipantId) return;
+        nextParticipantToSubgroup[cleanedParticipantId] = subgroupId;
+      });
+    });
+
+    return {
+      ...currentData,
+      subgroups: nextSubgroups,
+      participantToSubgroup: nextParticipantToSubgroup,
+      round3RotationAppliedAt: nowIso(),
+    };
+  });
+};
+
+/**
  * Upserts a World Cafe participant with presence timestamps.
  * @param {string} sessionId - Workshop session id.
  * @param {{id:string, name?:string, email?:string, isAuthenticated?:boolean}} [participant={}] - Participant payload.
@@ -758,6 +852,7 @@ export const removeWorldCoffeeIdea = async (sessionId, subgroupId, ideaId) => {
     [`${toWorldCoffeePath(sessionId)}/ideasBySubgroup/${cleanedSubgroupId}/${cleanedIdeaId}`]:
       null,
     [`${toWorldCoffeePath(sessionId)}/commentsByIdea/${cleanedIdeaId}`]: null,
+    [`${toWorldCoffeePath(sessionId)}/repliesByComment/idea-${cleanedIdeaId}`]: null,
   });
 };
 
@@ -844,6 +939,99 @@ export const removeWorldCoffeeIdeaComment = async (sessionId, ideaId, commentId)
 
   await update(ref(database), {
     [`${toWorldCoffeePath(sessionId)}/commentsByIdea/${cleanedIdeaId}/${cleanedCommentId}`]: null,
+    [`${toWorldCoffeePath(sessionId)}/repliesByComment/${cleanedCommentId}`]: null,
+  });
+};
+
+/**
+ * Adds a reply on a round-2 comment for round 3.
+ *
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} commentId - Comment id.
+ * @param {{authorId:string, text?:string}} [payload={}] - Reply payload.
+ * @returns {Promise<string>} Created reply id.
+ */
+export const addWorldCoffeeCommentReply = async (sessionId, commentId, payload = {}) => {
+  const cleanedCommentId = String(commentId || "").trim();
+  if (!sessionId || !cleanedCommentId || !payload?.authorId) {
+    throw new Error("addWorldCoffeeCommentReply: sessionId, commentId ou authorId manquant");
+  }
+
+  const replyRef = push(
+    ref(database, `${toWorldCoffeePath(sessionId)}/repliesByComment/${cleanedCommentId}`)
+  );
+  const replyId = replyRef.key;
+  if (!replyId) {
+    throw new Error("Impossible de generer replyId");
+  }
+
+  const now = nowIso();
+
+  await set(replyRef, {
+    id: replyId,
+    authorId: String(payload.authorId || "").trim(),
+    text: String(payload.text ?? ""),
+    roundId: "round-3",
+    roundLabel: "deuxieme-rotation",
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  return replyId;
+};
+
+/**
+ * Updates a reply attached to a World Cafe comment.
+ *
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} commentId - Comment id.
+ * @param {string} replyId - Reply id.
+ * @param {{text?:string}} [patch={}] - Reply patch.
+ * @returns {Promise<void>} Update completion.
+ */
+export const updateWorldCoffeeCommentReply = async (
+  sessionId,
+  commentId,
+  replyId,
+  patch = {}
+) => {
+  const cleanedCommentId = String(commentId || "").trim();
+  const cleanedReplyId = String(replyId || "").trim();
+  if (!sessionId || !cleanedCommentId || !cleanedReplyId) return;
+
+  const payload = {
+    updatedAt: nowIso(),
+  };
+
+  if (Object.prototype.hasOwnProperty.call(patch, "text")) {
+    payload.text = String(patch.text ?? "");
+  }
+
+  await update(
+    ref(
+      database,
+      `${toWorldCoffeePath(sessionId)}/repliesByComment/${cleanedCommentId}/${cleanedReplyId}`
+    ),
+    payload
+  );
+};
+
+/**
+ * Removes a reply attached to a World Cafe comment.
+ *
+ * @param {string} sessionId - Workshop session id.
+ * @param {string} commentId - Comment id.
+ * @param {string} replyId - Reply id.
+ * @returns {Promise<void>} Delete completion.
+ */
+export const removeWorldCoffeeCommentReply = async (sessionId, commentId, replyId) => {
+  const cleanedCommentId = String(commentId || "").trim();
+  const cleanedReplyId = String(replyId || "").trim();
+  if (!sessionId || !cleanedCommentId || !cleanedReplyId) return;
+
+  await update(ref(database), {
+    [`${toWorldCoffeePath(sessionId)}/repliesByComment/${cleanedCommentId}/${cleanedReplyId}`]:
+      null,
   });
 };
 

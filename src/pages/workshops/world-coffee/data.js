@@ -12,8 +12,8 @@ import Step1 from "./steps/Step1.jsx";
 import Step2 from "./steps/Step2.jsx";
 import Step3 from "./steps/Step3.jsx";
 import Step4 from "./steps/Step4.jsx";
-/*
 import Step5 from "./steps/Step5.jsx";
+/*
 import Step6 from "./steps/Step6.jsx";
 import Step7 from "./steps/Step7.jsx";
 */
@@ -106,9 +106,10 @@ export const worldCafe = {
     {
       label: "Deuxième rotation",
       duration: 20,
-      //component: Step5,
+      component: Step5,
       description: description5,
-      audioEnabled: false,
+      audioEnabled: true,
+      audioChannel: "subgroup",
     },
     {
       label: "Retour et synthèse",

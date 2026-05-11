@@ -9,17 +9,21 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { auth, onAuthStateChangedListener } from "../../../firebase";
 import {
+  addWorldCoffeeCommentReply,
   addWorldCoffeeIdeaComment,
   applyWorldCoffeeRound2Rotation,
+  applyWorldCoffeeRound3Rotation,
   clearWorldCoffeeFacilitator,
   createWorldCoffeeDescription,
   createWorldCoffeeIdea,
   initializeWorldCoffeeSubgroups,
+  removeWorldCoffeeCommentReply,
   removeWorldCoffeeDescription,
   removeWorldCoffeeIdeaComment,
   removeWorldCoffeeIdea,
   setWorldCoffeeFacilitator,
   subscribeWorldCoffeeSession,
+  updateWorldCoffeeCommentReply,
   updateWorldCoffeeDescription,
   updateWorldCoffeeIdeaComment,
   updateWorldCoffeeIdea,
@@ -63,6 +67,22 @@ const makeParticipantFallbackLabel = (participantId) => {
 const parseGroupIndex = (groupId) => {
   const match = String(groupId || "").match(/group-(\d+)/);
   return match ? Number(match[1]) : 0;
+};
+
+const IDEA_REPLY_KEY_PREFIX = "idea-";
+
+const buildIdeaReplyKey = (ideaId) => {
+  const cleanedIdeaId = String(ideaId || "").trim();
+  if (!cleanedIdeaId) return "";
+  return `${IDEA_REPLY_KEY_PREFIX}${cleanedIdeaId}`;
+};
+
+const extractIdeaIdFromReplyTarget = (targetId) => {
+  const cleanedTargetId = String(targetId || "").trim();
+  if (!cleanedTargetId.startsWith(IDEA_REPLY_KEY_PREFIX)) return "";
+
+  const ideaId = cleanedTargetId.slice(IDEA_REPLY_KEY_PREFIX.length).trim();
+  return ideaId || "";
 };
 
 const normalizeSubgroups = (value = {}) => {
@@ -188,6 +208,33 @@ const normalizeCommentsByIdea = (value = {}) => {
   });
 
   return commentsByIdea;
+};
+
+const normalizeRepliesByComment = (value = {}) => {
+  if (!value || typeof value !== "object") return {};
+
+  const repliesByComment = {};
+
+  Object.entries(value).forEach(([commentId, replies]) => {
+    const cleanedCommentId = String(commentId || "").trim();
+    if (!cleanedCommentId) return;
+    if (!replies || typeof replies !== "object") return;
+
+    repliesByComment[cleanedCommentId] = Object.entries(replies)
+      .map(([replyId, reply]) => ({
+        id: String(reply?.id || replyId || "").trim(),
+        authorId: String(reply?.authorId || "").trim(),
+        text: String(reply?.text ?? ""),
+        roundId: String(reply?.roundId || ""),
+        roundLabel: String(reply?.roundLabel || ""),
+        createdAt: String(reply?.createdAt || ""),
+        updatedAt: String(reply?.updatedAt || ""),
+      }))
+      .filter((reply) => reply.id)
+      .sort(sortByCreatedAt);
+  });
+
+  return repliesByComment;
 };
 
 const resolveParticipantIdentity = ({ sessionGuests, authUser }) => {
@@ -494,6 +541,10 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
   const activeIdeas = Array.isArray(ideasBySubgroup[subgroupId])
     ? ideasBySubgroup[subgroupId]
     : EMPTY_ARRAY;
+  const activeIdeaIds = useMemo(
+    () => new Set(activeIdeas.map((idea) => idea.id)),
+    [activeIdeas]
+  );
   const ideaIdsInActiveSubgroup = useMemo(
     () => new Set(activeIdeas.map((idea) => idea.id)),
     [activeIdeas]
@@ -507,8 +558,49 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
     () => normalizeCommentsByIdea(rawCommentsByIdea),
     [rawCommentsByIdea]
   );
+  const rawRepliesByComment =
+    activeState?.repliesByComment && typeof activeState.repliesByComment === "object"
+      ? activeState.repliesByComment
+      : EMPTY_OBJECT;
+  const repliesByComment = useMemo(
+    () => normalizeRepliesByComment(rawRepliesByComment),
+    [rawRepliesByComment]
+  );
+  const activeCommentIds = useMemo(() => {
+    const nextCommentIds = new Set();
+
+    activeIdeas.forEach((idea) => {
+      const comments = commentsByIdea[idea.id] || EMPTY_ARRAY;
+      comments.forEach((comment) => {
+        const cleanedCommentId = String(comment?.id || "").trim();
+        if (!cleanedCommentId) return;
+        nextCommentIds.add(cleanedCommentId);
+      });
+    });
+
+    return nextCommentIds;
+  }, [activeIdeas, commentsByIdea]);
+  const resolveReplyTargetId = useCallback(
+    (targetId) => {
+      const cleanedTargetId = String(targetId || "").trim();
+      if (!cleanedTargetId) return "";
+
+      if (activeCommentIds.has(cleanedTargetId)) {
+        return cleanedTargetId;
+      }
+
+      const ideaId = extractIdeaIdFromReplyTarget(cleanedTargetId);
+      if (!ideaId) return "";
+      if (!activeIdeaIds.has(ideaId)) return "";
+      if (cleanedTargetId !== buildIdeaReplyKey(ideaId)) return "";
+
+      return cleanedTargetId;
+    },
+    [activeCommentIds, activeIdeaIds]
+  );
   const round2RotationApplied = Boolean(activeState?.round2RotationAppliedAt);
-  const activeRound = "round-2";
+  const round3RotationApplied = Boolean(activeState?.round3RotationAppliedAt);
+  const activeRound = round3RotationApplied ? "round-3" : "round-2";
 
   useEffect(() => {
     if (!isEnabled || !sessionId || !participantReady) return;
@@ -759,6 +851,17 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
     }
   }, [isEnabled, participantReady, sessionId, setSessionError]);
 
+  const ensureRound3Rotation = useCallback(async () => {
+    if (!isEnabled || !sessionId || !participantReady) return;
+
+    try {
+      await applyWorldCoffeeRound3Rotation(sessionId);
+    } catch (error) {
+      console.error("Impossible d'appliquer la rotation round 3:", error);
+      setSessionError("La deuxieme permutation des groupes n'a pas pu etre appliquee.");
+    }
+  }, [isEnabled, participantReady, sessionId, setSessionError]);
+
   const addIdeaComment = useCallback(
     async (ideaId, text = "") => {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId || !ideaId) {
@@ -853,6 +956,108 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
     ]
   );
 
+  const addCommentReply = useCallback(
+    async (targetId, text = "") => {
+      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId || !targetId) {
+        return null;
+      }
+      if (!subgroupId) return null;
+
+      const resolvedTargetId = resolveReplyTargetId(targetId);
+      if (!resolvedTargetId) return null;
+
+      try {
+        return await addWorldCoffeeCommentReply(sessionId, resolvedTargetId, {
+          authorId: currentParticipantId,
+          text,
+        });
+      } catch (error) {
+        console.error("Impossible d'ajouter la reponse au commentaire:", error);
+        setSessionError("La reponse n'a pas pu etre ajoutee.");
+        return null;
+      }
+    },
+    [
+      currentParticipantId,
+      isEnabled,
+      participantReady,
+      resolveReplyTargetId,
+      sessionId,
+      setSessionError,
+      subgroupId,
+    ]
+  );
+
+  const updateCommentReplyText = useCallback(
+    async (targetId, replyId, text) => {
+      if (!isEnabled || !sessionId || !participantReady || !targetId || !replyId) return;
+      if (!subgroupId) return;
+
+      const cleanedCommentId = resolveReplyTargetId(targetId);
+      const cleanedReplyId = String(replyId || "").trim();
+      if (!cleanedCommentId || !cleanedReplyId) return;
+
+      const reply = (repliesByComment[cleanedCommentId] || EMPTY_ARRAY).find(
+        (currentReply) => currentReply.id === cleanedReplyId
+      );
+      if (!reply) return;
+
+      const currentText = String(reply.text ?? "");
+      const nextText = String(text ?? "");
+      if (currentText === nextText) return;
+
+      try {
+        await updateWorldCoffeeCommentReply(sessionId, cleanedCommentId, cleanedReplyId, {
+          text: nextText,
+        });
+      } catch (error) {
+        console.error("Impossible de mettre a jour la reponse:", error);
+        setSessionError("La reponse n'a pas pu etre enregistree.");
+      }
+    },
+    [
+      isEnabled,
+      participantReady,
+      repliesByComment,
+      resolveReplyTargetId,
+      sessionId,
+      setSessionError,
+      subgroupId,
+    ]
+  );
+
+  const removeCommentReply = useCallback(
+    async (targetId, replyId) => {
+      if (!isEnabled || !sessionId || !participantReady || !targetId || !replyId) return;
+      if (!subgroupId) return;
+
+      const cleanedCommentId = resolveReplyTargetId(targetId);
+      const cleanedReplyId = String(replyId || "").trim();
+      if (!cleanedCommentId || !cleanedReplyId) return;
+
+      const reply = (repliesByComment[cleanedCommentId] || EMPTY_ARRAY).find(
+        (currentReply) => currentReply.id === cleanedReplyId
+      );
+      if (!reply) return;
+
+      try {
+        await removeWorldCoffeeCommentReply(sessionId, cleanedCommentId, cleanedReplyId);
+      } catch (error) {
+        console.error("Impossible de supprimer la reponse:", error);
+        setSessionError("La reponse n'a pas pu etre supprimee.");
+      }
+    },
+    [
+      isEnabled,
+      participantReady,
+      repliesByComment,
+      resolveReplyTargetId,
+      sessionId,
+      setSessionError,
+      subgroupId,
+    ]
+  );
+
   const actions = useMemo(
     () => ({
       addDescription,
@@ -864,20 +1069,28 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
       updateIdeaText,
       removeIdea,
       ensureRound2Rotation,
+      ensureRound3Rotation,
       addIdeaComment,
       updateIdeaCommentText,
       removeIdeaComment,
+      addCommentReply,
+      updateCommentReplyText,
+      removeCommentReply,
     }),
     [
+      addCommentReply,
       addIdeaComment,
       addIdea,
       addDescription,
       clearFacilitator,
       ensureRound2Rotation,
+      ensureRound3Rotation,
+      removeCommentReply,
       removeIdeaComment,
       removeIdea,
       removeDescription,
       setFacilitator,
+      updateCommentReplyText,
       updateIdeaCommentText,
       updateIdeaText,
       updateDescription,
@@ -910,8 +1123,10 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
     ideasBySubgroup,
     activeIdeas,
     commentsByIdea,
+    repliesByComment,
     activeRound,
     round2RotationApplied,
+    round3RotationApplied,
     actions,
   };
 }
