@@ -14,9 +14,7 @@ import Step3 from "./steps/Step3.jsx";
 import Step4 from "./steps/Step4.jsx";
 import Step5 from "./steps/Step5.jsx";
 import Step6 from "./steps/Step6.jsx";
-/*
 import Step7 from "./steps/Step7.jsx";
-*/
 
 const description1 = [
   "Le facilitateur prépare plusieurs tables thématiques.",
@@ -122,9 +120,10 @@ export const worldCafe = {
     {
       label: "Restitution collective",
       duration: 10,
-      //component: Step7,
+      component: Step7,
       description: description7,
       audioEnabled: true,
+      audioChannel: "general",
     },
   ],
 };
