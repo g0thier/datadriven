@@ -8,8 +8,8 @@
 
 import worldCafeImg from "../../../assets/workshops/world-cafe.png";
 
-/*
 import Step1 from "./steps/Step1.jsx";
+/*
 import Step2 from "./steps/Step2.jsx";
 import Step3 from "./steps/Step3.jsx";
 import Step4 from "./steps/Step4.jsx";
@@ -76,7 +76,7 @@ export const worldCafe = {
     {
       label: "Préparation des tables",
       duration: 10,
-      //component: Step1,
+      component: Step1,
       description: description1,
       audioEnabled: true,
     },

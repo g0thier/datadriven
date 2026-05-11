@@ -1,0 +1,358 @@
+/**
+ * @module workshops/world-coffee/useWorldCoffeeCollaboration
+ * @description Collaboration hook managing realtime World Cafe workshop state and actions.
+ * @author Gauthier Rammault
+ * @version 1.0.0
+ * @license proprietary
+ */
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { auth, onAuthStateChangedListener } from "../../../firebase";
+import {
+  createWorldCoffeeDescription,
+  removeWorldCoffeeDescription,
+  subscribeWorldCoffeeSession,
+  updateWorldCoffeeDescription,
+  upsertWorldCoffeeParticipant,
+} from "../../../firebase/workshops/world-coffee.service";
+
+const EMPTY_OBJECT = Object.freeze({});
+const EMPTY_ARRAY = Object.freeze([]);
+
+const sortByCreatedAt = (a, b) => {
+  const createdA = a?.createdAt || "";
+  const createdB = b?.createdAt || "";
+
+  if (createdA !== createdB) {
+    return createdA.localeCompare(createdB);
+  }
+
+  return String(a?.id || "").localeCompare(String(b?.id || ""));
+};
+
+const resolveGuestName = (guest = {}) => {
+  const firstName = String(guest?.firstName || "").trim();
+  const lastName = String(guest?.lastName || "").trim();
+  const fullName = `${firstName} ${lastName}`.trim();
+
+  return (
+    fullName ||
+    String(guest?.name || "").trim() ||
+    String(guest?.label || "").trim() ||
+    String(guest?.email || "").trim() ||
+    ""
+  );
+};
+
+const makeParticipantFallbackLabel = (participantId) => {
+  const id = String(participantId || "");
+  const suffix = id.slice(-4).toUpperCase();
+  return suffix ? `Participant ${suffix}` : "Participant";
+};
+
+const resolveParticipantIdentity = ({ sessionGuests, authUser }) => {
+  const authUid = String(authUser?.uid || "").trim();
+  if (!authUid) return null;
+
+  const authEmail = String(authUser?.email || "").trim();
+  const authDisplayName = String(authUser?.displayName || "").trim();
+
+  const matchingGuest = sessionGuests.find((guest) => {
+    if (!guest) return false;
+    const guestId = String(guest.id || "").trim();
+    const guestEmail = String(guest.email || "").trim().toLowerCase();
+
+    if (guestId && guestId === authUid) return true;
+    if (authEmail && guestEmail && guestEmail === authEmail.toLowerCase()) return true;
+    return false;
+  });
+
+  return {
+    id: authUid,
+    name:
+      resolveGuestName(matchingGuest) ||
+      authDisplayName ||
+      authEmail ||
+      makeParticipantFallbackLabel(authUid),
+    email: authEmail,
+    isAuthenticated: true,
+  };
+};
+
+/**
+ * Provides realtime collaboration state and actions for World Cafe sessions.
+ *
+ * @param {Object} params - Hook parameters.
+ * @param {string} params.sessionId - Active workshop session id.
+ * @param {Object} params.session - Session payload containing participants/guests metadata.
+ * @param {string} params.workshopId - Workshop id used to enable World Cafe behavior.
+ * @returns {Object} Collaboration state and write actions.
+ */
+export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) {
+  const isEnabled = Boolean(sessionId) && workshopId === "world-cafe";
+
+  const [authUser, setAuthUser] = useState(() => auth.currentUser ?? null);
+  const [isAuthResolved, setIsAuthResolved] = useState(false);
+  const [worldCoffeeState, setWorldCoffeeState] = useState(null);
+  const [lastSnapshotSessionId, setLastSnapshotSessionId] = useState("");
+  const [syncError, setSyncError] = useState("");
+  const [syncErrorSessionId, setSyncErrorSessionId] = useState("");
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChangedListener((nextAuthUser) => {
+      setAuthUser(nextAuthUser);
+      setIsAuthResolved(true);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  const sessionGuests = useMemo(
+    () => (Array.isArray(session?.allGuests) ? session.allGuests : EMPTY_ARRAY),
+    [session?.allGuests]
+  );
+
+  const participant = useMemo(
+    () => (isAuthResolved ? resolveParticipantIdentity({ sessionGuests, authUser }) : null),
+    [authUser, isAuthResolved, sessionGuests]
+  );
+  const participantReady = Boolean(isEnabled && isAuthResolved && participant?.id);
+
+  const setSessionError = useCallback(
+    (message) => {
+      setSyncError(message);
+      setSyncErrorSessionId(sessionId || "");
+    },
+    [sessionId]
+  );
+
+  useEffect(() => {
+    if (!isEnabled || !sessionId) return () => {};
+
+    const unsubscribe = subscribeWorldCoffeeSession(
+      sessionId,
+      (nextState) => {
+        setWorldCoffeeState(nextState || {});
+        setLastSnapshotSessionId(sessionId);
+        setSessionError("");
+      },
+      (error) => {
+        console.error("Erreur de synchronisation World Cafe:", error);
+        setLastSnapshotSessionId(sessionId);
+        setSessionError("Impossible de synchroniser l'atelier en direct.");
+      }
+    );
+
+    return unsubscribe;
+  }, [isEnabled, sessionId, setSessionError]);
+
+  const activeState = isEnabled && lastSnapshotSessionId === sessionId ? worldCoffeeState : null;
+
+  useEffect(() => {
+    if (!isEnabled || !sessionId || !participantReady || !participant?.id) return () => {};
+
+    let isCancelled = false;
+
+    const syncParticipant = async () => {
+      try {
+        await upsertWorldCoffeeParticipant(sessionId, participant);
+      } catch (error) {
+        if (isCancelled) return;
+        console.error("Impossible d'enregistrer le participant:", error);
+      }
+    };
+
+    syncParticipant();
+    const intervalId = setInterval(syncParticipant, 30_000);
+
+    return () => {
+      isCancelled = true;
+      clearInterval(intervalId);
+    };
+  }, [isEnabled, participant, participantReady, sessionId]);
+
+  const rawDescriptions =
+    activeState?.descriptions && typeof activeState.descriptions === "object"
+      ? activeState.descriptions
+      : EMPTY_OBJECT;
+  const descriptions = useMemo(() => {
+    return Object.entries(rawDescriptions)
+      .map(([descriptionId, description]) => ({
+        id: String(description?.id || descriptionId || "").trim(),
+        authorId: String(description?.authorId || "").trim(),
+        text: String(description?.text ?? ""),
+        createdAt: String(description?.createdAt || ""),
+        updatedAt: String(description?.updatedAt || ""),
+      }))
+      .filter((description) => description.id)
+      .sort(sortByCreatedAt);
+  }, [rawDescriptions]);
+
+  const descriptionsById = useMemo(
+    () =>
+      descriptions.reduce((accumulator, description) => {
+        accumulator[description.id] = description;
+        return accumulator;
+      }, {}),
+    [descriptions]
+  );
+
+  const remoteParticipants =
+    activeState?.participants && typeof activeState.participants === "object"
+      ? activeState.participants
+      : EMPTY_OBJECT;
+
+  const participants = useMemo(() => {
+    const participantMap = new Map();
+
+    const addParticipant = (participantId, payload = {}) => {
+      const cleanedId = String(participantId || payload?.id || "").trim();
+      if (!cleanedId) return;
+
+      participantMap.set(cleanedId, {
+        id: cleanedId,
+        name:
+          String(payload?.name || "").trim() || makeParticipantFallbackLabel(cleanedId),
+        email: String(payload?.email || "").trim(),
+      });
+    };
+
+    Object.entries(remoteParticipants).forEach(([participantId, payload]) => {
+      addParticipant(participantId, payload);
+    });
+
+    sessionGuests.forEach((guest) => {
+      if (!guest) return;
+      const guestId = String(guest?.id || "").trim();
+      if (!guestId) return;
+
+      addParticipant(guestId, {
+        id: guestId,
+        name: resolveGuestName(guest),
+        email: String(guest?.email || "").trim(),
+      });
+    });
+
+    if (participant?.id) {
+      addParticipant(participant.id, participant);
+    }
+
+    return Array.from(participantMap.values()).sort((a, b) =>
+      a.name.localeCompare(b.name, "fr")
+    );
+  }, [participant, remoteParticipants, sessionGuests]);
+
+  const participantById = useMemo(() => {
+    return participants.reduce((accumulator, currentParticipant) => {
+      accumulator[currentParticipant.id] = currentParticipant;
+      return accumulator;
+    }, {});
+  }, [participants]);
+
+  const getParticipantLabel = useCallback(
+    (participantId) => {
+      if (!participantId) return "Participant";
+      return participantById[participantId]?.name || makeParticipantFallbackLabel(participantId);
+    },
+    [participantById]
+  );
+
+  const currentParticipantId = participant?.id || "";
+
+  const addDescription = useCallback(
+    async (options = {}) => {
+      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return null;
+
+      try {
+        return await createWorldCoffeeDescription(sessionId, {
+          authorId: currentParticipantId,
+          text: options?.text ?? "",
+        });
+      } catch (error) {
+        console.error("Impossible d'ajouter la description:", error);
+        setSessionError("La description n'a pas pu etre ajoutee.");
+        return null;
+      }
+    },
+    [currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]
+  );
+
+  const updateDescription = useCallback(
+    async (descriptionId, text, previousText = null) => {
+      if (!isEnabled || !sessionId || !participantReady || !descriptionId) return;
+
+      const description = descriptionsById[descriptionId];
+      if (!description) return;
+
+      const currentText = String(description.text ?? "");
+      const nextText = String(text ?? "");
+      if (currentText === nextText) return;
+
+      const expectedPreviousText =
+        previousText === null || previousText === undefined
+          ? currentText
+          : String(previousText ?? "");
+
+      try {
+        await updateWorldCoffeeDescription(
+          sessionId,
+          descriptionId,
+          { text: nextText },
+          { expectedPreviousText }
+        );
+      } catch (error) {
+        console.error("Impossible de mettre a jour la description:", error);
+        setSessionError("La description n'a pas pu etre enregistree.");
+      }
+    },
+    [
+      descriptionsById,
+      isEnabled,
+      participantReady,
+      sessionId,
+      setSessionError,
+    ]
+  );
+
+  const removeDescription = useCallback(
+    async (descriptionId) => {
+      if (!isEnabled || !sessionId || !participantReady || !descriptionId) return;
+
+      try {
+        await removeWorldCoffeeDescription(sessionId, descriptionId);
+      } catch (error) {
+        console.error("Impossible de supprimer la description:", error);
+        setSessionError("La description n'a pas pu etre supprimee.");
+      }
+    },
+    [isEnabled, participantReady, sessionId, setSessionError]
+  );
+
+  const actions = useMemo(
+    () => ({
+      addDescription,
+      updateDescription,
+      removeDescription,
+    }),
+    [addDescription, removeDescription, updateDescription]
+  );
+
+  const effectiveSyncError = isEnabled && syncErrorSessionId === sessionId ? syncError : "";
+  const effectiveIsLoading =
+    isEnabled && (!participantReady || (lastSnapshotSessionId !== sessionId && !effectiveSyncError));
+
+  return {
+    isEnabled,
+    participantReady,
+    isLoading: effectiveIsLoading,
+    syncError: effectiveSyncError,
+    participant,
+    participants,
+    getParticipantLabel,
+    descriptions,
+    actions,
+  };
+}
+
+export default useWorldCoffeeCollaboration;
+
