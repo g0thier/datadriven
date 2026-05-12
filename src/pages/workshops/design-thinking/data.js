@@ -152,7 +152,7 @@ export const designThinking = {
     },
     {
       label: "Idéation - sélection",
-      duration: 10000000000000000000,
+      duration: 10,
       component: Step7,
       description: description7,
       audioEnabled: true,
