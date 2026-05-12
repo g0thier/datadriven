@@ -1,3 +1,4 @@
+import WorkshopSyncErrorAlert from "../../../../components/workshops/WorkshopSyncErrorAlert.jsx";
 import WorkshopStepLayout from "../../WorkshopStepLayout.jsx";
 
 export default function Step5({ step, sessionTitle, collaboration }) {
@@ -30,11 +31,7 @@ export default function Step5({ step, sessionTitle, collaboration }) {
         <p className="text-gray-600 mb-1 text-sm">{challenge}</p>
       </div>
 
-      {!!syncError && (
-        <p className="mb-3 text-sm text-red-600" role="alert">
-          {syncError}
-        </p>
-      )}
+      <WorkshopSyncErrorAlert message={syncError} className="mb-3" />
 
       {!subgroup ? (
         <div className="rounded-2xl bg-white shadow-md p-8 text-center text-gray-500">

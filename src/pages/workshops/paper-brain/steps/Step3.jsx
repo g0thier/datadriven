@@ -1,3 +1,4 @@
+import WorkshopSyncErrorAlert from "../../../../components/workshops/WorkshopSyncErrorAlert.jsx";
 /**
  * @module workshops/paper-brain/steps/Step3
  * @description Paper Brain step 3 screen for note rotation and enrichment.
@@ -123,11 +124,7 @@ function Step3({ step, sessionTitle, collaboration }) {
         <p className="text-gray-600 mb-1 text-sm">{challenge}</p>
       </div>
 
-      {!!syncError && (
-        <p className="mb-3 text-sm text-red-600" role="alert">
-          {syncError}
-        </p>
-      )}
+      <WorkshopSyncErrorAlert message={syncError} className="mb-3" />
 
       {participantNotes.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-md p-8 text-center text-gray-500">

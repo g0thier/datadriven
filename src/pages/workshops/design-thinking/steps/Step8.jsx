@@ -1,3 +1,4 @@
+import WorkshopSyncErrorAlert from "../../../../components/workshops/WorkshopSyncErrorAlert.jsx";
 /**
  * @module workshops/design-thinking/steps/Step8
  * @description Design Thinking step 8 screen for read-only ranked voted notes.
@@ -90,11 +91,7 @@ function Step8({ step, sessionTitle, collaboration }) {
         <p className="text-gray-600 mb-1 text-sm">{challenge}</p>
       </div>
 
-      {!!syncError && (
-        <p className="mb-3 text-sm text-red-600" role="alert">
-          {syncError}
-        </p>
-      )}
+      <WorkshopSyncErrorAlert message={syncError} className="mb-3" />
 
       <div className="bg-white rounded-2xl shadow-md p-4">
         {rankedNotes.length === 0 ? (

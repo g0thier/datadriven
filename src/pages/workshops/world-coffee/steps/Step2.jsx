@@ -1,3 +1,4 @@
+import WorkshopSyncErrorAlert from "../../../../components/workshops/WorkshopSyncErrorAlert.jsx";
 /**
  * @module workshops/world-coffee/steps/Step2
  * @description World Cafe step 2 screen for assigning one facilitator per description.
@@ -104,11 +105,7 @@ export default function Step2({ step, sessionTitle, collaboration }) {
 
   return (
     <WorkshopStepLayout title={sessionTitle} stepLabel={step.label} description={step.description}>
-      {!!syncError && (
-        <p className="mb-3 text-sm text-red-600" role="alert">
-          {syncError}
-        </p>
-      )}
+      <WorkshopSyncErrorAlert message={syncError} className="mb-3" />
 
       {descriptions.length > 0 && hasUnassignedDescriptions && (
         <p className="mb-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">

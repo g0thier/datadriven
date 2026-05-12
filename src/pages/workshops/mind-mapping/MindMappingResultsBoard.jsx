@@ -1,3 +1,6 @@
+import WorkshopSyncErrorAlert from "../../../components/workshops/WorkshopSyncErrorAlert.jsx";
+import WorkshopEmptyStateCard from "../../../components/workshops/WorkshopEmptyStateCard.jsx";
+import WorkshopInfoCard from "../../../components/workshops/WorkshopInfoCard.jsx";
 export default function MindMappingResultsBoard({
   challenge = "",
   syncError = "",
@@ -10,21 +13,17 @@ export default function MindMappingResultsBoard({
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-2xl shadow-md p-6">
-        <h2 className="text-lg font-semibold text-gray-700 mb-2">Sujet de l'atelier</h2>
+      <WorkshopInfoCard title="Sujet de l'atelier">
         <p className="text-gray-600 whitespace-pre-wrap">{challenge}</p>
-      </div>
+      </WorkshopInfoCard>
 
-      {!!syncError && (
-        <p className="text-sm text-red-600" role="alert">
-          {syncError}
-        </p>
-      )}
+      <WorkshopSyncErrorAlert message={syncError} />
 
       {votedConceptCount === 0 ? (
-        <div className="bg-white rounded-2xl shadow-md p-8 text-center text-gray-500">
-          Aucun concept avec gommette n'est disponible pour le moment.
-        </div>
+        <WorkshopEmptyStateCard
+          message="Aucun concept avec gommette n'est disponible pour le moment."
+          className="bg-white rounded-2xl shadow-md border-0"
+        />
       ) : (
         <div className="space-y-6">
           {rankedConceptCards.map((item, index) => (

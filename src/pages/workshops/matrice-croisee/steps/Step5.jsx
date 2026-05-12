@@ -1,3 +1,4 @@
+import WorkshopSyncErrorAlert from "../../../../components/workshops/WorkshopSyncErrorAlert.jsx";
 /**
  * @module workshops/matrice-croisee/steps/Step5
  * @description Matrice croisee step 5 screen for developing the top-voted idea concept.
@@ -54,11 +55,7 @@ export default function Step5({ step, sessionTitle, collaboration }) {
         <p className="text-gray-600 mb-1 text-sm">{step1Description}</p>
       </div>
 
-      {!!syncError && (
-        <p className="mb-3 text-sm text-red-600" role="alert">
-          {syncError}
-        </p>
-      )}
+      <WorkshopSyncErrorAlert message={syncError} className="mb-3" />
 
       {!selectedTopIdea ? (
         <div className="bg-white rounded-2xl shadow-md p-8 text-center text-gray-500 mb-4">

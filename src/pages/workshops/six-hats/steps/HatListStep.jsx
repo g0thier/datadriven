@@ -1,3 +1,4 @@
+import WorkshopSyncErrorAlert from "../../../../components/workshops/WorkshopSyncErrorAlert.jsx";
 import { useEffect, useMemo, useRef } from "react";
 import WorkshopStepLayout from "../../WorkshopStepLayout.jsx";
 import { getHatConfigById } from "../sixHats.constants";
@@ -64,11 +65,7 @@ export default function HatListStep({ step, sessionTitle, collaboration, hatId }
         <p className="text-gray-600 mb-1 text-sm">{challenge}</p>
       </div>
 
-      {!!syncError && (
-        <p className="mb-3 text-sm text-red-600" role="alert">
-          {syncError}
-        </p>
-      )}
+      <WorkshopSyncErrorAlert message={syncError} className="mb-3" />
 
       <div className="bg-white rounded-2xl shadow-md p-6">
         <div className="flex items-center justify-between gap-3 mb-4">

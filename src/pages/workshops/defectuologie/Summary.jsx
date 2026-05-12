@@ -1,3 +1,5 @@
+import WorkshopSummaryLayout from "../../../components/workshops/WorkshopSummaryLayout.jsx";
+import WorkshopSyncErrorAlert from "../../../components/workshops/WorkshopSyncErrorAlert.jsx";
 import DefectuologieResultsBoard from "./DefectuologieResultsBoard.jsx";
 
 export default function DefectuologieSummary({ sessionTitle, collaboration }) {
@@ -8,22 +10,13 @@ export default function DefectuologieSummary({ sessionTitle, collaboration }) {
     : [];
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-200 py-12 px-6">
-      <div className="min-h-screen pr-86">
-        <p className="text-sm uppercase tracking-wide text-gray-500 mb-2">Atelier terminé</p>
-        <h1 className="text-4xl font-bold text-gray-800 mb-6">{sessionTitle}</h1>
+    <WorkshopSummaryLayout sessionTitle={sessionTitle}>
+      <WorkshopSyncErrorAlert message={syncError} className="mb-4" />
 
-        {!!syncError && (
-          <p className="mb-4 text-sm text-red-600" role="alert">
-            {syncError}
-          </p>
-        )}
-
-        <DefectuologieResultsBoard
-          resultsBySubgroup={resultsBySubgroup}
-          step1Description={step1Description}
-        />
-      </div>
-    </div>
+      <DefectuologieResultsBoard
+        resultsBySubgroup={resultsBySubgroup}
+        step1Description={step1Description}
+      />
+    </WorkshopSummaryLayout>
   );
 }

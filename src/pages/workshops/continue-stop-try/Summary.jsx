@@ -1,3 +1,6 @@
+import WorkshopSummaryLayout from "../../../components/workshops/WorkshopSummaryLayout.jsx";
+import WorkshopInfoCard from "../../../components/workshops/WorkshopInfoCard.jsx";
+import WorkshopSyncErrorAlert from "../../../components/workshops/WorkshopSyncErrorAlert.jsx";
 /**
  * @module workshops/continue-stop-try/ContinueStopTrySummary
  * @description Workshop-specific summary view for the Continue Stop Try workflow.
@@ -114,24 +117,16 @@ export default function ContinueStopTrySummary({ sessionTitle, collaboration }) 
     "Le défi n'a pas été renseigné pendant l'atelier.";
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-200 py-12 px-6">
-      <div className="min-h-screen pr-86">
-        <p className="text-sm uppercase tracking-wide text-gray-500 mb-2">Atelier terminé</p>
-        <h1 className="text-4xl font-bold text-gray-800 mb-6">{sessionTitle}</h1>
+    <WorkshopSummaryLayout sessionTitle={sessionTitle}>
 
-        <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-700 mb-2">Sujet de l'atelier</h2>
-          <p className="text-gray-600 whitespace-pre-wrap">{challenge}</p>
-        </div>
+      <WorkshopInfoCard title="Sujet de l'atelier" className="mb-6">
+        <p className="text-gray-600 whitespace-pre-wrap">{challenge}</p>
+      </WorkshopInfoCard>
 
-        {!!syncError && (
-          <p className="mb-4 text-sm text-red-600" role="alert">
-            {syncError}
-          </p>
-        )}
+      <WorkshopSyncErrorAlert message={syncError} className="mb-4" />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-          {columns.map((column) => {
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+        {columns.map((column) => {
             const rankedNotes = rankedNotesByColumn[column.id] || [];
             const placeholderText = String(step5PlaceholdersByColumn[column.id] || "").trim();
 
@@ -195,9 +190,8 @@ export default function ContinueStopTrySummary({ sessionTitle, collaboration }) 
                 )}
               </section>
             );
-          })}
-        </div>
+        })}
       </div>
-    </div>
+    </WorkshopSummaryLayout>
   );
 }

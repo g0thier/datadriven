@@ -1,3 +1,4 @@
+import WorkshopSyncErrorAlert from "../../../../components/workshops/WorkshopSyncErrorAlert.jsx";
 /**
  * @module workshops/speed-boat/steps/Step8
  * @description Speed Boat step 8 screen for final overview with full boat visual and lever board.
@@ -123,11 +124,7 @@ export default function Step8({ step, sessionTitle, collaboration }) {
         </div>
       </div>
 
-      {!!syncError && (
-        <p className="mb-3 text-sm text-red-600" role="alert">
-          {syncError}
-        </p>
-      )}
+      <WorkshopSyncErrorAlert message={syncError} className="mb-3" />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
         <div className="bg-white rounded-2xl shadow-md overflow-hidden relative min-h-64 md:min-h-0 md:h-full">

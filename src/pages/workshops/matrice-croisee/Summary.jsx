@@ -1,3 +1,6 @@
+import WorkshopSummaryLayout from "../../../components/workshops/WorkshopSummaryLayout.jsx";
+import WorkshopInfoCard from "../../../components/workshops/WorkshopInfoCard.jsx";
+import WorkshopSyncErrorAlert from "../../../components/workshops/WorkshopSyncErrorAlert.jsx";
 /**
  * @module workshops/matrice-croisee/MatriceCroiseeSummary
  * @description Workshop-specific summary view for the Matrice croisee workflow.
@@ -41,58 +44,46 @@ export default function MatriceCroiseeSummary({ sessionTitle, collaboration }) {
   const noteText = String(selectedTopIdea?.noteText || "").trim();
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-200 py-12 px-6">
-      <div className="min-h-screen pr-86">
-        <p className="text-sm uppercase tracking-wide text-gray-500 mb-2">Atelier terminé</p>
-        <h1 className="text-4xl font-bold text-gray-800 mb-6">{sessionTitle}</h1>
+    <WorkshopSummaryLayout sessionTitle={sessionTitle}>
+      <WorkshopInfoCard title="Sujet de l'atelier" className="mb-6">
+        <p className="text-gray-600 whitespace-pre-wrap">{challenge}</p>
+      </WorkshopInfoCard>
 
-        <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-700 mb-2">Sujet de l'atelier</h2>
-          <p className="text-gray-600 whitespace-pre-wrap">{challenge}</p>
+      <WorkshopSyncErrorAlert message={syncError} className="mb-4" />
+
+      <WorkshopInfoCard title="Fiche finale">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+          <article className="rounded-xl border border-violet-200 bg-violet-50 p-4">
+            <p className="text-xs uppercase tracking-wide text-violet-700 mb-1">Entête de colonne</p>
+            <p className="text-sm text-gray-700 whitespace-pre-wrap">
+              {columnText || <span className="text-gray-400">Entête de colonne vide.</span>}
+            </p>
+          </article>
+
+          <article className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+            <p className="text-xs uppercase tracking-wide text-blue-700 mb-1">Entête de ligne</p>
+            <p className="text-sm text-gray-700 whitespace-pre-wrap">
+              {rowText || <span className="text-gray-400">Entête de ligne vide.</span>}
+            </p>
+          </article>
+
+          <article className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <p className="text-xs uppercase tracking-wide text-amber-700 mb-1">Idée retenue</p>
+            <p className="text-sm text-gray-700 whitespace-pre-wrap">
+              {noteText || <span className="text-gray-400">Aucune idée votée.</span>}
+            </p>
+          </article>
+
+          <article className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+            <p className="text-xs uppercase tracking-wide text-emerald-700 mb-1">
+              Développement du concept
+            </p>
+            <p className="text-sm text-gray-700 whitespace-pre-wrap">
+              {concept || <span className="text-gray-400">Aucun concept rédigé.</span>}
+            </p>
+          </article>
         </div>
-
-        {!!syncError && (
-          <p className="mb-4 text-sm text-red-600" role="alert">
-            {syncError}
-          </p>
-        )}
-
-        <div className="bg-white rounded-2xl shadow-md p-6">
-          <h2 className="text-lg font-semibold text-gray-700 mb-4">Fiche finale</h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-            <article className="rounded-xl border border-violet-200 bg-violet-50 p-4">
-              <p className="text-xs uppercase tracking-wide text-violet-700 mb-1">Entête de colonne</p>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                {columnText || <span className="text-gray-400">Entête de colonne vide.</span>}
-              </p>
-            </article>
-
-            <article className="rounded-xl border border-blue-200 bg-blue-50 p-4">
-              <p className="text-xs uppercase tracking-wide text-blue-700 mb-1">Entête de ligne</p>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                {rowText || <span className="text-gray-400">Entête de ligne vide.</span>}
-              </p>
-            </article>
-
-            <article className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-              <p className="text-xs uppercase tracking-wide text-amber-700 mb-1">Idée retenue</p>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                {noteText || <span className="text-gray-400">Aucune idée votée.</span>}
-              </p>
-            </article>
-
-            <article className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-              <p className="text-xs uppercase tracking-wide text-emerald-700 mb-1">
-                Développement du concept
-              </p>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                {concept || <span className="text-gray-400">Aucun concept rédigé.</span>}
-              </p>
-            </article>
-          </div>
-        </div>
-      </div>
-    </div>
+      </WorkshopInfoCard>
+    </WorkshopSummaryLayout>
   );
 }

@@ -1,3 +1,4 @@
+import WorkshopSyncErrorAlert from "../../../../components/workshops/WorkshopSyncErrorAlert.jsx";
 /**
  * @module workshops/continue-stop-try/steps/Step5
  * @description Continue Stop Try step 5 screen for voted stack and per-column commitments.
@@ -133,11 +134,7 @@ function Step5({ step, sessionTitle, collaboration }) {
         <p className="text-gray-600 mb-1 text-sm">{challenge}</p>
       </div>
 
-      {!!syncError && (
-        <p className="mb-3 text-sm text-red-600" role="alert">
-          {syncError}
-        </p>
-      )}
+      <WorkshopSyncErrorAlert message={syncError} className="mb-3" />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
         {columns.map((column) => {

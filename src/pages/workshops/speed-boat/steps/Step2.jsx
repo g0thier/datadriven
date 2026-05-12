@@ -1,3 +1,4 @@
+import WorkshopSyncErrorAlert from "../../../../components/workshops/WorkshopSyncErrorAlert.jsx";
 /**
  * @module workshops/speed-boat/steps/Step2
  * @description Speed Boat step 2 screen for defining the workshop objective.
@@ -36,11 +37,7 @@ export default function Step2({ sessionTitle, step, collaboration }) {
       stepLabel={step.label}
       description={step.description}
     >
-      {!!syncError && (
-        <p className="mb-3 text-sm text-red-600" role="alert">
-          {syncError}
-        </p>
-      )}
+      <WorkshopSyncErrorAlert message={syncError} className="mb-3" />
 
       <textarea
         className="w-full h-40 p-4 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"

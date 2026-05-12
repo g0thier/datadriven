@@ -1,3 +1,4 @@
+import WorkshopSyncErrorAlert from "../../../../components/workshops/WorkshopSyncErrorAlert.jsx";
 import WorkshopStepLayout from "../../WorkshopStepLayout.jsx";
 import DefectuologieResultsBoard from "../DefectuologieResultsBoard.jsx";
 
@@ -10,11 +11,7 @@ export default function Step7({ step, sessionTitle, collaboration }) {
 
   return (
     <WorkshopStepLayout title={sessionTitle} stepLabel={step.label} description={step.description}>
-      {!!syncError && (
-        <p className="mb-3 text-sm text-red-600" role="alert">
-          {syncError}
-        </p>
-      )}
+      <WorkshopSyncErrorAlert message={syncError} className="mb-3" />
 
       <DefectuologieResultsBoard
         resultsBySubgroup={resultsBySubgroup}

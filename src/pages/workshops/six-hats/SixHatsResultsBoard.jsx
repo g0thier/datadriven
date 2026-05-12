@@ -1,4 +1,5 @@
 import { BLUE_HAT_CONFIG, HAT_CONFIG } from "./sixHats.constants";
+import WorkshopInfoCard from "../../../components/workshops/WorkshopInfoCard.jsx";
 
 const EMPTY_ARRAY = Object.freeze([]);
 
@@ -25,10 +26,9 @@ export default function SixHatsResultsBoard({
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-2xl shadow-md p-6">
-        <h2 className="text-lg font-semibold text-gray-700 mb-2">Sujet de l'atelier</h2>
+      <WorkshopInfoCard title="Sujet de l'atelier">
         <p className="text-gray-600 whitespace-pre-wrap">{challenge}</p>
-      </div>
+      </WorkshopInfoCard>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
         {HAT_CONFIG.map((hat) => {

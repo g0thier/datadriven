@@ -1,3 +1,4 @@
+import WorkshopSyncErrorAlert from "../../../../components/workshops/WorkshopSyncErrorAlert.jsx";
 /**
  * @module workshops/design-thinking/steps/Step9
  * @description Design Thinking step 9 screen for collective prototype feedback notes.
@@ -100,11 +101,7 @@ function Step9({ step, sessionTitle, collaboration }) {
         <p className="text-gray-600 mb-1 text-sm">{problemStatement}</p>
       </div>
 
-      {!!syncError && (
-        <p className="mb-3 text-sm text-red-600" role="alert">
-          {syncError}
-        </p>
-      )}
+      <WorkshopSyncErrorAlert message={syncError} className="mb-3" />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
         {columns.map((column) => {

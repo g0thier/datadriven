@@ -1,3 +1,4 @@
+import WorkshopSyncErrorAlert from "../../../../components/workshops/WorkshopSyncErrorAlert.jsx";
 /**
  * @module workshops/continue-stop-try/steps/Step3
  * @description Continue Stop Try step 3 screen for collaborative board organization in 3 columns.
@@ -321,11 +322,7 @@ function Step3({ step, sessionTitle, collaboration }) {
         <p className="text-gray-600 mb-1 text-sm">{challenge}</p>
       </div>
 
-      {!!syncError && (
-        <p className="mb-3 text-sm text-red-600" role="alert">
-          {syncError}
-        </p>
-      )}
+      <WorkshopSyncErrorAlert message={syncError} className="mb-3" />
 
       <div className="flex items-center justify-end mb-3 gap-3">
         <span className="text-xs text-gray-500 w-12 text-right">{zoom}%</span>

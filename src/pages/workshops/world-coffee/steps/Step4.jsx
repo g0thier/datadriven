@@ -1,3 +1,4 @@
+import WorkshopSyncErrorAlert from "../../../../components/workshops/WorkshopSyncErrorAlert.jsx";
 /**
  * @module workshops/world-coffee/steps/Step4
  * @description World Cafe step 4 screen for first rotation and idea enrichment comments.
@@ -103,11 +104,7 @@ export default function Step4({ step, sessionTitle, collaboration, session }) {
         </p>
       </div>
 
-      {!!syncError && (
-        <p className="mb-3 text-sm text-red-600" role="alert">
-          {syncError}
-        </p>
-      )}
+      <WorkshopSyncErrorAlert message={syncError} className="mb-3" />
 
       {descriptionCount > 0 && subgroupCount === 0 && hasUnassignedDescriptions && (
         <p className="mb-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">

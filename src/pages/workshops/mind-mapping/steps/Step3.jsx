@@ -1,3 +1,4 @@
+import WorkshopSyncErrorAlert from "../../../../components/workshops/WorkshopSyncErrorAlert.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import WorkshopStepLayout from "../../WorkshopStepLayout.jsx";
 
@@ -229,11 +230,7 @@ function Step3({ step, sessionTitle, collaboration }) {
       stepLabel={step.label}
       description={step.description}
     >
-      {!!syncError && (
-        <p className="mb-3 text-sm text-red-600" role="alert">
-          {syncError}
-        </p>
-      )}
+      <WorkshopSyncErrorAlert message={syncError} className="mb-3" />
 
       <div className="bg-white rounded-2xl shadow-md p-4">
         <div className="flex items-center justify-between mb-3">

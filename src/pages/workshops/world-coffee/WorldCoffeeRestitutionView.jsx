@@ -1,3 +1,5 @@
+import WorkshopSyncErrorAlert from "../../../components/workshops/WorkshopSyncErrorAlert.jsx";
+import WorkshopEmptyStateCard from "../../../components/workshops/WorkshopEmptyStateCard.jsx";
 /**
  * @module workshops/world-coffee/WorldCoffeeRestitutionView
  * @description Read-only restitution view reused by World Cafe step 7 and summary.
@@ -72,16 +74,13 @@ export default function WorldCoffeeRestitutionView({ collaboration }) {
 
   return (
     <>
-      {!!syncError && (
-        <p className="mb-3 text-sm text-red-600" role="alert">
-          {syncError}
-        </p>
-      )}
+      <WorkshopSyncErrorAlert message={syncError} className="mb-3" />
 
       {subgroups.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-md p-8 text-center text-gray-500">
-          Aucun sous-groupe disponible pour la restitution.
-        </div>
+        <WorkshopEmptyStateCard
+          message="Aucun sous-groupe disponible pour la restitution."
+          className="bg-white rounded-2xl shadow-md border-0"
+        />
       ) : (
         <div className="space-y-6">
           {subgroups.map((subgroup) => {

@@ -1,3 +1,6 @@
+import WorkshopSummaryLayout from "../../../components/workshops/WorkshopSummaryLayout.jsx";
+import WorkshopInfoCard from "../../../components/workshops/WorkshopInfoCard.jsx";
+import WorkshopSyncErrorAlert from "../../../components/workshops/WorkshopSyncErrorAlert.jsx";
 /**
  * @module workshops/paper-brain/PaperBrainSummary
  * @description Workshop-specific summary view for the Paper Brain workflow.
@@ -82,26 +85,15 @@ export default function PaperBrainSummary({ sessionTitle, collaboration }) {
   }, [commentsByNote, currentParticipantId, notes, votesByNote]);
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-200 py-12 px-6">
-      <div className="min-h-screen pr-86">
-        <p className="text-sm uppercase tracking-wide text-gray-500 mb-2">Atelier terminé</p>
-        <h1 className="text-4xl font-bold text-gray-800 mb-6">{sessionTitle}</h1>
+    <WorkshopSummaryLayout sessionTitle={sessionTitle}>
 
-        <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-700 mb-2">Sujet de l'atelier</h2>
-          <p className="text-gray-600 whitespace-pre-wrap">{challenge}</p>
-        </div>
+      <WorkshopInfoCard title="Sujet de l'atelier" className="mb-6">
+        <p className="text-gray-600 whitespace-pre-wrap">{challenge}</p>
+      </WorkshopInfoCard>
 
-        {!!syncError && (
-          <p className="mb-4 text-sm text-red-600" role="alert">
-            {syncError}
-          </p>
-        )}
+      <WorkshopSyncErrorAlert message={syncError} className="mb-4" />
 
-        <div className="bg-white rounded-2xl shadow-md p-6">
-          <h2 className="text-lg font-semibold text-gray-700 mb-4">
-            Résultats votés ({rankedNotes.length})
-          </h2>
+      <WorkshopInfoCard title={`Résultats votés (${rankedNotes.length})`}>
 
           {rankedNotes.length === 0 ? (
             <p className="text-gray-500">
@@ -158,9 +150,8 @@ export default function PaperBrainSummary({ sessionTitle, collaboration }) {
                 </article>
               ))}
             </div>
-          )}
-        </div>
-      </div>
-    </div>
+        )}
+      </WorkshopInfoCard>
+    </WorkshopSummaryLayout>
   );
 }

@@ -1,3 +1,4 @@
+import WorkshopSyncErrorAlert from "../../../../components/workshops/WorkshopSyncErrorAlert.jsx";
 /**
  * @module workshops/world-coffee/steps/Step1
  * @description World Cafe step 1 screen for defining shared descriptions.
@@ -71,11 +72,7 @@ export default function Step1({ sessionTitle, step, collaboration }) {
 
   return (
     <WorkshopStepLayout title={sessionTitle} stepLabel={step.label} description={step.description}>
-      {!!syncError && (
-        <p className="mb-3 text-sm text-red-600" role="alert">
-          {syncError}
-        </p>
-      )}
+      <WorkshopSyncErrorAlert message={syncError} className="mb-3" />
 
       <div className="bg-white rounded-2xl shadow-md p-6">
         {descriptions.length === 0 ? (

@@ -1,3 +1,6 @@
+import WorkshopSummaryLayout from "../../../components/workshops/WorkshopSummaryLayout.jsx";
+import WorkshopInfoCard from "../../../components/workshops/WorkshopInfoCard.jsx";
+import WorkshopSyncErrorAlert from "../../../components/workshops/WorkshopSyncErrorAlert.jsx";
 /**
  * @module workshops/design-thinking/DesignThinkingSummary
  * @description Workshop-specific summary view for the Design Thinking workflow.
@@ -128,47 +131,37 @@ export default function DesignThinkingSummary({ sessionTitle, collaboration }) {
   }, [commentsByNote, currentParticipantId, notes, votesByNote]);
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-200 py-12 px-6">
-      <div className="min-h-screen pr-86">
-        <p className="text-sm uppercase tracking-wide text-gray-500 mb-2">Atelier terminé</p>
-        <h1 className="text-4xl font-bold text-gray-800 mb-6">{sessionTitle}</h1>
+    <WorkshopSummaryLayout sessionTitle={sessionTitle}>
 
-        <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-700 mb-2">Sujet de l'atelier</h2>
-          <p className="text-gray-600 whitespace-pre-wrap">{challenge}</p>
-        </div>
+      <WorkshopInfoCard title="Sujet de l'atelier" className="mb-6">
+        <p className="text-gray-600 whitespace-pre-wrap">{challenge}</p>
+      </WorkshopInfoCard>
 
-        <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-700 mb-2">Prises de notes (Empathie)</h2>
-          {sharedNotes.length === 0 ? (
-            <p className="text-gray-500">Aucune prise de note n'a été renseignée.</p>
-          ) : (
-            <ul className="space-y-2">
-              {sharedNotes.map((note) => (
-                <li key={note.id} className="flex items-start gap-2 text-sm text-gray-700">
-                  <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-gray-400 shrink-0" aria-hidden="true" />
-                  <p className="whitespace-pre-wrap">{String(note.text || "").trim() || "-"}</p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-700 mb-2">Problématique</h2>
-          <p className="text-gray-600 whitespace-pre-wrap">{problemStatement}</p>
-        </div>
-
-        {!!syncError && (
-          <p className="mb-4 text-sm text-red-600" role="alert">
-            {syncError}
-          </p>
+      <WorkshopInfoCard title="Prises de notes (Empathie)" className="mb-6">
+        {sharedNotes.length === 0 ? (
+          <p className="text-gray-500">Aucune prise de note n'a été renseignée.</p>
+        ) : (
+          <ul className="space-y-2">
+            {sharedNotes.map((note) => (
+              <li key={note.id} className="flex items-start gap-2 text-sm text-gray-700">
+                <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-gray-400 shrink-0" aria-hidden="true" />
+                <p className="whitespace-pre-wrap">{String(note.text || "").trim() || "-"}</p>
+              </li>
+            ))}
+          </ul>
         )}
+      </WorkshopInfoCard>
 
-        <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-700 mb-4">
-            Meilleures idées ({rankedNotes.length})
-          </h2>
+      <WorkshopInfoCard title="Problématique" className="mb-6">
+        <p className="text-gray-600 whitespace-pre-wrap">{problemStatement}</p>
+      </WorkshopInfoCard>
+
+      <WorkshopSyncErrorAlert message={syncError} className="mb-4" />
+
+      <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
+        <h2 className="text-lg font-semibold text-gray-700 mb-4">
+          Meilleures idées ({rankedNotes.length})
+        </h2>
 
           {rankedNotes.length === 0 ? (
             <p className="text-gray-500">
@@ -225,11 +218,11 @@ export default function DesignThinkingSummary({ sessionTitle, collaboration }) {
                 </article>
               ))}
             </div>
-          )}
-        </div>
+        )}
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start mb-6">
-          {columns.map((column) => {
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start mb-6">
+        {columns.map((column) => {
             const columnNotes = prototypeFeedbackNotesByColumn[column.id] || [];
 
             return (
@@ -259,14 +252,12 @@ export default function DesignThinkingSummary({ sessionTitle, collaboration }) {
                 )}
               </section>
             );
-          })}
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-md p-6">
-          <h2 className="text-lg font-semibold text-gray-700 mb-2">Conclusion</h2>
-          <p className="text-gray-600 whitespace-pre-wrap">{conclusion}</p>
-        </div>
+        })}
       </div>
-    </div>
+
+      <WorkshopInfoCard title="Conclusion">
+        <p className="text-gray-600 whitespace-pre-wrap">{conclusion}</p>
+      </WorkshopInfoCard>
+    </WorkshopSummaryLayout>
   );
 }

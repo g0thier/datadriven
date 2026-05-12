@@ -1,3 +1,4 @@
+import WorkshopSyncErrorAlert from "../../../../components/workshops/WorkshopSyncErrorAlert.jsx";
 /**
  * @module workshops/design-thinking/steps/Step10
  * @description Design Thinking step 10 screen for collective conclusion and readonly test feedback.
@@ -87,11 +88,7 @@ function Step10({ step, sessionTitle, collaboration }) {
         <p className="text-sm text-gray-700 whitespace-pre-wrap">{problemStatement}</p>
       </div>
 
-      {!!syncError && (
-        <p className="mb-3 text-sm text-red-600" role="alert">
-          {syncError}
-        </p>
-      )}
+      <WorkshopSyncErrorAlert message={syncError} className="mb-3" />
 
       <textarea
         className="w-full h-40 p-4 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-6"

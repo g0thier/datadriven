@@ -1,3 +1,4 @@
+import WorkshopSyncErrorAlert from "../../../../components/workshops/WorkshopSyncErrorAlert.jsx";
 /**
  * @module workshops/paper-brain/steps/Step2
  * @description Paper Brain step 2 screen for individual note creation.
@@ -100,11 +101,7 @@ function Step2({ step, sessionTitle, collaboration, session }) {
         <p className="text-gray-600 mb-1 text-sm">{step1Description}</p>
       </div>
 
-      {!!syncError && (
-        <p className="mb-3 text-sm text-red-600" role="alert">
-          {syncError}
-        </p>
-      )}
+      <WorkshopSyncErrorAlert message={syncError} className="mb-3" />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {myNotes.map((note, index) => {

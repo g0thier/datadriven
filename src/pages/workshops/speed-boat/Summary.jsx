@@ -1,4 +1,7 @@
 import { useMemo, useState } from "react";
+import WorkshopEmptyStateCard from "../../../components/workshops/WorkshopEmptyStateCard.jsx";
+import WorkshopSummaryLayout from "../../../components/workshops/WorkshopSummaryLayout.jsx";
+import WorkshopSyncErrorAlert from "../../../components/workshops/WorkshopSyncErrorAlert.jsx";
 
 const EMPTY_ARRAY = Object.freeze([]);
 const EMPTY_OBJECT = Object.freeze({});
@@ -67,9 +70,7 @@ function NotesDashboard({
       </div>
 
       {notes.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 p-8 text-center text-gray-500">
-          {emptyMessage}
-        </div>
+        <WorkshopEmptyStateCard message={emptyMessage} />
       ) : (
         <div className="w-full aspect-square overflow-auto rounded-xl border border-slate-200">
           <div
@@ -195,10 +196,7 @@ export default function SpeedBoatSummary({ sessionTitle, collaboration }) {
   }, [brakeNotes, votesByNote]);
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-200 py-12 px-6">
-      <div className="min-h-screen pr-86">
-        <p className="text-sm uppercase tracking-wide text-gray-500 mb-2">Atelier terminé</p>
-        <h1 className="text-4xl font-bold text-gray-800 mb-6">{sessionTitle}</h1>
+    <WorkshopSummaryLayout sessionTitle={sessionTitle}>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div className="bg-white rounded-2xl shadow-md p-6">
@@ -214,11 +212,7 @@ export default function SpeedBoatSummary({ sessionTitle, collaboration }) {
           </div>
         </div>
 
-        {!!syncError && (
-          <p className="mb-4 text-sm text-red-600" role="alert">
-            {syncError}
-          </p>
-        )}
+        <WorkshopSyncErrorAlert message={syncError} className="mb-4" />
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch">
           <section>
@@ -300,7 +294,6 @@ export default function SpeedBoatSummary({ sessionTitle, collaboration }) {
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </WorkshopSummaryLayout>
   );
 }

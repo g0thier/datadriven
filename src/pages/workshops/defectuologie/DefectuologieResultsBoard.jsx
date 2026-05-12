@@ -1,3 +1,6 @@
+import WorkshopEmptyStateCard from "../../../components/workshops/WorkshopEmptyStateCard.jsx";
+import WorkshopInfoCard from "../../../components/workshops/WorkshopInfoCard.jsx";
+
 export default function DefectuologieResultsBoard({
   resultsBySubgroup = [],
   step1Description = "",
@@ -8,15 +11,15 @@ export default function DefectuologieResultsBoard({
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-2xl shadow-md p-6">
-        <h2 className="text-lg font-semibold text-gray-700 mb-2">Sujet de l'atelier</h2>
+      <WorkshopInfoCard title="Sujet de l'atelier">
         <p className="text-gray-600 whitespace-pre-wrap">{challenge}</p>
-      </div>
+      </WorkshopInfoCard>
 
       {!Array.isArray(resultsBySubgroup) || resultsBySubgroup.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-md p-8 text-center text-gray-500">
-          Aucune proposition de sous-groupe n'est disponible pour le moment.
-        </div>
+        <WorkshopEmptyStateCard
+          message="Aucune proposition de sous-groupe n'est disponible pour le moment."
+          className="bg-white rounded-2xl shadow-md border-0"
+        />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           {resultsBySubgroup.map((result) => {
