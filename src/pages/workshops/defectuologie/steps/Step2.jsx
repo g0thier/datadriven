@@ -114,7 +114,7 @@ export default function Step2({ step, sessionTitle, collaboration }) {
                           className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-xs"
                           aria-label="Supprimer le défaut"
                         >
-                          x
+                          ✕
                         </button>
                       </div>
                     ) : (

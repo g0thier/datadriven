@@ -80,8 +80,8 @@ export default function Step3({ step, sessionTitle, collaboration }) {
                     <div
                       className={`rounded-lg border px-3 py-2 ${
                         isDisabled
-                          ? "bg-gray-50 border-gray-200"
-                          : "bg-white border-gray-300 cursor-pointer hover:border-violet-300"
+                          ? "bg-gray-50 border-slate-200"
+                          : "bg-white border-slate-300 cursor-pointer hover:border-violet-300"
                       }`}
                       role="button"
                       tabIndex={0}

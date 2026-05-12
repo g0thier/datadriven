@@ -351,7 +351,7 @@ function Step4({ step, sessionTitle, collaboration }) {
                       className="absolute top-1.5 right-1.5 text-gray-400 hover:text-red-500 text-xs disabled:opacity-50"
                       aria-label="Supprimer le concept"
                     >
-                      x
+                      ✕
                     </button>
                   </div>
                 </div>

@@ -9,7 +9,7 @@ export default function DefectuologieResultsBoard({
   return (
     <div className="space-y-4">
       <div className="bg-white rounded-2xl shadow-md p-6">
-        <h2 className="text-lg font-semibold text-gray-700 mb-2">Demande formulée</h2>
+        <h2 className="text-lg font-semibold text-gray-700 mb-2">Sujet de l'atelier</h2>
         <p className="text-gray-600 whitespace-pre-wrap">{challenge}</p>
       </div>
 

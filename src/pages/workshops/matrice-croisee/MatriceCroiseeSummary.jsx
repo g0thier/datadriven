@@ -47,7 +47,7 @@ export default function MatriceCroiseeSummary({ sessionTitle, collaboration }) {
         <h1 className="text-4xl font-bold text-gray-800 mb-6">{sessionTitle}</h1>
 
         <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-700 mb-2">Demande formulée</h2>
+          <h2 className="text-lg font-semibold text-gray-700 mb-2">Sujet de l'atelier</h2>
           <p className="text-gray-600 whitespace-pre-wrap">{challenge}</p>
         </div>
 

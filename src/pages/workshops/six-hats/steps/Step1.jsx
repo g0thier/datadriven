@@ -21,7 +21,7 @@ export default function Step1({ sessionTitle, step, collaboration }) {
       )}
 
       <textarea
-        className="w-full h-40 p-4 bg-white border border-gray-300 rounded-lg shadow-sm"
+        className="w-full h-40 p-4 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         placeholder="Écrivez votre sujet ici..."
         disabled={isLoading}
         value={description}

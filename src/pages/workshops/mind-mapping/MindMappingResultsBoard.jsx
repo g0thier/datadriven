@@ -11,7 +11,7 @@ export default function MindMappingResultsBoard({
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl shadow-md p-6">
-        <h2 className="text-lg font-semibold text-gray-700 mb-2">Demande formulée</h2>
+        <h2 className="text-lg font-semibold text-gray-700 mb-2">Sujet de l'atelier</h2>
         <p className="text-gray-600 whitespace-pre-wrap">{challenge}</p>
       </div>
 
@@ -66,7 +66,7 @@ export default function MindMappingResultsBoard({
 
                 {isEditableReformulation ? (
                   <textarea
-                    className="w-full h-28 p-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full h-28 p-3 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Reformuler l'idée finale..."
                     value={item.reformulationText}
                     onChange={(event) =>

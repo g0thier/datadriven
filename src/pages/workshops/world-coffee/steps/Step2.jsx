@@ -141,7 +141,7 @@ export default function Step2({ step, sessionTitle, collaboration }) {
 
               return (
                 <li key={description.id} className="text-sm text-gray-700">
-                  <div className="rounded-lg border border-gray-200 bg-slate-50 px-3 py-2">
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-gray-700 text-sm whitespace-pre-wrap flex-1">
                         {description.text || <span className="text-gray-400">-</span>}

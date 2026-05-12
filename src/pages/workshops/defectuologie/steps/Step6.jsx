@@ -55,7 +55,7 @@ export default function Step6({ step, sessionTitle, collaboration }) {
           <div className="bg-white rounded-2xl shadow-md p-6">
             <p className="text-xs text-gray-500 mb-2">Proposition du groupe</p>
             <textarea
-              className="w-full h-40 p-4 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full h-40 p-4 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Formaliser la proposition finale du groupe..."
               value={proposalText}
               onChange={handleChange}

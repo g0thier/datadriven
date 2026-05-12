@@ -12,7 +12,7 @@ export default function SixHatsResultsBoard({
 }) {
   const challenge =
     String(step1Description || "").trim() ||
-    "Le sujet n'a pas ete renseigne pendant l'atelier.";
+    "Le sujet n'a pas été renseigné pendant l'atelier.";
 
   const normalizedBlueConclusion = String(blueConclusion || "");
 
@@ -26,7 +26,7 @@ export default function SixHatsResultsBoard({
   return (
     <div className="space-y-4">
       <div className="bg-white rounded-2xl shadow-md p-6">
-        <h2 className="text-lg font-semibold text-gray-700 mb-2">Sujet initial</h2>
+        <h2 className="text-lg font-semibold text-gray-700 mb-2">Sujet de l'atelier</h2>
         <p className="text-gray-600 whitespace-pre-wrap">{challenge}</p>
       </div>
 
@@ -65,8 +65,8 @@ export default function SixHatsResultsBoard({
 
         {isBlueEditable ? (
           <textarea
-            className="w-full h-40 p-4 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Synthese finale, decisions et prochaines actions..."
+            className="w-full h-40 p-4 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Synthèse finale, décisions et prochaines actions..."
             value={normalizedBlueConclusion}
             onChange={handleBlueConclusionChange}
             disabled={isLoading}

@@ -112,7 +112,7 @@ export default function HatListStep({ step, sessionTitle, collaboration, hatId }
                         className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-xs"
                         aria-label="Supprimer la contribution"
                       >
-                        x
+                        ✕
                       </button>
                     </div>
                   ) : (

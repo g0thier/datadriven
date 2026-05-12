@@ -202,7 +202,7 @@ export default function SpeedBoatSummary({ sessionTitle, collaboration }) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div className="bg-white rounded-2xl shadow-md p-6">
-            <p className="text-xs font-medium uppercase tracking-wide text-gray-500 mb-2">Défi</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-gray-500 mb-2">Sujet de l'atelier</p>
             <p className="text-sm text-gray-700 whitespace-pre-wrap">{challenge}</p>
           </div>
 

@@ -85,7 +85,7 @@ export default function Step4({ step, sessionTitle, collaboration }) {
           <div className="bg-white rounded-2xl shadow-md p-6">
             <div className="flex items-center justify-between gap-3 mb-4">
               <div>
-                <h3 className="text-base font-semibold text-gray-800">Solutions proposees</h3>
+                <h3 className="text-base font-semibold text-gray-800">Solutions proposées</h3>
                 <p className="text-xs text-gray-500">{subgroupLabel}</p>
               </div>
             </div>
@@ -123,7 +123,7 @@ export default function Step4({ step, sessionTitle, collaboration }) {
                             className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-xs"
                             aria-label="Supprimer la solution"
                           >
-                            x
+                            ✕
                           </button>
                         </div>
                       ) : (

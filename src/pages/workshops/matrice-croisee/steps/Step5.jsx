@@ -92,7 +92,7 @@ export default function Step5({ step, sessionTitle, collaboration }) {
       <div className="bg-white rounded-2xl shadow-md p-6">
         <p className="text-xs text-gray-500 mb-2">Développement du concept</p>
         <textarea
-          className="w-full h-40 p-4 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full h-40 p-4 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Développer le concept retenu..."
           value={concept}
           onChange={handleConceptChange}

@@ -49,7 +49,7 @@ function StepTime({ sessionData, startAt }) {
         <h2 className="text-xl font-bold mb-4">Atelier de groupe</h2>
 
         {/* 1er cadre arrondi */}
-        <div className="rounded-2xl border border-gray-100 p-4 mb-4">
+        <div className="rounded-2xl border border-slate-100 p-4 mb-4">
           <div className="flex items-center gap-3">
             <img
               src={sessionData.image}
@@ -65,7 +65,7 @@ function StepTime({ sessionData, startAt }) {
         </div>
 
         {/* 2e cadre arrondi */}
-        <div className="rounded-2xl border border-gray-100 p-4 flex flex-col flex-1 min-h-0">
+        <div className="rounded-2xl border border-slate-100 p-4 flex flex-col flex-1 min-h-0">
           <div className="flex items-center justify-between mb-3">
             <div className="font-semibold">Étapes de la séance</div>
           </div>

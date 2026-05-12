@@ -120,7 +120,7 @@ export default function ContinueStopTrySummary({ sessionTitle, collaboration }) 
         <h1 className="text-4xl font-bold text-gray-800 mb-6">{sessionTitle}</h1>
 
         <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-700 mb-2">Demande formulée</h2>
+          <h2 className="text-lg font-semibold text-gray-700 mb-2">Sujet de l'atelier</h2>
           <p className="text-gray-600 whitespace-pre-wrap">{challenge}</p>
         </div>
 
@@ -142,7 +142,7 @@ export default function ContinueStopTrySummary({ sessionTitle, collaboration }) 
               >
                 <h3 className="text-sm font-semibold text-gray-700 mb-3">{column.label}</h3>
 
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4 min-h-28">
+                <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 mb-4 min-h-28">
                   {placeholderText ? (
                     <p className="text-gray-700 text-sm whitespace-pre-wrap">{placeholderText}</p>
                   ) : (

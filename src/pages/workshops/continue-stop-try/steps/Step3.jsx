@@ -334,7 +334,7 @@ function Step3({ step, sessionTitle, collaboration }) {
 
         <input
           type="range"
-          min="30"
+          min="20"
           max="100"
           step="5"
           value={zoom}

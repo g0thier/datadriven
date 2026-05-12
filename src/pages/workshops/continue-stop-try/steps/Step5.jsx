@@ -152,7 +152,7 @@ function Step5({ step, sessionTitle, collaboration }) {
               <h3 className="text-sm font-semibold text-gray-700 mb-3">{column.label}</h3>
 
               <textarea
-                className="w-full h-28 p-4 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+                className="w-full h-28 p-4 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
                 placeholder="Définir l'engagement..."
                 value={placeholderText}
                 onChange={(event) => handlePlaceholderChange(column.id, event.target.value)}

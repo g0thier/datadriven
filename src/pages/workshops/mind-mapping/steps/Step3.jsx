@@ -370,7 +370,7 @@ function Step3({ step, sessionTitle, collaboration }) {
                             className="absolute top-1.5 right-1.5 text-gray-400 hover:text-red-500 text-xs"
                             aria-label="Supprimer l'idée"
                           >
-                            x
+                            ✕
                           </button>
                         </div>
                       </div>
