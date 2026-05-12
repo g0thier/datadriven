@@ -11,7 +11,7 @@ export default function Step6({ step, sessionTitle, collaboration }) {
 
   const challenge =
     String(collaboration?.step1Description || "").trim() ||
-    "Le sujet sera visible ici des qu'il est defini a l'etape 1.";
+    "Le sujet sera visible ici dès qu'il est défini à l'étape 1.";
 
   const handleChange = (event) => {
     const nextProposal = event.target.value;
@@ -39,9 +39,9 @@ export default function Step6({ step, sessionTitle, collaboration }) {
       ) : (
         <div className="space-y-4">
           <div className="bg-white rounded-2xl shadow-md p-6">
-            <p className="text-xs text-gray-500 mb-2">Defaut retenu ({subgroupLabel})</p>
+            <p className="text-xs text-gray-500 mb-2">Défaut retenu ({subgroupLabel})</p>
             <p className="text-gray-700 text-sm whitespace-pre-wrap">
-              {selectedDefect?.text || <span className="text-gray-400">Aucun defaut retenu.</span>}
+              {selectedDefect?.text || <span className="text-gray-400">Aucun défaut retenu.</span>}
             </p>
           </div>
 

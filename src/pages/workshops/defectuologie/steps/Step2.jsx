@@ -14,7 +14,7 @@ export default function Step2({ step, sessionTitle, collaboration }) {
 
   const challenge =
     String(collaboration?.step1Description || "").trim() ||
-    "Le sujet sera visible ici des qu'il est defini a l'etape 1.";
+    "Le sujet sera visible ici dès qu'il est défini à l'étape 1.";
 
   const addDefectAction = collaboration?.actions?.addDefect;
   const defectInputRefs = useRef({});
@@ -76,13 +76,13 @@ export default function Step2({ step, sessionTitle, collaboration }) {
         <div className="bg-white rounded-2xl shadow-md p-6">
           <div className="flex items-center justify-between gap-3 mb-4">
             <div>
-              <h3 className="text-base font-semibold text-gray-800">Defauts identifies</h3>
+              <h3 className="text-base font-semibold text-gray-800">Défauts identifiés</h3>
               <p className="text-xs text-gray-500">{subgroupLabel}</p>
             </div>
           </div>
 
           {defects.length === 0 ? (
-            <p className="text-sm text-gray-500">Ajoutez un premier defaut avec le bouton +.</p>
+            <p className="text-sm text-gray-500">Ajoutez un premier défaut avec le bouton +.</p>
           ) : (
             <ul className="list-disc pl-5 space-y-3 marker:text-gray-400">
               {defects.map((defect) => {
@@ -103,7 +103,7 @@ export default function Step2({ step, sessionTitle, collaboration }) {
                             delete defectInputRefs.current[defect.id];
                           }}
                           className="w-full bg-transparent focus:outline-none text-gray-800 text-sm pr-5"
-                          placeholder="Decrire un defaut..."
+                          placeholder="Décrire un défaut..."
                           value={defect.text || ""}
                           onChange={(event) => updateDefect(defect.id, event.target.value)}
                         />
@@ -112,7 +112,7 @@ export default function Step2({ step, sessionTitle, collaboration }) {
                           type="button"
                           onClick={() => removeDefect(defect.id)}
                           className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-xs"
-                          aria-label="Supprimer le defaut"
+                          aria-label="Supprimer le défaut"
                         >
                           x
                         </button>
@@ -137,8 +137,8 @@ export default function Step2({ step, sessionTitle, collaboration }) {
                 void createDefect();
               }}
               className="w-8 h-8 rounded-full bg-violet-500 text-white flex items-center justify-center shadow-md hover:bg-violet-600 transition"
-              aria-label="Ajouter un defaut"
-              title="Ajouter un defaut"
+              aria-label="Ajouter un défaut"
+              title="Ajouter un défaut"
             >
               +
             </button>

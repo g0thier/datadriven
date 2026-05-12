@@ -11,7 +11,7 @@ export default function MindMappingResultsBoard({
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl shadow-md p-6">
-        <h2 className="text-lg font-semibold text-gray-700 mb-2">Demande formulee</h2>
+        <h2 className="text-lg font-semibold text-gray-700 mb-2">Demande formulée</h2>
         <p className="text-gray-600 whitespace-pre-wrap">{challenge}</p>
       </div>
 
@@ -44,7 +44,7 @@ export default function MindMappingResultsBoard({
                   </section>
 
                   <section className="rounded-xl border border-blue-200 bg-blue-50 p-3">
-                    <p className="text-xs uppercase tracking-wide text-blue-700 mb-1">Idee 1</p>
+                    <p className="text-xs uppercase tracking-wide text-blue-700 mb-1">Idée 1</p>
                     <p className="text-sm text-gray-700 whitespace-pre-wrap">{item.fromIdeaText}</p>
                   </section>
 
@@ -54,7 +54,7 @@ export default function MindMappingResultsBoard({
                   </section>
 
                   <section className="rounded-xl border border-blue-200 bg-blue-50 p-3">
-                    <p className="text-xs uppercase tracking-wide text-blue-700 mb-1">Idee 2</p>
+                    <p className="text-xs uppercase tracking-wide text-blue-700 mb-1">Idée 2</p>
                     <p className="text-sm text-gray-700 whitespace-pre-wrap">{item.toIdeaText}</p>
                   </section>
 
@@ -67,7 +67,7 @@ export default function MindMappingResultsBoard({
                 {isEditableReformulation ? (
                   <textarea
                     className="w-full h-28 p-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Reformuler l'idee finale..."
+                    placeholder="Reformuler l'idée finale..."
                     value={item.reformulationText}
                     onChange={(event) =>
                       onReformulationChange?.(
@@ -85,7 +85,7 @@ export default function MindMappingResultsBoard({
                     </p>
                     <p className="text-sm text-gray-700 whitespace-pre-wrap">
                       {item.reformulationText.trim() || (
-                        <span className="text-gray-400">Aucune reformulation redigee.</span>
+                        <span className="text-gray-400">Aucune reformulation rédigée.</span>
                       )}
                     </p>
                   </div>

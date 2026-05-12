@@ -16,7 +16,7 @@ export default function Step3({ step, sessionTitle, collaboration }) {
 
   const challenge =
     String(collaboration?.step1Description || "").trim() ||
-    "Le sujet sera visible ici des qu'il est defini a l'etape 1.";
+    "Le sujet sera visible ici dès qu'il est défini à l'étape 1.";
 
   const toggleVote = (defectId, hasMine) => {
     if (!hasMine && remainingVotes <= 0) return;
@@ -43,7 +43,7 @@ export default function Step3({ step, sessionTitle, collaboration }) {
         <div className="bg-white rounded-2xl shadow-md p-6">
           <div className="flex items-center justify-between gap-3 mb-4">
             <div>
-              <h3 className="text-base font-semibold text-gray-800">Vote sur les defauts</h3>
+              <h3 className="text-base font-semibold text-gray-800">Vote sur les défauts</h3>
               <p className="text-xs text-gray-500">{subgroupLabel}</p>
             </div>
 
@@ -61,12 +61,12 @@ export default function Step3({ step, sessionTitle, collaboration }) {
 
           {topTie && (
             <p className="mb-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
-              Ex aequo detecte sur la meilleure idee. Le groupe doit choisir une idee finale.
+              Ex æquo détecté sur la meilleure idée. Le groupe doit choisir une idée finale.
             </p>
           )}
 
           {defects.length === 0 ? (
-            <p className="text-sm text-gray-500">Aucun defaut disponible pour voter.</p>
+            <p className="text-sm text-gray-500">Aucun défaut disponible pour voter.</p>
           ) : (
             <ul className="list-disc pl-5 space-y-3 marker:text-gray-400">
               {defects.map((defect) => {

@@ -436,8 +436,8 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
           expectedPreviousDescription: previousDescription,
         });
       } catch (error) {
-        console.error("Impossible de mettre a jour le sujet:", error);
-        setSessionError("Le sujet n'a pas pu etre enregistre.");
+        console.error("Impossible de mettre à jour le sujet:", error);
+        setSessionError("Le sujet n'a pas pu être enregistré.");
       }
     },
     [
@@ -463,7 +463,7 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
         });
       } catch (error) {
         console.error("Impossible d'ajouter la note:", error);
-        setSessionError("La note n'a pas pu etre ajoutee.");
+        setSessionError("La note n'a pas pu être ajoutée.");
         return null;
       }
     },
@@ -481,8 +481,8 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
       try {
         await updateMindMappingNote(sessionId, noteId, { text });
       } catch (error) {
-        console.error("Impossible de mettre a jour la note:", error);
-        setSessionError("La note n'a pas pu etre mise a jour.");
+        console.error("Impossible de mettre à jour la note:", error);
+        setSessionError("La note n'a pas pu être mise à jour.");
       }
     },
     [
@@ -507,7 +507,7 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
         await removeMindMappingNote(sessionId, noteId);
       } catch (error) {
         console.error("Impossible de supprimer la note:", error);
-        setSessionError("La note n'a pas pu etre supprimee.");
+        setSessionError("La note n'a pas pu être supprimée.");
       }
     },
     [
@@ -535,7 +535,7 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
         });
       } catch (error) {
         console.error("Impossible d'ajouter la sous-note:", error);
-        setSessionError("La sous-note n'a pas pu etre ajoutee.");
+        setSessionError("La sous-note n'a pas pu être ajoutée.");
         return null;
       }
     },
@@ -567,8 +567,8 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
       try {
         await updateMindMappingComment(sessionId, noteId, commentId, { text });
       } catch (error) {
-        console.error("Impossible de mettre a jour la sous-note:", error);
-        setSessionError("La sous-note n'a pas pu etre mise a jour.");
+        console.error("Impossible de mettre à jour la sous-note:", error);
+        setSessionError("La sous-note n'a pas pu être mise à jour.");
       }
     },
     [
@@ -600,7 +600,7 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
         await removeMindMappingComment(sessionId, noteId, commentId);
       } catch (error) {
         console.error("Impossible de supprimer la sous-note:", error);
-        setSessionError("La sous-note n'a pas pu etre supprimee.");
+        setSessionError("La sous-note n'a pas pu être supprimée.");
       }
     },
     [
@@ -639,7 +639,7 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
         });
       } catch (error) {
         console.error("Impossible d'ajouter le concept:", error);
-        setSessionError("Le concept n'a pas pu etre ajoute.");
+        setSessionError("Le concept n'a pas pu être ajouté.");
         return null;
       }
     },
@@ -664,8 +664,8 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
       try {
         await updateMindMappingConcept(sessionId, conceptId, { text });
       } catch (error) {
-        console.error("Impossible de mettre a jour le concept:", error);
-        setSessionError("Le concept n'a pas pu etre mis a jour.");
+        console.error("Impossible de mettre à jour le concept:", error);
+        setSessionError("Le concept n'a pas pu être mis à jour.");
       }
     },
     [
@@ -690,7 +690,7 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
         await removeMindMappingConcept(sessionId, conceptId);
       } catch (error) {
         console.error("Impossible de supprimer le concept:", error);
-        setSessionError("Le concept n'a pas pu etre supprime.");
+        setSessionError("Le concept n'a pas pu être supprimé.");
       }
     },
     [
@@ -720,7 +720,7 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
         });
       } catch (error) {
         console.error("Impossible de modifier le vote concept:", error);
-        setSessionError("Le vote concept n'a pas pu etre enregistre.");
+        setSessionError("Le vote concept n'a pas pu être enregistré.");
         return { committed: false, votes: {} };
       }
     },
@@ -745,8 +745,8 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
       try {
         await setMindMappingReformulation(sessionId, currentParticipantId, conceptId, text);
       } catch (error) {
-        console.error("Impossible de mettre a jour la reformulation:", error);
-        setSessionError("La reformulation n'a pas pu etre enregistree.");
+        console.error("Impossible de mettre à jour la reformulation:", error);
+        setSessionError("La reformulation n'a pas pu être enregistrée.");
       }
     },
     [

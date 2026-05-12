@@ -25,7 +25,7 @@ function Step6({ step, sessionTitle, collaboration }) {
 
   const challenge =
     String(collaboration?.step1Description || "").trim() ||
-    "Le sujet sera visible ici des qu'il est defini a l'etape 1.";
+    "Le sujet sera visible ici dès qu'il est défini à l'étape 1.";
 
   const rankedConceptCards = useMemo(
     () =>

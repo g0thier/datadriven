@@ -992,8 +992,8 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
           expectedPreviousDescription: previousDescription,
         });
       } catch (error) {
-        console.error("Impossible de mettre a jour le sujet:", error);
-        setSessionError("Le sujet n'a pas pu etre enregistre.");
+        console.error("Impossible de mettre à jour le sujet:", error);
+        setSessionError("Le sujet n'a pas pu être enregistré.");
       }
     },
     [
@@ -1024,8 +1024,8 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
           text: options?.text ?? "",
         });
       } catch (error) {
-        console.error("Impossible d'ajouter le defaut:", error);
-        setSessionError("Le defaut n'a pas pu etre ajoute.");
+        console.error("Impossible d'ajouter le défaut:", error);
+        setSessionError("Le défaut n'a pas pu être ajouté.");
         return null;
       }
     },
@@ -1061,8 +1061,8 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
           expectedPreviousText,
         });
       } catch (error) {
-        console.error("Impossible de mettre a jour le defaut:", error);
-        setSessionError("Le defaut n'a pas pu etre mis a jour.");
+        console.error("Impossible de mettre à jour le défaut:", error);
+        setSessionError("Le défaut n'a pas pu être mis à jour.");
       }
     },
     [currentParticipantId, defectsById, isEnabled, sessionId, setSessionError, writeReady]
@@ -1080,8 +1080,8 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
       try {
         await removeDefectuologieDefect(sessionId, defect.subgroupId, defectId);
       } catch (error) {
-        console.error("Impossible de supprimer le defaut:", error);
-        setSessionError("Le defaut n'a pas pu etre supprime.");
+        console.error("Impossible de supprimer le défaut:", error);
+        setSessionError("Le défaut n'a pas pu être supprimé.");
       }
     },
     [currentParticipantId, defectsById, isEnabled, sessionId, setSessionError, writeReady]
@@ -1099,8 +1099,8 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
           validDefectIds: activeDefectIdsSet,
         });
       } catch (error) {
-        console.error("Impossible de modifier la gommette du defaut:", error);
-        setSessionError("Le vote n'a pas pu etre enregistre.");
+        console.error("Impossible de modifier la gommette du défaut:", error);
+        setSessionError("Le vote n'a pas pu être enregistré.");
         return { committed: false, votes: {} };
       }
     },
@@ -1133,7 +1133,7 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
         });
       } catch (error) {
         console.error("Impossible d'ajouter la solution:", error);
-        setSessionError("La solution n'a pas pu etre ajoutee.");
+        setSessionError("La solution n'a pas pu être ajoutée.");
         return null;
       }
     },
@@ -1169,8 +1169,8 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
           expectedPreviousText,
         });
       } catch (error) {
-        console.error("Impossible de mettre a jour la solution:", error);
-        setSessionError("La solution n'a pas pu etre mise a jour.");
+        console.error("Impossible de mettre à jour la solution:", error);
+        setSessionError("La solution n'a pas pu être mise à jour.");
       }
     },
     [
@@ -1196,7 +1196,7 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
         await removeDefectuologieSolution(sessionId, solution.subgroupId, solutionId);
       } catch (error) {
         console.error("Impossible de supprimer la solution:", error);
-        setSessionError("La solution n'a pas pu etre supprimee.");
+        setSessionError("La solution n'a pas pu être supprimée.");
       }
     },
     [
@@ -1222,7 +1222,7 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
         });
       } catch (error) {
         console.error("Impossible de modifier la gommette de la solution:", error);
-        setSessionError("Le vote n'a pas pu etre enregistre.");
+        setSessionError("Le vote n'a pas pu être enregistré.");
         return { committed: false, votes: {} };
       }
     },
@@ -1256,8 +1256,8 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
           text
         );
       } catch (error) {
-        console.error("Impossible de mettre a jour la proposition:", error);
-        setSessionError("La proposition n'a pas pu etre enregistree.");
+        console.error("Impossible de mettre à jour la proposition:", error);
+        setSessionError("La proposition n'a pas pu être enregistrée.");
       }
     },
     [

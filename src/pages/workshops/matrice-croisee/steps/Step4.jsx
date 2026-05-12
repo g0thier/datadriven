@@ -412,7 +412,7 @@ export default function Step4({ step, sessionTitle, collaboration, session }) {
         )}
         {hasTopVoteTie && (
           <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-            Ex aequo : si le vote reste à égalité, une seule note sera sélectionnée
+            Ex æquo : si le vote reste à égalité, une seule note sera sélectionnée
             dans l'étape suivante.
           </p>
         )}

@@ -668,7 +668,7 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
         });
       } catch (error) {
         console.error("Impossible d'ajouter la description:", error);
-        setSessionError("La description n'a pas pu etre ajoutee.");
+        setSessionError("La description n'a pas pu être ajoutée.");
         return null;
       }
     },
@@ -699,8 +699,8 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
           { expectedPreviousText }
         );
       } catch (error) {
-        console.error("Impossible de mettre a jour la description:", error);
-        setSessionError("La description n'a pas pu etre enregistree.");
+        console.error("Impossible de mettre à jour la description:", error);
+        setSessionError("La description n'a pas pu être enregistrée.");
       }
     },
     [
@@ -720,7 +720,7 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
         await removeWorldCoffeeDescription(sessionId, descriptionId);
       } catch (error) {
         console.error("Impossible de supprimer la description:", error);
-        setSessionError("La description n'a pas pu etre supprimee.");
+        setSessionError("La description n'a pas pu être supprimée.");
       }
     },
     [isEnabled, participantReady, sessionId, setSessionError]
@@ -744,7 +744,7 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
         await setWorldCoffeeFacilitator(sessionId, cleanedDescriptionId, cleanedFacilitatorId);
       } catch (error) {
         console.error("Impossible d'attribuer le facilitateur:", error);
-        setSessionError("Le facilitateur n'a pas pu etre attribue.");
+        setSessionError("Le facilitateur n'a pas pu être attribué.");
       }
     },
     [
@@ -769,7 +769,7 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
         await clearWorldCoffeeFacilitator(sessionId, cleanedDescriptionId);
       } catch (error) {
         console.error("Impossible de retirer le facilitateur:", error);
-        setSessionError("Le facilitateur n'a pas pu etre retire.");
+        setSessionError("Le facilitateur n'a pas pu être retiré.");
       }
     },
     [descriptionIdsSet, isEnabled, participantReady, sessionId, setSessionError]
@@ -789,8 +789,8 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
           roundLabel: "premier-round",
         });
       } catch (error) {
-        console.error("Impossible d'ajouter l'idee:", error);
-        setSessionError("L'idee n'a pas pu etre ajoutee.");
+        console.error("Impossible d'ajouter l'idée:", error);
+        setSessionError("L'idée n'a pas pu être ajoutée.");
         return null;
       }
     },
@@ -831,8 +831,8 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
           { expectedPreviousText }
         );
       } catch (error) {
-        console.error("Impossible de mettre a jour l'idee:", error);
-        setSessionError("L'idee n'a pas pu etre enregistree.");
+        console.error("Impossible de mettre à jour l'idée:", error);
+        setSessionError("L'idée n'a pas pu être enregistrée.");
       }
     },
     [
@@ -858,8 +858,8 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
       try {
         await removeWorldCoffeeIdea(sessionId, subgroupId, ideaId);
       } catch (error) {
-        console.error("Impossible de supprimer l'idee:", error);
-        setSessionError("L'idee n'a pas pu etre supprimee.");
+        console.error("Impossible de supprimer l'idée:", error);
+        setSessionError("L'idée n'a pas pu être supprimée.");
       }
     },
     [
@@ -880,7 +880,7 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
       await applyWorldCoffeeRound2Rotation(sessionId);
     } catch (error) {
       console.error("Impossible d'appliquer la rotation round 2:", error);
-      setSessionError("La permutation des groupes n'a pas pu etre appliquee.");
+      setSessionError("La permutation des groupes n'a pas pu être appliquée.");
     }
   }, [isEnabled, participantReady, sessionId, setSessionError]);
 
@@ -891,7 +891,7 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
       await applyWorldCoffeeRound3Rotation(sessionId);
     } catch (error) {
       console.error("Impossible d'appliquer la rotation round 3:", error);
-      setSessionError("La deuxieme permutation des groupes n'a pas pu etre appliquee.");
+      setSessionError("La deuxième permutation des groupes n'a pas pu être appliquée.");
     }
   }, [isEnabled, participantReady, sessionId, setSessionError]);
 
@@ -902,7 +902,7 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
       await applyWorldCoffeeReturnRotation(sessionId);
     } catch (error) {
       console.error("Impossible d'appliquer la rotation de retour:", error);
-      setSessionError("Le retour des groupes n'a pas pu etre applique.");
+      setSessionError("Le retour des groupes n'a pas pu être appliqué.");
     }
   }, [isEnabled, participantReady, sessionId, setSessionError]);
 
@@ -931,8 +931,8 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
           { expectedPreviousText }
         );
       } catch (error) {
-        console.error("Impossible de mettre a jour la synthese:", error);
-        setSessionError("La synthese n'a pas pu etre enregistree.");
+        console.error("Impossible de mettre à jour la synthèse:", error);
+        setSessionError("La synthèse n'a pas pu être enregistrée.");
       }
     },
     [
@@ -963,7 +963,7 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
         });
       } catch (error) {
         console.error("Impossible d'ajouter le commentaire:", error);
-        setSessionError("Le commentaire n'a pas pu etre ajoute.");
+        setSessionError("Le commentaire n'a pas pu être ajouté.");
         return null;
       }
     },
@@ -996,8 +996,8 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
       try {
         await updateWorldCoffeeIdeaComment(sessionId, ideaId, commentId, { text: nextText });
       } catch (error) {
-        console.error("Impossible de mettre a jour le commentaire:", error);
-        setSessionError("Le commentaire n'a pas pu etre enregistre.");
+        console.error("Impossible de mettre à jour le commentaire:", error);
+        setSessionError("Le commentaire n'a pas pu être enregistré.");
       }
     },
     [
@@ -1026,7 +1026,7 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
         await removeWorldCoffeeIdeaComment(sessionId, ideaId, commentId);
       } catch (error) {
         console.error("Impossible de supprimer le commentaire:", error);
-        setSessionError("Le commentaire n'a pas pu etre supprime.");
+        setSessionError("Le commentaire n'a pas pu être supprimé.");
       }
     },
     [
@@ -1056,8 +1056,8 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
           text,
         });
       } catch (error) {
-        console.error("Impossible d'ajouter la reponse au commentaire:", error);
-        setSessionError("La reponse n'a pas pu etre ajoutee.");
+        console.error("Impossible d'ajouter la réponse au commentaire:", error);
+        setSessionError("La réponse n'a pas pu être ajoutée.");
         return null;
       }
     },
@@ -1095,8 +1095,8 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
           text: nextText,
         });
       } catch (error) {
-        console.error("Impossible de mettre a jour la reponse:", error);
-        setSessionError("La reponse n'a pas pu etre enregistree.");
+        console.error("Impossible de mettre à jour la réponse:", error);
+        setSessionError("La réponse n'a pas pu être enregistrée.");
       }
     },
     [
@@ -1127,8 +1127,8 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
       try {
         await removeWorldCoffeeCommentReply(sessionId, cleanedCommentId, cleanedReplyId);
       } catch (error) {
-        console.error("Impossible de supprimer la reponse:", error);
-        setSessionError("La reponse n'a pas pu etre supprimee.");
+        console.error("Impossible de supprimer la réponse:", error);
+        setSessionError("La réponse n'a pas pu être supprimée.");
       }
     },
     [

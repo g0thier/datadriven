@@ -17,7 +17,7 @@ export default function Step5({ step, sessionTitle, collaboration }) {
 
   const challenge =
     String(collaboration?.step1Description || "").trim() ||
-    "Le sujet sera visible ici des qu'il est defini a l'etape 1.";
+    "Le sujet sera visible ici dès qu'il est défini à l'étape 1.";
 
   const toggleVote = (solutionId, hasMine) => {
     if (!hasMine && remainingVotes <= 0) return;
@@ -43,9 +43,9 @@ export default function Step5({ step, sessionTitle, collaboration }) {
       ) : (
         <>
           <div className="bg-white rounded-2xl shadow-md p-6 mb-4">
-            <p className="text-xs text-gray-500 mb-2">Defaut retenu ({subgroupLabel})</p>
+            <p className="text-xs text-gray-500 mb-2">Défaut retenu ({subgroupLabel})</p>
             <p className="text-gray-700 text-sm whitespace-pre-wrap">
-              {selectedDefect?.text || <span className="text-gray-400">Aucun defaut retenu.</span>}
+              {selectedDefect?.text || <span className="text-gray-400">Aucun défaut retenu.</span>}
             </p>
           </div>
 
@@ -70,7 +70,7 @@ export default function Step5({ step, sessionTitle, collaboration }) {
 
             {topTie && (
               <p className="mb-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
-                Ex aequo detecte sur la meilleure idee. Le groupe doit choisir une idee finale.
+                Ex æquo détecté sur la meilleure idée. Le groupe doit choisir une idée finale.
               </p>
             )}
 

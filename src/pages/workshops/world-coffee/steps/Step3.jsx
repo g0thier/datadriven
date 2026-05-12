@@ -40,11 +40,11 @@ export default function Step3({ step, sessionTitle, collaboration }) {
 
   const challenge =
     String(collaboration?.activeSubgroupDescription?.text || "").trim() ||
-    "Le sujet du sous-groupe apparaitra ici une fois l'attribution terminee.";
+    "Le sujet du sous-groupe apparaîtra ici une fois l'attribution terminée.";
   const facilitatorId = String(subgroup?.facilitatorId || "").trim();
   const facilitatorLabel = facilitatorId
     ? collaboration?.getParticipantLabel?.(facilitatorId) || "Facilitateur"
-    : "Facilitateur non defini";
+    : "Facilitateur non défini";
 
   const addIdeaAction = collaboration?.actions?.addIdea;
   const ideaInputRefs = useRef({});
@@ -103,7 +103,7 @@ export default function Step3({ step, sessionTitle, collaboration }) {
 
       {descriptionCount > 0 && subgroupCount === 0 && hasUnassignedDescriptions && (
         <p className="mb-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
-          Aucun sous-groupe disponible: assignez d&apos;abord un facilitateur a chaque sujet a l&apos;etape 2.
+          Aucun sous-groupe disponible: assignez d&apos;abord un facilitateur à chaque sujet à l&apos;étape 2.
         </p>
       )}
 
@@ -115,13 +115,13 @@ export default function Step3({ step, sessionTitle, collaboration }) {
         <div className="bg-white rounded-2xl shadow-md p-6">
           <div className="flex items-center justify-between gap-3 mb-4">
             <div>
-              <h3 className="text-base font-semibold text-gray-800">Idees du premier round</h3>
+              <h3 className="text-base font-semibold text-gray-800">Idées du premier round</h3>
               <p className="text-xs text-gray-500">{subgroupLabel}</p>
             </div>
           </div>
 
           {ideas.length === 0 ? (
-            <p className="text-sm text-gray-500">Ajoutez une premiere idee avec le bouton +.</p>
+            <p className="text-sm text-gray-500">Ajoutez une première idée avec le bouton +.</p>
           ) : (
             <ul className="list-disc pl-5 space-y-3 marker:text-gray-400">
               {ideas.map((idea) => {
@@ -142,7 +142,7 @@ export default function Step3({ step, sessionTitle, collaboration }) {
                             delete ideaInputRefs.current[idea.id];
                           }}
                           className="w-full bg-transparent focus:outline-none text-gray-800 text-sm pr-5"
-                          placeholder="Decrire une idee..."
+                          placeholder="Décrire une idée..."
                           value={idea.text || ""}
                           onChange={(event) => updateIdea(idea.id, event.target.value)}
                         />
@@ -151,7 +151,7 @@ export default function Step3({ step, sessionTitle, collaboration }) {
                           type="button"
                           onClick={() => removeIdea(idea.id)}
                           className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-xs"
-                          aria-label="Supprimer l'idee"
+                          aria-label="Supprimer l'idée"
                         >
                           x
                         </button>
@@ -176,8 +176,8 @@ export default function Step3({ step, sessionTitle, collaboration }) {
                 void createIdea({ focusNewInput: true });
               }}
               className="w-8 h-8 rounded-full bg-violet-500 text-white flex items-center justify-center shadow-md hover:bg-violet-600 transition"
-              aria-label="Ajouter une idee"
-              title="Ajouter une idee"
+              aria-label="Ajouter une idée"
+              title="Ajouter une idée"
             >
               +
             </button>
@@ -187,4 +187,3 @@ export default function Step3({ step, sessionTitle, collaboration }) {
     </WorkshopStepLayout>
   );
 }
-

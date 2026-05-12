@@ -74,7 +74,7 @@ export default function SixHatsResultsBoard({
         ) : (
           <div className={`rounded-lg p-4 ${BLUE_HAT_CONFIG.noteBgClass}`}>
             <p className="text-gray-700 text-sm whitespace-pre-wrap">
-              {normalizedBlueConclusion || <span className="text-gray-400">Aucune conclusion redigee.</span>}
+              {normalizedBlueConclusion || <span className="text-gray-400">Aucune conclusion rédigée.</span>}
             </p>
           </div>
         )}

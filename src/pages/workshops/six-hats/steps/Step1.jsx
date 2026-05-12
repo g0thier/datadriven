@@ -22,7 +22,7 @@ export default function Step1({ sessionTitle, step, collaboration }) {
 
       <textarea
         className="w-full h-40 p-4 bg-white border border-gray-300 rounded-lg shadow-sm"
-        placeholder="Ecrivez votre sujet ici..."
+        placeholder="Écrivez votre sujet ici..."
         disabled={isLoading}
         value={description}
         onChange={handleChange}

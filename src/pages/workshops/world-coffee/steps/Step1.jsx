@@ -79,7 +79,7 @@ export default function Step1({ sessionTitle, step, collaboration }) {
 
       <div className="bg-white rounded-2xl shadow-md p-6">
         {descriptions.length === 0 ? (
-          <p className="text-sm text-gray-500">Ajoutez une premiere description avec le bouton +.</p>
+          <p className="text-sm text-gray-500">Ajoutez une première description avec le bouton +.</p>
         ) : (
           <ul className="list-disc pl-5 space-y-3 marker:text-gray-400">
             {descriptions.map((description) => {
@@ -97,7 +97,7 @@ export default function Step1({ sessionTitle, step, collaboration }) {
                         delete descriptionInputRefs.current[description.id];
                       }}
                       className="w-full bg-transparent focus:outline-none text-gray-800 text-sm pr-5"
-                      placeholder="Decrire le sujet..."
+                      placeholder="Décrire le sujet..."
                       value={description.text || ""}
                       onChange={(event) => updateDescription(description.id, event.target.value)}
                     />

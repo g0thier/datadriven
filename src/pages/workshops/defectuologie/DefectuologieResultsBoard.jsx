@@ -37,9 +37,9 @@ export default function DefectuologieResultsBoard({
 
                 <div className="space-y-3">
                   <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
-                    <p className="text-xs uppercase tracking-wide text-amber-700 mb-1">Defaut</p>
+                    <p className="text-xs uppercase tracking-wide text-amber-700 mb-1">Défaut</p>
                     <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                      {defectText || <span className="text-gray-400">Aucun defaut retenu.</span>}
+                      {defectText || <span className="text-gray-400">Aucun défaut retenu.</span>}
                     </p>
                   </div>
 
@@ -57,7 +57,7 @@ export default function DefectuologieResultsBoard({
                       Proposition
                     </p>
                     <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                      {proposalText || <span className="text-gray-400">Aucune proposition redigee.</span>}
+                      {proposalText || <span className="text-gray-400">Aucune proposition rédigée.</span>}
                     </p>
                   </div>
                 </div>

@@ -112,13 +112,13 @@ export default function Step2({ step, sessionTitle, collaboration }) {
 
       {descriptions.length > 0 && hasUnassignedDescriptions && (
         <p className="mb-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
-          Si un sujet n&apos;a pas de facilitateur, il ne sera pas traite dans les etapes suivantes.
+          Si un sujet n&apos;a pas de facilitateur, il ne sera pas traité dans les étapes suivantes.
         </p>
       )}
 
       {descriptions.length === 0 ? (
         <div className="rounded-2xl bg-white shadow-md p-8 text-center text-gray-500">
-          Aucun sujet disponible. Ajoutez d&apos;abord des sujets a l&apos;etape 1.
+          Aucun sujet disponible. Ajoutez d&apos;abord des sujets à l&apos;étape 1.
         </div>
       ) : (
         <div className="bg-white rounded-2xl shadow-md p-6">

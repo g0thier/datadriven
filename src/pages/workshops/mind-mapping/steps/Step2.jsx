@@ -46,7 +46,7 @@ function Step2({ step, sessionTitle, collaboration }) {
 
   const challenge =
     String(collaboration?.step1Description || "").trim() ||
-    "Le sujet sera visible ici des qu'il est defini a l'etape 1.";
+    "Le sujet sera visible ici dès qu'il est défini à l'étape 1.";
 
   const [zoom, setZoom] = useState(100);
   const scale = zoom / 100;
@@ -166,7 +166,7 @@ function Step2({ step, sessionTitle, collaboration }) {
               }}
             >
               <div className="relative bg-white border border-slate-200 rounded-2xl shadow-md p-6 min-h-40">
-                <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">Challenge</p>
+                <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">Défi</p>
                 <p className="text-gray-700 text-sm whitespace-pre-wrap">{challenge}</p>
 
                 <button
@@ -195,7 +195,7 @@ function Step2({ step, sessionTitle, collaboration }) {
                 <div className="relative bg-yellow-100 border border-yellow-200 rounded-lg shadow-md p-4 h-40 flex flex-col">
                   <textarea
                     className="flex-1 bg-transparent resize-none focus:outline-none text-gray-800 text-sm"
-                    placeholder="Ecrivez une catégorie..."
+                    placeholder="Écrivez une catégorie..."
                     value={note.text || ""}
                     onChange={(event) => updateNote(note.id, event.target.value)}
                   />

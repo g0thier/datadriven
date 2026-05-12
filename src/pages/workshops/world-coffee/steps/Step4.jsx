@@ -53,11 +53,11 @@ export default function Step4({ step, sessionTitle, collaboration, session }) {
 
   const challenge =
     String(collaboration?.activeSubgroupDescription?.text || "").trim() ||
-    "Le sujet du sous-groupe apparaitra ici une fois la rotation terminee.";
+    "Le sujet du sous-groupe apparaîtra ici une fois la rotation terminée.";
   const facilitatorId = String(subgroup?.facilitatorId || "").trim();
   const facilitatorLabel = facilitatorId
     ? collaboration?.getParticipantLabel?.(facilitatorId) || "Facilitateur"
-    : "Facilitateur non defini";
+    : "Facilitateur non défini";
 
   useEffect(() => {
     if (!sessionId || !currentParticipantId || !ensureRound2RotationAction) return;
@@ -111,7 +111,7 @@ export default function Step4({ step, sessionTitle, collaboration, session }) {
 
       {descriptionCount > 0 && subgroupCount === 0 && hasUnassignedDescriptions && (
         <p className="mb-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
-          Aucun sous-groupe disponible: assignez d&apos;abord un facilitateur a chaque sujet a l&apos;etape 2.
+          Aucun sous-groupe disponible: assignez d&apos;abord un facilitateur à chaque sujet à l&apos;étape 2.
         </p>
       )}
 
@@ -125,13 +125,13 @@ export default function Step4({ step, sessionTitle, collaboration, session }) {
         </div>
       ) : ideas.length === 0 ? (
         <div className="rounded-2xl bg-white shadow-md p-8 text-center text-gray-500">
-          Aucune idee du round 1 disponible pour ce sujet.
+          Aucune idée du round 1 disponible pour ce sujet.
         </div>
       ) : (
         <div className="bg-white rounded-2xl shadow-md p-6">
           <div className="flex items-center justify-between gap-3 mb-4">
             <div>
-              <h3 className="text-base font-semibold text-gray-800">Idees du premier round</h3>
+              <h3 className="text-base font-semibold text-gray-800">Idées du premier round</h3>
               <p className="text-xs text-gray-500">{subgroupLabel}</p>
             </div>
           </div>

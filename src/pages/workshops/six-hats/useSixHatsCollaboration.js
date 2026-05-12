@@ -306,8 +306,8 @@ export function useSixHatsCollaboration({ sessionId, session, workshopId }) {
           expectedPreviousDescription: previousDescription,
         });
       } catch (error) {
-        console.error("Impossible de mettre a jour le sujet:", error);
-        setSessionError("Le sujet n'a pas pu etre enregistre.");
+        console.error("Impossible de mettre à jour le sujet:", error);
+        setSessionError("Le sujet n'a pas pu être enregistré.");
       }
     },
     [
@@ -334,7 +334,7 @@ export function useSixHatsCollaboration({ sessionId, session, workshopId }) {
         });
       } catch (error) {
         console.error("Impossible d'ajouter la contribution:", error);
-        setSessionError("La contribution n'a pas pu etre ajoutee.");
+        setSessionError("La contribution n'a pas pu être ajoutée.");
         return null;
       }
     },
@@ -370,8 +370,8 @@ export function useSixHatsCollaboration({ sessionId, session, workshopId }) {
           { expectedPreviousText }
         );
       } catch (error) {
-        console.error("Impossible de mettre a jour la contribution:", error);
-        setSessionError("La contribution n'a pas pu etre mise a jour.");
+        console.error("Impossible de mettre à jour la contribution:", error);
+        setSessionError("La contribution n'a pas pu être mise à jour.");
       }
     },
     [currentParticipantId, isEnabled, itemsById, participantReady, sessionId, setSessionError]
@@ -393,7 +393,7 @@ export function useSixHatsCollaboration({ sessionId, session, workshopId }) {
         await removeSixHatsItem(sessionId, normalizedHatId, itemId);
       } catch (error) {
         console.error("Impossible de supprimer la contribution:", error);
-        setSessionError("La contribution n'a pas pu etre supprimee.");
+        setSessionError("La contribution n'a pas pu être supprimée.");
       }
     },
     [currentParticipantId, isEnabled, itemsById, participantReady, sessionId, setSessionError]
@@ -406,8 +406,8 @@ export function useSixHatsCollaboration({ sessionId, session, workshopId }) {
       try {
         await setSixHatsBlueConclusion(sessionId, currentParticipantId, text);
       } catch (error) {
-        console.error("Impossible de mettre a jour la conclusion:", error);
-        setSessionError("La conclusion n'a pas pu etre enregistree.");
+        console.error("Impossible de mettre à jour la conclusion:", error);
+        setSessionError("La conclusion n'a pas pu être enregistrée.");
       }
     },
     [currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]

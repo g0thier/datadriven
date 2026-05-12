@@ -37,7 +37,7 @@ function Step4({ step, sessionTitle, collaboration }) {
 
   const challenge =
     String(collaboration?.step1Description || "").trim() ||
-    "Le sujet sera visible ici des qu'il est defini a l'etape 1.";
+    "Le sujet sera visible ici dès qu'il est défini à l'étape 1.";
 
   const [zoom, setZoom] = useState(85);
   const scale = zoom / 100;
@@ -97,7 +97,7 @@ function Step4({ step, sessionTitle, collaboration }) {
       <div className="bg-white rounded-2xl shadow-md p-4">
         <div className="flex items-center justify-between mb-3 gap-3">
           <p className="text-sm text-gray-600">
-            {totals.notesWithIdeasCount} notes • {totals.totalIdeas} idees • {totals.conceptCount} concepts
+            {totals.notesWithIdeasCount} notes • {totals.totalIdeas} idées • {totals.conceptCount} concepts
           </p>
 
           <div className="flex items-center gap-3">
@@ -336,7 +336,7 @@ function Step4({ step, sessionTitle, collaboration }) {
                   <div className="relative bg-orange-50 border border-orange-200 rounded-lg shadow-sm p-2 flex flex-col">
                     <textarea
                       className="w-full h-20 bg-transparent resize-none focus:outline-none text-gray-800 text-xs"
-                      placeholder="Ecrivez un concept..."
+                      placeholder="Écrivez un concept..."
                       value={curve.concept.text || ""}
                       disabled={isLoading}
                       onChange={(event) =>
@@ -389,7 +389,7 @@ function Step4({ step, sessionTitle, collaboration }) {
                     isLinking
                       ? isSource
                         ? "Noeud source"
-                        : "Relier cette idee"
+                        : "Relier cette idée"
                       : "Commencer une liaison"
                   }
                   onPointerDown={(event) => event.stopPropagation()}

@@ -145,7 +145,7 @@ export function splitLabelIntoLines(label, maxCharsPerLine, maxLines = 3) {
     .filter(Boolean);
 
   if (!words.length) {
-    return ["Idee vide"];
+    return ["Idée vide"];
   }
 
   const lines = [];

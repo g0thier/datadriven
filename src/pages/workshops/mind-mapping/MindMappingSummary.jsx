@@ -25,7 +25,7 @@ export default function MindMappingSummary({ sessionTitle, collaboration }) {
   const syncError = collaboration?.syncError || "";
   const challenge =
     String(collaboration?.step1Description || "").trim() ||
-    "Le defi n'a pas ete renseigne pendant l'atelier.";
+    "Le défi n'a pas ete renseigne pendant l'atelier.";
 
   const rankedConceptCards = useMemo(
     () =>
@@ -42,7 +42,7 @@ export default function MindMappingSummary({ sessionTitle, collaboration }) {
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-200 py-12 px-6">
       <div className="min-h-screen pr-86">
-        <p className="text-sm uppercase tracking-wide text-gray-500 mb-2">Atelier termine</p>
+        <p className="text-sm uppercase tracking-wide text-gray-500 mb-2">Atelier terminé</p>
         <h1 className="text-4xl font-bold text-gray-800 mb-6">{sessionTitle}</h1>
 
         <MindMappingResultsBoard

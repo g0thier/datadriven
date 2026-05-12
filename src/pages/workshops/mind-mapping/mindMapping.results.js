@@ -60,11 +60,11 @@ export const buildRankedConceptCards = ({
         concept,
         voteCount,
         reformulationText,
-        fromNoteText: resolveDisplayText(fromNote?.text, "Note supprimee"),
-        fromIdeaText: resolveDisplayText(fromIdea?.text, "Idee supprimee"),
+        fromNoteText: resolveDisplayText(fromNote?.text, "Note supprimée"),
+        fromIdeaText: resolveDisplayText(fromIdea?.text, "Idée supprimée"),
         conceptText: resolveDisplayText(concept?.text, "Concept vide"),
-        toIdeaText: resolveDisplayText(toIdea?.text, "Idee supprimee"),
-        toNoteText: resolveDisplayText(toNote?.text, "Note supprimee"),
+        toIdeaText: resolveDisplayText(toIdea?.text, "Idée supprimée"),
+        toNoteText: resolveDisplayText(toNote?.text, "Note supprimée"),
       };
     })
     .filter(Boolean)
