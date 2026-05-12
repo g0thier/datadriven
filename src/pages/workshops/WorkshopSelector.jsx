@@ -208,7 +208,6 @@ function WorldCoffeeBridge({ sessionId, session, workshopId, children }) {
 const WORKSHOP_BRIDGES = {
   "paper-brain": PaperBrainBridge,
   "continue-arrete-tente": ContinueStopTryBridge,
-  "continue-stop-try": ContinueStopTryBridge,
   "defectuologie": DefectuologieBridge,
   "six-chapeaux-bono": SixHatsBridge,
   "mind-mapping": MindMappingBridge,

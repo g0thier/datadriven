@@ -99,7 +99,7 @@ export const speedBoat = {
       audioEnabled: false,
     },
     {
-      label: "Mise en commun",
+      label: "Mise en commun des freins",
       duration: 10,
       component: Step4,
       description: description4,
@@ -113,7 +113,7 @@ export const speedBoat = {
       audioEnabled: false,
     },
     {
-      label: "Mise en commun",
+      label: "Mise en commun des leviers",
       duration: 10,
       component: Step6,
       description: description6,

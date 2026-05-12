@@ -47,7 +47,7 @@ export default function WorkshopSummaryPage({ workshopId, sessionTitle, collabor
     return <PaperBrainSummary sessionTitle={sessionTitle} collaboration={collaboration} />;
   }
 
-  if (workshopId === "continue-arrete-tente" || workshopId === "continue-stop-try") {
+  if (workshopId === "continue-arrete-tente") {
     return (
       <ContinueStopTrySummary
         sessionTitle={sessionTitle}

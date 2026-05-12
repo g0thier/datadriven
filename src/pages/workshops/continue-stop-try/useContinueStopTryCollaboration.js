@@ -162,8 +162,7 @@ const resolveParticipantIdentity = ({ sessionGuests, authUser }) => {
  * @returns {Object} Collaboration state and write actions.
  */
 export function useContinueStopTryCollaboration({ sessionId, session, workshopId }) {
-  const isContinueStopTryWorkshop =
-    workshopId === "continue-stop-try" || workshopId === "continue-arrete-tente";
+  const isContinueStopTryWorkshop = workshopId === "continue-arrete-tente";
   const isEnabled = Boolean(sessionId) && isContinueStopTryWorkshop;
 
   const [authUser, setAuthUser] = useState(() => auth.currentUser ?? null);
