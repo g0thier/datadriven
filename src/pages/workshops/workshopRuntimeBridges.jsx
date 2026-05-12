@@ -13,47 +13,29 @@ function renderBridgeOutput(children, collaboration) {
   return children(collaboration);
 }
 
-export function PaperBrainBridge({ sessionId, session, workshopId, children }) {
-  const collaboration = usePaperBrainCollaboration({ sessionId, session, workshopId });
-  return renderBridgeOutput(children, collaboration);
+function createWorkshopBridge(useWorkshopCollaboration) {
+  return function WorkshopRuntimeBridge({ sessionId, session, workshopId, children }) {
+    const collaboration = useWorkshopCollaboration({ sessionId, session, workshopId });
+    return renderBridgeOutput(children, collaboration);
+  };
 }
 
-export function ContinueStopTryBridge({ sessionId, session, workshopId, children }) {
-  const collaboration = useContinueStopTryCollaboration({ sessionId, session, workshopId });
-  return renderBridgeOutput(children, collaboration);
-}
+const COLLABORATION_HOOKS_BY_WORKSHOP_ID = {
+  "paper-brain": usePaperBrainCollaboration,
+  "continue-arrete-tente": useContinueStopTryCollaboration,
+  "defectuologie": useDefectuologieCollaboration,
+  "six-chapeaux-bono": useSixHatsCollaboration,
+  "mind-mapping": useMindMappingCollaboration,
+  "speed-boat": useSpeedBoatCollaboration,
+  "matrice-croisee": useMatriceCroiseeCollaboration,
+  "design-thinking": useDesignThinkingCollaboration,
+  "world-cafe": useWorldCoffeeCollaboration,
+};
 
-export function DefectuologieBridge({ sessionId, session, workshopId, children }) {
-  const collaboration = useDefectuologieCollaboration({ sessionId, session, workshopId });
-  return renderBridgeOutput(children, collaboration);
-}
-
-export function SixHatsBridge({ sessionId, session, workshopId, children }) {
-  const collaboration = useSixHatsCollaboration({ sessionId, session, workshopId });
-  return renderBridgeOutput(children, collaboration);
-}
-
-export function MindMappingBridge({ sessionId, session, workshopId, children }) {
-  const collaboration = useMindMappingCollaboration({ sessionId, session, workshopId });
-  return renderBridgeOutput(children, collaboration);
-}
-
-export function SpeedBoatBridge({ sessionId, session, workshopId, children }) {
-  const collaboration = useSpeedBoatCollaboration({ sessionId, session, workshopId });
-  return renderBridgeOutput(children, collaboration);
-}
-
-export function MatriceCroiseeBridge({ sessionId, session, workshopId, children }) {
-  const collaboration = useMatriceCroiseeCollaboration({ sessionId, session, workshopId });
-  return renderBridgeOutput(children, collaboration);
-}
-
-export function DesignThinkingBridge({ sessionId, session, workshopId, children }) {
-  const collaboration = useDesignThinkingCollaboration({ sessionId, session, workshopId });
-  return renderBridgeOutput(children, collaboration);
-}
-
-export function WorldCoffeeBridge({ sessionId, session, workshopId, children }) {
-  const collaboration = useWorldCoffeeCollaboration({ sessionId, session, workshopId });
-  return renderBridgeOutput(children, collaboration);
-}
+export const WORKSHOP_BRIDGES = Object.entries(COLLABORATION_HOOKS_BY_WORKSHOP_ID).reduce(
+  (accumulator, [workshopId, useWorkshopCollaboration]) => {
+    accumulator[workshopId] = createWorkshopBridge(useWorkshopCollaboration);
+    return accumulator;
+  },
+  {}
+);

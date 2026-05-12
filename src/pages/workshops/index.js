@@ -7,7 +7,7 @@
  */
 
 import { lazy } from "react";
-import { WORKSHOP_BRIDGES } from "./workshopBridgeRegistry.js";
+import { WORKSHOP_BRIDGES } from "./workshopRuntimeBridges.jsx";
 
 const WORKSHOP_DATA_MODULES = import.meta.glob("./*/data.js", {
   eager: true,
