@@ -6,17 +6,31 @@
  * @license proprietary
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getWorkshopSession } from "../../firebase";
 import StepTime from "./StepTime.jsx";
 import { useStepTimeline } from "./useStepTimeline.js";
-import { getWorkshop } from "./index.js";
+import { getWorkshop, getWorkshopRuntime } from "./index.js";
 import WorkshopWaitingPage from "./WorkshopWaitingPage.jsx";
 import RouteFallback from "../../components/fallback/RouteFallback.jsx";
-import WorkshopSummaryPage from "./WorkshopSummaryPage.jsx";
 import WorkshopVoiceOverlay from "../../components/workshop-audio/WorkshopVoiceOverlay.jsx";
-import WorkshopSelector from "./WorkshopSelector.jsx";
+
+function GenericWorkshopSummary({ sessionTitle }) {
+  return (
+    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-200 py-12 px-6">
+      <div className="min-h-screen pr-86">
+        <div className="bg-white rounded-2xl shadow-md p-8">
+          <p className="text-sm uppercase tracking-wide text-gray-500 mb-2">Atelier terminé</p>
+          <h1 className="text-3xl font-bold text-gray-800 mb-3">{sessionTitle}</h1>
+          <p className="text-gray-600">
+            Le récapitulatif détaillé de cet atelier sera bientôt disponible.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 /**
  * Renders the workshop runtime route page.
@@ -30,11 +44,6 @@ import WorkshopSelector from "./WorkshopSelector.jsx";
  *
  * // Real usage reference: src/App.jsx
  * <Route path="/innovation/:workshopId/:id" element={<WorkshopRunner />} />;
- *
- * // Internal callsites in this component:
- * // - useStepTimeline(sessionData, startAt)
- * // - Workshop bridge selected by workshop id
- * // - <StepTime ... />, <WorkshopWaitingPage ... />, <WorkshopSummaryPage ... />
  */
 export default function WorkshopRunner() {
   const { workshopId: routeWorkshopId, id: sessionId } = useParams();
@@ -84,6 +93,7 @@ export default function WorkshopRunner() {
 
   const resolvedWorkshopId = session?.workshopId || routeWorkshopId;
   const sessionData = getWorkshop(resolvedWorkshopId);
+  const workshopRuntime = getWorkshopRuntime(resolvedWorkshopId);
   const startAt = useMemo(() => {
     const sessionDate = session?.workshopDateTime ? new Date(session.workshopDateTime) : null;
     if (sessionDate && !Number.isNaN(sessionDate.getTime())) {
@@ -108,15 +118,12 @@ export default function WorkshopRunner() {
   const { currentStep, isFinished } = useStepTimeline(sessionData ?? { steps: [] }, startAt);
 
   const StepComponent = currentStep?.component ?? null;
+  const CollaborationBridge = workshopRuntime?.bridge ?? null;
+  const SummaryComponent = workshopRuntime?.summary ?? null;
   const isWorkshopActive = !isWaiting && !isFinished;
 
   if (isLoadingSession) {
-    // Chargement de la session…
-    return (
-      <>
-        <RouteFallback /> 
-      </>
-    );
+    return <RouteFallback />;
   }
 
   if (sessionLoadError) {
@@ -137,32 +144,46 @@ export default function WorkshopRunner() {
     );
   }
 
+  if (!CollaborationBridge) {
+    return (
+      <div className="p-10">
+        Système de collaboration introuvable pour l'atelier : {resolvedWorkshopId}
+      </div>
+    );
+  }
+
   return (
-    <WorkshopSelector
-      sessionId={sessionId}
-      session={session}
-      workshopId={resolvedWorkshopId}
-    >
-      {(collaboration) => (
-        (() => {
+    <Suspense fallback={<RouteFallback />}>
+      <CollaborationBridge
+        sessionId={sessionId}
+        session={session}
+        workshopId={resolvedWorkshopId}
+      >
+        {(collaboration) => {
           const requestedAudioChannel =
             currentStep?.audioChannel === "subgroup" ? "subgroup" : "general";
           const subgroupId = String(collaboration?.subgroupId || "").trim();
-          const hasSubgroupAudioChannel = requestedAudioChannel !== "subgroup" || Boolean(subgroupId);
+          const hasSubgroupAudioChannel =
+            requestedAudioChannel !== "subgroup" || Boolean(subgroupId);
           const stepAudioEnabled = Boolean(currentStep?.audioEnabled) && hasSubgroupAudioChannel;
           const voiceChannelId =
-            requestedAudioChannel === "subgroup" && subgroupId ? `subgroup-${subgroupId}` : "general";
+            requestedAudioChannel === "subgroup" && subgroupId
+              ? `subgroup-${subgroupId}`
+              : "general";
 
           return (
             <div className="min-h-screen">
               <StepTime sessionData={sessionData} startAt={startAt} />
 
               {isFinished ? (
-                <WorkshopSummaryPage
-                  workshopId={resolvedWorkshopId}
-                  sessionTitle={sessionData.title}
-                  collaboration={collaboration}
-                />
+                SummaryComponent ? (
+                  <SummaryComponent
+                    sessionTitle={sessionData.title}
+                    collaboration={collaboration}
+                  />
+                ) : (
+                  <GenericWorkshopSummary sessionTitle={sessionData.title} />
+                )
               ) : StepComponent && currentStep ? (
                 <StepComponent
                   sessionTitle={sessionData.title}
@@ -183,8 +204,8 @@ export default function WorkshopRunner() {
               />
             </div>
           );
-        })()
-      )}
-    </WorkshopSelector>
+        }}
+      </CollaborationBridge>
+    </Suspense>
   );
 }

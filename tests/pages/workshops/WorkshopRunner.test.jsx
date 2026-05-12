@@ -5,6 +5,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 let paramsMock = { workshopId: "paper-brain", id: "s1" };
 let getWorkshopSessionMock = vi.fn();
 let getWorkshopMock = vi.fn();
+let getWorkshopRuntimeMock = vi.fn();
 let timelineState = {
   currentStep: { component: ({ sessionTitle }) => <div>STEP:{sessionTitle}</div>, audioEnabled: true },
   isFinished: false,
@@ -21,6 +22,7 @@ vi.mock("../../../src/firebase", () => ({
 
 vi.mock("../../../src/pages/workshops/index.js", () => ({
   getWorkshop: (...args) => getWorkshopMock(...args),
+  getWorkshopRuntime: (...args) => getWorkshopRuntimeMock(...args),
 }));
 
 vi.mock("../../../src/pages/workshops/useStepTimeline.js", () => ({
@@ -33,7 +35,6 @@ vi.mock("../../../src/pages/workshops/paper-brain/usePaperBrainCollaboration.js"
 
 vi.mock("../../../src/pages/workshops/StepTime.jsx", () => ({ default: () => <div>STEP_TIME</div> }));
 vi.mock("../../../src/pages/workshops/WorkshopWaitingPage.jsx", () => ({ default: () => <div>WAITING_PAGE</div> }));
-vi.mock("../../../src/pages/workshops/WorkshopSummaryPage.jsx", () => ({ default: () => <div>SUMMARY_PAGE</div> }));
 vi.mock("../../../src/components/fallback/RouteFallback.jsx", () => ({ default: () => <div>ROUTE_FALLBACK</div> }));
 vi.mock("../../../src/components/workshop-audio/WorkshopVoiceOverlay.jsx", () => ({
   default: ({ roomId }) => <div>VOICE:{roomId}</div>,
@@ -44,6 +45,10 @@ import WorkshopRunner from "../../../src/pages/workshops/WorkshopRunner.jsx";
 describe("WorkshopRunner", () => {
   beforeEach(() => {
     paramsMock = { workshopId: "paper-brain", id: "s1" };
+    getWorkshopRuntimeMock = vi.fn().mockReturnValue({
+      bridge: ({ children }) => <>{children?.({})}</>,
+      summary: ({ sessionTitle }) => <div>SUMMARY:{sessionTitle}</div>,
+    });
     timelineState = {
       currentStep: { component: ({ sessionTitle }) => <div>STEP:{sessionTitle}</div>, audioEnabled: true },
       isFinished: false,
