@@ -64,7 +64,7 @@ const description8 = [
   { type: "hint", text: "Objectif : passer du constat au plan d’action." },
 ];
 
-export const speedBoat = {
+const workshop = {
   id: "speed-boat",
   title: "Speed Boat",
   groupSize: "5 à 10 personnes",
@@ -135,3 +135,5 @@ export const speedBoat = {
     },
   ],
 };
+
+export default workshop;

@@ -180,7 +180,7 @@ describe("useWorldCoffeeCollaboration", () => {
 
   it("stays disabled for non world-cafe workshop", async () => {
     const { default: useWorldCoffeeCollaboration } = await import(
-      "../../../../src/pages/workshops/world-coffee/useWorldCoffeeCollaboration.js"
+      "../../../../src/pages/workshops/world-coffee/useCollaboration.js"
     );
 
     const hook = await renderHook(() =>
@@ -193,7 +193,7 @@ describe("useWorldCoffeeCollaboration", () => {
 
   it("hydrates state and executes actions", async () => {
     const { default: useWorldCoffeeCollaboration } = await import(
-      "../../../../src/pages/workshops/world-coffee/useWorldCoffeeCollaboration.js"
+      "../../../../src/pages/workshops/world-coffee/useCollaboration.js"
     );
 
     const hook = await renderHook(() =>
@@ -282,7 +282,7 @@ describe("useWorldCoffeeCollaboration", () => {
     );
 
     const { default: useWorldCoffeeCollaboration } = await import(
-      "../../../../src/pages/workshops/world-coffee/useWorldCoffeeCollaboration.js"
+      "../../../../src/pages/workshops/world-coffee/useCollaboration.js"
     );
 
     const hook = await renderHook(() =>

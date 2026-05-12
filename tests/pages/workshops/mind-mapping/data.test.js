@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mindMapping } from "../../../../src/pages/workshops/mind-mapping/data.js";
+import mindMapping from "../../../../src/pages/workshops/mind-mapping/data.js";
 
 describe("mind-mapping/data", () => {
   it("exports workshop metadata with valid steps", () => {

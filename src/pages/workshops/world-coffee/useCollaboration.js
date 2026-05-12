@@ -294,7 +294,7 @@ const resolveParticipantIdentity = ({ sessionGuests, authUser }) => {
  * @param {string} params.workshopId - Workshop id used to enable World Cafe behavior.
  * @returns {Object} Collaboration state and write actions.
  */
-export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) {
+export function useCollaboration({ sessionId, session, workshopId }) {
   const isEnabled = Boolean(sessionId) && workshopId === "world-cafe";
 
   const [authUser, setAuthUser] = useState(() => auth.currentUser ?? null);
@@ -1222,4 +1222,4 @@ export function useWorldCoffeeCollaboration({ sessionId, session, workshopId }) 
   };
 }
 
-export default useWorldCoffeeCollaboration;
+export default useCollaboration;

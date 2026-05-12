@@ -101,7 +101,7 @@ const resolveParticipantIdentity = ({ sessionGuests, authUser }) => {
  * @param {string} params.workshopId - Workshop id used to enable Matrice croisee behavior.
  * @returns {Object} Collaboration state and write actions.
  */
-export function useMatriceCroiseeCollaboration({ sessionId, session, workshopId }) {
+export function useCollaboration({ sessionId, session, workshopId }) {
   const isEnabled = Boolean(sessionId) && workshopId === "matrice-croisee";
 
   const [authUser, setAuthUser] = useState(() => auth.currentUser ?? null);
@@ -941,4 +941,4 @@ export function useMatriceCroiseeCollaboration({ sessionId, session, workshopId 
  *
  * @type {typeof useMatriceCroiseeCollaboration}
  */
-export default useMatriceCroiseeCollaboration;
+export default useCollaboration;

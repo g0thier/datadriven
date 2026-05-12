@@ -69,7 +69,7 @@ describe("useSixHatsCollaboration", () => {
 
   it("stays disabled for non six-hats workshop", async () => {
     const { default: useSixHatsCollaboration } = await import(
-      "../../../../src/pages/workshops/six-hats/useSixHatsCollaboration.js"
+      "../../../../src/pages/workshops/six-hats/useCollaboration.js"
     );
 
     const hook = await renderHook(() =>
@@ -82,7 +82,7 @@ describe("useSixHatsCollaboration", () => {
 
   it("hydrates state and executes actions", async () => {
     const { default: useSixHatsCollaboration } = await import(
-      "../../../../src/pages/workshops/six-hats/useSixHatsCollaboration.js"
+      "../../../../src/pages/workshops/six-hats/useCollaboration.js"
     );
 
     const hook = await renderHook(() =>
@@ -137,7 +137,7 @@ describe("useSixHatsCollaboration", () => {
     );
 
     const { default: useSixHatsCollaboration } = await import(
-      "../../../../src/pages/workshops/six-hats/useSixHatsCollaboration.js"
+      "../../../../src/pages/workshops/six-hats/useCollaboration.js"
     );
 
     const hook = await renderHook(() =>

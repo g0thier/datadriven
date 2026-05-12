@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import MindMappingSummary from "../../../../src/pages/workshops/mind-mapping/MindMappingSummary.jsx";
+import MindMappingSummary from "../../../../src/pages/workshops/mind-mapping/Summary.jsx";
 
 describe("MindMappingSummary", () => {
   it("renders ranked concepts and sync error", () => {
@@ -40,7 +40,7 @@ describe("MindMappingSummary", () => {
 
     expect(screen.getByText("Session MM")).toBeInTheDocument();
     expect(screen.getByText(/sync issue/i)).toBeInTheDocument();
-    expect(screen.getByText(/demande formulee/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /sujet de l'atelier/i })).toBeInTheDocument();
     expect(screen.getByText(/concept #1/i)).toBeInTheDocument();
     expect(screen.getAllByText(/reformulation finale/i).length).toBeGreaterThan(0);
   });

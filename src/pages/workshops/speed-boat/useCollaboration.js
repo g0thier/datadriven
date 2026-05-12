@@ -120,7 +120,7 @@ const resolveParticipantIdentity = ({ sessionGuests, authUser }) => {
  * @param {string} params.workshopId - Workshop id used to enable Speed Boat behavior.
  * @returns {Object} Collaboration state and write actions.
  */
-export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
+export function useCollaboration({ sessionId, session, workshopId }) {
   const isEnabled = Boolean(sessionId) && workshopId === "speed-boat";
 
   const [authUser, setAuthUser] = useState(() => auth.currentUser ?? null);
@@ -748,4 +748,4 @@ export function useSpeedBoatCollaboration({ sessionId, session, workshopId }) {
  *
  * @type {typeof useSpeedBoatCollaboration}
  */
-export default useSpeedBoatCollaboration;
+export default useCollaboration;

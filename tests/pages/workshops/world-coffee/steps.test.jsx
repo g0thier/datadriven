@@ -99,8 +99,8 @@ describe("world-coffee steps", () => {
     );
 
     await user.type(screen.getByDisplayValue("Mon idee"), " ++");
-    await user.click(screen.getByLabelText(/supprimer l'idee/i));
-    await user.click(screen.getByLabelText(/ajouter une idee/i));
+    await user.click(screen.getByLabelText(/supprimer l'idée/i));
+    await user.click(screen.getByLabelText(/ajouter une idée/i));
 
     expect(updateIdeaText).toHaveBeenCalled();
     expect(removeIdea).toHaveBeenCalledWith("i1");
@@ -221,7 +221,7 @@ describe("world-coffee steps", () => {
     );
 
     await user.type(screen.getByDisplayValue("Reponse c1"), " ++");
-    await user.click(screen.getByLabelText(/supprimer la reponse/i));
+    await user.click(screen.getByLabelText(/supprimer la réponse/i));
     await user.click(screen.getAllByLabelText(/sur-enrichir l'idée/i)[0]);
 
     expect(updateCommentReplyText).toHaveBeenCalled();
@@ -279,7 +279,7 @@ describe("world-coffee steps", () => {
       />
     );
 
-    await user.type(screen.getByPlaceholderText(/synthese du groupe/i), " ++");
+    await user.type(screen.getByPlaceholderText(/synthèse du groupe/i), " ++");
     expect(updateSubgroupSynthesis).toHaveBeenCalled();
   });
 

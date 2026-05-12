@@ -23,7 +23,7 @@ describe("mind-mapping steps", () => {
       />
     );
 
-    await user.type(screen.getByPlaceholderText(/description/i), "Sujet principal");
+    await user.type(screen.getByPlaceholderText(/écrivez ici/i), "Sujet principal");
     expect(setStep1Description).toHaveBeenCalled();
   });
 
@@ -94,7 +94,7 @@ describe("mind-mapping steps", () => {
     await user.click(screen.getByLabelText(/ajouter une branche/i));
     expect(addNote).toHaveBeenCalled();
 
-    await user.type(screen.getAllByPlaceholderText(/ecrivez une id[ée]e/i)[0], " ++");
+    await user.type(screen.getAllByPlaceholderText(/écrivez une id[ée]e/i)[0], " ++");
     expect(updateCommentText).toHaveBeenCalled();
 
     await user.click(screen.getAllByLabelText(/ajouter une id[ée]e/i)[0]);
@@ -137,7 +137,7 @@ describe("mind-mapping steps", () => {
       />
     );
 
-    await user.type(screen.getByPlaceholderText(/reformuler l'idee finale/i), " maj");
+    await user.type(screen.getByPlaceholderText(/reformuler l'idée finale/i), " maj");
     expect(setReformulation).toHaveBeenCalled();
   });
 });

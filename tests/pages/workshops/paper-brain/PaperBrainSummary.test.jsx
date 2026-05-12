@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import PaperBrainSummary from "../../../../src/pages/workshops/paper-brain/PaperBrainSummary.jsx";
+import PaperBrainSummary from "../../../../src/pages/workshops/paper-brain/Summary.jsx";
 
 describe("PaperBrainSummary", () => {
   it("renders ranked voted notes and sync error", () => {

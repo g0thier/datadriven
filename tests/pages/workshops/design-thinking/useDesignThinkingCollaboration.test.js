@@ -135,7 +135,7 @@ describe("useDesignThinkingCollaboration", () => {
 
   it("stays disabled for non design-thinking workshop", async () => {
     const { default: useDesignThinkingCollaboration } = await import(
-      "../../../../src/pages/workshops/design-thinking/useDesignThinkingCollaboration.js"
+      "../../../../src/pages/workshops/design-thinking/useCollaboration.js"
     );
 
     const hook = await renderHook(() =>
@@ -148,7 +148,7 @@ describe("useDesignThinkingCollaboration", () => {
 
   it("hydrates state and executes actions", async () => {
     const { default: useDesignThinkingCollaboration } = await import(
-      "../../../../src/pages/workshops/design-thinking/useDesignThinkingCollaboration.js"
+      "../../../../src/pages/workshops/design-thinking/useCollaboration.js"
     );
 
     const hook = await renderHook(() =>
@@ -239,7 +239,7 @@ describe("useDesignThinkingCollaboration", () => {
     );
 
     const { default: useDesignThinkingCollaboration } = await import(
-      "../../../../src/pages/workshops/design-thinking/useDesignThinkingCollaboration.js"
+      "../../../../src/pages/workshops/design-thinking/useCollaboration.js"
     );
 
     const hook = await renderHook(() =>

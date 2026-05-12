@@ -155,7 +155,7 @@ const resolveParticipantIdentity = ({ sessionGuests, authUser }) => {
  * @param {string} params.workshopId - Workshop id used to enable Design Thinking behavior.
  * @returns {Object} Collaboration state (participant, step1, errors) and write actions.
  */
-export function useDesignThinkingCollaboration({ sessionId, session, workshopId }) {
+export function useCollaboration({ sessionId, session, workshopId }) {
   const isEnabled = Boolean(sessionId) && workshopId === "design-thinking";
 
   const [authUser, setAuthUser] = useState(() => auth.currentUser ?? null);
@@ -1173,4 +1173,4 @@ export function useDesignThinkingCollaboration({ sessionId, session, workshopId 
   };
 }
 
-export default useDesignThinkingCollaboration;
+export default useCollaboration;

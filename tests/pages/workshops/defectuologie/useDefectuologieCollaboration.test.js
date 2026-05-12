@@ -126,7 +126,7 @@ describe("useDefectuologieCollaboration", () => {
 
   it("stays disabled for non defectuologie workshop", async () => {
     const { default: useDefectuologieCollaboration } = await import(
-      "../../../../src/pages/workshops/defectuologie/useDefectuologieCollaboration.js"
+      "../../../../src/pages/workshops/defectuologie/useCollaboration.js"
     );
 
     const hook = await renderHook(() =>
@@ -139,7 +139,7 @@ describe("useDefectuologieCollaboration", () => {
 
   it("hydrates state and executes actions", async () => {
     const { default: useDefectuologieCollaboration } = await import(
-      "../../../../src/pages/workshops/defectuologie/useDefectuologieCollaboration.js"
+      "../../../../src/pages/workshops/defectuologie/useCollaboration.js"
     );
 
     const hook = await renderHook(() =>
@@ -203,7 +203,7 @@ describe("useDefectuologieCollaboration", () => {
     );
 
     const { default: useDefectuologieCollaboration } = await import(
-      "../../../../src/pages/workshops/defectuologie/useDefectuologieCollaboration.js"
+      "../../../../src/pages/workshops/defectuologie/useCollaboration.js"
     );
 
     const hook = await renderHook(() =>

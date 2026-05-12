@@ -88,7 +88,7 @@ const description10 = [
 /**
  * Design Thinking workshop configuration used by the workshops registry.
  */
-export const designThinking = {
+const workshop = {
   id: "design-thinking",
   title: "Design Thinking",
   groupSize: "5 à 8 personnes",
@@ -173,3 +173,5 @@ export const designThinking = {
     },
   ],
 };
+
+export default workshop;

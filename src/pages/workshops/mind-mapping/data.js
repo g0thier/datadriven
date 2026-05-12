@@ -51,7 +51,7 @@ const description6 = [
   { type: "hint", text: "Objectif : passer à une solution exploitable." },
 ];
 
-export const mindMapping = {
+const workshop = {
   id: "mind-mapping",
   title: "Mind Mapping",
   groupSize: "3 à 8 personnes",
@@ -108,3 +108,5 @@ export const mindMapping = {
     },
   ],
 };
+
+export default workshop;

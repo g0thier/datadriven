@@ -58,7 +58,7 @@ const description7 = [
   { type: "hint", text: "Objectif : mettre en commun l’intelligence collective." },
 ];
 
-export const worldCafe = {
+const workshop = {
   id: "world-cafe",
   title: "World Café",
   groupSize: "35 à 50 personnes",
@@ -127,3 +127,5 @@ export const worldCafe = {
     },
   ],
 };
+
+export default workshop;

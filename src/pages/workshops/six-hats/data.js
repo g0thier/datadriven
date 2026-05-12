@@ -58,7 +58,7 @@ const description7 = [
   { type: "hint", text: "Objectif : conclure, décider et aligner le groupe." },
 ];
 
-export const sixChapeauxBono = {
+const workshop = {
   id: "six-chapeaux-bono",
   title: "Six chapeaux de Bono",
   groupSize: "6 à 10 personnes",
@@ -122,3 +122,5 @@ export const sixChapeauxBono = {
     },
   ],
 };
+
+export default workshop;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { designThinking } from "../../../../src/pages/workshops/design-thinking/data.js";
+import designThinking from "../../../../src/pages/workshops/design-thinking/data.js";
 
 describe("design-thinking/data", () => {
   it("exports workshop metadata with valid steps", () => {

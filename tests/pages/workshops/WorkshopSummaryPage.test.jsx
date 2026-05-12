@@ -6,7 +6,7 @@ describe("workshops runtime resolution", () => {
     const runtime = getWorkshopRuntime("paper-brain");
 
     expect(runtime).toBeDefined();
-    expect(runtime?.bridge).toBeTypeOf("object");
+    expect(runtime?.bridge).toBeTypeOf("function");
     expect(runtime?.summary).toBeTypeOf("object");
   });
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { paperBrain } from "../../../../src/pages/workshops/paper-brain/data.js";
+import paperBrain from "../../../../src/pages/workshops/paper-brain/data.js";
 
 describe("paper-brain/data", () => {
   it("exports workshop metadata with valid steps", () => {

@@ -22,7 +22,7 @@ describe("paper-brain steps", () => {
       />
     );
 
-    await user.type(screen.getByPlaceholderText(/écrivez votre description/i), "Défi");
+    await user.type(screen.getByPlaceholderText(/écrivez ici/i), "Défi");
     expect(setStep1Description).toHaveBeenCalled();
   });
 

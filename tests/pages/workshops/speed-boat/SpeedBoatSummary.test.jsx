@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import SpeedBoatSummary from "../../../../src/pages/workshops/speed-boat/SpeedBoatSummary.jsx";
+import SpeedBoatSummary from "../../../../src/pages/workshops/speed-boat/Summary.jsx";
 
 describe("SpeedBoatSummary", () => {
   it("renders dashboards, ranked brakes, and actions", () => {

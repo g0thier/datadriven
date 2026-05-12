@@ -97,7 +97,7 @@ describe("useContinueStopTryCollaboration", () => {
 
   it("stays disabled for non continue-stop-try workshop", async () => {
     const { default: useContinueStopTryCollaboration } = await import(
-      "../../../../src/pages/workshops/continue-stop-try/useContinueStopTryCollaboration.js"
+      "../../../../src/pages/workshops/continue-stop-try/useCollaboration.js"
     );
 
     const hook = await renderHook(() =>
@@ -110,13 +110,13 @@ describe("useContinueStopTryCollaboration", () => {
 
   it("hydrates state and executes actions", async () => {
     const { default: useContinueStopTryCollaboration } = await import(
-      "../../../../src/pages/workshops/continue-stop-try/useContinueStopTryCollaboration.js"
+      "../../../../src/pages/workshops/continue-stop-try/useCollaboration.js"
     );
 
     const hook = await renderHook(() =>
       useContinueStopTryCollaboration({
         sessionId: "s1",
-        workshopId: "continue-stop-try",
+        workshopId: "continue-arrete-tente",
         session: {
           allGuests: [
             { id: "u1", firstName: "Ada", lastName: "Lovelace" },
@@ -168,7 +168,7 @@ describe("useContinueStopTryCollaboration", () => {
     );
 
     const { default: useContinueStopTryCollaboration } = await import(
-      "../../../../src/pages/workshops/continue-stop-try/useContinueStopTryCollaboration.js"
+      "../../../../src/pages/workshops/continue-stop-try/useCollaboration.js"
     );
 
     const hook = await renderHook(() =>
@@ -190,4 +190,3 @@ describe("useContinueStopTryCollaboration", () => {
     await hook.unmount();
   });
 });
-

@@ -117,7 +117,7 @@ const resolveParticipantIdentity = ({ sessionGuests, authUser }) => {
  * @returns {Object} Collaboration state (notes, comments, votes, participant, errors) and write actions.
  *
  * @example
- * import { usePaperBrainCollaboration } from "./paper-brain/usePaperBrainCollaboration.js";
+ * import { usePaperBrainCollaboration } from "./paper-brain/useCollaboration.js";
  *
  * // Real usage reference: src/pages/workshops/WorkshopRunner.jsx
  * const collaboration = usePaperBrainCollaboration({
@@ -126,7 +126,7 @@ const resolveParticipantIdentity = ({ sessionGuests, authUser }) => {
  *   workshopId: resolvedWorkshopId,
  * });
  */
-export function usePaperBrainCollaboration({ sessionId, session, workshopId }) {
+export function useCollaboration({ sessionId, session, workshopId }) {
   const isEnabled = Boolean(sessionId) && workshopId === "paper-brain";
 
   const [authUser, setAuthUser] = useState(() => auth.currentUser ?? null);
@@ -731,9 +731,9 @@ export function usePaperBrainCollaboration({ sessionId, session, workshopId }) {
  *
  * @type {typeof usePaperBrainCollaboration}
  * @example
- * import { usePaperBrainCollaboration } from "./paper-brain/usePaperBrainCollaboration.js";
+ * import { usePaperBrainCollaboration } from "./paper-brain/useCollaboration.js";
  *
  * // Real usage reference (named import): src/pages/workshops/WorkshopRunner.jsx
  * const collaboration = usePaperBrainCollaboration({ sessionId, session, workshopId });
  */
-export default usePaperBrainCollaboration;
+export default useCollaboration;

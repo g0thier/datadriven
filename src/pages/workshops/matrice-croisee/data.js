@@ -43,7 +43,7 @@ const description5 = [
   { type: "hint", text: "On transforme l’idée en concept." },
 ];
 
-export const matriceCroisee = {
+const workshop = {
   id: "matrice-croisee",
   title: "Matrice croisée",
   groupSize: "4 à 8 personnes",
@@ -93,3 +93,5 @@ export const matriceCroisee = {
     }
   ],
 };
+
+export default workshop;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { worldCafe } from "../../../../src/pages/workshops/world-coffee/data.js";
+import worldCafe from "../../../../src/pages/workshops/world-coffee/data.js";
 
 describe("world-coffee/data", () => {
   it("exports workshop metadata with valid steps", () => {

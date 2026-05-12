@@ -256,7 +256,7 @@ const writeStoredSubgroupId = (sessionId, participantId, subgroupId) => {
   }
 };
 
-export function useDefectuologieCollaboration({ sessionId, session, workshopId }) {
+export function useCollaboration({ sessionId, session, workshopId }) {
   const isEnabled = Boolean(sessionId) && workshopId === "defectuologie";
 
   const [authUser, setAuthUser] = useState(() => auth.currentUser ?? null);
@@ -1349,4 +1349,4 @@ export function useDefectuologieCollaboration({ sessionId, session, workshopId }
   };
 }
 
-export default useDefectuologieCollaboration;
+export default useCollaboration;

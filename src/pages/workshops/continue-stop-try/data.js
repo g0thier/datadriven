@@ -44,7 +44,7 @@ const description5 = [
   { type: "hint", text: "L’atelier devient utile quand il produit une suite visible." },
 ];
 
-export const continueArreteTente = {
+const workshop = {
   id: "continue-arrete-tente",
   title: "On continue, arrête, tente",
   groupSize: "3 à 12 personnes",
@@ -93,3 +93,5 @@ export const continueArreteTente = {
     }
   ],
 };
+
+export default workshop;

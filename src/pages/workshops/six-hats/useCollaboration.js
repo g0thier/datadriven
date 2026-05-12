@@ -82,7 +82,7 @@ const resolveParticipantIdentity = ({ sessionGuests, authUser }) => {
   };
 };
 
-export function useSixHatsCollaboration({ sessionId, session, workshopId }) {
+export function useCollaboration({ sessionId, session, workshopId }) {
   const isEnabled = Boolean(sessionId) && workshopId === "six-chapeaux-bono";
 
   const [authUser, setAuthUser] = useState(() => auth.currentUser ?? null);
@@ -445,4 +445,4 @@ export function useSixHatsCollaboration({ sessionId, session, workshopId }) {
   };
 }
 
-export default useSixHatsCollaboration;
+export default useCollaboration;

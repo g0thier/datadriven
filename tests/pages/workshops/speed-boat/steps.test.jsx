@@ -25,7 +25,7 @@ describe("speed-boat steps", () => {
       />
     );
 
-    await user.type(screen.getByPlaceholderText(/défi/i), "Defi principal");
+    await user.type(screen.getByPlaceholderText(/écrivez ici/i), "Defi principal");
     expect(setStep1Description).toHaveBeenCalled();
   });
 

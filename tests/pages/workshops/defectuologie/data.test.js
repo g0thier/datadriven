@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defectuologie } from "../../../../src/pages/workshops/defectuologie/data.js";
+import defectuologie from "../../../../src/pages/workshops/defectuologie/data.js";
 
 describe("defectuologie/data", () => {
   it("exports workshop metadata with valid steps", () => {

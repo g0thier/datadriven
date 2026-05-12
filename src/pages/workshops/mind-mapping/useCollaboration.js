@@ -82,7 +82,7 @@ const resolveParticipantIdentity = ({ sessionGuests, authUser }) => {
   };
 };
 
-export function useMindMappingCollaboration({ sessionId, session, workshopId }) {
+export function useCollaboration({ sessionId, session, workshopId }) {
   const isEnabled = Boolean(sessionId) && workshopId === "mind-mapping";
 
   const [authUser, setAuthUser] = useState(() => auth.currentUser ?? null);
@@ -816,4 +816,4 @@ export function useMindMappingCollaboration({ sessionId, session, workshopId }) 
   };
 }
 
-export default useMindMappingCollaboration;
+export default useCollaboration;

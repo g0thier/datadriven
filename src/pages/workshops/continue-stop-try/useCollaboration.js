@@ -161,7 +161,7 @@ const resolveParticipantIdentity = ({ sessionGuests, authUser }) => {
  * @param {string} params.workshopId - Workshop id used to enable Continue / Stop / Try behavior.
  * @returns {Object} Collaboration state and write actions.
  */
-export function useContinueStopTryCollaboration({ sessionId, session, workshopId }) {
+export function useCollaboration({ sessionId, session, workshopId }) {
   const isContinueStopTryWorkshop = workshopId === "continue-arrete-tente";
   const isEnabled = Boolean(sessionId) && isContinueStopTryWorkshop;
 
@@ -781,4 +781,4 @@ export function useContinueStopTryCollaboration({ sessionId, session, workshopId
  *
  * @type {typeof useContinueStopTryCollaboration}
  */
-export default useContinueStopTryCollaboration;
+export default useCollaboration;

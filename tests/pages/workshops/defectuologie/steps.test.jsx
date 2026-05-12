@@ -53,7 +53,7 @@ describe("defectuologie steps", () => {
     await user.type(screen.getByDisplayValue("Defaut initial"), "{enter}");
     expect(addDefect).not.toHaveBeenCalled();
 
-    await user.click(screen.getByLabelText(/ajouter un defaut/i));
+    await user.click(screen.getByLabelText(/ajouter un défaut/i));
     expect(addDefect).toHaveBeenCalledTimes(1);
   });
 
@@ -131,9 +131,9 @@ describe("defectuologie steps", () => {
       </>
     );
 
-    expect(screen.getByText(/vote sur les defauts/i)).toBeInTheDocument();
+    expect(screen.getByText(/vote sur les défauts/i)).toBeInTheDocument();
     expect(screen.getByText(/vote sur les solutions/i)).toBeInTheDocument();
-    expect(screen.getByText(/demande formul/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/proposition/i).length).toBeGreaterThan(0);
 
     await user.type(
       screen.getByPlaceholderText(/formaliser la proposition finale du groupe/i),
@@ -142,4 +142,3 @@ describe("defectuologie steps", () => {
     expect(setStep6Proposal).toHaveBeenCalled();
   });
 });
-

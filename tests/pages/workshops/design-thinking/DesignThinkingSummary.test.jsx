@@ -2,7 +2,7 @@ import React from "react";
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import DesignThinkingSummary from "../../../../src/pages/workshops/design-thinking/DesignThinkingSummary.jsx";
+import DesignThinkingSummary from "../../../../src/pages/workshops/design-thinking/Summary.jsx";
 
 describe("DesignThinkingSummary", () => {
   it("renders expected sections in order with sync error", () => {
@@ -63,7 +63,7 @@ describe("DesignThinkingSummary", () => {
       />
     );
 
-    const challengeHeading = screen.getByRole("heading", { name: /définition du défi/i });
+    const challengeHeading = screen.getByRole("heading", { name: /sujet de l'atelier/i });
     const empathyHeading = screen.getByRole("heading", { name: /prises de notes \(empathie\)/i });
     const problemHeading = screen.getByRole("heading", { name: /problématique/i });
     const ideasHeading = screen.getByRole("heading", { name: /meilleures idées/i });

@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import SixHatsSummary from "../../../../src/pages/workshops/six-hats/SixHatsSummary.jsx";
+import SixHatsSummary from "../../../../src/pages/workshops/six-hats/Summary.jsx";
 
 describe("SixHatsSummary", () => {
   it("renders summary content and hides empty list items", () => {
@@ -28,7 +28,8 @@ describe("SixHatsSummary", () => {
 
     expect(screen.getByText("Session Six Hats")).toBeInTheDocument();
     expect(screen.getByText(/sync issue/i)).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /sujet initial/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /sujet de l'atelier/i })).toBeInTheDocument();
+    expect(screen.getByText(/sujet initial/i)).toBeInTheDocument();
     expect(screen.getByText("Fait 1")).toBeInTheDocument();
     expect(screen.queryByText(/^-\s*$/)).not.toBeInTheDocument();
     expect(screen.getByText(/conclusion finale/i)).toBeInTheDocument();

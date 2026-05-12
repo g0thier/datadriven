@@ -27,7 +27,7 @@ describe("design-thinking steps", () => {
       />
     );
 
-    await user.type(screen.getByPlaceholderText(/écrivez votre description ici/i), "Défi");
+    await user.type(screen.getByPlaceholderText(/écrivez ici/i), "Défi");
     expect(setStep1Description).toHaveBeenCalled();
   });
 

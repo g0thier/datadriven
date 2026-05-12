@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
-import WorldCoffeeSummary from "../../../../src/pages/workshops/world-coffee/WorldCoffeeSummary.jsx";
+import WorldCoffeeSummary from "../../../../src/pages/workshops/world-coffee/Summary.jsx";
 
 describe("WorldCoffeeSummary", () => {
   it("renders summary header and restitution content", async () => {

@@ -102,7 +102,7 @@ describe("useSpeedBoatCollaboration", () => {
 
   it("stays disabled for non speed-boat workshop", async () => {
     const { default: useSpeedBoatCollaboration } = await import(
-      "../../../../src/pages/workshops/speed-boat/useSpeedBoatCollaboration.js"
+      "../../../../src/pages/workshops/speed-boat/useCollaboration.js"
     );
 
     const hook = await renderHook(() =>
@@ -115,7 +115,7 @@ describe("useSpeedBoatCollaboration", () => {
 
   it("hydrates state and executes actions", async () => {
     const { default: useSpeedBoatCollaboration } = await import(
-      "../../../../src/pages/workshops/speed-boat/useSpeedBoatCollaboration.js"
+      "../../../../src/pages/workshops/speed-boat/useCollaboration.js"
     );
 
     const hook = await renderHook(() =>
@@ -185,7 +185,7 @@ describe("useSpeedBoatCollaboration", () => {
     );
 
     const { default: useSpeedBoatCollaboration } = await import(
-      "../../../../src/pages/workshops/speed-boat/useSpeedBoatCollaboration.js"
+      "../../../../src/pages/workshops/speed-boat/useCollaboration.js"
     );
 
     const hook = await renderHook(() =>

@@ -29,8 +29,8 @@ vi.mock("../../../src/pages/workshops/useStepTimeline.js", () => ({
   useStepTimeline: () => timelineState,
 }));
 
-vi.mock("../../../src/pages/workshops/paper-brain/usePaperBrainCollaboration.js", () => ({
-  usePaperBrainCollaboration: () => ({ notes: [] }),
+vi.mock("../../../src/pages/workshops/paper-brain/useCollaboration.js", () => ({
+  useCollaboration: () => ({ notes: [] }),
 }));
 
 vi.mock("../../../src/pages/workshops/StepTime.jsx", () => ({ default: () => <div>STEP_TIME</div> }));

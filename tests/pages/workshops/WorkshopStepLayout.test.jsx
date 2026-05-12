@@ -6,7 +6,11 @@ import WorkshopStepLayout from "../../../src/pages/workshops/WorkshopStepLayout.
 describe("WorkshopStepLayout", () => {
   it("renders title, step label, description and children", () => {
     render(
-      <WorkshopStepLayout title="Atelier" stepLabel="Step 1" description={["A", "B"]}>
+      <WorkshopStepLayout
+        title="Atelier"
+        stepLabel="Step 1"
+        description={[{ type: "paragraph", text: "A" }]}
+      >
         <div>CONTENT</div>
       </WorkshopStepLayout>
     );

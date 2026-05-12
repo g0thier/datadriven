@@ -68,8 +68,8 @@ describe("mindMapping.results", () => {
     });
 
     expect(ranked).toHaveLength(1);
-    expect(ranked[0].fromNoteText).toBe("Note supprimee");
-    expect(ranked[0].fromIdeaText).toBe("Idee supprimee");
+    expect(ranked[0].fromNoteText).toBe("Note supprimée");
+    expect(ranked[0].fromIdeaText).toBe("Idée supprimée");
     expect(ranked[0].conceptText).toBe("Concept vide");
   });
 });

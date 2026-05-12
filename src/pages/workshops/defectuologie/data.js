@@ -58,7 +58,7 @@ const description7 = [
   { type: "hint", text: "Objectif : rendre visible la valeur produite." },
 ];
 
-export const defectuologie = {
+const workshop = {
   id: "defectuologie",
   title: "Défectuologie",
   groupSize: "4 personnes et +",
@@ -129,3 +129,5 @@ export const defectuologie = {
     },
   ],
 };
+
+export default workshop;

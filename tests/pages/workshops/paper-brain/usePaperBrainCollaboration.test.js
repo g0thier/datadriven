@@ -86,7 +86,7 @@ describe("usePaperBrainCollaboration", () => {
 
   it("stays disabled for non paper-brain workshop", async () => {
     const { default: usePaperBrainCollaboration } = await import(
-      "../../../../src/pages/workshops/paper-brain/usePaperBrainCollaboration.js"
+      "../../../../src/pages/workshops/paper-brain/useCollaboration.js"
     );
 
     const hook = await renderHook(() =>
@@ -99,7 +99,7 @@ describe("usePaperBrainCollaboration", () => {
 
   it("hydrates state and executes actions", async () => {
     const { default: usePaperBrainCollaboration } = await import(
-      "../../../../src/pages/workshops/paper-brain/usePaperBrainCollaboration.js"
+      "../../../../src/pages/workshops/paper-brain/useCollaboration.js"
     );
 
     const hook = await renderHook(() =>
@@ -155,7 +155,7 @@ describe("usePaperBrainCollaboration", () => {
     );
 
     const { default: usePaperBrainCollaboration } = await import(
-      "../../../../src/pages/workshops/paper-brain/usePaperBrainCollaboration.js"
+      "../../../../src/pages/workshops/paper-brain/useCollaboration.js"
     );
 
     const hook = await renderHook(() =>

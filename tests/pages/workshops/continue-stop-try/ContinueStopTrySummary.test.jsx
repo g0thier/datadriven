@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import ContinueStopTrySummary from "../../../../src/pages/workshops/continue-stop-try/ContinueStopTrySummary.jsx";
+import ContinueStopTrySummary from "../../../../src/pages/workshops/continue-stop-try/Summary.jsx";
 
 describe("ContinueStopTrySummary", () => {
   it("renders challenge, voted notes and sync error", () => {
@@ -41,9 +41,8 @@ describe("ContinueStopTrySummary", () => {
 
     expect(screen.getByText("Session CST")).toBeInTheDocument();
     expect(screen.getByText(/sync issue/i)).toBeInTheDocument();
-    expect(screen.getByText(/demande formul/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /sujet de l'atelier/i })).toBeInTheDocument();
     expect(screen.getByText(/daily court/i)).toBeInTheDocument();
     expect(screen.getByText(/meetings trop longues/i)).toBeInTheDocument();
   });
 });
-

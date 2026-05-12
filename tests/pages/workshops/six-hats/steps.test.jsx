@@ -24,7 +24,7 @@ describe("six-hats steps", () => {
       />
     );
 
-    await user.type(screen.getByPlaceholderText(/ecrivez votre sujet/i), "Sujet");
+    await user.type(screen.getByPlaceholderText(/écrivez ici/i), "Sujet");
     expect(setStep1Description).toHaveBeenCalled();
   });
 
@@ -101,7 +101,7 @@ describe("six-hats steps", () => {
     expect(screen.getAllByText(/chapeau bleu/i).length).toBeGreaterThan(0);
 
     await user.type(
-      screen.getByPlaceholderText(/synthese finale, decisions et prochaines actions/i),
+      screen.getByPlaceholderText(/synthèse finale, décisions et prochaines actions/i),
       "Decision"
     );
     expect(setBlueConclusion).toHaveBeenCalled();

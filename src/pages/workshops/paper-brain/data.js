@@ -50,14 +50,14 @@ const description5 = [
  *
  * @type {Object}
  * @example
- * import { paperBrain } from "./paper-brain/data.js";
+ * import paperBrain from "./paper-brain/data.js";
  *
  * // Real usage references:
  * // - src/pages/workshops/index.js (WORKSHOPS["paper-brain"])
  * // - src/pages/workshops/paper-brain/data.js (steps use Step1..Step5 components)
  * const stepComponent = paperBrain.steps[0].component;
  */
-export const paperBrain = {
+const workshop = {
   id: "paper-brain",
   title: "Paper Brain",
   groupSize: "3 à 8 personnes",
@@ -106,3 +106,5 @@ export const paperBrain = {
     },
   ],
 };
+
+export default workshop;

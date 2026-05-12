@@ -2,7 +2,7 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import DefectuologieSummary from "../../../../src/pages/workshops/defectuologie/DefectuologieSummary.jsx";
+import DefectuologieSummary from "../../../../src/pages/workshops/defectuologie/Summary.jsx";
 
 describe("DefectuologieSummary", () => {
   it("renders challenge, subgroup results and sync error", () => {
@@ -28,9 +28,8 @@ describe("DefectuologieSummary", () => {
 
     expect(screen.getByText("Session Defectuologie")).toBeInTheDocument();
     expect(screen.getByText(/sync issue/i)).toBeInTheDocument();
-    expect(screen.getByText(/demande formul/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /sujet de l'atelier/i })).toBeInTheDocument();
     expect(screen.getByText(/attente trop longue/i)).toBeInTheDocument();
     expect(screen.getByText(/file virtuelle/i)).toBeInTheDocument();
   });
 });
-

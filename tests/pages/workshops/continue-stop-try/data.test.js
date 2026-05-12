@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { continueArreteTente } from "../../../../src/pages/workshops/continue-stop-try/data.js";
+import continueArreteTente from "../../../../src/pages/workshops/continue-stop-try/data.js";
 
 describe("continue-stop-try/data", () => {
   it("exports workshop metadata with valid steps", () => {

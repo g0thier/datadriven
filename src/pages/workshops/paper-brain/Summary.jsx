@@ -20,7 +20,7 @@ const EMPTY_ARRAY = Object.freeze([]);
  * @returns {JSX.Element} The rendered Paper Brain summary.
  *
  * @example
- * import PaperBrainSummary from "./paper-brain/PaperBrainSummary.jsx";
+ * import PaperBrainSummary from "./paper-brain/Summary.jsx";
  *
  * // Real usage reference: src/pages/workshops/WorkshopSummaryPage.jsx
  * <PaperBrainSummary sessionTitle={sessionTitle} collaboration={collaboration} />;

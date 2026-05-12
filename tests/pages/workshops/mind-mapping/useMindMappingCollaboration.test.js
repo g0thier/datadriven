@@ -93,7 +93,7 @@ describe("useMindMappingCollaboration", () => {
 
   it("stays disabled for non mind-mapping workshop", async () => {
     const { default: useMindMappingCollaboration } = await import(
-      "../../../../src/pages/workshops/mind-mapping/useMindMappingCollaboration.js"
+      "../../../../src/pages/workshops/mind-mapping/useCollaboration.js"
     );
 
     const hook = await renderHook(() =>
@@ -106,7 +106,7 @@ describe("useMindMappingCollaboration", () => {
 
   it("hydrates state and executes actions", async () => {
     const { default: useMindMappingCollaboration } = await import(
-      "../../../../src/pages/workshops/mind-mapping/useMindMappingCollaboration.js"
+      "../../../../src/pages/workshops/mind-mapping/useCollaboration.js"
     );
 
     const hook = await renderHook(() =>
@@ -181,7 +181,7 @@ describe("useMindMappingCollaboration", () => {
     );
 
     const { default: useMindMappingCollaboration } = await import(
-      "../../../../src/pages/workshops/mind-mapping/useMindMappingCollaboration.js"
+      "../../../../src/pages/workshops/mind-mapping/useCollaboration.js"
     );
 
     const hook = await renderHook(() =>

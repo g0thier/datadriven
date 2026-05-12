@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sixChapeauxBono } from "../../../../src/pages/workshops/six-hats/data.js";
+import sixChapeauxBono from "../../../../src/pages/workshops/six-hats/data.js";
 
 describe("six-hats/data", () => {
   it("exports workshop metadata with valid steps", () => {
