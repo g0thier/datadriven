@@ -155,6 +155,7 @@ export default function Step2({ step, sessionTitle, collaboration }) {
                             collaboration?.actions?.clearFacilitator?.(description.id);
                           }}
                           className="shrink-0 rounded-full border border-violet-200 bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-700 hover:bg-violet-200 transition"
+                          aria-label={`Retirer ${getParticipantDisplayName(facilitator)} de ce sujet`}
                           title={`Retirer ${getParticipantDisplayName(facilitator)} de ce sujet`}
                         >
                           {getParticipantInitials(facilitator)}
@@ -187,6 +188,7 @@ export default function Step2({ step, sessionTitle, collaboration }) {
                                   );
                                 }}
                                 className="shrink-0 rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:border-violet-300 hover:text-violet-700 transition"
+                                aria-label={`Affecter ${participantName} à ce sujet`}
                                 title={participantName}
                               >
                                 {getParticipantInitials(participant)}
