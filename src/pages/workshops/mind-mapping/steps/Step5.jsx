@@ -380,8 +380,6 @@ function Step5({ step, sessionTitle, collaboration }) {
                     onClick={(event) => event.stopPropagation()}
                   >
                     <div
-                      role="button"
-                      tabIndex={0}
                       className={`relative border rounded-lg shadow-sm p-2 min-h-30 transition ${
                         isDisabled
                           ? "bg-orange-50 border-orange-200"
@@ -389,12 +387,6 @@ function Step5({ step, sessionTitle, collaboration }) {
                       }`}
                       title="Cliquer pour ajouter/retirer une gommette"
                       onClick={() => toggleConceptVote(curve.concept.id, hasMine)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          toggleConceptVote(curve.concept.id, hasMine);
-                        }
-                      }}
                     >
                       <div className="absolute top-1.5 right-1.5 flex items-center gap-1">
                         <div

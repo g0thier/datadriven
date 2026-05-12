@@ -264,8 +264,6 @@ function DraggableColumnBoard({
           >
             <div
               className={`relative rounded-lg shadow-md p-4 min-h-28 ${column.noteBgClass}`}
-              role="button"
-              tabIndex={0}
               onPointerDown={(event) => onPointerDown(event, note.id)}
               data-x={note.displayPosition.x}
               data-y={note.displayPosition.y}

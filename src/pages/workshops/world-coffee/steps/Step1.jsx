@@ -97,7 +97,7 @@ export default function Step1({ sessionTitle, step, collaboration }) {
                         delete descriptionInputRefs.current[description.id];
                       }}
                       className="w-full bg-transparent focus:outline-none text-gray-800 text-sm pr-5"
-                      placeholder="Décrire le sujet..."
+                      placeholder="Écrivez ici..."
                       value={description.text || ""}
                       onChange={(event) => updateDescription(description.id, event.target.value)}
                     />

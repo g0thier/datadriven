@@ -92,15 +92,7 @@ export default function Step5({ step, sessionTitle, collaboration }) {
                             ? "bg-gray-50 border-slate-200"
                             : "bg-white border-slate-300 cursor-pointer hover:border-violet-300"
                         }`}
-                        role="button"
-                        tabIndex={0}
                         onClick={() => toggleVote(solution.id, hasMine)}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            toggleVote(solution.id, hasMine);
-                          }
-                        }}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <p className="text-gray-700 text-sm whitespace-pre-wrap flex-1">

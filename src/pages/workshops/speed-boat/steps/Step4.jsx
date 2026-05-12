@@ -306,8 +306,6 @@ export default function Step4({ step, sessionTitle, collaboration }) {
                 >
                   <div
                     className="relative bg-red-100 rounded-lg shadow-md p-4"
-                    role="button"
-                    tabIndex={0}
                     onPointerDown={(event) => onPointerDown(event, note.id)}
                     data-x={note.displayPosition.x}
                     data-y={note.displayPosition.y}

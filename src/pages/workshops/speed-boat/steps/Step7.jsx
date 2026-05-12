@@ -174,16 +174,8 @@ export default function Step7({ step, sessionTitle, collaboration }) {
                       className={`relative rounded-lg shadow-md p-4 ${
                         isDisabled ? "bg-red-50" : "bg-red-100 cursor-pointer"
                       }`}
-                      role="button"
-                      tabIndex={0}
                       title="Cliquer pour ajouter/retirer une gommette"
                       onClick={() => toggleSticker(note.id, hasMine)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          toggleSticker(note.id, hasMine);
-                        }
-                      }}
                     >
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <span className="text-xs text-gray-500"></span>
