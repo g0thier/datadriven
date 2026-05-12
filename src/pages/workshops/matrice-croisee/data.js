@@ -14,36 +14,33 @@ import Step4 from "./steps/Step4.jsx";
 import Step5 from "./steps/Step5.jsx";
 
 const description1 = [
-  "Le facilitateur présente le défi.",
-  "Il explique les axes de réflexion (ex : cible, usage, technologie).",
-  "👉 L’objectif est de cadrer la problématique."
+  { type: "paragraph", text: "Le facilitateur présente le défi." },
+  { type: "paragraph", text: "Il explique les axes de réflexion (ex : cible, usage, technologie)." },
+  { type: "hint", text: "L’objectif est de cadrer la problématique." },
 ];
 
 const description2 = [
-  "Le groupe construit une matrice à partir des axes définis.",
-  "Chaque axe contient plusieurs variables.",
-  "👉 Exemple : enfants / adultes / seniors."
+  { type: "paragraph", text: "Le groupe construit une matrice à partir des axes définis." },
+  { type: "paragraph", text: "Chaque axe contient plusieurs variables." },
+  { type: "hint", text: "Exemple : enfants / adultes / seniors." },
 ];
 
 const description3 = [
-  "Les participants combinent les éléments de la matrice.",
-  "Chaque combinaison génère une idée.",
-  "👉 Objectif : produire un maximum d’idées."
+  { type: "paragraph", text: "Les participants combinent les éléments de la matrice." },
+  { type: "paragraph", text: "Chaque combinaison génère une idée." },
+  { type: "hint", text: "Objectif : produire un maximum d’idées." },
 ];
 
 const description4 = [
-  "Le groupe sélectionne une idée prometteuse.",
-  "Critères : impact, faisabilité, originalité.",
-  "👉 Le facilitateur veille au timing."
+  { type: "paragraph", text: "Le groupe sélectionne une idée prometteuse." },
+  { type: "paragraph", text: "Critères : impact, faisabilité, originalité." },
+  { type: "hint", text: "Le facilitateur veille au timing." },
 ];
 
 const description5 = [
-  "L’idée est développée :",
-  "- Nom",
-  "- Usage",
-  "- Bénéfices",
-  "- Cible",
-  "👉 On transforme l’idée en concept."
+  { type: "paragraph", text: "L’idée est développée :" },
+  { type: "list", items: ["Nom", "Usage", "Bénéfices", "Cible"] },
+  { type: "hint", text: "On transforme l’idée en concept." },
 ];
 
 export const matriceCroisee = {

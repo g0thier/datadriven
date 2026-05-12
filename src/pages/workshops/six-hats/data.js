@@ -17,45 +17,45 @@ import Step6 from "./steps/Step6.jsx";
 import Step7 from "./steps/Step7.jsx";
 
 const description1 = [
-  "Le facilitateur présente le sujet ou le problème à traiter.",
-  "Il explique les règles de la méthode des six chapeaux.",
-  "👉 Le groupe comprend qu’il faut explorer une seule posture de réflexion à la fois."
+  { type: "paragraph", text: "Le facilitateur présente le sujet ou le problème à traiter." },
+  { type: "paragraph", text: "Il explique les règles de la méthode des six chapeaux." },
+  { type: "hint", text: "Le groupe comprend qu’il faut explorer une seule posture de réflexion à la fois." },
 ];
 
 const description2 = [
-  "Le groupe adopte le chapeau blanc.",
-  "On partage les faits, les données disponibles et les informations manquantes.",
-  "👉 Objectif : partir d’une base factuelle."
+  { type: "paragraph", text: "Le groupe adopte le chapeau blanc." },
+  { type: "paragraph", text: "On partage les faits, les données disponibles et les informations manquantes." },
+  { type: "hint", text: "Objectif : partir d’une base factuelle." },
 ];
 
 const description3 = [
-  "Le groupe adopte le chapeau rouge.",
-  "Chacun exprime librement ses ressentis, intuitions ou perceptions.",
-  "👉 Objectif : faire émerger la dimension émotionnelle du sujet."
+  { type: "paragraph", text: "Le groupe adopte le chapeau rouge." },
+  { type: "paragraph", text: "Chacun exprime librement ses ressentis, intuitions ou perceptions." },
+  { type: "hint", text: "Objectif : faire émerger la dimension émotionnelle du sujet." },
 ];
 
 const description4 = [
-  "Le groupe adopte le chapeau noir.",
-  "On identifie les risques, les limites, les objections et les points de vigilance.",
-  "👉 Objectif : tester la robustesse des idées."
+  { type: "paragraph", text: "Le groupe adopte le chapeau noir." },
+  { type: "paragraph", text: "On identifie les risques, les limites, les objections et les points de vigilance." },
+  { type: "hint", text: "Objectif : tester la robustesse des idées." },
 ];
 
 const description5 = [
-  "Le groupe adopte le chapeau jaune.",
-  "On met en avant les bénéfices, les opportunités et les éléments positifs.",
-  "👉 Objectif : révéler le potentiel de la proposition."
+  { type: "paragraph", text: "Le groupe adopte le chapeau jaune." },
+  { type: "paragraph", text: "On met en avant les bénéfices, les opportunités et les éléments positifs." },
+  { type: "hint", text: "Objectif : révéler le potentiel de la proposition." },
 ];
 
 const description6 = [
-  "Le groupe adopte le chapeau vert.",
-  "On cherche des idées nouvelles, des alternatives et des pistes créatives.",
-  "👉 Objectif : ouvrir largement le champ des possibles."
+  { type: "paragraph", text: "Le groupe adopte le chapeau vert." },
+  { type: "paragraph", text: "On cherche des idées nouvelles, des alternatives et des pistes créatives." },
+  { type: "hint", text: "Objectif : ouvrir largement le champ des possibles." },
 ];
 
 const description7 = [
-  "Le groupe adopte le chapeau bleu.",
-  "Le facilitateur synthétise les échanges et organise la suite.",
-  "👉 Objectif : conclure, décider et aligner le groupe."
+  { type: "paragraph", text: "Le groupe adopte le chapeau bleu." },
+  { type: "paragraph", text: "Le facilitateur synthétise les échanges et organise la suite." },
+  { type: "hint", text: "Objectif : conclure, décider et aligner le groupe." },
 ];
 
 export const sixChapeauxBono = {

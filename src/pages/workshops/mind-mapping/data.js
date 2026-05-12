@@ -16,39 +16,39 @@ import Step5 from "./steps/Step5.jsx";
 import Step6 from "./steps/Step6.jsx";
 
 const description1 = [
-  "Le facilitateur définit le sujet central.",
-  "Il est placé au centre de la feuille ou du tableau.",
-  "👉 Exemple : un produit, un service ou un problème à résoudre."
+  { type: "paragraph", text: "Le facilitateur définit le sujet central." },
+  { type: "paragraph", text: "Il est placé au centre de la feuille ou du tableau." },
+  { type: "hint", text: "Exemple : un produit, un service ou un problème à résoudre." },
 ];
 
 const description2 = [
-  "Le groupe identifie les grandes catégories liées au sujet.",
-  "Ces catégories deviennent les branches principales.",
-  "👉 Exemple : usages, cibles, caractéristiques."
+  { type: "paragraph", text: "Le groupe identifie les grandes catégories liées au sujet." },
+  { type: "paragraph", text: "Ces catégories deviennent les branches principales." },
+  { type: "hint", text: "Exemple : usages, cibles, caractéristiques." },
 ];
 
 const description3 = [
-  "Chaque branche est développée en sous-branches.",
-  "On ajoute des idées, des fonctionnalités ou des variantes.",
-  "👉 Objectif : enrichir la réflexion."
+  { type: "paragraph", text: "Chaque branche est développée en sous-branches." },
+  { type: "paragraph", text: "On ajoute des idées, des fonctionnalités ou des variantes." },
+  { type: "hint", text: "Objectif : enrichir la réflexion." },
 ];
 
 const description4 = [
-  "Le groupe explore des pistes créatives.",
-  "On cherche des associations, des idées originales ou inattendues.",
-  "👉 Objectif : générer de nouvelles opportunités."
+  { type: "paragraph", text: "Le groupe explore des pistes créatives." },
+  { type: "paragraph", text: "On cherche des associations, des idées originales ou inattendues." },
+  { type: "hint", text: "Objectif : générer de nouvelles opportunités." },
 ];
 
 const description5 = [
-  "Le groupe sélectionne les idées les plus pertinentes.",
-  "Critères : impact, faisabilité, originalité.",
-  "👉 Objectif : converger vers une piste forte."
+  { type: "paragraph", text: "Le groupe sélectionne les idées les plus pertinentes." },
+  { type: "paragraph", text: "Critères : impact, faisabilité, originalité." },
+  { type: "hint", text: "Objectif : converger vers une piste forte." },
 ];
 
 const description6 = [
-  "La carte mentale est synthétisée.",
-  "On transforme les idées en concept structuré.",
-  "👉 Objectif : passer à une solution exploitable."
+  { type: "paragraph", text: "La carte mentale est synthétisée." },
+  { type: "paragraph", text: "On transforme les idées en concept structuré." },
+  { type: "hint", text: "Objectif : passer à une solution exploitable." },
 ];
 
 export const mindMapping = {

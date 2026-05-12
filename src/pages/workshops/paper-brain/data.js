@@ -15,39 +15,34 @@ import Step4 from "./steps/Step4.jsx";
 import Step5 from "./steps/Step5.jsx";
 
 const description1 = [
-    "Le facilitateur pose une question claire, souvent formulée en « Comment pourrions-nous… ? »",
-    "Exemples :",
-    "- Comment pourrions-nous améliorer l’expérience des télétravailleurs ?",
-    "- Comment pourrions-nous réduire les irritants d’un parcours client ?",
-    "- Comment pourrions-nous inventer un produit antistress pour cadres en burn-out ?",
-    "👉 La question doit être précise mais ouverte."
+  { type: "paragraph", text: "Le facilitateur pose une question claire, souvent formulée en « Comment pourrions-nous… ? »" },
+  { type: "paragraph", text: "Exemples :" },
+  { type: "list", items: ["Comment pourrions-nous améliorer l’expérience des télétravailleurs ?", "Comment pourrions-nous réduire les irritants d’un parcours client ?", "Comment pourrions-nous inventer un produit antistress pour cadres en burn-out ?"] },
+  { type: "hint", text: "La question doit être précise mais ouverte." },
 ];
 
 const description2 = [
-    "Chaque participant note ses idées :",
-    "- Une idée par post-it",
-    "- Sans discussion, ni autocensure",
-    "Objectifs : éviter l’influence, libérer les introvertis et favoriser l’originalité."
+  { type: "paragraph", text: "Chaque participant note ses idées :" },
+  { type: "list", items: ["Une idée par post-it", "Sans discussion, ni autocensure"] },
+  { type: "hint", text: "Objectifs : éviter l’influence, libérer les introvertis et favoriser l’originalité." },
 ];
 
 const description3 = [
-    "Les feuilles circulent entre les participants.",
-    "Chacun lit, complète, améliore, combine et ajoute des idées.",
-    "👉 On construit sur les idées existantes.",
-    "La richesse collective émerge."
+  { type: "paragraph", text: "Les feuilles circulent entre les participants." },
+  { type: "paragraph", text: "Chacun lit, complète, améliore, combine et ajoute des idées." },
+  { type: "hint", text: "On construit sur les idées existantes." },
+  { type: "paragraph", text: "La richesse collective émerge." },
 ];
 
 const description4 = [
-    "Le groupe met les idées en commun :",
-    "- Les post-it sont affichés au mur",
-    "- Les idées similaires sont regroupées",
-    "- Les participants peuvent clarifier certaines propositions",
-    "👉 L’objectif est d’organiser et comprendre les idées, sans les juger."
+  { type: "paragraph", text: "Le groupe met les idées en commun :" },
+  { type: "list", items: ["Les post-it sont affichés au mur", "Les idées similaires sont regroupées", "Les participants peuvent clarifier certaines propositions"] },
+  { type: "hint", text: "L’objectif est d’organiser et comprendre les idées, sans les juger." },
 ];
 
 const description5 = [
-    "On utilise ici un vote à gommettes",
-    "Objectif : transformer la créativité en innovation exploitable."
+  { type: "paragraph", text: "On utilise ici un vote à gommettes" },
+  { type: "paragraph", text: "Objectif : transformer la créativité en innovation exploitable." },
 ];
 
 /**

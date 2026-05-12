@@ -17,45 +17,45 @@ import Step6 from "./steps/Step6.jsx";
 import Step7 from "./steps/Step7.jsx";
 
 const description1 = [
-  "Le facilitateur prépare plusieurs tables thématiques.",
-  "Chaque table correspond à un sujet précis.",
-  "👉 Objectif : structurer l’atelier autour de plusieurs conversations parallèles."
+  { type: "paragraph", text: "Le facilitateur prépare plusieurs tables thématiques." },
+  { type: "paragraph", text: "Chaque table correspond à un sujet précis." },
+  { type: "hint", text: "Objectif : structurer l’atelier autour de plusieurs conversations parallèles." },
 ];
 
 const description2 = [
-  "Un facilitateur fixe est désigné pour chaque table.",
-  "Il reste à sa place pendant toute la durée de l’atelier.",
-  "👉 Objectif : assurer la continuité des échanges à chaque rotation."
+  { type: "paragraph", text: "Un facilitateur fixe est désigné pour chaque table." },
+  { type: "paragraph", text: "Il reste à sa place pendant toute la durée de l’atelier." },
+  { type: "hint", text: "Objectif : assurer la continuité des échanges à chaque rotation." },
 ];
 
 const description3 = [
-  "Un premier groupe rejoint chaque table pour un temps d’échange.",
-  "Les participants notent leurs idées directement sur la nappe ou le paperboard.",
-  "👉 En fin de séquence, le groupe retient 3 idées clés."
+  { type: "paragraph", text: "Un premier groupe rejoint chaque table pour un temps d’échange." },
+  { type: "paragraph", text: "Les participants notent leurs idées directement sur la nappe ou le paperboard." },
+  { type: "hint", text: "En fin de séquence, le groupe retient 3 idées clés." },
 ];
 
 const description4 = [
-  "Les groupes tournent vers une nouvelle table.",
-  "Le facilitateur rappelle le thème et les idées déjà produites.",
-  "👉 Le nouveau groupe enrichit les premières pistes."
+  { type: "paragraph", text: "Les groupes tournent vers une nouvelle table." },
+  { type: "paragraph", text: "Le facilitateur rappelle le thème et les idées déjà produites." },
+  { type: "hint", text: "Le nouveau groupe enrichit les premières pistes." },
 ];
 
 const description5 = [
-  "Une nouvelle rotation permet d’approfondir encore les idées.",
-  "Le groupe détaille les propositions et commence à les rendre plus opérationnelles.",
-  "👉 Objectif : passer d’idées générales à des pistes d’action."
+  { type: "paragraph", text: "Une nouvelle rotation permet d’approfondir encore les idées." },
+  { type: "paragraph", text: "Le groupe détaille les propositions et commence à les rendre plus opérationnelles." },
+  { type: "hint", text: "Objectif : passer d’idées générales à des pistes d’action." },
 ];
 
 const description6 = [
-  "Les groupes reviennent à leur table d’origine.",
-  "Ils découvrent comment les idées ont évolué au fil des rotations.",
-  "👉 Objectif : synthétiser le travail collectif."
+  { type: "paragraph", text: "Les groupes reviennent à leur table d’origine." },
+  { type: "paragraph", text: "Ils découvrent comment les idées ont évolué au fil des rotations." },
+  { type: "hint", text: "Objectif : synthétiser le travail collectif." },
 ];
 
 const description7 = [
-  "Chaque table restitue ses idées et ses pistes d’action en plénière.",
-  "Le groupe partage les enseignements produits pendant l’atelier.",
-  "👉 Objectif : mettre en commun l’intelligence collective."
+  { type: "paragraph", text: "Chaque table restitue ses idées et ses pistes d’action en plénière." },
+  { type: "paragraph", text: "Le groupe partage les enseignements produits pendant l’atelier." },
+  { type: "hint", text: "Objectif : mettre en commun l’intelligence collective." },
 ];
 
 export const worldCafe = {

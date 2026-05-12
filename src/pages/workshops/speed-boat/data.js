@@ -17,51 +17,51 @@ import Step7 from "./steps/Step7.jsx";
 import Step8 from "./steps/Step8.jsx";
 
 const description1 = [
-  "Le facilitateur présente le défi et le support visuel du bateau.",
-  "Le bateau représente l’équipe, le projet ou l’organisation.",
-  "👉 L’objectif est de poser un cadre simple et visuel."
+  { type: "paragraph", text: "Le facilitateur présente le défi et le support visuel du bateau." },
+  { type: "paragraph", text: "Le bateau représente l’équipe, le projet ou l’organisation." },
+  { type: "hint", text: "L’objectif est de poser un cadre simple et visuel." },
 ];
 
 const description2 = [
-  "Le groupe définit la destination du bateau.",
-  "L’île représente l’objectif à atteindre ou la situation souhaitée.",
-  "👉 Objectif : aligner les participants sur la cible."
+  { type: "paragraph", text: "Le groupe définit la destination du bateau." },
+  { type: "paragraph", text: "L’île représente l’objectif à atteindre ou la situation souhaitée." },
+  { type: "hint", text: "Objectif : aligner les participants sur la cible." },
 ];
 
 const description3 = [
-  "Chaque participant identifie les freins qui ralentissent le bateau.",
-  "Une idée par post-it : contraintes, irritants, peurs, obstacles.",
-  "👉 Objectif : faire émerger les ancres du projet."
+  { type: "paragraph", text: "Chaque participant identifie les freins qui ralentissent le bateau." },
+  { type: "paragraph", text: "Une idée par post-it : contraintes, irritants, peurs, obstacles." },
+  { type: "hint", text: "Objectif : faire émerger les ancres du projet." },
 ];
 
 const description4 = [
-  "Le groupe met en commun les freins identifiés.",
-  "Les post-it sont regroupés par grandes catégories.",
-  "👉 Objectif : clarifier les principaux blocages."
+  { type: "paragraph", text: "Le groupe met en commun les freins identifiés." },
+  { type: "paragraph", text: "Les post-it sont regroupés par grandes catégories." },
+  { type: "hint", text: "Objectif : clarifier les principaux blocages." },
 ];
 
 const description5 = [
-  "Le groupe identifie aussi les leviers qui peuvent faire avancer le bateau.",
-  "On cherche les ressources, les atouts et les appuis disponibles.",
-  "👉 Objectif : équilibrer le diagnostic entre freins et moteurs."
+  { type: "paragraph", text: "Le groupe identifie aussi les leviers qui peuvent faire avancer le bateau." },
+  { type: "paragraph", text: "On cherche les ressources, les atouts et les appuis disponibles." },
+  { type: "hint", text: "Objectif : équilibrer le diagnostic entre freins et moteurs." },
 ];
 
 const description6 = [
-  "Le groupe met en commun les leviers identifiés.",
-  "Les post-it sont regroupés par grandes catégories.",
-  "👉 Objectif : clarifier les principaux moteurs d’action."
+  { type: "paragraph", text: "Le groupe met en commun les leviers identifiés." },
+  { type: "paragraph", text: "Les post-it sont regroupés par grandes catégories." },
+  { type: "hint", text: "Objectif : clarifier les principaux moteurs d’action." },
 ];
 
 const description7 = [
-  "Le groupe priorise les freins à traiter.",
-  "Les participants sélectionnent les ancres les plus critiques.",
-  "👉 Objectif : concentrer l’énergie sur les vrais sujets."
+  { type: "paragraph", text: "Le groupe priorise les freins à traiter." },
+  { type: "paragraph", text: "Les participants sélectionnent les ancres les plus critiques." },
+  { type: "hint", text: "Objectif : concentrer l’énergie sur les vrais sujets." },
 ];
 
 const description8 = [
-  "Le groupe transforme les freins prioritaires en actions concrètes.",
-  "Il précise les premières actions, décisions ou étapes à lancer.",
-  "👉 Objectif : passer du constat au plan d’action."
+  { type: "paragraph", text: "Le groupe transforme les freins prioritaires en actions concrètes." },
+  { type: "paragraph", text: "Il précise les premières actions, décisions ou étapes à lancer." },
+  { type: "hint", text: "Objectif : passer du constat au plan d’action." },
 ];
 
 export const speedBoat = {

@@ -17,45 +17,45 @@ import Step6 from "./steps/Step6.jsx";
 import Step7 from "./steps/Step7.jsx";
 
 const description1 = [
-  "Le facilitateur choisit l’objet, le service ou le support à analyser.",
-  "Le sujet doit être concret et partagé par le groupe.",
-  "👉 Objectif : partir d’une base connue par tous."
+  { type: "paragraph", text: "Le facilitateur choisit l’objet, le service ou le support à analyser." },
+  { type: "paragraph", text: "Le sujet doit être concret et partagé par le groupe." },
+  { type: "hint", text: "Objectif : partir d’une base connue par tous." },
 ];
 
 const description2 = [
-  "Le groupe liste tous les défauts, limites ou irritants du sujet.",
-  "Aucune autocensure : tous les problèmes perçus sont utiles.",
-  "👉 Objectif : faire émerger les points de friction."
+  { type: "paragraph", text: "Le groupe liste tous les défauts, limites ou irritants du sujet." },
+  { type: "paragraph", text: "Aucune autocensure : tous les problèmes perçus sont utiles." },
+  { type: "hint", text: "Objectif : faire émerger les points de friction." },
 ];
 
 const description3 = [
-  "Le groupe sélectionne un défaut prioritaire.",
-  "Ce défaut devient le point de départ du travail créatif.",
-  "👉 Objectif : concentrer l’énergie collective sur un vrai problème."
+  { type: "paragraph", text: "Le groupe sélectionne un défaut prioritaire." },
+  { type: "paragraph", text: "Ce défaut devient le point de départ du travail créatif." },
+  { type: "hint", text: "Objectif : concentrer l’énergie collective sur un vrai problème." },
 ];
 
 const description4 = [
-  "Les participants cherchent un maximum de solutions pour résoudre le défaut.",
-  "Les idées peuvent être simples, ambitieuses ou décalées.",
-  "👉 Objectif : entrer en divergence créative."
+  { type: "paragraph", text: "Les participants cherchent un maximum de solutions pour résoudre le défaut." },
+  { type: "paragraph", text: "Les idées peuvent être simples, ambitieuses ou décalées." },
+  { type: "hint", text: "Objectif : entrer en divergence créative." },
 ];
 
 const description5 = [
-  "Le groupe retient la solution la plus prometteuse.",
-  "Critères possibles : impact, utilité, originalité, faisabilité.",
-  "👉 Objectif : converger vers une piste forte."
+  { type: "paragraph", text: "Le groupe retient la solution la plus prometteuse." },
+  { type: "paragraph", text: "Critères possibles : impact, utilité, originalité, faisabilité." },
+  { type: "hint", text: "Objectif : converger vers une piste forte." },
 ];
 
 const description6 = [
-  "La solution choisie est formalisée en concept.",
-  "Le groupe précise le bénéfice, l’usage et la valeur apportée.",
-  "👉 Objectif : transformer une idée en proposition claire."
+  { type: "paragraph", text: "La solution choisie est formalisée en concept." },
+  { type: "paragraph", text: "Le groupe précise le bénéfice, l’usage et la valeur apportée." },
+  { type: "hint", text: "Objectif : transformer une idée en proposition claire." },
 ];
 
 const description7 = [
-  "Chaque groupe présente le défaut initial et la solution imaginée.",
-  "La restitution permet de partager les apprentissages et les concepts.",
-  "👉 Objectif : rendre visible la valeur produite."
+  { type: "paragraph", text: "Chaque groupe présente le défaut initial et la solution imaginée." },
+  { type: "paragraph", text: "La restitution permet de partager les apprentissages et les concepts." },
+  { type: "hint", text: "Objectif : rendre visible la valeur produite." },
 ];
 
 export const defectuologie = {

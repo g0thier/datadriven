@@ -15,36 +15,33 @@ import Step4 from "./steps/Step4.jsx";
 import Step5 from "./steps/Step5.jsx";
 
 const description1 = [
-    "Le facilitateur précise le périmètre : projet, équipe, rituel ou période concernée.",
-    "Trois colonnes sont préparées : on continue, on arrête, on tente.",
-    "👉 Plus le périmètre est clair, plus les contributions seront utiles."
+  { type: "paragraph", text: "Le facilitateur précise le périmètre : projet, équipe, rituel ou période concernée." },
+  { type: "paragraph", text: "Trois colonnes sont préparées : on continue, on arrête, on tente." },
+  { type: "hint", text: "Plus le périmètre est clair, plus les contributions seront utiles." },
 ];
 
 const description2 = [
-    "Chaque participant note ses idées dans les trois colonnes.",
-    "- Une idée par post-it",
-    "- Sans discussion, ni autocensure",
-    "Objectifs : éviter l’influence, libérer les introvertis et favoriser l’originalité."
+  { type: "paragraph", text: "Chaque participant note ses idées dans les trois colonnes." },
+  { type: "list", items: ["Une idée par post-it", "Sans discussion, ni autocensure"] },
+  { type: "paragraph", text: "Objectifs : éviter l’influence, libérer les introvertis et favoriser l’originalité." },
 ];
 
 const description3 = [
-    "Le groupe met les idées en commun :",
-    "- Les post-it sont affichés au mur",
-    "- Les idées similaires sont regroupées",
-    "- Les participants peuvent clarifier certaines propositions",
-    "👉 L’objectif est d’organiser et comprendre les idées, sans les juger."
+  { type: "paragraph", text: "Le groupe met les idées en commun :" },
+  { type: "list", items: ["Les post-it sont affichés au mur", "Les idées similaires sont regroupées", "Les participants peuvent clarifier certaines propositions"] },
+  { type: "hint", text: "L’objectif est d’organiser et comprendre les idées, sans les juger." },
 ];
 
 const description4 = [
-    "Les participants votent pour retenir les éléments les plus importants de chaque colonne.",
-    "On garde quelques priorités maximum pour rester réaliste.",
-    "👉 La simplicité fait la force de l’outil."
+  { type: "paragraph", text: "Les participants votent pour retenir les éléments les plus importants de chaque colonne." },
+  { type: "paragraph", text: "On garde quelques priorités maximum pour rester réaliste." },
+  { type: "hint", text: "La simplicité fait la force de l’outil." },
 ];
 
 const description5 = [
-    "Le groupe transforme les choix en engagements : ce qu’on maintient, ce qu’on stoppe, ce qu’on expérimente.",
-    "On peut associer un responsable et une échéance à chaque point retenu.",
-    "👉 L’atelier devient utile quand il produit une suite visible."
+  { type: "paragraph", text: "Le groupe transforme les choix en engagements : ce qu’on maintient, ce qu’on stoppe, ce qu’on expérimente." },
+  { type: "paragraph", text: "On peut associer un responsable et une échéance à chaque point retenu." },
+  { type: "hint", text: "L’atelier devient utile quand il produit une suite visible." },
 ];
 
 export const continueArreteTente = {

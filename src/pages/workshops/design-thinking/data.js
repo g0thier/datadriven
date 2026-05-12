@@ -19,77 +19,70 @@ import Step9 from "./steps/Step9.jsx";
 import Step10 from "./steps/Step10.jsx";
 
 const description1 = [
-  "Le facilitateur pose une question claire, souvent formulée en « Comment pourrions-nous… ? »",
-  "Exemples :",
-  "- Comment pourrions-nous améliorer l’expérience des utilisateurs ?",
-  "- Comment pourrions-nous réduire les irritants d’un parcours client ?",
-  "- Comment pourrions-nous rendre un service plus simple et plus utile ?",
-  "👉 La question doit être précise mais ouverte."
+  { type: "paragraph", text: "Le facilitateur pose une question claire, souvent formulée en « Comment pourrions-nous… ? »" },
+  { type: "paragraph", text: "Exemples :" },
+  { type: "list", items: ["Comment pourrions-nous améliorer l’expérience des utilisateurs ?", "Comment pourrions-nous réduire les irritants d’un parcours client ?", "Comment pourrions-nous rendre un service plus simple et plus utile ?"] },
+  { type: "hint", text: "La question doit être précise mais ouverte." },
 ];
 
 const description2 = [
-  "L’équipe se met à la place des utilisateurs.",
-  "Objectifs : comprendre leurs besoins, frustrations et comportements réels.",
-  "Méthodes possibles : interviews, observation, immersion terrain.",
-  "👉 On cherche à comprendre avant de proposer des solutions."
+  { type: "paragraph", text: "L’équipe se met à la place des utilisateurs." },
+  { type: "paragraph", text: "Objectifs : comprendre leurs besoins, frustrations et comportements réels." },
+  { type: "paragraph", text: "Méthodes possibles : interviews, observation, immersion terrain." },
+  { type: "hint", text: "On cherche à comprendre avant de proposer des solutions." },
 ];
 
 const description3 = [
-  "Synthèse des apprentissages de la phase d’empathie.",
-  "Identification des problèmes clés et des insights.",
-  "Formulation d’une question claire sous forme de :",
-  "👉 « Comment pourrions-nous… ? »",
-  "Exemple : Comment pourrions-nous améliorer l’expérience des utilisateurs ?"
+  { type: "paragraph", text: "Synthèse des apprentissages de la phase d’empathie." },
+  { type: "paragraph", text: "Identification des problèmes clés et des insights." },
+  { type: "paragraph", text: "Formulation d’une question claire sous forme de :" },
+  { type: "hint", text: "« Comment pourrions-nous… ? »" },
+  { type: "paragraph", text: "Exemple : Comment pourrions-nous améliorer l’expérience des utilisateurs ?" },
 ];
 
 const description4 = [
-  "Chaque participant note ses idées :",
-  "- Une idée par post-it",
-  "- Sans discussion, ni autocensure",
-  "Objectifs : éviter l’influence, libérer les introvertis et favoriser l’originalité."
+  { type: "paragraph", text: "Chaque participant note ses idées :" },
+  { type: "list", items: ["Une idée par post-it", "Sans discussion, ni autocensure"] },
+  { type: "paragraph", text: "Objectifs : éviter l’influence, libérer les introvertis et favoriser l’originalité." },
 ];
 
 const description5 = [
-  "Les feuilles circulent entre les participants.",
-  "Chacun lit, complète, améliore, combine et ajoute des idées.",
-  "👉 On construit sur les idées existantes.",
-  "La richesse collective émerge."
+  { type: "paragraph", text: "Les feuilles circulent entre les participants." },
+  { type: "paragraph", text: "Chacun lit, complète, améliore, combine et ajoute des idées." },
+  { type: "hint", text: "On construit sur les idées existantes." },
+  { type: "paragraph", text: "La richesse collective émerge." },
 ];
 
 const description6 = [
-  "Le groupe met les idées en commun :",
-  "- Les post-it sont affichés au mur",
-  "- Les idées similaires sont regroupées",
-  "- Les participants peuvent clarifier certaines propositions",
-  "👉 L’objectif est d’organiser et comprendre les idées, sans les juger."
+  { type: "paragraph", text: "Le groupe met les idées en commun :" },
+  { type: "list", items: ["Les post-it sont affichés au mur", "Les idées similaires sont regroupées", "Les participants peuvent clarifier certaines propositions"] },
+  { type: "hint", text: "L’objectif est d’organiser et comprendre les idées, sans les juger." },
 ];
 
 const description7 = [
-  "On utilise ici un vote à gommettes",
-  "Objectif : transformer la créativité en innovation exploitable."
+  { type: "paragraph", text: "On utilise ici un vote à gommettes" },
+  { type: "paragraph", text: "Objectif : transformer la créativité en innovation exploitable." },
 ];
 
 const description8 = [
-  "Transformation des idées en solutions concrètes.",
-  "Création de maquettes simples : croquis, storyboard, prototype papier.",
-  "👉 Le but n’est pas la perfection mais la rapidité.",
-  "On rend l’idée tangible pour pouvoir la tester."
+  { type: "paragraph", text: "Transformation des idées en solutions concrètes." },
+  { type: "paragraph", text: "Création de maquettes simples : croquis, storyboard, prototype papier." },
+  { type: "hint", text: "Le but n’est pas la perfection mais la rapidité." },
+  { type: "paragraph", text: "On rend l’idée tangible pour pouvoir la tester." },
 ];
 
 const description9 = [
-  "Test des prototypes auprès des utilisateurs.",
-  "Recueil de feedback :",
-  "- Ce qui fonctionne",
-  "- Ce qui pose problème",
-  "- Ce qui peut être amélioré",
-  "👉 Objectif : apprendre rapidement et améliorer la solution.",
-  "Possibilité d’itérer (V1, V2, V3)."
+  { type: "paragraph", text: "Test des prototypes auprès des utilisateurs." },
+  { type: "paragraph", text: "Recueil de feedback :" },
+  { type: "list", items: ["Ce qui fonctionne", "Ce qui pose problème", "Ce qui peut être amélioré"] },
+  { type: "hint", text: "Objectif : apprendre rapidement et améliorer la solution." },
+  { type: "paragraph", text: "Possibilité d’itérer (V1, V2, V3)." },
 ];
 
 const description10 = [
-  "Le groupe formalise les apprentissages clés de l’atelier.",
-  "Objectif : transformer les retours en décision claire et actionnable.",
-  "👉 Cette conclusion sert de référence pour la prochaine itération."
+  { type: "paragraph", text: "Le groupe formalise les apprentissages clés de l’atelier." },
+  { type: "paragraph", text: "Objectif : transformer les retours en décision claire et actionnable." },
+  { type: "hint", text: "Cette conclusion sert de référence pour la prochaine itération." },
 ];
 
 /**
