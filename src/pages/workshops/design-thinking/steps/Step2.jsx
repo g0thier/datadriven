@@ -97,7 +97,7 @@ export default function Step2({ sessionTitle, step, collaboration }) {
 
       <div className="bg-white rounded-2xl shadow-md p-6">
         {sharedNotes.length === 0 ? (
-          <p className="text-sm text-gray-500">Ajoutez une première prise de note avec le bouton +.</p>
+          <p className="text-sm text-gray-500">Aucune prise de note disponible pour le moment.</p>
         ) : (
           <ul className="space-y-3">
             {sharedNotes.map((note) => (
@@ -127,7 +127,7 @@ export default function Step2({ sessionTitle, step, collaboration }) {
                   <button
                     type="button"
                     onClick={() => removeNote(note.id)}
-                    className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-xs"
+                    className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-sm"
                     aria-label="Supprimer la contribution"
                   >
                     ✕

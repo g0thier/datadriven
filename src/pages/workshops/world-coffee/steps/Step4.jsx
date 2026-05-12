@@ -111,7 +111,7 @@ export default function Step4({ step, sessionTitle, collaboration, session }) {
 
       {descriptionCount > 0 && subgroupCount === 0 && hasUnassignedDescriptions && (
         <p className="mb-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
-          Aucun sous-groupe disponible : assignez d&apos;abord un facilitateur à chaque sujet à l&apos;étape 2.
+          Aucun sous-groupe disponible pour le moment.
         </p>
       )}
 

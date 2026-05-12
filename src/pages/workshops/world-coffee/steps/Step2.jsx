@@ -118,7 +118,7 @@ export default function Step2({ step, sessionTitle, collaboration }) {
 
       {descriptions.length === 0 ? (
         <div className="rounded-2xl bg-white shadow-md p-8 text-center text-gray-500">
-          Aucun sujet disponible. Ajoutez d&apos;abord des sujets à l&apos;étape 1.
+          Aucun sujet disponible pour le moment.
         </div>
       ) : (
         <div className="bg-white rounded-2xl shadow-md p-6">

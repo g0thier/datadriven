@@ -91,7 +91,7 @@ export default function Step4({ step, sessionTitle, collaboration }) {
             </div>
 
             {solutions.length === 0 ? (
-              <p className="text-sm text-gray-500">Ajoutez une première solution avec le bouton +.</p>
+              <p className="text-sm text-gray-500">Aucune solution disponible pour le moment.</p>
             ) : (
               <ul className="list-disc pl-5 space-y-3 marker:text-gray-400">
                 {solutions.map((solution) => {
@@ -120,7 +120,7 @@ export default function Step4({ step, sessionTitle, collaboration }) {
                           <button
                             type="button"
                             onClick={() => removeSolution(solution.id)}
-                            className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-xs"
+                            className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-sm"
                             aria-label="Supprimer la solution"
                           >
                             ✕

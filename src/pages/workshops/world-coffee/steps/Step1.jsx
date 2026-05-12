@@ -79,7 +79,7 @@ export default function Step1({ sessionTitle, step, collaboration }) {
 
       <div className="bg-white rounded-2xl shadow-md p-6">
         {descriptions.length === 0 ? (
-          <p className="text-sm text-gray-500">Ajoutez une première description avec le bouton +.</p>
+          <p className="text-sm text-gray-500">Aucune description disponible pour le moment.</p>
         ) : (
           <ul className="list-disc pl-5 space-y-3 marker:text-gray-400">
             {descriptions.map((description) => {
@@ -105,7 +105,7 @@ export default function Step1({ sessionTitle, step, collaboration }) {
                     <button
                       type="button"
                       onClick={() => removeDescription(description.id)}
-                      className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-xs"
+                      className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-sm"
                       aria-label="Supprimer la description"
                     >
                       ✕

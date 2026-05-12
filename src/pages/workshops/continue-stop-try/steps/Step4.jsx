@@ -178,7 +178,7 @@ function Step4({ step, sessionTitle, collaboration }) {
 
               {columnNotes.length === 0 ? (
                 <div className="rounded-xl border border-slate-200 p-8 text-center text-gray-500 bg-white">
-                  Cette colonne se remplira après l'étape 2.
+                  Aucune note disponible dans cette colonne pour le moment.
                 </div>
               ) : (
                 <div className="w-full overflow-auto rounded-xl border border-slate-200 bg-white">

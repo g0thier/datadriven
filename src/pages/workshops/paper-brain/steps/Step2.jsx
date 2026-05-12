@@ -36,7 +36,7 @@ function Step2({ step, sessionTitle, collaboration, session }) {
   const participantId = collaboration?.participant?.id || "";
   const sessionId = session?.sessionId || session?.id || "";
   const initialNoteKey = `${sessionId}:${participantId}`;
-  const step1Description = String(collaboration?.step1Description || "").trim() || "...";
+  const step1Description = String(collaboration?.step1Description || "").trim() || "Le sujet de l'atelier sera affiché ici dès qu'il sera renseigné.";
 
   const addNote = collaboration?.actions?.addNote;
   const updateNoteText = collaboration?.actions?.updateNoteText;

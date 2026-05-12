@@ -367,7 +367,7 @@ function Step3({ step, sessionTitle, collaboration }) {
                           <button
                             type="button"
                             onClick={() => removeComment(note.id, comment.id)}
-                            className="absolute top-1.5 right-1.5 text-gray-400 hover:text-red-500 text-xs"
+                            className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-xs"
                             aria-label="Supprimer l'idée"
                           >
                             ✕

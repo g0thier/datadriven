@@ -348,7 +348,7 @@ function Step4({ step, sessionTitle, collaboration }) {
                       type="button"
                       onClick={() => handleRemoveConcept(curve.concept.id)}
                       disabled={isLoading}
-                      className="absolute top-1.5 right-1.5 text-gray-400 hover:text-red-500 text-xs disabled:opacity-50"
+                      className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-xs disabled:opacity-50"
                       aria-label="Supprimer le concept"
                     >
                       ✕

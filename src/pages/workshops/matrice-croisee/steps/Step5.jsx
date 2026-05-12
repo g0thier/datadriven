@@ -26,7 +26,7 @@ const getRowPlaceholder = (index) => ROW_PLACEHOLDERS[index] || `Rang ${index + 
 export default function Step5({ step, sessionTitle, collaboration }) {
   const isLoading = Boolean(collaboration?.isLoading);
   const syncError = collaboration?.syncError || "";
-  const step1Description = String(collaboration?.step1Description || "").trim() || "...";
+  const step1Description = String(collaboration?.step1Description || "").trim() || "Le sujet de l'atelier sera affiché ici dès qu'il sera renseigné.";
   const concept = String(collaboration?.concept || "");
   const selectedTopIdea = collaboration?.selectedTopIdea || null;
 

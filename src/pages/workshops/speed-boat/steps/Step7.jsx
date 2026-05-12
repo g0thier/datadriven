@@ -50,8 +50,8 @@ export default function Step7({ step, sessionTitle, collaboration }) {
     : 3;
   const syncError = collaboration?.syncError || "";
 
-  const challenge = String(collaboration?.step1Description || "").trim() || "...";
-  const objective = String(collaboration?.step2Objective || "").trim() || "...";
+  const challenge = String(collaboration?.step1Description || "").trim() || "Le sujet de l'atelier sera affiché ici dès qu'il sera renseigné.";
+  const objective = String(collaboration?.step2Objective || "").trim() || "L'objectif de l'atelier sera affiché ici dès qu'il sera renseigné.";
 
   const [zoom, setZoom] = useState(100);
   const scale = zoom / 100;

@@ -222,7 +222,7 @@ function DraggableColumnBoard({
   if (notes.length === 0) {
     return (
       <div className="rounded-xl border border-slate-200 p-8 text-center text-gray-500 bg-white">
-        Cette colonne se remplira après l'étape 2.
+        Aucune note disponible dans cette colonne pour le moment.
       </div>
     );
   }

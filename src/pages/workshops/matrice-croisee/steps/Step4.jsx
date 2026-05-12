@@ -79,7 +79,7 @@ export default function Step4({ step, sessionTitle, collaboration, session }) {
   const syncError = collaboration?.syncError || "";
   const participantId = collaboration?.participant?.id || "";
   const sessionId = session?.sessionId || session?.id || "";
-  const step1Description = String(collaboration?.step1Description || "").trim() || "...";
+  const step1Description = String(collaboration?.step1Description || "").trim() || "Le sujet de l'atelier sera affiché ici dès qu'il sera renseigné.";
   const remainingVotes = Number.isFinite(collaboration?.remainingVotes)
     ? collaboration.remainingVotes
     : 0;

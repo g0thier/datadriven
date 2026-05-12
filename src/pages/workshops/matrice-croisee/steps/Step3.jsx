@@ -74,7 +74,7 @@ export default function Step3({ step, sessionTitle, collaboration, session }) {
   const syncError = collaboration?.syncError || "";
   const participantId = collaboration?.participant?.id || "";
   const sessionId = session?.sessionId || session?.id || "";
-  const step1Description = String(collaboration?.step1Description || "").trim() || "...";
+  const step1Description = String(collaboration?.step1Description || "").trim() || "Le sujet de l'atelier sera affiché ici dès qu'il sera renseigné.";
 
   const initializeStructure = collaboration?.actions?.initializeStructure;
   const addCellNoteAction = collaboration?.actions?.addCellNote;
@@ -321,7 +321,7 @@ export default function Step3({ step, sessionTitle, collaboration, session }) {
                                         onClick={() =>
                                           removeCellNote(rowItem.id, columnItem.id, note.id)
                                         }
-                                        className="absolute top-1 right-1 text-gray-400 hover:text-red-500 text-xs"
+                                        className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-xs"
                                         aria-label="Supprimer le post-it"
                                       >
                                         ✕
