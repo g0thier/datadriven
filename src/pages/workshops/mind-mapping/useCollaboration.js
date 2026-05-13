@@ -35,19 +35,16 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     sessionGuests,
     participant,
     participantReady,
-    syncError,
-    syncErrorSessionId,
     setSessionError,
     activeState,
-    lastSnapshotSessionId,
+    effectiveIsLoading,
+    effectiveSyncError,
   } = useWorkshopCollaborationCore({
     sessionId,
     session,
     isEnabled,
     subscribeSession: subscribeSession,
     upsertParticipant: upsertParticipant,
-    syncErrorMessage: "Impossible de se synchroniser avec le serveur.",
-    participantErrorMessage: "Impossible d'enregistrer le participant.",
   });
   const rawDescription = String(activeState?.step1?.description || "");
 
@@ -148,8 +145,6 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     remoteParticipants,
     currentParticipant: participant,
     authoredParticipantIds,
-    variant: "default",
-    mergeOrder: ["guests", "remote", "authored", "current"],
   });
 
   const currentParticipantId = participant?.id || "";
@@ -543,10 +538,6 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       updateNoteText,
     ]
   );
-
-  const effectiveSyncError = isEnabled && syncErrorSessionId === sessionId ? syncError : "";
-  const effectiveIsLoading =
-    isEnabled && (!participantReady || (lastSnapshotSessionId !== sessionId && !effectiveSyncError));
 
   return {
     isEnabled,

@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { auth, onAuthStateChangedListener } from "../../firebase";
-import { EMPTY_ARRAY, resolveParticipantIdentity } from "./collaboration.shared.js";
+import {
+  EMPTY_ARRAY,
+  resolveCollaborationStatus,
+  resolveParticipantIdentity,
+} from "./collaboration.shared.js";
 
 const DEFAULT_SYNC_ERROR_MESSAGE = "Impossible de se synchroniser avec le serveur.";
 const DEFAULT_PARTICIPANT_ERROR_MESSAGE = "Impossible d'enregistrer le participant.";
@@ -81,6 +85,14 @@ export function useWorkshopCollaborationCore({
   }, [isEnabled, sessionId, setSessionError, subscribeSession, syncErrorMessage]);
 
   const activeState = isEnabled && lastSnapshotSessionId === sessionId ? state : null;
+  const status = resolveCollaborationStatus({
+    isEnabled,
+    sessionId,
+    participantReady,
+    lastSnapshotSessionId,
+    syncErrorSessionId,
+    syncError,
+  });
 
   useEffect(() => {
     if (!isEnabled || !sessionId || !participantReady || typeof upsertParticipant !== "function") {
@@ -133,5 +145,7 @@ export function useWorkshopCollaborationCore({
     setSessionError,
     activeState,
     lastSnapshotSessionId,
+    effectiveIsLoading: status.isLoading,
+    effectiveSyncError: status.syncError,
   };
 }

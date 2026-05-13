@@ -87,6 +87,25 @@ export const countVotes = (votesMap = EMPTY_OBJECT, validIdsSet = null) => {
   }, 0);
 };
 
+export const resolveCollaborationStatus = ({
+  isEnabled,
+  sessionId,
+  participantReady,
+  lastSnapshotSessionId,
+  syncErrorSessionId,
+  syncError,
+}) => {
+  const effectiveSyncError = isEnabled && syncErrorSessionId === sessionId ? syncError : "";
+  const isLoading =
+    isEnabled &&
+    (!participantReady || (lastSnapshotSessionId !== sessionId && !effectiveSyncError));
+
+  return {
+    isLoading,
+    syncError: effectiveSyncError,
+  };
+};
+
 export const sortByCreatedAt = (a, b) => {
   const createdA = a?.createdAt || "";
   const createdB = b?.createdAt || "";

@@ -228,19 +228,16 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     sessionGuests,
     participant,
     participantReady,
-    syncError,
-    syncErrorSessionId,
     setSessionError,
     activeState,
-    lastSnapshotSessionId,
+    effectiveIsLoading,
+    effectiveSyncError,
   } = useWorkshopCollaborationCore({
     sessionId,
     session,
     isEnabled,
     subscribeSession: subscribeSession,
     upsertParticipant: upsertParticipant,
-    syncErrorMessage: "Impossible de se synchroniser avec le serveur.",
-    participantErrorMessage: "Impossible d'enregistrer le participant.",
   });
 
   const rawDescriptions =
@@ -980,10 +977,6 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       updateDescription,
     ]
   );
-
-  const effectiveSyncError = isEnabled && syncErrorSessionId === sessionId ? syncError : "";
-  const effectiveIsLoading =
-    isEnabled && (!participantReady || (lastSnapshotSessionId !== sessionId && !effectiveSyncError));
 
   return {
     isEnabled,
