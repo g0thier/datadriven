@@ -7,12 +7,12 @@
  */
 
 import paperBrainImg from "../../../assets/workshops/paper-brain.png";
+import DraggableNotes from "../../../components/workshops/DraggableNotes.jsx";
+import RotatingComments from "../../../components/workshops/RotatingComments.jsx";
+import VotingNotes from "../../../components/workshops/VotingNotes.jsx";
 
 import WorkshopChallenge from "../WorkshopChallenge.jsx";
 import Step2 from "./steps/Step2.jsx";
-import Step3 from "./steps/Step3.jsx";
-import Step4 from "./steps/Step4.jsx";
-import Step5 from "./steps/Step5.jsx";
 
 const description1 = [
   { type: "paragraph", text: "Le facilitateur pose une question claire, souvent formulée en « Comment pourrions-nous… ? »" },
@@ -86,22 +86,28 @@ const workshop = {
     {
       label: "Rotation des feuilles",
       duration: 10,
-      component: Step3,
+      component: RotatingComments,
       description: description3,
       audioEnabled: false,
     },
     {
       label: "Mise en commun",
       duration: 15,
-      component: Step4,
+      component: DraggableNotes,
       description: description4,
+      notesField: "notes",
+      setPositionAction: "setNotePosition",
+      showComments: true,
+      noteClassName: "bg-yellow-100",
       audioEnabled: true,
     },
     {
       label: "Sélection / priorisation",
       duration: 10,
-      component: Step5,
+      component: VotingNotes,
       description: description5,
+      notesField: "notes",
+      toggleVoteAction: "toggleVote",
       audioEnabled: true,
     },
   ],

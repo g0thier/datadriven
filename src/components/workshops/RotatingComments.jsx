@@ -1,33 +1,20 @@
-import WorkshopSyncErrorAlert from "../../../../components/workshops/WorkshopSyncErrorAlert.jsx";
 /**
- * @module workshops/paper-brain/steps/Step3
- * @description Paper Brain step 3 screen for note rotation and enrichment.
- * @author Gauthier Rammault
- * @version 1.0.0
- * @license proprietary
+ * @module components/workshops/RotatingComments
+ * @description Shared workshop screen for rotating participant notes and adding comments.
  */
 
 import { useMemo, useState } from "react";
-import WorkshopStepLayout from "../../WorkshopStepLayout.jsx";
+import WorkshopStepLayout from "../../pages/workshops/WorkshopStepLayout.jsx";
+import WorkshopSyncErrorAlert from "./WorkshopSyncErrorAlert.jsx";
 
-/**
- * Renders Paper Brain step 3 (rotation and enrichment).
- *
- * @param {Object} props - Component props.
- * @param {Object} props.step - Step metadata.
- * @param {string} props.sessionTitle - Current session title.
- * @param {Object} props.collaboration - Collaboration state and actions.
- * @returns {JSX.Element} The rendered step 3 screen.
- *
- * @example
- * import Step3 from "./steps/Step3.jsx";
- *
- * // Real usage references:
- * // - src/pages/workshops/paper-brain/data.js
- * // - src/pages/workshops/WorkshopRunner.jsx
- * <Step3 step={step} sessionTitle={sessionTitle} collaboration={collaboration} />;
- */
-function Step3({ step, sessionTitle, collaboration }) {
+const DEFAULT_CHALLENGE_FALLBACK = "Le sujet de l'atelier sera affiché ici dès qu'il sera renseigné.";
+
+function resolveChallengeText({ collaboration, fieldName, fallbackText }) {
+  const value = String(collaboration?.[fieldName] || "").trim();
+  return value || fallbackText;
+}
+
+export default function RotatingComments({ step, sessionTitle, collaboration }) {
   const notes = useMemo(() => collaboration?.notes ?? [], [collaboration?.notes]);
   const commentsByNote = collaboration?.commentsByNote || {};
   const currentParticipantId = collaboration?.participant?.id || "";
@@ -35,9 +22,13 @@ function Step3({ step, sessionTitle, collaboration }) {
   const isLoading = Boolean(collaboration?.isLoading);
   const syncError = collaboration?.syncError || "";
 
-  const challenge =
-    String(collaboration?.description || "").trim() ||
-    "Le défi sera visible ici dès qu'il est défini à l'étape 1.";
+  const challengeField = String(step?.challengeField || "description");
+  const challengeFallback = String(step?.challengeFallback || "").trim() || DEFAULT_CHALLENGE_FALLBACK;
+  const challenge = resolveChallengeText({
+    collaboration,
+    fieldName: challengeField,
+    fallbackText: challengeFallback,
+  });
 
   const participantNotes = useMemo(() => {
     const groupedByParticipant = new Map();
@@ -115,11 +106,7 @@ function Step3({ step, sessionTitle, collaboration }) {
   };
 
   return (
-    <WorkshopStepLayout
-      title={sessionTitle}
-      stepLabel={step.label}
-      description={step.description}
-    >
+    <WorkshopStepLayout title={sessionTitle} stepLabel={step.label} description={step.description}>
       <div className="bg-white rounded-2xl shadow-md p-6 mb-4">
         <p className="text-gray-600 mb-1 text-sm">{challenge}</p>
       </div>
@@ -148,8 +135,7 @@ function Step3({ step, sessionTitle, collaboration }) {
               </p>
             ) : (
               <p className="text-gray-600 text-sm">
-                Notes du participant ({currentParticipantIndex + 1}/
-                {participantNotes.length})
+                Notes du participant ({currentParticipantIndex + 1}/{participantNotes.length})
               </p>
             )}
 
@@ -185,9 +171,7 @@ function Step3({ step, sessionTitle, collaboration }) {
                   <div className="mt-2 space-y-2">
                     {foreignComments.map((comment) => (
                       <div key={comment.id} className="bg-transparent">
-                        <p className="text-violet-500 text-xs whitespace-pre-wrap">
-                          {comment.text}
-                        </p>
+                        <p className="text-violet-500 text-xs whitespace-pre-wrap">{comment.text}</p>
                       </div>
                     ))}
 
@@ -237,5 +221,3 @@ function Step3({ step, sessionTitle, collaboration }) {
     </WorkshopStepLayout>
   );
 }
-
-export default Step3;

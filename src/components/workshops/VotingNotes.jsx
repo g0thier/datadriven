@@ -1,56 +1,41 @@
-import WorkshopSyncErrorAlert from "../../../../components/workshops/WorkshopSyncErrorAlert.jsx";
 /**
- * @module workshops/design-thinking/steps/Step7
- * @description Design Thinking step 7 screen for voting and prioritization.
- * @author Gauthier Rammault
- * @version 1.0.0
- * @license proprietary
+ * @module components/workshops/VotingNotes
+ * @description Shared workshop screen for note prioritization with stickers.
  */
 
 import { useMemo, useState } from "react";
-import WorkshopStepLayout from "../../WorkshopStepLayout.jsx";
+import WorkshopStepLayout from "../../pages/workshops/WorkshopStepLayout.jsx";
+import WorkshopSyncErrorAlert from "./WorkshopSyncErrorAlert.jsx";
+import {
+  buildGridPosition,
+  normalizePosition,
+} from "./workshopBoardGeometry.js";
 
-function buildGridPosition(index = 0) {
-  const col = index % 5;
-  const row = Math.floor(index / 5);
+const CANVAS_WIDTH = 2800;
+const CANVAS_HEIGHT = 1600;
+const DEFAULT_CHALLENGE_FALLBACK = "Le sujet de l'atelier sera affiché ici dès qu'il sera renseigné.";
+const DEFAULT_EMPTY_MESSAGE = "Les contributions apparaîtront ici dès qu'elles seront ajoutées.";
 
-  return {
-    x: 40 + col * 290,
-    y: 40 + row * 220,
-  };
+function resolveChallengeText({ collaboration, fieldName, fallbackText }) {
+  const value = String(collaboration?.[fieldName] || "").trim();
+  return value || fallbackText;
 }
 
-function normalizePosition(position = {}, fallback = buildGridPosition(0)) {
-  const x = Number(position?.x);
-  const y = Number(position?.y);
+export default function VotingNotes({ step, sessionTitle, collaboration }) {
+  const notesField = String(step?.notesField || "notes");
+  const notes = useMemo(() => {
+    const candidate = collaboration?.[notesField];
+    return Array.isArray(candidate) ? candidate : [];
+  }, [collaboration, notesField]);
 
-  return {
-    x: Number.isFinite(x) ? x : fallback.x,
-    y: Number.isFinite(y) ? y : fallback.y,
-  };
-}
-
-/**
- * Renders Design Thinking step 7 (selection and prioritization).
- *
- * @param {Object} props - Component props.
- * @param {Object} props.step - Step metadata.
- * @param {string} props.sessionTitle - Current session title.
- * @param {Object} props.collaboration - Collaboration state and actions.
- * @returns {JSX.Element} The rendered step 7 screen.
- *
- * @example
- * import Step7 from "./steps/Step7.jsx";
- *
- * // Real usage references:
- * // - src/pages/workshops/paper-brain/data.js
- * // - src/pages/workshops/WorkshopRunner.jsx
- * <Step7 step={step} sessionTitle={sessionTitle} collaboration={collaboration} />;
- */
-function Step7({ step, sessionTitle, collaboration }) {
-  const notes = useMemo(() => collaboration?.notes ?? [], [collaboration?.notes]);
-  const commentsByNote = collaboration?.commentsByNote || {};
-  const votesByNote = collaboration?.votesByNote || {};
+  const commentsByNote =
+    collaboration?.commentsByNote && typeof collaboration.commentsByNote === "object"
+      ? collaboration.commentsByNote
+      : {};
+  const votesByNote =
+    collaboration?.votesByNote && typeof collaboration.votesByNote === "object"
+      ? collaboration.votesByNote
+      : {};
 
   const currentParticipantId = collaboration?.participant?.id || "";
   const remainingVotes = Number.isFinite(collaboration?.remainingVotes)
@@ -62,9 +47,18 @@ function Step7({ step, sessionTitle, collaboration }) {
 
   const syncError = collaboration?.syncError || "";
 
-  const challenge =
-    String(collaboration?.problemStatement || "").trim() ||
-    "La problématique sera visible ici dès qu'elle est définie à l'étape 3.";
+  const challengeField = String(step?.challengeField || "description");
+  const challengeFallback = String(step?.challengeFallback || "").trim() || DEFAULT_CHALLENGE_FALLBACK;
+  const challenge = resolveChallengeText({
+    collaboration,
+    fieldName: challengeField,
+    fallbackText: challengeFallback,
+  });
+
+  const gridConfig =
+    step?.gridPositionConfig && typeof step.gridPositionConfig === "object"
+      ? step.gridPositionConfig
+      : {};
 
   const [zoom, setZoom] = useState(100);
   const scale = zoom / 100;
@@ -72,24 +66,21 @@ function Step7({ step, sessionTitle, collaboration }) {
   const notesWithPosition = useMemo(() => {
     return notes.map((note, index) => ({
       ...note,
-      displayPosition: normalizePosition(note.position, buildGridPosition(index)),
+      displayPosition: normalizePosition(note.position, buildGridPosition(index, gridConfig)),
     }));
-  }, [notes]);
+  }, [gridConfig, notes]);
+
+  const toggleVoteActionName = String(step?.toggleVoteAction || "toggleVote");
 
   const toggleSticker = (noteId, hasMine) => {
     if (!hasMine && remainingVotes <= 0) return;
-    collaboration?.actions?.toggleVote?.(noteId);
+    collaboration?.actions?.[toggleVoteActionName]?.(noteId);
   };
 
-  const CANVAS_WIDTH = 2800;
-  const CANVAS_HEIGHT = 1600;
+  const emptyMessage = String(step?.emptyMessage || "").trim() || DEFAULT_EMPTY_MESSAGE;
 
   return (
-    <WorkshopStepLayout
-      title={sessionTitle}
-      stepLabel={step.label}
-      description={step.description}
-    >
+    <WorkshopStepLayout title={sessionTitle} stepLabel={step.label} description={step.description}>
       <div className="bg-white rounded-2xl shadow-md p-6 mb-4">
         <p className="text-gray-600 mb-1 text-sm">{challenge}</p>
       </div>
@@ -131,7 +122,7 @@ function Step7({ step, sessionTitle, collaboration }) {
 
         {notes.length === 0 ? (
           <div className="rounded-xl border border-slate-200 p-8 text-center text-gray-500">
-            Les notes apparaîtront ici dès qu'elles seront créées en étape 4.
+            {emptyMessage}
           </div>
         ) : (
           <div className="w-full overflow-auto rounded-xl border border-slate-200">
@@ -163,8 +154,9 @@ function Step7({ step, sessionTitle, collaboration }) {
                     key={note.id}
                     className="absolute select-none touch-none"
                     style={{
-                      transform: `translate(${note.displayPosition.x * scale}px, ${note.displayPosition.y *
-                        scale}px) scale(${scale})`,
+                      transform: `translate(${note.displayPosition.x * scale}px, ${
+                        note.displayPosition.y * scale
+                      }px) scale(${scale})`,
                       transformOrigin: "top left",
                       width: 260,
                     }}
@@ -182,9 +174,7 @@ function Step7({ step, sessionTitle, collaboration }) {
                         <div className="flex items-center gap-1">
                           <div
                             className={`w-3 h-3 rounded-full ${
-                              hasMine
-                                ? "bg-green-500"
-                                : "bg-transparent border border-green-300"
+                              hasMine ? "bg-green-500" : "bg-transparent border border-green-300"
                             }`}
                             title={hasMine ? "Ta gommette" : "Pas de gommette"}
                           />
@@ -203,7 +193,7 @@ function Step7({ step, sessionTitle, collaboration }) {
                         {note.text || <span className="text-gray-400">—</span>}
                       </p>
 
-                      {!!comments.length && (
+                      {comments.length > 0 ? (
                         <div className="mt-3 space-y-2">
                           {comments.map((comment) => (
                             <div
@@ -216,7 +206,7 @@ function Step7({ step, sessionTitle, collaboration }) {
                             </div>
                           ))}
                         </div>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 );
@@ -228,5 +218,3 @@ function Step7({ step, sessionTitle, collaboration }) {
     </WorkshopStepLayout>
   );
 }
-
-export default Step7;

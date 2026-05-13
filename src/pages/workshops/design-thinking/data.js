@@ -7,13 +7,13 @@
  */
 
 import designThinkingImg from "../../../assets/workshops/design-thinking.png";
+import DraggableNotes from "../../../components/workshops/DraggableNotes.jsx";
+import RotatingComments from "../../../components/workshops/RotatingComments.jsx";
+import VotingNotes from "../../../components/workshops/VotingNotes.jsx";
 import WorkshopChallenge from "../WorkshopChallenge.jsx";
 import Step2 from "./steps/Step2.jsx";
 import Step3 from "./steps/Step3.jsx";
 import Step4 from "./steps/Step4.jsx";
-import Step5 from "./steps/Step5.jsx";
-import Step6 from "./steps/Step6.jsx";
-import Step7 from "./steps/Step7.jsx";
 import Step8 from "./steps/Step8.jsx";
 import Step9 from "./steps/Step9.jsx";
 import Step10 from "./steps/Step10.jsx";
@@ -132,22 +132,31 @@ const workshop = {
     {
       label: "Idéation - rotation des feuilles",
       duration: 10,
-      component: Step5,
+      component: RotatingComments,
       description: description5,
+      challengeField: "problemStatement",
       audioEnabled: false,
     },
     {
       label: "Idéation - mise en commun",
       duration: 15,
-      component: Step6,
+      component: DraggableNotes,
       description: description6,
+      notesField: "notes",
+      setPositionAction: "setNotePosition",
+      showComments: true,
+      noteClassName: "bg-yellow-100",
+      challengeField: "problemStatement",
       audioEnabled: true,
     },
     {
       label: "Idéation - sélection",
       duration: 10,
-      component: Step7,
+      component: VotingNotes,
       description: description7,
+      notesField: "notes",
+      toggleVoteAction: "toggleVote",
+      challengeField: "problemStatement",
       audioEnabled: true,
     },
     {

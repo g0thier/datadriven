@@ -8,12 +8,11 @@
 
 import speedBoatImg from "../../../assets/workshops/speed-boat.png";
 import speedBoatBoatImg from "../../../assets/workshops/speed-boat/speed-boat-boat.png";
+import DraggableNotes from "../../../components/workshops/DraggableNotes.jsx";
 import WorkshopChallenge from "../WorkshopChallenge.jsx";
 import Step2 from "./steps/Step2.jsx";
 import Step3 from "./steps/Step3.jsx";
-import Step4 from "./steps/Step4.jsx";
 import Step5 from "./steps/Step5.jsx";
-import Step6 from "./steps/Step6.jsx";
 import Step7 from "./steps/Step7.jsx";
 import Step8 from "./steps/Step8.jsx";
 
@@ -104,8 +103,14 @@ const workshop = {
     {
       label: "Mise en commun des freins",
       duration: 10,
-      component: Step4,
+      component: DraggableNotes,
       description: description4,
+      notesField: "brakeNotes",
+      setPositionAction: "setBrakeNotePosition",
+      showComments: false,
+      noteClassName: "bg-red-100",
+      notesCountLabel: "freins",
+      showObjectiveCard: true,
       audioEnabled: true,
     },
     {
@@ -118,8 +123,14 @@ const workshop = {
     {
       label: "Mise en commun des leviers",
       duration: 10,
-      component: Step6,
+      component: DraggableNotes,
       description: description6,
+      notesField: "leverNotes",
+      setPositionAction: "setLeverNotePosition",
+      showComments: false,
+      noteClassName: "bg-blue-100",
+      notesCountLabel: "leviers",
+      showObjectiveCard: true,
       audioEnabled: true,
     },
     {
