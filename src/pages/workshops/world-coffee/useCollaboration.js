@@ -33,13 +33,12 @@ import {
 import {
   EMPTY_ARRAY,
   EMPTY_OBJECT,
-  makeParticipantFallbackLabel,
   normalizeParticipantToSubgroup,
   parseGroupIndex,
-  resolveGuestName,
   sortByCreatedAt,
 } from "../collaboration.shared.js";
 import { useWorkshopCollaborationCore } from "../useWorkshopCollaborationCore.js";
+import { useWorkshopParticipants } from "../useWorkshopParticipants.js";
 
 const IDEA_REPLY_KEY_PREFIX = "idea-";
 
@@ -275,84 +274,14 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       ? activeState.participants
       : EMPTY_OBJECT;
 
-  const participants = useMemo(() => {
-    const participantMap = new Map();
-
-    const addParticipant = (participantId, payload = {}) => {
-      const cleanedId = String(participantId || payload?.id || "").trim();
-      if (!cleanedId) return;
-
-      const current = participantMap.get(cleanedId) || {
-        id: cleanedId,
-        firstName: "",
-        lastName: "",
-        name: "",
-        label: "",
-        email: "",
-      };
-      const firstName = String(payload?.firstName || "").trim();
-      const lastName = String(payload?.lastName || "").trim();
-      const name = String(payload?.name || "").trim();
-      const label = String(payload?.label || "").trim();
-      const email = String(payload?.email || "").trim();
-
-      participantMap.set(cleanedId, {
-        id: cleanedId,
-        firstName: firstName || current.firstName,
-        lastName: lastName || current.lastName,
-        name:
-          name ||
-          label ||
-          current.name ||
-          current.label ||
-          makeParticipantFallbackLabel(cleanedId),
-        label: label || current.label,
-        email: email || current.email,
-      });
-    };
-
-    Object.entries(remoteParticipants).forEach(([participantId, payload]) => {
-      addParticipant(participantId, payload);
-    });
-
-    sessionGuests.forEach((guest) => {
-      if (!guest) return;
-      const guestId = String(guest?.id || "").trim();
-      if (!guestId) return;
-
-      addParticipant(guestId, {
-        id: guestId,
-        firstName: String(guest?.firstName || "").trim(),
-        lastName: String(guest?.lastName || "").trim(),
-        label: String(guest?.label || "").trim(),
-        name: resolveGuestName(guest),
-        email: String(guest?.email || "").trim(),
-      });
-    });
-
-    if (participant?.id) {
-      addParticipant(participant.id, participant);
-    }
-
-    return Array.from(participantMap.values()).sort((a, b) =>
-      a.name.localeCompare(b.name, "fr")
-    );
-  }, [participant, remoteParticipants, sessionGuests]);
-
-  const participantById = useMemo(() => {
-    return participants.reduce((accumulator, currentParticipant) => {
-      accumulator[currentParticipant.id] = currentParticipant;
-      return accumulator;
-    }, {});
-  }, [participants]);
-
-  const getParticipantLabel = useCallback(
-    (participantId) => {
-      if (!participantId) return "Participant";
-      return participantById[participantId]?.name || makeParticipantFallbackLabel(participantId);
-    },
-    [participantById]
-  );
+  const { participants, getParticipantLabel } = useWorkshopParticipants({
+    sessionGuests,
+    remoteParticipants,
+    currentParticipant: participant,
+    authoredParticipantIds: EMPTY_ARRAY,
+    variant: "world-coffee",
+    mergeOrder: ["remote", "guests", "current"],
+  });
 
   const currentParticipantId = participant?.id || "";
   const descriptionIdsSet = useMemo(

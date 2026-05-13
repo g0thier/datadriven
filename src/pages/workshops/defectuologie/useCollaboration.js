@@ -28,10 +28,10 @@ import {
   makeParticipantFallbackLabel,
   normalizeParticipantToSubgroup,
   parseGroupIndex,
-  resolveGuestName,
   sortByCreatedAt,
 } from "../collaboration.shared.js";
 import { useWorkshopCollaborationCore } from "../useWorkshopCollaborationCore.js";
+import { useWorkshopParticipants } from "../useWorkshopParticipants.js";
 
 const MAX_STICKERS_PER_STEP = 1;
 
@@ -460,80 +460,21 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     [solutionIdsSet, solutionVotesByParticipant]
   );
 
-  const participants = useMemo(() => {
-    const participantMap = new Map();
-
-    const addParticipant = (id, data = {}) => {
-      const participantId = String(id || "").trim();
-      if (!participantId) return;
-
-      const current = participantMap.get(participantId) || {
-        id: participantId,
-        name: "",
-        email: "",
-        isAuthenticated: false,
-      };
-
-      const resolvedName = String(data?.name || "").trim();
-      const resolvedEmail = String(data?.email || "").trim();
-
-      participantMap.set(participantId, {
-        id: participantId,
-        name: resolvedName || current.name || makeParticipantFallbackLabel(participantId),
-        email: resolvedEmail || current.email,
-        isAuthenticated: Boolean(data?.isAuthenticated ?? current.isAuthenticated),
-      });
-    };
-
-    sessionGuests.forEach((guest) => {
-      const guestId = String(guest?.id || guest?.email || "").trim();
-      if (!guestId) return;
-
-      addParticipant(guestId, {
-        name: resolveGuestName(guest),
-        email: guest?.email || "",
-      });
-    });
-
-    Object.entries(remoteParticipants).forEach(([participantId, data]) => {
-      addParticipant(participantId, data);
-    });
-
-    defects.forEach((defect) => {
-      addParticipant(defect.authorId);
-    });
-
-    solutions.forEach((solution) => {
-      addParticipant(solution.authorId);
-    });
-
-    if (effectiveParticipant?.id) {
-      addParticipant(effectiveParticipant.id, effectiveParticipant);
-    }
-
-    return Array.from(participantMap.values()).sort((a, b) =>
-      String(a.name || "").localeCompare(String(b.name || ""), "fr")
-    );
-  }, [defects, effectiveParticipant, remoteParticipants, sessionGuests, solutions]);
-
-  const participantById = useMemo(() => {
-    return participants.reduce((accumulator, currentParticipant) => {
-      accumulator[currentParticipant.id] = currentParticipant;
-      return accumulator;
-    }, {});
-  }, [participants]);
-
-  const getParticipantLabel = useCallback(
-    (participantId) => {
-      if (!participantId) return "Participant";
-
-      return (
-        participantById[participantId]?.name ||
-        makeParticipantFallbackLabel(participantId)
-      );
-    },
-    [participantById]
+  const authoredParticipantIds = useMemo(
+    () => [
+      ...defects.map((defect) => defect.authorId),
+      ...solutions.map((solution) => solution.authorId),
+    ],
+    [defects, solutions]
   );
+  const { participants, getParticipantLabel } = useWorkshopParticipants({
+    sessionGuests,
+    remoteParticipants,
+    currentParticipant: effectiveParticipant,
+    authoredParticipantIds,
+    variant: "default",
+    mergeOrder: ["guests", "remote", "authored", "current"],
+  });
 
   const currentParticipantId = effectiveParticipant?.id || "";
   const subgroupIdFromMapping = participantToSubgroup[currentParticipantId] || "";

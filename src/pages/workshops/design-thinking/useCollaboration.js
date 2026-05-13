@@ -32,12 +32,11 @@ import {
   buildGridPosition,
   EMPTY_ARRAY,
   EMPTY_OBJECT,
-  makeParticipantFallbackLabel,
   normalizePosition,
-  resolveGuestName,
   sortByCreatedAt,
 } from "../collaboration.shared.js";
 import { useWorkshopCollaborationCore } from "../useWorkshopCollaborationCore.js";
+import { useWorkshopParticipants } from "../useWorkshopParticipants.js";
 
 const MAX_STICKERS = 3;
 const GRID_POSITION_CONFIG = Object.freeze({
@@ -326,84 +325,22 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     return byNote;
   }, [noteIdsSet, votesByParticipant]);
 
-  const participants = useMemo(() => {
-    const participantMap = new Map();
-
-    const addParticipant = (id, data = {}) => {
-      const participantId = String(id || "").trim();
-      if (!participantId) return;
-
-      const current = participantMap.get(participantId) || {
-        id: participantId,
-        name: "",
-        email: "",
-        isAuthenticated: false,
-      };
-
-      const resolvedName = String(data?.name || "").trim();
-      const resolvedEmail = String(data?.email || "").trim();
-
-      participantMap.set(participantId, {
-        id: participantId,
-        name: resolvedName || current.name || makeParticipantFallbackLabel(participantId),
-        email: resolvedEmail || current.email,
-        isAuthenticated: Boolean(data?.isAuthenticated ?? current.isAuthenticated),
-      });
-    };
-
-    sessionGuests.forEach((guest) => {
-      const guestId = String(guest?.id || guest?.email || "").trim();
-      if (!guestId) return;
-
-      addParticipant(guestId, {
-        name: resolveGuestName(guest),
-        email: guest?.email || "",
-      });
-    });
-
-    Object.entries(remoteParticipants).forEach(([participantId, data]) => {
-      addParticipant(participantId, {
-        name: data?.name || "",
-        email: data?.email || "",
-        isAuthenticated: Boolean(data?.isAuthenticated),
-      });
-    });
-
-    sharedNotes.forEach((note) => {
-      addParticipant(note.authorId);
-    });
-
-    prototypeFeedbackNotes.forEach((note) => {
-      addParticipant(note.authorId);
-    });
-
-    notes.forEach((note) => {
-      addParticipant(note.authorId);
-    });
-
-    if (participant?.id) {
-      addParticipant(participant.id, participant);
-    }
-
-    return Array.from(participantMap.values()).sort((a, b) =>
-      String(a.name || "").localeCompare(String(b.name || ""), "fr")
-    );
-  }, [notes, participant, prototypeFeedbackNotes, remoteParticipants, sessionGuests, sharedNotes]);
-
-  const participantById = useMemo(() => {
-    return participants.reduce((accumulator, currentParticipant) => {
-      accumulator[currentParticipant.id] = currentParticipant;
-      return accumulator;
-    }, {});
-  }, [participants]);
-
-  const getParticipantLabel = useCallback(
-    (participantId) => {
-      if (!participantId) return "Participant";
-      return participantById[participantId]?.name || makeParticipantFallbackLabel(participantId);
-    },
-    [participantById]
+  const authoredParticipantIds = useMemo(
+    () => [
+      ...sharedNotes.map((note) => note.authorId),
+      ...prototypeFeedbackNotes.map((note) => note.authorId),
+      ...notes.map((note) => note.authorId),
+    ],
+    [notes, prototypeFeedbackNotes, sharedNotes]
   );
+  const { participants, getParticipantLabel } = useWorkshopParticipants({
+    sessionGuests,
+    remoteParticipants,
+    currentParticipant: participant,
+    authoredParticipantIds,
+    variant: "default",
+    mergeOrder: ["guests", "remote", "authored", "current"],
+  });
 
   const currentParticipantId = participant?.id || "";
   const description = rawDescription || lastNonEmptyDescription;
