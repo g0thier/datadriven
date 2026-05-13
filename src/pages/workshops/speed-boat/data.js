@@ -7,7 +7,8 @@
  */
 
 import speedBoatImg from "../../../assets/workshops/speed-boat.png";
-import Step1 from "./steps/Step1.jsx";
+import speedBoatBoatImg from "../../../assets/workshops/speed-boat/speed-boat-boat.png";
+import WorkshopChallenge from "../WorkshopChallenge.jsx";
 import Step2 from "./steps/Step2.jsx";
 import Step3 from "./steps/Step3.jsx";
 import Step4 from "./steps/Step4.jsx";
@@ -80,8 +81,10 @@ const workshop = {
     {
       label: "Introduction du défi",
       duration: 5,
-      component: Step1,
+      component: WorkshopChallenge,
       description: description1,
+      challengeFooterImage: speedBoatBoatImg,
+      challengeFooterAlt: "Support visuel Speed Boat",
       audioEnabled: true,
     },
     {
