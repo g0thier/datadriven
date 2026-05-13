@@ -8,17 +8,17 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  addPaperBrainComment,
-  createPaperBrainNote,
-  removePaperBrainComment,
-  removePaperBrainNote,
-  setPaperBrainNotePosition,
-  setPaperBrainStep1Description,
-  subscribePaperBrainSession,
-  togglePaperBrainVote,
-  updatePaperBrainComment,
-  updatePaperBrainNote,
-  upsertPaperBrainParticipant,
+  addComment as addCommentService,
+  createNote,
+  removeComment as removeCommentService,
+  removeNote as removeNoteService,
+  setNotePosition as setNotePositionService,
+  setStep1Description as setStep1DescriptionService,
+  subscribeSession,
+  toggleVote as toggleVoteService,
+  updateComment,
+  updateNote,
+  upsertParticipant,
 } from "../../../firebase/workshops/paper-brain.service";
 import {
   buildGridPosition,
@@ -72,18 +72,18 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     syncError,
     syncErrorSessionId,
     setSessionError,
-    activeState: activePaperBrainState,
+    activeState,
     lastSnapshotSessionId,
   } = useWorkshopCollaborationCore({
     sessionId,
     session,
     isEnabled,
-    subscribeSession: subscribePaperBrainSession,
-    upsertParticipant: upsertPaperBrainParticipant,
+    subscribeSession: subscribeSession,
+    upsertParticipant: upsertParticipant,
     syncErrorMessage: "Impossible de se synchroniser avec le serveur.",
     participantErrorMessage: "Impossible d'enregistrer le participant.",
   });
-  const rawStep1Description = String(activePaperBrainState?.step1?.description || "");
+  const rawStep1Description = String(activeState?.step1?.description || "");
 
   useEffect(() => {
     setLastNonEmptyStep1Description("");
@@ -99,8 +99,8 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   }, [rawStep1Description]);
 
   const rawNotes =
-    activePaperBrainState?.notes && typeof activePaperBrainState.notes === "object"
-      ? activePaperBrainState.notes
+    activeState?.notes && typeof activeState.notes === "object"
+      ? activeState.notes
       : EMPTY_OBJECT;
 
   const notes = useMemo(() => {
@@ -129,9 +129,9 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   );
 
   const rawCommentsByNote =
-    activePaperBrainState?.commentsByNote &&
-    typeof activePaperBrainState.commentsByNote === "object"
-      ? activePaperBrainState.commentsByNote
+    activeState?.commentsByNote &&
+    typeof activeState.commentsByNote === "object"
+      ? activeState.commentsByNote
       : EMPTY_OBJECT;
 
   const commentsByNote = useMemo(() => {
@@ -155,9 +155,9 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   }, [rawCommentsByNote]);
 
   const rawVotesByParticipant =
-    activePaperBrainState?.votesByParticipant &&
-    typeof activePaperBrainState.votesByParticipant === "object"
-      ? activePaperBrainState.votesByParticipant
+    activeState?.votesByParticipant &&
+    typeof activeState.votesByParticipant === "object"
+      ? activeState.votesByParticipant
       : EMPTY_OBJECT;
 
   const votesByParticipant = useMemo(() => {
@@ -201,9 +201,9 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   }, [noteIdsSet, votesByParticipant]);
 
   const remoteParticipants =
-    activePaperBrainState?.participants &&
-    typeof activePaperBrainState.participants === "object"
-      ? activePaperBrainState.participants
+    activeState?.participants &&
+    typeof activeState.participants === "object"
+      ? activeState.participants
       : EMPTY_OBJECT;
 
   const participants = useMemo(() => {
@@ -294,7 +294,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
     const restoreStep1Description = async () => {
       try {
-        await setPaperBrainStep1Description(
+        await setStep1DescriptionService(
           sessionId,
           currentParticipantId,
           lastNonEmptyStep1Description,
@@ -348,7 +348,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
 
       try {
-        await setPaperBrainStep1Description(sessionId, currentParticipantId, description, {
+        await setStep1DescriptionService(sessionId, currentParticipantId, description, {
           expectedPreviousDescription: previousDescription,
         });
       } catch (error) {
@@ -375,7 +375,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       const text = options?.text ?? "";
 
       try {
-        return await createPaperBrainNote(sessionId, {
+        return await createNote(sessionId, {
           authorId: currentParticipantId,
           text,
           position,
@@ -399,7 +399,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!note || note.authorId !== currentParticipantId) return;
 
       try {
-        await updatePaperBrainNote(sessionId, noteId, { text });
+        await updateNote(sessionId, noteId, { text });
       } catch (error) {
         console.error("Impossible de mettre à jour la note:", error);
         setSessionError("La note n'a pas pu être mise à jour.");
@@ -418,7 +418,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!note || note.authorId !== currentParticipantId) return;
 
       try {
-        await removePaperBrainNote(sessionId, noteId);
+        await removeNoteService(sessionId, noteId);
       } catch (error) {
         console.error("Impossible de supprimer la note:", error);
         setSessionError("La note n'a pas pu être supprimée.");
@@ -437,7 +437,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!note || note.authorId === currentParticipantId) return null;
 
       try {
-        return await addPaperBrainComment(sessionId, noteId, {
+        return await addCommentService(sessionId, noteId, {
           authorId: currentParticipantId,
           text,
         });
@@ -470,7 +470,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!comment || comment.authorId !== currentParticipantId) return;
 
       try {
-        await updatePaperBrainComment(sessionId, noteId, commentId, { text });
+        await updateComment(sessionId, noteId, commentId, { text });
       } catch (error) {
         console.error("Impossible de mettre à jour le commentaire:", error);
         setSessionError("Le commentaire n'a pas pu être mis à jour.");
@@ -499,7 +499,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!comment || comment.authorId !== currentParticipantId) return;
 
       try {
-        await removePaperBrainComment(sessionId, noteId, commentId);
+        await removeCommentService(sessionId, noteId, commentId);
       } catch (error) {
         console.error("Impossible de supprimer le commentaire:", error);
         setSessionError("Le commentaire n'a pas pu être supprimé.");
@@ -513,7 +513,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!isEnabled || !sessionId || !participantReady || !noteId) return;
 
       try {
-        await setPaperBrainNotePosition(sessionId, noteId, position);
+        await setNotePositionService(sessionId, noteId, position);
       } catch (error) {
         console.error("Impossible de déplacer la note:", error);
         setSessionError("La position de la note n'a pas pu être enregistrée.");
@@ -529,7 +529,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       }
 
       try {
-        return await togglePaperBrainVote(sessionId, currentParticipantId, noteId, {
+        return await toggleVoteService(sessionId, currentParticipantId, noteId, {
           maxVotes: MAX_STICKERS,
           validNoteIds: noteIdsSet,
         });

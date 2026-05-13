@@ -432,7 +432,7 @@ const normalizeVotesByParticipant = (votesByParticipant = {}, validIds = null) =
   }, {});
 };
 
-export const subscribeDefectuologieSession = (
+export const subscribeSession = (
   sessionId,
   callback,
   onError = () => {}
@@ -453,14 +453,14 @@ export const subscribeDefectuologieSession = (
   );
 };
 
-export const fetchDefectuologieSessionOnce = async (sessionId) => {
+export const fetchSessionOnce = async (sessionId) => {
   if (!sessionId) return null;
 
   const snapshot = await get(ref(database, toDefectuologiePath(sessionId)));
   return snapshot.exists() ? snapshot.val() : null;
 };
 
-export const upsertDefectuologieParticipant = async (
+export const upsertParticipant = async (
   sessionId,
   participant = {}
 ) => {
@@ -487,7 +487,7 @@ export const upsertDefectuologieParticipant = async (
   });
 };
 
-export const initializeDefectuologieSubgroups = async (sessionId) => {
+export const initializeSubgroups = async (sessionId) => {
   if (!sessionId) return;
 
   const defectuologieRef = ref(database, toDefectuologiePath(sessionId));
@@ -541,7 +541,7 @@ export const initializeDefectuologieSubgroups = async (sessionId) => {
   });
 };
 
-export const assignDefectuologieParticipantToSubgroup = async (
+export const assignParticipantToSubgroup = async (
   sessionId,
   participantId
 ) => {
@@ -659,7 +659,7 @@ export const assignDefectuologieParticipantToSubgroup = async (
   });
 };
 
-export const setDefectuologieStep1Description = async (
+export const setStep1Description = async (
   sessionId,
   participantId,
   description,
@@ -703,7 +703,7 @@ export const setDefectuologieStep1Description = async (
   });
 };
 
-export const createDefectuologieDefect = async (
+export const createDefect = async (
   sessionId,
   subgroupId,
   payload = {}
@@ -711,7 +711,7 @@ export const createDefectuologieDefect = async (
   const cleanedSubgroupId = normalizeSubgroupId(subgroupId);
 
   if (!sessionId || !cleanedSubgroupId || !payload?.authorId) {
-    throw new Error("createDefectuologieDefect: parametres manquants");
+    throw new Error("createDefect: parametres manquants");
   }
 
   const defectsRef = ref(
@@ -738,7 +738,7 @@ export const createDefectuologieDefect = async (
   return defectId;
 };
 
-export const updateDefectuologieDefect = async (
+export const updateDefect = async (
   sessionId,
   subgroupId,
   defectId,
@@ -804,7 +804,7 @@ export const updateDefectuologieDefect = async (
   );
 };
 
-export const removeDefectuologieDefect = async (sessionId, subgroupId, defectId) => {
+export const removeDefect = async (sessionId, subgroupId, defectId) => {
   const cleanedSubgroupId = normalizeSubgroupId(subgroupId);
 
   if (!sessionId || !cleanedSubgroupId || !defectId) return;
@@ -829,7 +829,7 @@ export const removeDefectuologieDefect = async (sessionId, subgroupId, defectId)
   await update(ref(database), updates);
 };
 
-export const toggleDefectuologieDefectVote = async (
+export const toggleDefectVote = async (
   sessionId,
   participantId,
   defectId,
@@ -877,7 +877,7 @@ export const toggleDefectuologieDefectVote = async (
   };
 };
 
-export const createDefectuologieSolution = async (
+export const createSolution = async (
   sessionId,
   subgroupId,
   payload = {}
@@ -885,7 +885,7 @@ export const createDefectuologieSolution = async (
   const cleanedSubgroupId = normalizeSubgroupId(subgroupId);
 
   if (!sessionId || !cleanedSubgroupId || !payload?.authorId) {
-    throw new Error("createDefectuologieSolution: parametres manquants");
+    throw new Error("createSolution: parametres manquants");
   }
 
   const solutionsRef = ref(
@@ -912,7 +912,7 @@ export const createDefectuologieSolution = async (
   return solutionId;
 };
 
-export const updateDefectuologieSolution = async (
+export const updateSolution = async (
   sessionId,
   subgroupId,
   solutionId,
@@ -978,7 +978,7 @@ export const updateDefectuologieSolution = async (
   );
 };
 
-export const removeDefectuologieSolution = async (sessionId, subgroupId, solutionId) => {
+export const removeSolution = async (sessionId, subgroupId, solutionId) => {
   const cleanedSubgroupId = normalizeSubgroupId(subgroupId);
 
   if (!sessionId || !cleanedSubgroupId || !solutionId) return;
@@ -1003,7 +1003,7 @@ export const removeDefectuologieSolution = async (sessionId, subgroupId, solutio
   await update(ref(database), updates);
 };
 
-export const toggleDefectuologieSolutionVote = async (
+export const toggleSolutionVote = async (
   sessionId,
   participantId,
   solutionId,
@@ -1052,7 +1052,7 @@ export const toggleDefectuologieSolutionVote = async (
   };
 };
 
-export const setDefectuologieStep6Proposal = async (
+export const setStep6Proposal = async (
   sessionId,
   participantId,
   subgroupId,

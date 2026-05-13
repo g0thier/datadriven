@@ -56,7 +56,7 @@ const normalizePosition = (position = {}, fallback = { x: 40, y: 40 }) => {
  * @param {Function} [onError=() => {}] - Error callback.
  * @returns {Function} Unsubscribe callback.
  */
-export const subscribePaperBrainSession = (
+export const subscribeSession = (
   sessionId,
   callback,
   onError = () => {}
@@ -82,7 +82,7 @@ export const subscribePaperBrainSession = (
  * @param {{id:string, name?:string, email?:string, isAuthenticated?:boolean}} [participant={}] - Participant payload.
  * @returns {Promise<void>} Upsert completion.
  */
-export const upsertPaperBrainParticipant = async (
+export const upsertParticipant = async (
   sessionId,
   participant = {}
 ) => {
@@ -117,7 +117,7 @@ export const upsertPaperBrainParticipant = async (
  * @param {string} description - Step description text.
  * @returns {Promise<void>} Update completion.
  */
-export const setPaperBrainStep1Description = async (
+export const setStep1Description = async (
   sessionId,
   participantId,
   description,
@@ -167,9 +167,9 @@ export const setPaperBrainStep1Description = async (
  * @param {{authorId:string, text?:string, position?:{x?:number,y?:number}}} [payload={}] - Note payload.
  * @returns {Promise<string>} Created note id.
  */
-export const createPaperBrainNote = async (sessionId, payload = {}) => {
+export const createNote = async (sessionId, payload = {}) => {
   if (!sessionId || !payload?.authorId) {
-    throw new Error("createPaperBrainNote: sessionId ou authorId manquant");
+    throw new Error("createNote: sessionId ou authorId manquant");
   }
 
   const noteRef = push(ref(database, `${toPaperBrainPath(sessionId)}/notes`));
@@ -199,7 +199,7 @@ export const createPaperBrainNote = async (sessionId, payload = {}) => {
  * @param {{text?:string, position?:{x?:number,y?:number}}} [patch={}] - Note patch.
  * @returns {Promise<void>} Update completion.
  */
-export const updatePaperBrainNote = async (sessionId, noteId, patch = {}) => {
+export const updateNote = async (sessionId, noteId, patch = {}) => {
   if (!sessionId || !noteId) return;
 
   const payload = {
@@ -222,7 +222,7 @@ export const updatePaperBrainNote = async (sessionId, noteId, patch = {}) => {
  * @param {string} noteId - Note id.
  * @returns {Promise<void>} Delete completion.
  */
-export const removePaperBrainNote = async (sessionId, noteId) => {
+export const removeNote = async (sessionId, noteId) => {
   if (!sessionId || !noteId) return;
 
   const basePath = toPaperBrainPath(sessionId);
@@ -251,9 +251,9 @@ export const removePaperBrainNote = async (sessionId, noteId) => {
  * @param {{authorId:string, text?:string}} [payload={}] - Comment payload.
  * @returns {Promise<string>} Created comment id.
  */
-export const addPaperBrainComment = async (sessionId, noteId, payload = {}) => {
+export const addComment = async (sessionId, noteId, payload = {}) => {
   if (!sessionId || !noteId || !payload?.authorId) {
-    throw new Error("addPaperBrainComment: paramètres manquants");
+    throw new Error("addComment: paramètres manquants");
   }
 
   const commentRef = push(
@@ -285,7 +285,7 @@ export const addPaperBrainComment = async (sessionId, noteId, payload = {}) => {
  * @param {{text?:string}} [patch={}] - Comment patch.
  * @returns {Promise<void>} Update completion.
  */
-export const updatePaperBrainComment = async (
+export const updateComment = async (
   sessionId,
   noteId,
   commentId,
@@ -317,7 +317,7 @@ export const updatePaperBrainComment = async (
  * @param {string} commentId - Comment id.
  * @returns {Promise<void>} Delete completion.
  */
-export const removePaperBrainComment = async (sessionId, noteId, commentId) => {
+export const removeComment = async (sessionId, noteId, commentId) => {
   if (!sessionId || !noteId || !commentId) return;
 
   await remove(
@@ -335,7 +335,7 @@ export const removePaperBrainComment = async (sessionId, noteId, commentId) => {
  * @param {{x?:number, y?:number}} position - Target position.
  * @returns {Promise<void>} Update completion.
  */
-export const setPaperBrainNotePosition = async (sessionId, noteId, position) => {
+export const setNotePosition = async (sessionId, noteId, position) => {
   if (!sessionId || !noteId) return;
 
   await update(ref(database, `${toPaperBrainPath(sessionId)}/notes/${noteId}`), {
@@ -352,7 +352,7 @@ export const setPaperBrainNotePosition = async (sessionId, noteId, position) => 
  * @param {{maxVotes?:number, validNoteIds?:Set<string>}} [options={}] - Voting options.
  * @returns {Promise<{committed:boolean, votes:Object}>} Transaction result and resulting votes.
  */
-export const togglePaperBrainVote = async (
+export const toggleVote = async (
   sessionId,
   participantId,
   noteId,

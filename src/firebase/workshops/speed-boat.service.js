@@ -31,7 +31,7 @@ const toSpeedBoatPath = (sessionId) => `workshopSessions/${sessionId}/speedBoat`
  * @param {Function} [onError=() => {}] - Error callback.
  * @returns {Function} Unsubscribe callback.
  */
-export const subscribeSpeedBoatSession = (
+export const subscribeSession = (
   sessionId,
   callback,
   onError = () => {}
@@ -58,7 +58,7 @@ export const subscribeSpeedBoatSession = (
  * @param {{id:string, name?:string, email?:string, isAuthenticated?:boolean}} [participant={}] - Participant payload.
  * @returns {Promise<void>} Upsert completion.
  */
-export const upsertSpeedBoatParticipant = async (
+export const upsertParticipant = async (
   sessionId,
   participant = {}
 ) => {
@@ -94,7 +94,7 @@ export const upsertSpeedBoatParticipant = async (
  * @param {{expectedPreviousDescription?:string}} [options={}] - Concurrency guards.
  * @returns {Promise<void>} Update completion.
  */
-export const setSpeedBoatStep1Description = async (
+export const setStep1Description = async (
   sessionId,
   participantId,
   description,
@@ -146,7 +146,7 @@ export const setSpeedBoatStep1Description = async (
  * @param {{expectedPreviousObjective?:string}} [options={}] - Concurrency guards.
  * @returns {Promise<void>} Update completion.
  */
-export const setSpeedBoatStep2Objective = async (
+export const setStep2Objective = async (
   sessionId,
   participantId,
   objective,
@@ -196,9 +196,9 @@ export const setSpeedBoatStep2Objective = async (
  * @param {{authorId:string, text?:string}} [payload={}] - Brake note payload.
  * @returns {Promise<string>} Created note id.
  */
-export const createSpeedBoatBrakeNote = async (sessionId, payload = {}) => {
+export const createBrakeNote = async (sessionId, payload = {}) => {
   if (!sessionId || !payload?.authorId) {
-    throw new Error("createSpeedBoatBrakeNote: sessionId ou authorId manquant");
+    throw new Error("createBrakeNote: sessionId ou authorId manquant");
   }
 
   const noteRef = push(ref(database, `${toSpeedBoatPath(sessionId)}/notesByType/brakes`));
@@ -227,7 +227,7 @@ export const createSpeedBoatBrakeNote = async (sessionId, payload = {}) => {
  * @param {{text?:string}} [patch={}] - Brake note patch.
  * @returns {Promise<void>} Update completion.
  */
-export const updateSpeedBoatBrakeNote = async (sessionId, noteId, patch = {}) => {
+export const updateBrakeNote = async (sessionId, noteId, patch = {}) => {
   if (!sessionId || !noteId) return;
 
   const payload = {
@@ -250,7 +250,7 @@ export const updateSpeedBoatBrakeNote = async (sessionId, noteId, patch = {}) =>
  * @param {string} noteId - Brake note id.
  * @returns {Promise<void>} Delete completion.
  */
-export const removeSpeedBoatBrakeNote = async (sessionId, noteId) => {
+export const removeBrakeNote = async (sessionId, noteId) => {
   if (!sessionId || !noteId) return;
 
   await update(ref(database), {
@@ -264,9 +264,9 @@ export const removeSpeedBoatBrakeNote = async (sessionId, noteId) => {
  * @param {{authorId:string, text?:string}} [payload={}] - Lever note payload.
  * @returns {Promise<string>} Created note id.
  */
-export const createSpeedBoatLeverNote = async (sessionId, payload = {}) => {
+export const createLeverNote = async (sessionId, payload = {}) => {
   if (!sessionId || !payload?.authorId) {
-    throw new Error("createSpeedBoatLeverNote: sessionId ou authorId manquant");
+    throw new Error("createLeverNote: sessionId ou authorId manquant");
   }
 
   const noteRef = push(ref(database, `${toSpeedBoatPath(sessionId)}/notesByType/levers`));
@@ -295,7 +295,7 @@ export const createSpeedBoatLeverNote = async (sessionId, payload = {}) => {
  * @param {{text?:string}} [patch={}] - Lever note patch.
  * @returns {Promise<void>} Update completion.
  */
-export const updateSpeedBoatLeverNote = async (sessionId, noteId, patch = {}) => {
+export const updateLeverNote = async (sessionId, noteId, patch = {}) => {
   if (!sessionId || !noteId) return;
 
   const payload = {
@@ -318,7 +318,7 @@ export const updateSpeedBoatLeverNote = async (sessionId, noteId, patch = {}) =>
  * @param {string} noteId - Lever note id.
  * @returns {Promise<void>} Delete completion.
  */
-export const removeSpeedBoatLeverNote = async (sessionId, noteId) => {
+export const removeLeverNote = async (sessionId, noteId) => {
   if (!sessionId || !noteId) return;
 
   await update(ref(database), {
@@ -349,7 +349,7 @@ const normalizePosition = (position = {}, fallback = { x: 40, y: 40 }) => {
  * @param {{x?:number,y?:number}} [position={}] - Next note position.
  * @returns {Promise<void>} Update completion.
  */
-export const setSpeedBoatBrakeNotePosition = async (sessionId, noteId, position = {}) => {
+export const setBrakeNotePosition = async (sessionId, noteId, position = {}) => {
   if (!sessionId || !noteId) return;
 
   await update(
@@ -368,7 +368,7 @@ export const setSpeedBoatBrakeNotePosition = async (sessionId, noteId, position 
  * @param {{x?:number,y?:number}} [position={}] - Next note position.
  * @returns {Promise<void>} Update completion.
  */
-export const setSpeedBoatLeverNotePosition = async (sessionId, noteId, position = {}) => {
+export const setLeverNotePosition = async (sessionId, noteId, position = {}) => {
   if (!sessionId || !noteId) return;
 
   await update(
@@ -388,7 +388,7 @@ export const setSpeedBoatLeverNotePosition = async (sessionId, noteId, position 
  * @param {{maxVotes?:number, validNoteIds?:Set<string>}} [options={}] - Voting options.
  * @returns {Promise<{committed:boolean, votes:Object}>} Transaction result and resulting votes.
  */
-export const toggleSpeedBoatBrakeVote = async (
+export const toggleBrakeVote = async (
   sessionId,
   participantId,
   noteId,
@@ -445,7 +445,7 @@ export const toggleSpeedBoatBrakeVote = async (
  * @param {string} text - Action text.
  * @returns {Promise<void>} Update completion.
  */
-export const setSpeedBoatStep8BrakeAction = async (
+export const setStep8BrakeAction = async (
   sessionId,
   participantId,
   brakeId,

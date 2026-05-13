@@ -1,19 +1,19 @@
 import { useCallback, useMemo } from "react";
 import {
-  addMindMappingConcept,
-  addMindMappingComment,
-  createMindMappingNote,
-  removeMindMappingConcept,
-  removeMindMappingComment,
-  removeMindMappingNote,
+  addConcept as addConceptService,
+  addComment as addCommentService,
+  createNote,
+  removeConcept as removeConceptService,
+  removeComment as removeCommentService,
+  removeNote as removeNoteService,
   setReformulation as setMindMappingReformulation,
-  setMindMappingStep1Description,
-  subscribeMindMappingSession,
-  toggleMindMappingConceptVote,
-  updateMindMappingConcept,
-  updateMindMappingComment,
-  updateMindMappingNote,
-  upsertMindMappingParticipant,
+  setStep1Description as setStep1DescriptionService,
+  subscribeSession,
+  toggleConceptVote as toggleConceptVoteService,
+  updateConcept,
+  updateComment,
+  updateNote,
+  upsertParticipant,
 } from "../../../firebase/workshops/mind-mapping.service";
 import {
   EMPTY_OBJECT,
@@ -34,22 +34,22 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     syncError,
     syncErrorSessionId,
     setSessionError,
-    activeState: activeMindMappingState,
+    activeState,
     lastSnapshotSessionId,
   } = useWorkshopCollaborationCore({
     sessionId,
     session,
     isEnabled,
-    subscribeSession: subscribeMindMappingSession,
-    upsertParticipant: upsertMindMappingParticipant,
+    subscribeSession: subscribeSession,
+    upsertParticipant: upsertParticipant,
     syncErrorMessage: "Impossible de se synchroniser avec le serveur.",
     participantErrorMessage: "Impossible d'enregistrer le participant.",
   });
-  const rawStep1Description = String(activeMindMappingState?.step1?.description || "");
+  const rawStep1Description = String(activeState?.step1?.description || "");
 
   const rawNotes =
-    activeMindMappingState?.notes && typeof activeMindMappingState.notes === "object"
-      ? activeMindMappingState.notes
+    activeState?.notes && typeof activeState.notes === "object"
+      ? activeState.notes
       : EMPTY_OBJECT;
 
   const notes = useMemo(() => {
@@ -74,9 +74,9 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   );
 
   const rawCommentsByNote =
-    activeMindMappingState?.commentsByNote &&
-    typeof activeMindMappingState.commentsByNote === "object"
-      ? activeMindMappingState.commentsByNote
+    activeState?.commentsByNote &&
+    typeof activeState.commentsByNote === "object"
+      ? activeState.commentsByNote
       : EMPTY_OBJECT;
 
   const commentsByNote = useMemo(() => {
@@ -100,8 +100,8 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   }, [rawCommentsByNote]);
 
   const rawConcepts =
-    activeMindMappingState?.concepts && typeof activeMindMappingState.concepts === "object"
-      ? activeMindMappingState.concepts
+    activeState?.concepts && typeof activeState.concepts === "object"
+      ? activeState.concepts
       : EMPTY_OBJECT;
 
   const concepts = useMemo(() => {
@@ -158,8 +158,8 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   }, [commentsByNote]);
 
   const remoteParticipants =
-    activeMindMappingState?.participants && typeof activeMindMappingState.participants === "object"
-      ? activeMindMappingState.participants
+    activeState?.participants && typeof activeState.participants === "object"
+      ? activeState.participants
       : EMPTY_OBJECT;
 
   const participants = useMemo(() => {
@@ -236,9 +236,9 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   const currentParticipantId = participant?.id || "";
   const step1Description = rawStep1Description;
   const rawVotesByParticipant =
-    activeMindMappingState?.votesByParticipant &&
-    typeof activeMindMappingState.votesByParticipant === "object"
-      ? activeMindMappingState.votesByParticipant
+    activeState?.votesByParticipant &&
+    typeof activeState.votesByParticipant === "object"
+      ? activeState.votesByParticipant
       : EMPTY_OBJECT;
 
   const votesByParticipant = useMemo(() => {
@@ -280,9 +280,9 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     return groupedVotes;
   }, [concepts, votesByParticipant]);
   const rawReformulationsByConcept =
-    activeMindMappingState?.reformulationsByConcept &&
-    typeof activeMindMappingState.reformulationsByConcept === "object"
-      ? activeMindMappingState.reformulationsByConcept
+    activeState?.reformulationsByConcept &&
+    typeof activeState.reformulationsByConcept === "object"
+      ? activeState.reformulationsByConcept
       : EMPTY_OBJECT;
 
   const reformulationsByConcept = useMemo(() => {
@@ -312,7 +312,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
 
       try {
-        await setMindMappingStep1Description(sessionId, currentParticipantId, description, {
+        await setStep1DescriptionService(sessionId, currentParticipantId, description, {
           expectedPreviousDescription: previousDescription,
         });
       } catch (error) {
@@ -337,7 +337,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       const text = options?.text ?? "";
 
       try {
-        return await createMindMappingNote(sessionId, {
+        return await createNote(sessionId, {
           authorId: currentParticipantId,
           text,
         });
@@ -359,7 +359,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!notesById[noteId]) return;
 
       try {
-        await updateMindMappingNote(sessionId, noteId, { text });
+        await updateNote(sessionId, noteId, { text });
       } catch (error) {
         console.error("Impossible de mettre à jour la note:", error);
         setSessionError("La note n'a pas pu être mise à jour.");
@@ -384,7 +384,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!notesById[noteId]) return;
 
       try {
-        await removeMindMappingNote(sessionId, noteId);
+        await removeNoteService(sessionId, noteId);
       } catch (error) {
         console.error("Impossible de supprimer la note:", error);
         setSessionError("La note n'a pas pu être supprimée.");
@@ -409,7 +409,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!notesById[noteId]) return null;
 
       try {
-        return await addMindMappingComment(sessionId, noteId, {
+        return await addCommentService(sessionId, noteId, {
           authorId: currentParticipantId,
           text,
         });
@@ -445,7 +445,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!notesById[noteId]) return;
 
       try {
-        await updateMindMappingComment(sessionId, noteId, commentId, { text });
+        await updateComment(sessionId, noteId, commentId, { text });
       } catch (error) {
         console.error("Impossible de mettre à jour la sous-note:", error);
         setSessionError("La sous-note n'a pas pu être mise à jour.");
@@ -477,7 +477,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!notesById[noteId]) return;
 
       try {
-        await removeMindMappingComment(sessionId, noteId, commentId);
+        await removeCommentService(sessionId, noteId, commentId);
       } catch (error) {
         console.error("Impossible de supprimer la sous-note:", error);
         setSessionError("La sous-note n'a pas pu être supprimée.");
@@ -511,7 +511,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!ideaKeySet.has(fromKey) || !ideaKeySet.has(toKey)) return null;
 
       try {
-        return await addMindMappingConcept(sessionId, {
+        return await addConceptService(sessionId, {
           authorId: currentParticipantId,
           text: payload?.text ?? "",
           from: { noteId: fromNoteId, ideaId: fromIdeaId },
@@ -542,7 +542,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!conceptsById[conceptId]) return;
 
       try {
-        await updateMindMappingConcept(sessionId, conceptId, { text });
+        await updateConcept(sessionId, conceptId, { text });
       } catch (error) {
         console.error("Impossible de mettre à jour le concept:", error);
         setSessionError("Le concept n'a pas pu être mis à jour.");
@@ -567,7 +567,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!conceptsById[conceptId]) return;
 
       try {
-        await removeMindMappingConcept(sessionId, conceptId);
+        await removeConceptService(sessionId, conceptId);
       } catch (error) {
         console.error("Impossible de supprimer le concept:", error);
         setSessionError("Le concept n'a pas pu être supprimé.");
@@ -594,7 +594,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       }
 
       try {
-        return await toggleMindMappingConceptVote(sessionId, currentParticipantId, conceptId, {
+        return await toggleConceptVoteService(sessionId, currentParticipantId, conceptId, {
           maxVotes: MAX_STICKERS,
           validConceptIds: conceptIdsSet,
         });

@@ -8,22 +8,22 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  buildMatriceCroiseeCellKey,
-  createMatriceCroiseeCellNote,
-  createMatriceCroiseeColumnItem,
-  createMatriceCroiseeRowItem,
-  initializeMatriceCroiseeStructure,
-  removeMatriceCroiseeCellNote,
-  removeMatriceCroiseeColumnItem,
-  removeMatriceCroiseeRowItem,
-  setMatriceCroiseeConcept,
-  setMatriceCroiseeStep1Description,
-  subscribeMatriceCroiseeSession,
-  toggleMatriceCroiseeVote,
-  updateMatriceCroiseeCellNote,
-  updateMatriceCroiseeColumnItem,
-  updateMatriceCroiseeRowItem,
-  upsertMatriceCroiseeParticipant,
+  buildCellKey,
+  createCellNote,
+  createColumnItem,
+  createRowItem,
+  initializeStructure as initializeStructureService,
+  removeCellNote as removeCellNoteService,
+  removeColumnItem as removeColumnItemService,
+  removeRowItem as removeRowItemService,
+  setConcept as setConceptService,
+  setStep1Description as setStep1DescriptionService,
+  subscribeSession,
+  toggleVote as toggleVoteService,
+  updateCellNote,
+  updateColumnItem,
+  updateRowItem,
+  upsertParticipant,
 } from "../../../firebase/workshops/matrice-croisee.service";
 import {
   EMPTY_ARRAY,
@@ -58,38 +58,38 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     syncError,
     syncErrorSessionId,
     setSessionError,
-    activeState: activeMatriceCroiseeState,
+    activeState,
     lastSnapshotSessionId,
   } = useWorkshopCollaborationCore({
     sessionId,
     session,
     isEnabled,
-    subscribeSession: subscribeMatriceCroiseeSession,
-    upsertParticipant: upsertMatriceCroiseeParticipant,
+    subscribeSession: subscribeSession,
+    upsertParticipant: upsertParticipant,
     syncErrorMessage: "Impossible de se synchroniser avec le serveur.",
     participantErrorMessage: "Impossible d'enregistrer le participant.",
   });
-  const rawStep1Description = String(activeMatriceCroiseeState?.step1?.description || "");
-  const rawConcept = String(activeMatriceCroiseeState?.step5?.concept?.text || "");
+  const rawStep1Description = String(activeState?.step1?.description || "");
+  const rawConcept = String(activeState?.step5?.concept?.text || "");
   const rawColumnItems =
-    activeMatriceCroiseeState?.step2?.itemsColumns &&
-    typeof activeMatriceCroiseeState.step2.itemsColumns === "object"
-      ? activeMatriceCroiseeState.step2.itemsColumns
+    activeState?.step2?.itemsColumns &&
+    typeof activeState.step2.itemsColumns === "object"
+      ? activeState.step2.itemsColumns
       : EMPTY_OBJECT;
   const rawRowItems =
-    activeMatriceCroiseeState?.step2?.itemsRows &&
-    typeof activeMatriceCroiseeState.step2.itemsRows === "object"
-      ? activeMatriceCroiseeState.step2.itemsRows
+    activeState?.step2?.itemsRows &&
+    typeof activeState.step2.itemsRows === "object"
+      ? activeState.step2.itemsRows
       : EMPTY_OBJECT;
   const rawCellNotesByCell =
-    activeMatriceCroiseeState?.step3?.notesByCell &&
-    typeof activeMatriceCroiseeState.step3.notesByCell === "object"
-      ? activeMatriceCroiseeState.step3.notesByCell
+    activeState?.step3?.notesByCell &&
+    typeof activeState.step3.notesByCell === "object"
+      ? activeState.step3.notesByCell
       : EMPTY_OBJECT;
   const rawVotesByParticipant =
-    activeMatriceCroiseeState?.votesByParticipant &&
-    typeof activeMatriceCroiseeState.votesByParticipant === "object"
-      ? activeMatriceCroiseeState.votesByParticipant
+    activeState?.votesByParticipant &&
+    typeof activeState.votesByParticipant === "object"
+      ? activeState.votesByParticipant
       : EMPTY_OBJECT;
 
   useEffect(() => {
@@ -231,7 +231,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
     rowItems.forEach((rowItem, rowIndex) => {
       columnItems.forEach((columnItem, columnIndex) => {
-        const cellKey = buildMatriceCroiseeCellKey(rowItem.id, columnItem.id);
+        const cellKey = buildCellKey(rowItem.id, columnItem.id);
         if (!cellKey) return;
 
         const notes = Array.isArray(cellNotesByKey[cellKey]) ? cellNotesByKey[cellKey] : EMPTY_ARRAY;
@@ -298,9 +298,9 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   }, [cellNotesByKey, columnItems, rowItems, votesByNote]);
 
   const remoteParticipants =
-    activeMatriceCroiseeState?.participants &&
-    typeof activeMatriceCroiseeState.participants === "object"
-      ? activeMatriceCroiseeState.participants
+    activeState?.participants &&
+    typeof activeState.participants === "object"
+      ? activeState.participants
       : EMPTY_OBJECT;
 
   const participants = useMemo(() => {
@@ -397,7 +397,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
     const seedStructure = async () => {
       try {
-        await initializeMatriceCroiseeStructure(sessionId, currentParticipantId);
+        await initializeStructureService(sessionId, currentParticipantId);
       } catch (error) {
         if (cancelled) return;
         console.error("Impossible d'initialiser la matrice:", error);
@@ -422,7 +422,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
     const restoreStep1Description = async () => {
       try {
-        await setMatriceCroiseeStep1Description(
+        await setStep1DescriptionService(
           sessionId,
           currentParticipantId,
           lastNonEmptyStep1Description,
@@ -457,7 +457,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
 
       try {
-        await setMatriceCroiseeStep1Description(sessionId, currentParticipantId, description, {
+        await setStep1DescriptionService(sessionId, currentParticipantId, description, {
           expectedPreviousDescription: previousDescription,
         });
       } catch (error) {
@@ -480,7 +480,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
 
       try {
-        await setMatriceCroiseeConcept(sessionId, currentParticipantId, text);
+        await setConceptService(sessionId, currentParticipantId, text);
       } catch (error) {
         console.error("Impossible d'enregistrer le concept:", error);
         setSessionError("Le concept n'a pas pu être enregistré.");
@@ -495,7 +495,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     }
 
     try {
-      await initializeMatriceCroiseeStructure(sessionId, currentParticipantId);
+      await initializeStructureService(sessionId, currentParticipantId);
       return true;
     } catch (error) {
       console.error("Impossible d'initialiser la matrice:", error);
@@ -509,7 +509,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return null;
 
       try {
-        return await createMatriceCroiseeColumnItem(sessionId, currentParticipantId, {
+        return await createColumnItem(sessionId, currentParticipantId, {
           text: options?.text ?? "",
         });
       } catch (error) {
@@ -535,7 +535,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
         previousText === undefined ? currentText : String(previousText ?? "");
 
       try {
-        await updateMatriceCroiseeColumnItem(
+        await updateColumnItem(
           sessionId,
           currentParticipantId,
           itemId,
@@ -563,7 +563,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (columnItems.length <= 1) return;
 
       try {
-        await removeMatriceCroiseeColumnItem(sessionId, itemId);
+        await removeColumnItemService(sessionId, itemId);
       } catch (error) {
         console.error("Impossible de supprimer la colonne:", error);
         setSessionError("La colonne n'a pas pu être supprimée.");
@@ -577,7 +577,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return null;
 
       try {
-        return await createMatriceCroiseeRowItem(sessionId, currentParticipantId, {
+        return await createRowItem(sessionId, currentParticipantId, {
           text: options?.text ?? "",
         });
       } catch (error) {
@@ -603,7 +603,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
         previousText === undefined ? currentText : String(previousText ?? "");
 
       try {
-        await updateMatriceCroiseeRowItem(sessionId, currentParticipantId, itemId, nextText, {
+        await updateRowItem(sessionId, currentParticipantId, itemId, nextText, {
           expectedPreviousText,
         });
       } catch (error) {
@@ -627,7 +627,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (rowItems.length <= 1) return;
 
       try {
-        await removeMatriceCroiseeRowItem(sessionId, itemId);
+        await removeRowItemService(sessionId, itemId);
       } catch (error) {
         console.error("Impossible de supprimer le rang:", error);
         setSessionError("Le rang n'a pas pu être supprimé.");
@@ -642,7 +642,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!rowId || !columnId) return null;
 
       try {
-        return await createMatriceCroiseeCellNote(
+        return await createCellNote(
           sessionId,
           currentParticipantId,
           rowId,
@@ -672,7 +672,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
         return;
       }
 
-      const cellKey = buildMatriceCroiseeCellKey(rowId, columnId);
+      const cellKey = buildCellKey(rowId, columnId);
       const currentNotes = Array.isArray(cellNotesByKey[cellKey]) ? cellNotesByKey[cellKey] : EMPTY_ARRAY;
       const currentText = String(
         currentNotes.find((note) => String(note?.id || "") === String(noteId))?.text || ""
@@ -685,7 +685,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
         previousText === undefined ? currentText : String(previousText ?? "");
 
       try {
-        await updateMatriceCroiseeCellNote(
+        await updateCellNote(
           sessionId,
           currentParticipantId,
           rowId,
@@ -716,7 +716,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       }
 
       try {
-        await removeMatriceCroiseeCellNote(sessionId, rowId, columnId, noteId);
+        await removeCellNoteService(sessionId, rowId, columnId, noteId);
       } catch (error) {
         console.error("Impossible de supprimer le post-it:", error);
         setSessionError("Le post-it n'a pas pu être supprimé.");
@@ -739,7 +739,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       }
 
       try {
-        return await toggleMatriceCroiseeVote(sessionId, currentParticipantId, noteId, {
+        return await toggleVoteService(sessionId, currentParticipantId, noteId, {
           maxVotes: MAX_STICKERS,
           validNoteIds: noteIdsSet,
         });
@@ -814,7 +814,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     selectedTopIdea,
     remainingVotes,
     maxStickers: MAX_STICKERS,
-    buildCellKey: buildMatriceCroiseeCellKey,
+    buildCellKey: buildCellKey,
     actions,
   };
 }

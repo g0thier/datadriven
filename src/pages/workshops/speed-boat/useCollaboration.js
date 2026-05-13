@@ -8,20 +8,20 @@
 
 import { useCallback, useMemo } from "react";
 import {
-  createSpeedBoatBrakeNote,
-  createSpeedBoatLeverNote,
-  removeSpeedBoatBrakeNote,
-  removeSpeedBoatLeverNote,
-  setSpeedBoatBrakeNotePosition,
-  setSpeedBoatLeverNotePosition,
-  setSpeedBoatStep8BrakeAction,
-  setSpeedBoatStep1Description,
-  setSpeedBoatStep2Objective,
-  subscribeSpeedBoatSession,
-  toggleSpeedBoatBrakeVote,
-  updateSpeedBoatBrakeNote,
-  updateSpeedBoatLeverNote,
-  upsertSpeedBoatParticipant,
+  createBrakeNote,
+  createLeverNote,
+  removeBrakeNote as removeBrakeNoteService,
+  removeLeverNote as removeLeverNoteService,
+  setBrakeNotePosition as setBrakeNotePositionService,
+  setLeverNotePosition as setLeverNotePositionService,
+  setStep8BrakeAction as setStep8BrakeActionService,
+  setStep1Description as setStep1DescriptionService,
+  setStep2Objective as setStep2ObjectiveService,
+  subscribeSession,
+  toggleBrakeVote as toggleBrakeVoteService,
+  updateBrakeNote,
+  updateLeverNote,
+  upsertParticipant,
 } from "../../../firebase/workshops/speed-boat.service";
 import {
   buildGridPosition,
@@ -61,44 +61,44 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     syncError,
     syncErrorSessionId,
     setSessionError,
-    activeState: activeSpeedBoatState,
+    activeState,
     lastSnapshotSessionId,
   } = useWorkshopCollaborationCore({
     sessionId,
     session,
     isEnabled,
-    subscribeSession: subscribeSpeedBoatSession,
-    upsertParticipant: upsertSpeedBoatParticipant,
+    subscribeSession: subscribeSession,
+    upsertParticipant: upsertParticipant,
     syncErrorMessage: "Impossible de se synchroniser avec le serveur.",
     participantErrorMessage: "Impossible d'enregistrer le participant.",
   });
-  const rawStep1Description = String(activeSpeedBoatState?.step1?.description || "");
-  const rawStep2Objective = String(activeSpeedBoatState?.step2?.objective || "");
+  const rawStep1Description = String(activeState?.step1?.description || "");
+  const rawStep2Objective = String(activeState?.step2?.objective || "");
   const rawBrakeNotes =
-    activeSpeedBoatState?.notesByType?.brakes &&
-    typeof activeSpeedBoatState.notesByType.brakes === "object"
-      ? activeSpeedBoatState.notesByType.brakes
+    activeState?.notesByType?.brakes &&
+    typeof activeState.notesByType.brakes === "object"
+      ? activeState.notesByType.brakes
       : EMPTY_OBJECT;
   const rawLeverNotes =
-    activeSpeedBoatState?.notesByType?.levers &&
-    typeof activeSpeedBoatState.notesByType.levers === "object"
-      ? activeSpeedBoatState.notesByType.levers
+    activeState?.notesByType?.levers &&
+    typeof activeState.notesByType.levers === "object"
+      ? activeState.notesByType.levers
       : EMPTY_OBJECT;
   const rawVotesByParticipant =
-    activeSpeedBoatState?.votesByParticipant &&
-    typeof activeSpeedBoatState.votesByParticipant === "object"
-      ? activeSpeedBoatState.votesByParticipant
+    activeState?.votesByParticipant &&
+    typeof activeState.votesByParticipant === "object"
+      ? activeState.votesByParticipant
       : EMPTY_OBJECT;
   const rawStep8ActionsByBrake =
-    activeSpeedBoatState?.step8ActionsByBrake &&
-    typeof activeSpeedBoatState.step8ActionsByBrake === "object"
-      ? activeSpeedBoatState.step8ActionsByBrake
+    activeState?.step8ActionsByBrake &&
+    typeof activeState.step8ActionsByBrake === "object"
+      ? activeState.step8ActionsByBrake
       : EMPTY_OBJECT;
 
   const remoteParticipants =
-    activeSpeedBoatState?.participants &&
-    typeof activeSpeedBoatState.participants === "object"
-      ? activeSpeedBoatState.participants
+    activeState?.participants &&
+    typeof activeState.participants === "object"
+      ? activeState.participants
       : EMPTY_OBJECT;
 
   const brakeNotes = useMemo(() => {
@@ -307,7 +307,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
 
       try {
-        await setSpeedBoatStep1Description(sessionId, currentParticipantId, description, {
+        await setStep1DescriptionService(sessionId, currentParticipantId, description, {
           expectedPreviousDescription: previousDescription,
         });
       } catch (error) {
@@ -330,7 +330,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
 
       try {
-        await setSpeedBoatStep2Objective(sessionId, currentParticipantId, objective, {
+        await setStep2ObjectiveService(sessionId, currentParticipantId, objective, {
           expectedPreviousObjective: previousObjective,
         });
       } catch (error) {
@@ -353,7 +353,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return null;
 
       try {
-        return await createSpeedBoatBrakeNote(sessionId, {
+        return await createBrakeNote(sessionId, {
           authorId: currentParticipantId,
           text: options?.text ?? "",
         });
@@ -376,7 +376,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!note || note.authorId !== currentParticipantId) return;
 
       try {
-        await updateSpeedBoatBrakeNote(sessionId, noteId, { text });
+        await updateBrakeNote(sessionId, noteId, { text });
       } catch (error) {
         console.error("Impossible de mettre à jour le frein:", error);
         setSessionError("Le frein n'a pas pu être mis à jour.");
@@ -402,7 +402,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!note || note.authorId !== currentParticipantId) return;
 
       try {
-        await removeSpeedBoatBrakeNote(sessionId, noteId);
+        await removeBrakeNoteService(sessionId, noteId);
       } catch (error) {
         console.error("Impossible de supprimer le frein:", error);
         setSessionError("Le frein n'a pas pu être supprimé.");
@@ -423,7 +423,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!isEnabled || !sessionId || !participantReady || !noteId) return;
 
       try {
-        await setSpeedBoatBrakeNotePosition(sessionId, noteId, position);
+        await setBrakeNotePositionService(sessionId, noteId, position);
       } catch (error) {
         console.error("Impossible de déplacer le frein:", error);
         setSessionError("La position du frein n'a pas pu être enregistrée.");
@@ -437,7 +437,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return null;
 
       try {
-        return await createSpeedBoatLeverNote(sessionId, {
+        return await createLeverNote(sessionId, {
           authorId: currentParticipantId,
           text: options?.text ?? "",
         });
@@ -460,7 +460,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!note || note.authorId !== currentParticipantId) return;
 
       try {
-        await updateSpeedBoatLeverNote(sessionId, noteId, { text });
+        await updateLeverNote(sessionId, noteId, { text });
       } catch (error) {
         console.error("Impossible de mettre à jour le levier:", error);
         setSessionError("Le levier n'a pas pu être mis à jour.");
@@ -486,7 +486,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!note || note.authorId !== currentParticipantId) return;
 
       try {
-        await removeSpeedBoatLeverNote(sessionId, noteId);
+        await removeLeverNoteService(sessionId, noteId);
       } catch (error) {
         console.error("Impossible de supprimer le levier:", error);
         setSessionError("Le levier n'a pas pu être supprimé.");
@@ -507,7 +507,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!isEnabled || !sessionId || !participantReady || !noteId) return;
 
       try {
-        await setSpeedBoatLeverNotePosition(sessionId, noteId, position);
+        await setLeverNotePositionService(sessionId, noteId, position);
       } catch (error) {
         console.error("Impossible de déplacer le levier:", error);
         setSessionError("La position du levier n'a pas pu être enregistrée.");
@@ -523,7 +523,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       }
 
       try {
-        return await toggleSpeedBoatBrakeVote(sessionId, currentParticipantId, noteId, {
+        return await toggleBrakeVoteService(sessionId, currentParticipantId, noteId, {
           maxVotes: MAX_STICKERS,
           validNoteIds: noteIdsSet,
         });
@@ -548,7 +548,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!isEnabled || !sessionId || !participantReady || !brakeId) return;
 
       try {
-        await setSpeedBoatStep8BrakeAction(sessionId, currentParticipantId, brakeId, text);
+        await setStep8BrakeActionService(sessionId, currentParticipantId, brakeId, text);
       } catch (error) {
         console.error("Impossible d'enregistrer l'action du frein:", error);
         setSessionError("L'action du frein n'a pas pu être enregistrée.");

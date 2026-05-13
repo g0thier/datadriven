@@ -174,7 +174,7 @@ const sortGroupIds = (groupIds = []) => {
  * @param {Function} [onError=() => {}] - Error callback.
  * @returns {Function} Unsubscribe callback.
  */
-export const subscribeWorldCoffeeSession = (
+export const subscribeSession = (
   sessionId,
   callback,
   onError = () => {}
@@ -201,7 +201,7 @@ export const subscribeWorldCoffeeSession = (
  * @param {Array<{id?:string,uid?:string,name?:string,label?:string,firstName?:string,lastName?:string,email?:string}>} [invitedParticipants=[]] - Session invitees (`allGuests`).
  * @returns {Promise<void>} Transaction completion.
  */
-export const initializeWorldCoffeeSubgroups = async (
+export const initializeSubgroups = async (
   sessionId,
   invitedParticipants = []
 ) => {
@@ -341,7 +341,7 @@ export const initializeWorldCoffeeSubgroups = async (
  * @param {string} sessionId - Workshop session id.
  * @returns {Promise<void>} Transaction completion.
  */
-export const applyWorldCoffeeRound2Rotation = async (sessionId) => {
+export const applyRound2Rotation = async (sessionId) => {
   if (!sessionId) return;
 
   await runTransaction(ref(database, toWorldCoffeePath(sessionId)), (current) => {
@@ -435,7 +435,7 @@ export const applyWorldCoffeeRound2Rotation = async (sessionId) => {
  * @param {string} sessionId - Workshop session id.
  * @returns {Promise<void>} Transaction completion.
  */
-export const applyWorldCoffeeRound3Rotation = async (sessionId) => {
+export const applyRound3Rotation = async (sessionId) => {
   if (!sessionId) return;
 
   await runTransaction(ref(database, toWorldCoffeePath(sessionId)), (current) => {
@@ -529,7 +529,7 @@ export const applyWorldCoffeeRound3Rotation = async (sessionId) => {
  * @param {string} sessionId - Workshop session id.
  * @returns {Promise<void>} Transaction completion.
  */
-export const applyWorldCoffeeReturnRotation = async (sessionId) => {
+export const applyReturnRotation = async (sessionId) => {
   if (!sessionId) return;
 
   await runTransaction(ref(database, toWorldCoffeePath(sessionId)), (current) => {
@@ -623,7 +623,7 @@ export const applyWorldCoffeeReturnRotation = async (sessionId) => {
  * @param {{id:string, name?:string, email?:string, isAuthenticated?:boolean}} [participant={}] - Participant payload.
  * @returns {Promise<void>} Upsert completion.
  */
-export const upsertWorldCoffeeParticipant = async (
+export const upsertParticipant = async (
   sessionId,
   participant = {}
 ) => {
@@ -657,9 +657,9 @@ export const upsertWorldCoffeeParticipant = async (
  * @param {{authorId:string, text?:string}} [payload={}] - Description payload.
  * @returns {Promise<string>} Created description id.
  */
-export const createWorldCoffeeDescription = async (sessionId, payload = {}) => {
+export const createDescription = async (sessionId, payload = {}) => {
   if (!sessionId || !payload?.authorId) {
-    throw new Error("createWorldCoffeeDescription: sessionId ou authorId manquant");
+    throw new Error("createDescription: sessionId ou authorId manquant");
   }
 
   const descriptionRef = push(ref(database, `${toWorldCoffeePath(sessionId)}/descriptions`));
@@ -689,7 +689,7 @@ export const createWorldCoffeeDescription = async (sessionId, payload = {}) => {
  * @param {{expectedPreviousText?:string}} [options={}] - Optional concurrency guard.
  * @returns {Promise<void>} Update completion.
  */
-export const updateWorldCoffeeDescription = async (
+export const updateDescription = async (
   sessionId,
   descriptionId,
   patch = {},
@@ -743,7 +743,7 @@ export const updateWorldCoffeeDescription = async (
  * @param {{expectedPreviousText?:string}} [options={}] - Optional concurrency guard.
  * @returns {Promise<void>} Update completion.
  */
-export const updateWorldCoffeeSubgroupSynthesis = async (
+export const updateSubgroupSynthesis = async (
   sessionId,
   subgroupId,
   patch = {},
@@ -793,7 +793,7 @@ export const updateWorldCoffeeSubgroupSynthesis = async (
  * @param {string} facilitatorId - Participant id.
  * @returns {Promise<void>} Update completion.
  */
-export const setWorldCoffeeFacilitator = async (
+export const setFacilitator = async (
   sessionId,
   descriptionId,
   facilitatorId
@@ -842,7 +842,7 @@ export const setWorldCoffeeFacilitator = async (
  * @param {string} descriptionId - Description id.
  * @returns {Promise<void>} Update completion.
  */
-export const clearWorldCoffeeFacilitator = async (sessionId, descriptionId) => {
+export const clearFacilitator = async (sessionId, descriptionId) => {
   const cleanedDescriptionId = String(descriptionId || "").trim();
   if (!sessionId || !cleanedDescriptionId) return;
 
@@ -887,10 +887,10 @@ export const clearWorldCoffeeFacilitator = async (sessionId, descriptionId) => {
  * @param {{authorId:string, text?:string, roundId?:string, roundLabel?:string}} [payload={}] - Idea payload.
  * @returns {Promise<string>} Created idea id.
  */
-export const createWorldCoffeeIdea = async (sessionId, subgroupId, payload = {}) => {
+export const createIdea = async (sessionId, subgroupId, payload = {}) => {
   const cleanedSubgroupId = String(subgroupId || "").trim();
   if (!sessionId || !cleanedSubgroupId || !payload?.authorId) {
-    throw new Error("createWorldCoffeeIdea: sessionId, subgroupId ou authorId manquant");
+    throw new Error("createIdea: sessionId, subgroupId ou authorId manquant");
   }
 
   const ideasRef = ref(database, `${toWorldCoffeePath(sessionId)}/ideasBySubgroup/${cleanedSubgroupId}`);
@@ -925,7 +925,7 @@ export const createWorldCoffeeIdea = async (sessionId, subgroupId, payload = {})
  * @param {{expectedPreviousText?:string}} [options={}] - Optional concurrency guard.
  * @returns {Promise<void>} Update completion.
  */
-export const updateWorldCoffeeIdea = async (
+export const updateIdea = async (
   sessionId,
   subgroupId,
   ideaId,
@@ -988,7 +988,7 @@ export const updateWorldCoffeeIdea = async (
  * @param {string} ideaId - Idea id.
  * @returns {Promise<void>} Delete completion.
  */
-export const removeWorldCoffeeIdea = async (sessionId, subgroupId, ideaId) => {
+export const removeIdea = async (sessionId, subgroupId, ideaId) => {
   const cleanedSubgroupId = String(subgroupId || "").trim();
   const cleanedIdeaId = String(ideaId || "").trim();
   if (!sessionId || !cleanedSubgroupId || !cleanedIdeaId) return;
@@ -1009,10 +1009,10 @@ export const removeWorldCoffeeIdea = async (sessionId, subgroupId, ideaId) => {
  * @param {{authorId:string, text?:string}} [payload={}] - Comment payload.
  * @returns {Promise<string>} Created comment id.
  */
-export const addWorldCoffeeIdeaComment = async (sessionId, ideaId, payload = {}) => {
+export const addIdeaComment = async (sessionId, ideaId, payload = {}) => {
   const cleanedIdeaId = String(ideaId || "").trim();
   if (!sessionId || !cleanedIdeaId || !payload?.authorId) {
-    throw new Error("addWorldCoffeeIdeaComment: sessionId, ideaId ou authorId manquant");
+    throw new Error("addIdeaComment: sessionId, ideaId ou authorId manquant");
   }
 
   const commentRef = push(ref(database, `${toWorldCoffeePath(sessionId)}/commentsByIdea/${cleanedIdeaId}`));
@@ -1045,7 +1045,7 @@ export const addWorldCoffeeIdeaComment = async (sessionId, ideaId, payload = {})
  * @param {{text?:string}} [patch={}] - Comment patch.
  * @returns {Promise<void>} Update completion.
  */
-export const updateWorldCoffeeIdeaComment = async (
+export const updateIdeaComment = async (
   sessionId,
   ideaId,
   commentId,
@@ -1077,7 +1077,7 @@ export const updateWorldCoffeeIdeaComment = async (
  * @param {string} commentId - Comment id.
  * @returns {Promise<void>} Delete completion.
  */
-export const removeWorldCoffeeIdeaComment = async (sessionId, ideaId, commentId) => {
+export const removeIdeaComment = async (sessionId, ideaId, commentId) => {
   const cleanedIdeaId = String(ideaId || "").trim();
   const cleanedCommentId = String(commentId || "").trim();
   if (!sessionId || !cleanedIdeaId || !cleanedCommentId) return;
@@ -1096,10 +1096,10 @@ export const removeWorldCoffeeIdeaComment = async (sessionId, ideaId, commentId)
  * @param {{authorId:string, text?:string}} [payload={}] - Reply payload.
  * @returns {Promise<string>} Created reply id.
  */
-export const addWorldCoffeeCommentReply = async (sessionId, commentId, payload = {}) => {
+export const addCommentReply = async (sessionId, commentId, payload = {}) => {
   const cleanedCommentId = String(commentId || "").trim();
   if (!sessionId || !cleanedCommentId || !payload?.authorId) {
-    throw new Error("addWorldCoffeeCommentReply: sessionId, commentId ou authorId manquant");
+    throw new Error("addCommentReply: sessionId, commentId ou authorId manquant");
   }
 
   const replyRef = push(
@@ -1134,7 +1134,7 @@ export const addWorldCoffeeCommentReply = async (sessionId, commentId, payload =
  * @param {{text?:string}} [patch={}] - Reply patch.
  * @returns {Promise<void>} Update completion.
  */
-export const updateWorldCoffeeCommentReply = async (
+export const updateCommentReply = async (
   sessionId,
   commentId,
   replyId,
@@ -1169,7 +1169,7 @@ export const updateWorldCoffeeCommentReply = async (
  * @param {string} replyId - Reply id.
  * @returns {Promise<void>} Delete completion.
  */
-export const removeWorldCoffeeCommentReply = async (sessionId, commentId, replyId) => {
+export const removeCommentReply = async (sessionId, commentId, replyId) => {
   const cleanedCommentId = String(commentId || "").trim();
   const cleanedReplyId = String(replyId || "").trim();
   if (!sessionId || !cleanedCommentId || !cleanedReplyId) return;
@@ -1186,7 +1186,7 @@ export const removeWorldCoffeeCommentReply = async (sessionId, commentId, replyI
  * @param {string} descriptionId - Description id.
  * @returns {Promise<void>} Delete completion.
  */
-export const removeWorldCoffeeDescription = async (sessionId, descriptionId) => {
+export const removeDescription = async (sessionId, descriptionId) => {
   const cleanedDescriptionId = String(descriptionId || "").trim();
   if (!sessionId || !cleanedDescriptionId) return;
 

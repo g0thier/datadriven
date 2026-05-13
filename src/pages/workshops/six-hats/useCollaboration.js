@@ -1,12 +1,12 @@
 import { useCallback, useMemo } from "react";
 import {
-  createSixHatsItem,
-  removeSixHatsItem,
-  setSixHatsBlueConclusion,
-  setSixHatsStep1Description,
-  subscribeSixHatsSession,
-  updateSixHatsItem,
-  upsertSixHatsParticipant,
+  createItem,
+  removeItem,
+  setBlueConclusion as setBlueConclusionService,
+  setStep1Description as setStep1DescriptionService,
+  subscribeSession,
+  updateItem,
+  upsertParticipant,
 } from "../../../firebase/workshops/six-hats.service";
 import {
   EMPTY_OBJECT,
@@ -34,22 +34,22 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     syncError,
     syncErrorSessionId,
     setSessionError,
-    activeState: activeSixHatsState,
+    activeState,
     lastSnapshotSessionId,
   } = useWorkshopCollaborationCore({
     sessionId,
     session,
     isEnabled,
-    subscribeSession: subscribeSixHatsSession,
-    upsertParticipant: upsertSixHatsParticipant,
+    subscribeSession: subscribeSession,
+    upsertParticipant: upsertParticipant,
     syncErrorMessage: "Impossible de se synchroniser avec le serveur.",
     participantErrorMessage: "Impossible d'enregistrer le participant.",
   });
-  const rawStep1Description = String(activeSixHatsState?.step1?.description || "");
+  const rawStep1Description = String(activeState?.step1?.description || "");
 
   const rawItemsByHat =
-    activeSixHatsState?.itemsByHat && typeof activeSixHatsState.itemsByHat === "object"
-      ? activeSixHatsState.itemsByHat
+    activeState?.itemsByHat && typeof activeState.itemsByHat === "object"
+      ? activeState.itemsByHat
       : EMPTY_OBJECT;
 
   const items = useMemo(() => {
@@ -98,8 +98,8 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   );
 
   const remoteParticipants =
-    activeSixHatsState?.participants && typeof activeSixHatsState.participants === "object"
-      ? activeSixHatsState.participants
+    activeState?.participants && typeof activeState.participants === "object"
+      ? activeState.participants
       : EMPTY_OBJECT;
 
   const participants = useMemo(() => {
@@ -176,14 +176,14 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
   const currentParticipantId = participant?.id || "";
   const step1Description = rawStep1Description;
-  const blueConclusion = String(activeSixHatsState?.step7?.blueConclusion?.text || "");
+  const blueConclusion = String(activeState?.step7?.blueConclusion?.text || "");
 
   const setStep1Description = useCallback(
     async (description, previousDescription = step1Description) => {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
 
       try {
-        await setSixHatsStep1Description(sessionId, currentParticipantId, description, {
+        await setStep1DescriptionService(sessionId, currentParticipantId, description, {
           expectedPreviousDescription: previousDescription,
         });
       } catch (error) {
@@ -209,7 +209,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!normalizedHatId) return null;
 
       try {
-        return await createSixHatsItem(sessionId, normalizedHatId, {
+        return await createItem(sessionId, normalizedHatId, {
           authorId: currentParticipantId,
           text: options?.text ?? "",
         });
@@ -243,7 +243,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
           : String(previousText ?? "");
 
       try {
-        await updateSixHatsItem(
+        await updateItem(
           sessionId,
           normalizedHatId,
           itemId,
@@ -271,7 +271,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!item || item.authorId !== currentParticipantId || item.hatId !== normalizedHatId) return;
 
       try {
-        await removeSixHatsItem(sessionId, normalizedHatId, itemId);
+        await removeItem(sessionId, normalizedHatId, itemId);
       } catch (error) {
         console.error("Impossible de supprimer la contribution:", error);
         setSessionError("La contribution n'a pas pu être supprimée.");
@@ -285,7 +285,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
 
       try {
-        await setSixHatsBlueConclusion(sessionId, currentParticipantId, text);
+        await setBlueConclusionService(sessionId, currentParticipantId, text);
       } catch (error) {
         console.error("Impossible de mettre à jour la conclusion:", error);
         setSessionError("La conclusion n'a pas pu être enregistrée.");

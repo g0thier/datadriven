@@ -67,7 +67,7 @@ const normalizePosition = (position = {}, fallback = { x: 40, y: 40 }) => {
  * @param {Function} [onError=() => {}] - Error callback.
  * @returns {Function} Unsubscribe callback.
  */
-export const subscribeContinueStopTrySession = (
+export const subscribeSession = (
   sessionId,
   callback,
   onError = () => {}
@@ -93,7 +93,7 @@ export const subscribeContinueStopTrySession = (
  * @param {{id:string, name?:string, email?:string, isAuthenticated?:boolean}} [participant={}] - Participant payload.
  * @returns {Promise<void>} Upsert completion.
  */
-export const upsertContinueStopTryParticipant = async (
+export const upsertParticipant = async (
   sessionId,
   participant = {}
 ) => {
@@ -128,7 +128,7 @@ export const upsertContinueStopTryParticipant = async (
  * @param {string} description - Step description text.
  * @returns {Promise<void>} Update completion.
  */
-export const setContinueStopTryStep1Description = async (
+export const setStep1Description = async (
   sessionId,
   participantId,
   description,
@@ -180,7 +180,7 @@ export const setContinueStopTryStep1Description = async (
  * @param {string} text - Placeholder value.
  * @returns {Promise<void>} Update completion.
  */
-export const setContinueStopTryStep5Placeholder = async (
+export const setStep5Placeholder = async (
   sessionId,
   participantId,
   columnId,
@@ -210,14 +210,14 @@ export const setContinueStopTryStep5Placeholder = async (
  * @param {{authorId:string, columnId:"continue"|"stop"|"try", text?:string, position?:{x?:number,y?:number}}} [payload={}] - Note payload.
  * @returns {Promise<string>} Created note id.
  */
-export const createContinueStopTryNote = async (sessionId, payload = {}) => {
+export const createNote = async (sessionId, payload = {}) => {
   if (!sessionId || !payload?.authorId) {
-    throw new Error("createContinueStopTryNote: sessionId ou authorId manquant");
+    throw new Error("createNote: sessionId ou authorId manquant");
   }
 
   const normalizedColumnId = normalizeColumnId(payload?.columnId);
   if (!normalizedColumnId) {
-    throw new Error("createContinueStopTryNote: columnId invalide");
+    throw new Error("createNote: columnId invalide");
   }
 
   const noteRef = push(ref(database, `${toContinueStopTryPath(sessionId)}/notes`));
@@ -248,7 +248,7 @@ export const createContinueStopTryNote = async (sessionId, payload = {}) => {
  * @param {{text?:string, position?:{x?:number,y?:number}, columnId?:"continue"|"stop"|"try"}} [patch={}] - Note patch.
  * @returns {Promise<void>} Update completion.
  */
-export const updateContinueStopTryNote = async (sessionId, noteId, patch = {}) => {
+export const updateNote = async (sessionId, noteId, patch = {}) => {
   if (!sessionId || !noteId) return;
 
   const payload = {
@@ -264,7 +264,7 @@ export const updateContinueStopTryNote = async (sessionId, noteId, patch = {}) =
   if (Object.prototype.hasOwnProperty.call(patch, "columnId")) {
     const normalizedColumnId = normalizeColumnId(patch.columnId);
     if (!normalizedColumnId) {
-      throw new Error("updateContinueStopTryNote: columnId invalide");
+      throw new Error("updateNote: columnId invalide");
     }
     payload.columnId = normalizedColumnId;
   }
@@ -278,7 +278,7 @@ export const updateContinueStopTryNote = async (sessionId, noteId, patch = {}) =
  * @param {string} noteId - Note id.
  * @returns {Promise<void>} Delete completion.
  */
-export const removeContinueStopTryNote = async (sessionId, noteId) => {
+export const removeNote = async (sessionId, noteId) => {
   if (!sessionId || !noteId) return;
 
   const basePath = toContinueStopTryPath(sessionId);
@@ -306,7 +306,7 @@ export const removeContinueStopTryNote = async (sessionId, noteId) => {
  * @param {{x?:number, y?:number}} position - Target position.
  * @returns {Promise<void>} Update completion.
  */
-export const setContinueStopTryNotePosition = async (sessionId, noteId, position) => {
+export const setNotePosition = async (sessionId, noteId, position) => {
   if (!sessionId || !noteId) return;
 
   await update(ref(database, `${toContinueStopTryPath(sessionId)}/notes/${noteId}`), {
@@ -323,7 +323,7 @@ export const setContinueStopTryNotePosition = async (sessionId, noteId, position
  * @param {{maxVotesPerColumn?:number, validNoteIds?:Set<string>, noteColumnsById?:Object<string,string>}} [options={}] - Voting options.
  * @returns {Promise<{committed:boolean, votes:Object}>} Transaction result and resulting votes.
  */
-export const toggleContinueStopTryVote = async (
+export const toggleVote = async (
   sessionId,
   participantId,
   noteId,

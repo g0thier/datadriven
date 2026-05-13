@@ -53,7 +53,7 @@ const normalizePrototypeFeedbackColumnId = (columnId) => {
  * @param {Function} [onError=() => {}] - Error callback.
  * @returns {Function} Unsubscribe callback.
  */
-export const subscribeDesignThinkingSession = (
+export const subscribeSession = (
   sessionId,
   callback,
   onError = () => {}
@@ -80,7 +80,7 @@ export const subscribeDesignThinkingSession = (
  * @param {{id:string, name?:string, email?:string, isAuthenticated?:boolean}} [participant={}] - Participant payload.
  * @returns {Promise<void>} Upsert completion.
  */
-export const upsertDesignThinkingParticipant = async (
+export const upsertParticipant = async (
   sessionId,
   participant = {}
 ) => {
@@ -116,7 +116,7 @@ export const upsertDesignThinkingParticipant = async (
  * @param {{expectedPreviousDescription?:string}} [options={}] - Concurrency guards.
  * @returns {Promise<void>} Update completion.
  */
-export const setDesignThinkingStep1Description = async (
+export const setStep1Description = async (
   sessionId,
   participantId,
   description,
@@ -166,9 +166,9 @@ export const setDesignThinkingStep1Description = async (
  * @param {{authorId:string, text?:string}} [payload={}] - Shared note payload.
  * @returns {Promise<string>} Created shared note id.
  */
-export const createDesignThinkingSharedNote = async (sessionId, payload = {}) => {
+export const createSharedNote = async (sessionId, payload = {}) => {
   if (!sessionId || !payload?.authorId) {
-    throw new Error("createDesignThinkingSharedNote: sessionId ou authorId manquant");
+    throw new Error("createSharedNote: sessionId ou authorId manquant");
   }
 
   const noteRef = push(ref(database, `${toDesignThinkingPath(sessionId)}/sharedNotes`));
@@ -198,7 +198,7 @@ export const createDesignThinkingSharedNote = async (sessionId, payload = {}) =>
  * @param {{expectedPreviousText?:string}} [options={}] - Concurrency guards.
  * @returns {Promise<void>} Update completion.
  */
-export const updateDesignThinkingSharedNote = async (
+export const updateSharedNote = async (
   sessionId,
   noteId,
   patch = {},
@@ -254,7 +254,7 @@ export const updateDesignThinkingSharedNote = async (
  * @param {string} noteId - Shared note id.
  * @returns {Promise<void>} Delete completion.
  */
-export const removeDesignThinkingSharedNote = async (sessionId, noteId) => {
+export const removeSharedNote = async (sessionId, noteId) => {
   if (!sessionId || !noteId) return;
 
   const basePath = toDesignThinkingPath(sessionId);
@@ -271,7 +271,7 @@ export const removeDesignThinkingSharedNote = async (sessionId, noteId) => {
  * @param {{expectedPreviousStatement?:string}} [options={}] - Concurrency guards.
  * @returns {Promise<void>} Update completion.
  */
-export const setDesignThinkingProblemStatement = async (
+export const setProblemStatement = async (
   sessionId,
   participantId,
   statement,
@@ -323,7 +323,7 @@ export const setDesignThinkingProblemStatement = async (
  * @param {{expectedPreviousConclusion?:string}} [options={}] - Concurrency guards.
  * @returns {Promise<void>} Update completion.
  */
-export const setDesignThinkingConclusion = async (
+export const setConclusion = async (
   sessionId,
   participantId,
   conclusion,
@@ -373,16 +373,16 @@ export const setDesignThinkingConclusion = async (
  * @param {{authorId:string, columnId:"works"|"problems"|"improvements", text?:string}} [payload={}] - Note payload.
  * @returns {Promise<string>} Created note id.
  */
-export const createDesignThinkingPrototypeFeedbackNote = async (sessionId, payload = {}) => {
+export const createPrototypeFeedbackNote = async (sessionId, payload = {}) => {
   if (!sessionId || !payload?.authorId) {
     throw new Error(
-      "createDesignThinkingPrototypeFeedbackNote: sessionId ou authorId manquant"
+      "createPrototypeFeedbackNote: sessionId ou authorId manquant"
     );
   }
 
   const normalizedColumnId = normalizePrototypeFeedbackColumnId(payload?.columnId);
   if (!normalizedColumnId) {
-    throw new Error("createDesignThinkingPrototypeFeedbackNote: columnId invalide");
+    throw new Error("createPrototypeFeedbackNote: columnId invalide");
   }
 
   const noteRef = push(ref(database, `${toDesignThinkingPrototypeFeedbackPath(sessionId)}/notes`));
@@ -413,7 +413,7 @@ export const createDesignThinkingPrototypeFeedbackNote = async (sessionId, paylo
  * @param {{expectedPreviousText?:string}} [options={}] - Concurrency guards.
  * @returns {Promise<void>} Update completion.
  */
-export const updateDesignThinkingPrototypeFeedbackNote = async (
+export const updatePrototypeFeedbackNote = async (
   sessionId,
   noteId,
   patch = {},
@@ -429,7 +429,7 @@ export const updateDesignThinkingPrototypeFeedbackNote = async (
     : "";
 
   if (hasNextColumnId && !normalizedColumnId) {
-    throw new Error("updateDesignThinkingPrototypeFeedbackNote: columnId invalide");
+    throw new Error("updatePrototypeFeedbackNote: columnId invalide");
   }
 
   if (!hasNextText) {
@@ -481,7 +481,7 @@ export const updateDesignThinkingPrototypeFeedbackNote = async (
  * @param {string} noteId - Note id.
  * @returns {Promise<void>} Delete completion.
  */
-export const removeDesignThinkingPrototypeFeedbackNote = async (sessionId, noteId) => {
+export const removePrototypeFeedbackNote = async (sessionId, noteId) => {
   if (!sessionId || !noteId) return;
 
   await update(ref(database), {
@@ -495,9 +495,9 @@ export const removeDesignThinkingPrototypeFeedbackNote = async (sessionId, noteI
  * @param {{authorId:string, text?:string, position?:{x?:number,y?:number}}} [payload={}] - Note payload.
  * @returns {Promise<string>} Created note id.
  */
-export const createDesignThinkingIdeationNote = async (sessionId, payload = {}) => {
+export const createIdeationNote = async (sessionId, payload = {}) => {
   if (!sessionId || !payload?.authorId) {
-    throw new Error("createDesignThinkingIdeationNote: sessionId ou authorId manquant");
+    throw new Error("createIdeationNote: sessionId ou authorId manquant");
   }
 
   const noteRef = push(ref(database, `${toDesignThinkingIdeationPath(sessionId)}/notes`));
@@ -527,7 +527,7 @@ export const createDesignThinkingIdeationNote = async (sessionId, payload = {}) 
  * @param {{text?:string, position?:{x?:number,y?:number}}} [patch={}] - Note patch.
  * @returns {Promise<void>} Update completion.
  */
-export const updateDesignThinkingIdeationNote = async (sessionId, noteId, patch = {}) => {
+export const updateIdeationNote = async (sessionId, noteId, patch = {}) => {
   if (!sessionId || !noteId) return;
 
   const payload = {
@@ -550,7 +550,7 @@ export const updateDesignThinkingIdeationNote = async (sessionId, noteId, patch 
  * @param {string} noteId - Note id.
  * @returns {Promise<void>} Delete completion.
  */
-export const removeDesignThinkingIdeationNote = async (sessionId, noteId) => {
+export const removeIdeationNote = async (sessionId, noteId) => {
   if (!sessionId || !noteId) return;
 
   const basePath = toDesignThinkingIdeationPath(sessionId);
@@ -579,9 +579,9 @@ export const removeDesignThinkingIdeationNote = async (sessionId, noteId) => {
  * @param {{authorId:string, text?:string}} [payload={}] - Comment payload.
  * @returns {Promise<string>} Created comment id.
  */
-export const addDesignThinkingIdeationComment = async (sessionId, noteId, payload = {}) => {
+export const addIdeationComment = async (sessionId, noteId, payload = {}) => {
   if (!sessionId || !noteId || !payload?.authorId) {
-    throw new Error("addDesignThinkingIdeationComment: paramètres manquants");
+    throw new Error("addIdeationComment: paramètres manquants");
   }
 
   const commentRef = push(
@@ -613,7 +613,7 @@ export const addDesignThinkingIdeationComment = async (sessionId, noteId, payloa
  * @param {{text?:string}} [patch={}] - Comment patch.
  * @returns {Promise<void>} Update completion.
  */
-export const updateDesignThinkingIdeationComment = async (
+export const updateIdeationComment = async (
   sessionId,
   noteId,
   commentId,
@@ -645,7 +645,7 @@ export const updateDesignThinkingIdeationComment = async (
  * @param {string} commentId - Comment id.
  * @returns {Promise<void>} Delete completion.
  */
-export const removeDesignThinkingIdeationComment = async (sessionId, noteId, commentId) => {
+export const removeIdeationComment = async (sessionId, noteId, commentId) => {
   if (!sessionId || !noteId || !commentId) return;
 
   await update(ref(database), {
@@ -660,7 +660,7 @@ export const removeDesignThinkingIdeationComment = async (sessionId, noteId, com
  * @param {{x?:number, y?:number}} position - Target position.
  * @returns {Promise<void>} Update completion.
  */
-export const setDesignThinkingIdeationNotePosition = async (sessionId, noteId, position) => {
+export const setIdeationNotePosition = async (sessionId, noteId, position) => {
   if (!sessionId || !noteId) return;
 
   await update(ref(database, `${toDesignThinkingIdeationPath(sessionId)}/notes/${noteId}`), {
@@ -677,7 +677,7 @@ export const setDesignThinkingIdeationNotePosition = async (sessionId, noteId, p
  * @param {{maxVotes?:number, validNoteIds?:Set<string>}} [options={}] - Voting options.
  * @returns {Promise<{committed:boolean, votes:Object}>} Transaction result and resulting votes.
  */
-export const toggleDesignThinkingIdeationVote = async (
+export const toggleIdeationVote = async (
   sessionId,
   participantId,
   noteId,

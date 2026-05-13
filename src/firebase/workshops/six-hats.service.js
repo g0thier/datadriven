@@ -25,7 +25,7 @@ const normalizeTextPatch = (patch = {}) => {
   return payload;
 };
 
-export const subscribeSixHatsSession = (sessionId, callback, onError = () => {}) => {
+export const subscribeSession = (sessionId, callback, onError = () => {}) => {
   if (!sessionId) {
     callback(null);
     return () => {};
@@ -42,7 +42,7 @@ export const subscribeSixHatsSession = (sessionId, callback, onError = () => {})
   );
 };
 
-export const upsertSixHatsParticipant = async (sessionId, participant = {}) => {
+export const upsertParticipant = async (sessionId, participant = {}) => {
   if (!sessionId || !participant?.id) return;
 
   const participantRef = ref(
@@ -65,7 +65,7 @@ export const upsertSixHatsParticipant = async (sessionId, participant = {}) => {
   });
 };
 
-export const setSixHatsStep1Description = async (
+export const setStep1Description = async (
   sessionId,
   participantId,
   description,
@@ -104,11 +104,11 @@ export const setSixHatsStep1Description = async (
   });
 };
 
-export const createSixHatsItem = async (sessionId, hatId, payload = {}) => {
+export const createItem = async (sessionId, hatId, payload = {}) => {
   const normalizedHatId = normalizeHatId(hatId);
 
   if (!sessionId || !normalizedHatId || !payload?.authorId) {
-    throw new Error("createSixHatsItem: parametres manquants");
+    throw new Error("createItem: parametres manquants");
   }
 
   const itemsRef = ref(database, `${toSixHatsPath(sessionId)}/itemsByHat/${normalizedHatId}`);
@@ -132,7 +132,7 @@ export const createSixHatsItem = async (sessionId, hatId, payload = {}) => {
   return itemId;
 };
 
-export const updateSixHatsItem = async (
+export const updateItem = async (
   sessionId,
   hatId,
   itemId,
@@ -183,7 +183,7 @@ export const updateSixHatsItem = async (
   });
 };
 
-export const removeSixHatsItem = async (sessionId, hatId, itemId) => {
+export const removeItem = async (sessionId, hatId, itemId) => {
   const normalizedHatId = normalizeHatId(hatId);
 
   if (!sessionId || !normalizedHatId || !itemId) return;
@@ -194,7 +194,7 @@ export const removeSixHatsItem = async (sessionId, hatId, itemId) => {
   });
 };
 
-export const setSixHatsBlueConclusion = async (sessionId, participantId, text) => {
+export const setBlueConclusion = async (sessionId, participantId, text) => {
   if (!sessionId) return;
 
   await update(ref(database, `${toSixHatsPath(sessionId)}/step7/blueConclusion`), {

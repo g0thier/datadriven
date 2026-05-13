@@ -45,7 +45,7 @@ const normalizeCellKeyPart = (value) =>
  * @param {string} columnId - Column item id.
  * @returns {string} Normalized cell key.
  */
-export const buildMatriceCroiseeCellKey = (rowId, columnId) => {
+export const buildCellKey = (rowId, columnId) => {
   const normalizedRowId = normalizeCellKeyPart(rowId);
   const normalizedColumnId = normalizeCellKeyPart(columnId);
 
@@ -159,7 +159,7 @@ const removeMatriceCroiseeItem = async (sessionId, itemId, targetPath) => {
 };
 
 const toMatriceCroiseeCellNotesPath = (sessionId, rowId, columnId) => {
-  const cellKey = buildMatriceCroiseeCellKey(rowId, columnId);
+  const cellKey = buildCellKey(rowId, columnId);
   if (!cellKey) return "";
   return `${toMatriceCroiseeStep3NotesByCellPath(sessionId)}/${cellKey}`;
 };
@@ -171,7 +171,7 @@ const toMatriceCroiseeCellNotesPath = (sessionId, rowId, columnId) => {
  * @param {Function} [onError=() => {}] - Error callback.
  * @returns {Function} Unsubscribe callback.
  */
-export const subscribeMatriceCroiseeSession = (
+export const subscribeSession = (
   sessionId,
   callback,
   onError = () => {}
@@ -197,7 +197,7 @@ export const subscribeMatriceCroiseeSession = (
  * @param {{id:string, name?:string, email?:string, isAuthenticated?:boolean}} [participant={}] - Participant payload.
  * @returns {Promise<void>} Upsert completion.
  */
-export const upsertMatriceCroiseeParticipant = async (
+export const upsertParticipant = async (
   sessionId,
   participant = {}
 ) => {
@@ -233,7 +233,7 @@ export const upsertMatriceCroiseeParticipant = async (
  * @param {{expectedPreviousDescription?:string}} [options={}] - Concurrency guards.
  * @returns {Promise<void>} Update completion.
  */
-export const setMatriceCroiseeStep1Description = async (
+export const setStep1Description = async (
   sessionId,
   participantId,
   description,
@@ -284,7 +284,7 @@ export const setMatriceCroiseeStep1Description = async (
  * @param {string} text - Concept text.
  * @returns {Promise<void>} Update completion.
  */
-export const setMatriceCroiseeConcept = async (sessionId, participantId, text) => {
+export const setConcept = async (sessionId, participantId, text) => {
   if (!sessionId) return;
 
   await update(ref(database, `${toMatriceCroiseePath(sessionId)}/step5/concept`), {
@@ -300,7 +300,7 @@ export const setMatriceCroiseeConcept = async (sessionId, participantId, text) =
  * @param {string} participantId - Participant id creating the seed.
  * @returns {Promise<void>} Seed completion.
  */
-export const initializeMatriceCroiseeStructure = async (sessionId, participantId) => {
+export const initializeStructure = async (sessionId, participantId) => {
   if (!sessionId) return;
 
   await runTransaction(ref(database, toMatriceCroiseeStep2Path(sessionId)), (current) => {
@@ -340,7 +340,7 @@ export const initializeMatriceCroiseeStructure = async (sessionId, participantId
  * @param {{text?:string}} [payload={}] - Item payload.
  * @returns {Promise<string>} Created item id.
  */
-export const createMatriceCroiseeColumnItem = async (
+export const createColumnItem = async (
   sessionId,
   participantId,
   payload = {}
@@ -362,7 +362,7 @@ export const createMatriceCroiseeColumnItem = async (
  * @param {{expectedPreviousText?:string}} [options={}] - Concurrency guards.
  * @returns {Promise<void>} Update completion.
  */
-export const updateMatriceCroiseeColumnItem = async (
+export const updateColumnItem = async (
   sessionId,
   participantId,
   itemId,
@@ -385,7 +385,7 @@ export const updateMatriceCroiseeColumnItem = async (
  * @param {string} itemId - Column item id.
  * @returns {Promise<void>} Remove completion.
  */
-export const removeMatriceCroiseeColumnItem = async (sessionId, itemId) => {
+export const removeColumnItem = async (sessionId, itemId) => {
   await removeMatriceCroiseeItem(sessionId, itemId, toMatriceCroiseeItemsColumnsPath);
 };
 
@@ -396,7 +396,7 @@ export const removeMatriceCroiseeColumnItem = async (sessionId, itemId) => {
  * @param {{text?:string}} [payload={}] - Item payload.
  * @returns {Promise<string>} Created item id.
  */
-export const createMatriceCroiseeRowItem = async (
+export const createRowItem = async (
   sessionId,
   participantId,
   payload = {}
@@ -418,7 +418,7 @@ export const createMatriceCroiseeRowItem = async (
  * @param {{expectedPreviousText?:string}} [options={}] - Concurrency guards.
  * @returns {Promise<void>} Update completion.
  */
-export const updateMatriceCroiseeRowItem = async (
+export const updateRowItem = async (
   sessionId,
   participantId,
   itemId,
@@ -441,7 +441,7 @@ export const updateMatriceCroiseeRowItem = async (
  * @param {string} itemId - Row item id.
  * @returns {Promise<void>} Remove completion.
  */
-export const removeMatriceCroiseeRowItem = async (sessionId, itemId) => {
+export const removeRowItem = async (sessionId, itemId) => {
   await removeMatriceCroiseeItem(sessionId, itemId, toMatriceCroiseeItemsRowsPath);
 };
 
@@ -454,7 +454,7 @@ export const removeMatriceCroiseeRowItem = async (sessionId, itemId) => {
  * @param {{text?:string}} [payload={}] - Note payload.
  * @returns {Promise<string>} Created note id.
  */
-export const createMatriceCroiseeCellNote = async (
+export const createCellNote = async (
   sessionId,
   participantId,
   rowId,
@@ -462,12 +462,12 @@ export const createMatriceCroiseeCellNote = async (
   payload = {}
 ) => {
   if (!sessionId || !participantId || !rowId || !columnId) {
-    throw new Error("createMatriceCroiseeCellNote: paramètres manquants");
+    throw new Error("createCellNote: paramètres manquants");
   }
 
   const cellNotesPath = toMatriceCroiseeCellNotesPath(sessionId, rowId, columnId);
   if (!cellNotesPath) {
-    throw new Error("createMatriceCroiseeCellNote: cellule invalide");
+    throw new Error("createCellNote: cellule invalide");
   }
 
   const noteRef = push(ref(database, cellNotesPath));
@@ -501,7 +501,7 @@ export const createMatriceCroiseeCellNote = async (
  * @param {{expectedPreviousText?:string}} [options={}] - Concurrency guards.
  * @returns {Promise<void>} Update completion.
  */
-export const updateMatriceCroiseeCellNote = async (
+export const updateCellNote = async (
   sessionId,
   participantId,
   rowId,
@@ -560,7 +560,7 @@ export const updateMatriceCroiseeCellNote = async (
  * @param {string} noteId - Note id.
  * @returns {Promise<void>} Remove completion.
  */
-export const removeMatriceCroiseeCellNote = async (
+export const removeCellNote = async (
   sessionId,
   rowId,
   columnId,
@@ -582,7 +582,7 @@ export const removeMatriceCroiseeCellNote = async (
  * @param {{maxVotes?:number, validNoteIds?:Set<string>}} [options={}] - Voting options.
  * @returns {Promise<{committed:boolean, votes:Object}>} Transaction result and resulting votes.
  */
-export const toggleMatriceCroiseeVote = async (
+export const toggleVote = async (
   sessionId,
   participantId,
   noteId,

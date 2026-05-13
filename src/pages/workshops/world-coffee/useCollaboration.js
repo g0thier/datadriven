@@ -8,27 +8,27 @@
 
 import { useCallback, useEffect, useMemo } from "react";
 import {
-  addWorldCoffeeCommentReply,
-  addWorldCoffeeIdeaComment,
-  applyWorldCoffeeReturnRotation,
-  applyWorldCoffeeRound2Rotation,
-  applyWorldCoffeeRound3Rotation,
-  clearWorldCoffeeFacilitator,
-  createWorldCoffeeDescription,
-  createWorldCoffeeIdea,
-  initializeWorldCoffeeSubgroups,
-  removeWorldCoffeeCommentReply,
-  removeWorldCoffeeDescription,
-  removeWorldCoffeeIdeaComment,
-  removeWorldCoffeeIdea,
-  setWorldCoffeeFacilitator,
-  subscribeWorldCoffeeSession,
-  updateWorldCoffeeCommentReply,
-  updateWorldCoffeeDescription,
-  updateWorldCoffeeIdeaComment,
-  updateWorldCoffeeIdea,
-  updateWorldCoffeeSubgroupSynthesis,
-  upsertWorldCoffeeParticipant,
+  addCommentReply as addCommentReplyService,
+  addIdeaComment as addIdeaCommentService,
+  applyReturnRotation,
+  applyRound2Rotation,
+  applyRound3Rotation,
+  clearFacilitator as clearFacilitatorService,
+  createDescription,
+  createIdea,
+  initializeSubgroups,
+  removeCommentReply as removeCommentReplyService,
+  removeDescription as removeDescriptionService,
+  removeIdeaComment as removeIdeaCommentService,
+  removeIdea as removeIdeaService,
+  setFacilitator as setFacilitatorService,
+  subscribeSession,
+  updateCommentReply,
+  updateDescription as updateDescriptionService,
+  updateIdeaComment,
+  updateIdea,
+  updateSubgroupSynthesis as updateSubgroupSynthesisService,
+  upsertParticipant,
 } from "../../../firebase/workshops/world-coffee.service";
 import {
   EMPTY_ARRAY,
@@ -238,8 +238,8 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     sessionId,
     session,
     isEnabled,
-    subscribeSession: subscribeWorldCoffeeSession,
-    upsertParticipant: upsertWorldCoffeeParticipant,
+    subscribeSession: subscribeSession,
+    upsertParticipant: upsertParticipant,
     syncErrorMessage: "Impossible de se synchroniser avec le serveur.",
     participantErrorMessage: "Impossible d'enregistrer le participant.",
   });
@@ -510,7 +510,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
     const syncSubgroups = async () => {
       try {
-        await initializeWorldCoffeeSubgroups(sessionId, sessionGuests);
+        await initializeSubgroups(sessionId, sessionGuests);
       } catch (error) {
         if (cancelled) return;
         console.error("Impossible de synchroniser les sous-groupes World Cafe:", error);
@@ -529,7 +529,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return null;
 
       try {
-        return await createWorldCoffeeDescription(sessionId, {
+        return await createDescription(sessionId, {
           authorId: currentParticipantId,
           text: options?.text ?? "",
         });
@@ -559,7 +559,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
           : String(previousText ?? "");
 
       try {
-        await updateWorldCoffeeDescription(
+        await updateDescriptionService(
           sessionId,
           descriptionId,
           { text: nextText },
@@ -584,7 +584,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!isEnabled || !sessionId || !participantReady || !descriptionId) return;
 
       try {
-        await removeWorldCoffeeDescription(sessionId, descriptionId);
+        await removeDescriptionService(sessionId, descriptionId);
       } catch (error) {
         console.error("Impossible de supprimer la description:", error);
         setSessionError("La description n'a pas pu être supprimée.");
@@ -608,7 +608,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!isParticipantKnown) return;
 
       try {
-        await setWorldCoffeeFacilitator(sessionId, cleanedDescriptionId, cleanedFacilitatorId);
+        await setFacilitatorService(sessionId, cleanedDescriptionId, cleanedFacilitatorId);
       } catch (error) {
         console.error("Impossible d'attribuer le facilitateur:", error);
         setSessionError("Le facilitateur n'a pas pu être attribué.");
@@ -633,7 +633,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!descriptionIdsSet.has(cleanedDescriptionId)) return;
 
       try {
-        await clearWorldCoffeeFacilitator(sessionId, cleanedDescriptionId);
+        await clearFacilitatorService(sessionId, cleanedDescriptionId);
       } catch (error) {
         console.error("Impossible de retirer le facilitateur:", error);
         setSessionError("Le facilitateur n'a pas pu être retiré.");
@@ -649,7 +649,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       }
 
       try {
-        return await createWorldCoffeeIdea(sessionId, subgroupId, {
+        return await createIdea(sessionId, subgroupId, {
           authorId: currentParticipantId,
           text: options?.text ?? "",
           roundId: "round-1",
@@ -690,7 +690,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
           : String(previousText ?? "");
 
       try {
-        await updateWorldCoffeeIdea(
+        await updateIdea(
           sessionId,
           subgroupId,
           ideaId,
@@ -723,7 +723,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (idea.authorId !== currentParticipantId) return;
 
       try {
-        await removeWorldCoffeeIdea(sessionId, subgroupId, ideaId);
+        await removeIdeaService(sessionId, subgroupId, ideaId);
       } catch (error) {
         console.error("Impossible de supprimer l'idée:", error);
         setSessionError("L'idée n'a pas pu être supprimée.");
@@ -744,7 +744,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     if (!isEnabled || !sessionId || !participantReady) return;
 
     try {
-      await applyWorldCoffeeRound2Rotation(sessionId);
+      await applyRound2Rotation(sessionId);
     } catch (error) {
       console.error("Impossible d'appliquer la rotation round 2:", error);
       setSessionError("La permutation des groupes n'a pas pu être appliquée.");
@@ -755,7 +755,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     if (!isEnabled || !sessionId || !participantReady) return;
 
     try {
-      await applyWorldCoffeeRound3Rotation(sessionId);
+      await applyRound3Rotation(sessionId);
     } catch (error) {
       console.error("Impossible d'appliquer la rotation round 3:", error);
       setSessionError("La deuxième permutation des groupes n'a pas pu être appliquée.");
@@ -766,7 +766,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     if (!isEnabled || !sessionId || !participantReady) return;
 
     try {
-      await applyWorldCoffeeReturnRotation(sessionId);
+      await applyReturnRotation(sessionId);
     } catch (error) {
       console.error("Impossible d'appliquer la rotation de retour:", error);
       setSessionError("Le retour des groupes n'a pas pu être appliqué.");
@@ -788,7 +788,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
           : String(previousText ?? "");
 
       try {
-        await updateWorldCoffeeSubgroupSynthesis(
+        await updateSubgroupSynthesisService(
           sessionId,
           subgroupId,
           {
@@ -824,7 +824,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!idea || idea.subgroupId !== subgroupId) return null;
 
       try {
-        return await addWorldCoffeeIdeaComment(sessionId, ideaId, {
+        return await addIdeaCommentService(sessionId, ideaId, {
           authorId: currentParticipantId,
           text,
         });
@@ -861,7 +861,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (currentText === nextText) return;
 
       try {
-        await updateWorldCoffeeIdeaComment(sessionId, ideaId, commentId, { text: nextText });
+        await updateIdeaComment(sessionId, ideaId, commentId, { text: nextText });
       } catch (error) {
         console.error("Impossible de mettre à jour le commentaire:", error);
         setSessionError("Le commentaire n'a pas pu être enregistré.");
@@ -890,7 +890,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!comment) return;
 
       try {
-        await removeWorldCoffeeIdeaComment(sessionId, ideaId, commentId);
+        await removeIdeaCommentService(sessionId, ideaId, commentId);
       } catch (error) {
         console.error("Impossible de supprimer le commentaire:", error);
         setSessionError("Le commentaire n'a pas pu être supprimé.");
@@ -918,7 +918,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!resolvedTargetId) return null;
 
       try {
-        return await addWorldCoffeeCommentReply(sessionId, resolvedTargetId, {
+        return await addCommentReplyService(sessionId, resolvedTargetId, {
           authorId: currentParticipantId,
           text,
         });
@@ -958,7 +958,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (currentText === nextText) return;
 
       try {
-        await updateWorldCoffeeCommentReply(sessionId, cleanedCommentId, cleanedReplyId, {
+        await updateCommentReply(sessionId, cleanedCommentId, cleanedReplyId, {
           text: nextText,
         });
       } catch (error) {
@@ -992,7 +992,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!reply) return;
 
       try {
-        await removeWorldCoffeeCommentReply(sessionId, cleanedCommentId, cleanedReplyId);
+        await removeCommentReplyService(sessionId, cleanedCommentId, cleanedReplyId);
       } catch (error) {
         console.error("Impossible de supprimer la réponse:", error);
         setSessionError("La réponse n'a pas pu être supprimée.");

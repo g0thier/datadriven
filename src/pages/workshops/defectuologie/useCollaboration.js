@@ -1,20 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  assignDefectuologieParticipantToSubgroup,
-  createDefectuologieDefect,
-  createDefectuologieSolution,
-  fetchDefectuologieSessionOnce,
-  initializeDefectuologieSubgroups,
-  removeDefectuologieDefect,
-  removeDefectuologieSolution,
-  setDefectuologieStep1Description,
-  setDefectuologieStep6Proposal,
-  subscribeDefectuologieSession,
-  toggleDefectuologieDefectVote,
-  toggleDefectuologieSolutionVote,
-  updateDefectuologieDefect,
-  updateDefectuologieSolution,
-  upsertDefectuologieParticipant,
+  assignParticipantToSubgroup,
+  createDefect,
+  createSolution,
+  fetchSessionOnce,
+  initializeSubgroups,
+  removeDefect as removeDefectService,
+  removeSolution as removeSolutionService,
+  setStep1Description as setStep1DescriptionService,
+  setStep6Proposal as setStep6ProposalService,
+  subscribeSession,
+  toggleDefectVote as toggleDefectVoteService,
+  toggleSolutionVote as toggleSolutionVoteService,
+  updateDefect,
+  updateSolution,
+  upsertParticipant,
 } from "../../../firebase/workshops/defectuologie.service";
 import {
   buildVotesByItem,
@@ -220,8 +220,8 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     sessionId,
     session,
     isEnabled,
-    subscribeSession: subscribeDefectuologieSession,
-    upsertParticipant: upsertDefectuologieParticipant,
+    subscribeSession: subscribeSession,
+    upsertParticipant: upsertParticipant,
     syncErrorMessage: "Impossible de se synchroniser avec le serveur.",
     participantErrorMessage: "Impossible d'enregistrer le participant.",
     canSyncParticipant: () => false,
@@ -269,7 +269,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (cancelled || hasHydrated) return;
 
       try {
-        await fetchDefectuologieSessionOnce(sessionId);
+        await fetchSessionOnce(sessionId);
         if (cancelled) return;
 
         hasHydrated = true;
@@ -323,7 +323,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
     const syncParticipant = async () => {
       try {
-        await upsertDefectuologieParticipant(sessionId, effectiveParticipant);
+        await upsertParticipant(sessionId, effectiveParticipant);
       } catch (error) {
         if (isCancelled) return;
         console.error("Impossible d'enregistrer le participant:", error);
@@ -346,7 +346,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
     const syncSubgroups = async () => {
       try {
-        await initializeDefectuologieSubgroups(sessionId);
+        await initializeSubgroups(sessionId);
       } catch (error) {
         if (isCancelled) return;
         console.error("Impossible de synchroniser les sous-groupes:", error);
@@ -652,7 +652,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       subgroupRestoreInFlightRef.current = true;
 
       try {
-        await assignDefectuologieParticipantToSubgroup(sessionId, currentParticipantId);
+        await assignParticipantToSubgroup(sessionId, currentParticipantId);
       } catch (error) {
         if (cancelled) return;
         console.error("Impossible de restaurer le sous-groupe:", error);
@@ -740,7 +740,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
     const restoreStep1Description = async () => {
       try {
-        await setDefectuologieStep1Description(
+        await setStep1DescriptionService(
           sessionId,
           currentParticipantId,
           lastNonEmptyStep1Description,
@@ -891,7 +891,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!isEnabled || !sessionId || !writeReady || !currentParticipantId) return;
 
       try {
-        await setDefectuologieStep1Description(sessionId, currentParticipantId, description, {
+        await setStep1DescriptionService(sessionId, currentParticipantId, description, {
           expectedPreviousDescription: previousDescription,
         });
       } catch (error) {
@@ -922,7 +922,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       }
 
       try {
-        return await createDefectuologieDefect(sessionId, effectiveSubgroupId, {
+        return await createDefect(sessionId, effectiveSubgroupId, {
           authorId: currentParticipantId,
           text: options?.text ?? "",
         });
@@ -960,7 +960,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
           : String(previousText ?? "");
 
       try {
-        await updateDefectuologieDefect(sessionId, defect.subgroupId, defectId, { text }, {
+        await updateDefect(sessionId, defect.subgroupId, defectId, { text }, {
           expectedPreviousText,
         });
       } catch (error) {
@@ -981,7 +981,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!defect || defect.authorId !== currentParticipantId) return;
 
       try {
-        await removeDefectuologieDefect(sessionId, defect.subgroupId, defectId);
+        await removeDefectService(sessionId, defect.subgroupId, defectId);
       } catch (error) {
         console.error("Impossible de supprimer le défaut:", error);
         setSessionError("Le défaut n'a pas pu être supprimé.");
@@ -997,7 +997,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       }
 
       try {
-        return await toggleDefectuologieDefectVote(sessionId, currentParticipantId, defectId, {
+        return await toggleDefectVoteService(sessionId, currentParticipantId, defectId, {
           maxVotes: MAX_STICKERS_PER_STEP,
           validDefectIds: activeDefectIdsSet,
         });
@@ -1030,7 +1030,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       }
 
       try {
-        return await createDefectuologieSolution(sessionId, effectiveSubgroupId, {
+        return await createSolution(sessionId, effectiveSubgroupId, {
           authorId: currentParticipantId,
           text: options?.text ?? "",
         });
@@ -1068,7 +1068,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
           : String(previousText ?? "");
 
       try {
-        await updateDefectuologieSolution(sessionId, solution.subgroupId, solutionId, { text }, {
+        await updateSolution(sessionId, solution.subgroupId, solutionId, { text }, {
           expectedPreviousText,
         });
       } catch (error) {
@@ -1096,7 +1096,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!solution || solution.authorId !== currentParticipantId) return;
 
       try {
-        await removeDefectuologieSolution(sessionId, solution.subgroupId, solutionId);
+        await removeSolutionService(sessionId, solution.subgroupId, solutionId);
       } catch (error) {
         console.error("Impossible de supprimer la solution:", error);
         setSessionError("La solution n'a pas pu être supprimée.");
@@ -1119,7 +1119,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       }
 
       try {
-        return await toggleDefectuologieSolutionVote(sessionId, currentParticipantId, solutionId, {
+        return await toggleSolutionVoteService(sessionId, currentParticipantId, solutionId, {
           maxVotes: MAX_STICKERS_PER_STEP,
           validSolutionIds: activeSolutionIdsSet,
         });
@@ -1152,7 +1152,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       }
 
       try {
-        await setDefectuologieStep6Proposal(
+        await setStep6ProposalService(
           sessionId,
           currentParticipantId,
           effectiveSubgroupId,

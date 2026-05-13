@@ -21,7 +21,7 @@ const toMindMappingPath = (sessionId) => `workshopSessions/${sessionId}/mindMapp
  * @param {Function} [onError=() => {}] - Error callback.
  * @returns {Function} Unsubscribe callback.
  */
-export const subscribeMindMappingSession = (sessionId, callback, onError = () => {}) => {
+export const subscribeSession = (sessionId, callback, onError = () => {}) => {
   if (!sessionId) {
     callback(null);
     return () => {};
@@ -43,7 +43,7 @@ export const subscribeMindMappingSession = (sessionId, callback, onError = () =>
  * @param {{id:string, name?:string, email?:string, isAuthenticated?:boolean}} [participant={}] - Participant payload.
  * @returns {Promise<void>} Upsert completion.
  */
-export const upsertMindMappingParticipant = async (sessionId, participant = {}) => {
+export const upsertParticipant = async (sessionId, participant = {}) => {
   if (!sessionId || !participant?.id) return;
 
   const participantRef = ref(
@@ -74,7 +74,7 @@ export const upsertMindMappingParticipant = async (sessionId, participant = {}) 
  * @param {{expectedPreviousDescription?:string}} [options={}] - Optional stale-write protection.
  * @returns {Promise<void>} Update completion.
  */
-export const setMindMappingStep1Description = async (
+export const setStep1Description = async (
   sessionId,
   participantId,
   description,
@@ -119,9 +119,9 @@ export const setMindMappingStep1Description = async (
  * @param {{authorId:string, text?:string}} [payload={}] - Note payload.
  * @returns {Promise<string>} Created note id.
  */
-export const createMindMappingNote = async (sessionId, payload = {}) => {
+export const createNote = async (sessionId, payload = {}) => {
   if (!sessionId || !payload?.authorId) {
-    throw new Error("createMindMappingNote: sessionId ou authorId manquant");
+    throw new Error("createNote: sessionId ou authorId manquant");
   }
 
   const noteRef = push(ref(database, `${toMindMappingPath(sessionId)}/notes`));
@@ -150,7 +150,7 @@ export const createMindMappingNote = async (sessionId, payload = {}) => {
  * @param {{text?:string}} [patch={}] - Note patch.
  * @returns {Promise<void>} Update completion.
  */
-export const updateMindMappingNote = async (sessionId, noteId, patch = {}) => {
+export const updateNote = async (sessionId, noteId, patch = {}) => {
   if (!sessionId || !noteId) return;
 
   const payload = {
@@ -170,7 +170,7 @@ export const updateMindMappingNote = async (sessionId, noteId, patch = {}) => {
  * @param {string} noteId - Note id.
  * @returns {Promise<void>} Delete completion.
  */
-export const removeMindMappingNote = async (sessionId, noteId) => {
+export const removeNote = async (sessionId, noteId) => {
   if (!sessionId || !noteId) return;
 
   await remove(ref(database, `${toMindMappingPath(sessionId)}/notes/${noteId}`));
@@ -183,9 +183,9 @@ export const removeMindMappingNote = async (sessionId, noteId) => {
  * @param {{authorId:string, text?:string}} [payload={}] - Comment payload.
  * @returns {Promise<string>} Created comment id.
  */
-export const addMindMappingComment = async (sessionId, noteId, payload = {}) => {
+export const addComment = async (sessionId, noteId, payload = {}) => {
   if (!sessionId || !noteId || !payload?.authorId) {
-    throw new Error("addMindMappingComment: sessionId, noteId ou authorId manquant");
+    throw new Error("addComment: sessionId, noteId ou authorId manquant");
   }
 
   const commentRef = push(ref(database, `${toMindMappingPath(sessionId)}/commentsByNote/${noteId}`));
@@ -215,7 +215,7 @@ export const addMindMappingComment = async (sessionId, noteId, payload = {}) => 
  * @param {{text?:string}} [patch={}] - Comment patch.
  * @returns {Promise<void>} Update completion.
  */
-export const updateMindMappingComment = async (
+export const updateComment = async (
   sessionId,
   noteId,
   commentId,
@@ -244,7 +244,7 @@ export const updateMindMappingComment = async (
  * @param {string} commentId - Comment id.
  * @returns {Promise<void>} Delete completion.
  */
-export const removeMindMappingComment = async (sessionId, noteId, commentId) => {
+export const removeComment = async (sessionId, noteId, commentId) => {
   if (!sessionId || !noteId || !commentId) return;
 
   await remove(ref(database, `${toMindMappingPath(sessionId)}/commentsByNote/${noteId}/${commentId}`));
@@ -261,12 +261,12 @@ const normalizeConceptEndpoint = (endpoint = {}) => ({
  * @param {{authorId:string, from:{noteId:string, ideaId:string}, to:{noteId:string, ideaId:string}, text?:string}} [payload={}] - Concept payload.
  * @returns {Promise<string>} Created concept id.
  */
-export const addMindMappingConcept = async (sessionId, payload = {}) => {
+export const addConcept = async (sessionId, payload = {}) => {
   const from = normalizeConceptEndpoint(payload?.from);
   const to = normalizeConceptEndpoint(payload?.to);
 
   if (!sessionId || !payload?.authorId || !from.noteId || !from.ideaId || !to.noteId || !to.ideaId) {
-    throw new Error("addMindMappingConcept: parametres manquants");
+    throw new Error("addConcept: parametres manquants");
   }
 
   const conceptRef = push(ref(database, `${toMindMappingPath(sessionId)}/concepts`));
@@ -297,7 +297,7 @@ export const addMindMappingConcept = async (sessionId, payload = {}) => {
  * @param {{text?:string}} [patch={}] - Concept patch.
  * @returns {Promise<void>} Update completion.
  */
-export const updateMindMappingConcept = async (sessionId, conceptId, patch = {}) => {
+export const updateConcept = async (sessionId, conceptId, patch = {}) => {
   if (!sessionId || !conceptId) return;
 
   const payload = {
@@ -317,7 +317,7 @@ export const updateMindMappingConcept = async (sessionId, conceptId, patch = {})
  * @param {string} conceptId - Concept id.
  * @returns {Promise<void>} Delete completion.
  */
-export const removeMindMappingConcept = async (sessionId, conceptId) => {
+export const removeConcept = async (sessionId, conceptId) => {
   if (!sessionId || !conceptId) return;
 
   await remove(ref(database, `${toMindMappingPath(sessionId)}/concepts/${conceptId}`));
@@ -349,7 +349,7 @@ export const setReformulation = async (sessionId, participantId, conceptId, text
  * @param {{maxVotes?:number, validConceptIds?:Set<string>}} [options={}] - Voting options.
  * @returns {Promise<{committed:boolean, votes:Object}>} Transaction result and resulting votes.
  */
-export const toggleMindMappingConceptVote = async (
+export const toggleConceptVote = async (
   sessionId,
   participantId,
   conceptId,

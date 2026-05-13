@@ -8,15 +8,15 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  createContinueStopTryNote,
-  removeContinueStopTryNote,
-  setContinueStopTryNotePosition,
-  setContinueStopTryStep1Description,
-  setContinueStopTryStep5Placeholder,
-  subscribeContinueStopTrySession,
-  toggleContinueStopTryVote,
-  updateContinueStopTryNote,
-  upsertContinueStopTryParticipant,
+  createNote,
+  removeNote as removeNoteService,
+  setNotePosition as setNotePositionService,
+  setStep1Description as setStep1DescriptionService,
+  setStep5Placeholder as setStep5PlaceholderService,
+  subscribeSession,
+  toggleVote as toggleVoteService,
+  updateNote,
+  upsertParticipant,
 } from "../../../firebase/workshops/continue-stop-try.service";
 import {
   buildGridPosition,
@@ -108,18 +108,18 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     syncError,
     syncErrorSessionId,
     setSessionError,
-    activeState: activeContinueStopTryState,
+    activeState,
     lastSnapshotSessionId,
   } = useWorkshopCollaborationCore({
     sessionId,
     session,
     isEnabled,
-    subscribeSession: subscribeContinueStopTrySession,
-    upsertParticipant: upsertContinueStopTryParticipant,
+    subscribeSession: subscribeSession,
+    upsertParticipant: upsertParticipant,
     syncErrorMessage: "Impossible de se synchroniser avec le serveur.",
     participantErrorMessage: "Impossible d'enregistrer le participant.",
   });
-  const rawStep1Description = String(activeContinueStopTryState?.step1?.description || "");
+  const rawStep1Description = String(activeState?.step1?.description || "");
 
   useEffect(() => {
     setLastNonEmptyStep1Description("");
@@ -135,8 +135,8 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   }, [rawStep1Description]);
 
   const rawNotes =
-    activeContinueStopTryState?.notes && typeof activeContinueStopTryState.notes === "object"
-      ? activeContinueStopTryState.notes
+    activeState?.notes && typeof activeState.notes === "object"
+      ? activeState.notes
       : EMPTY_OBJECT;
 
   const notes = useMemo(() => {
@@ -191,9 +191,9 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   }, [notes]);
 
   const rawVotesByParticipant =
-    activeContinueStopTryState?.votesByParticipant &&
-    typeof activeContinueStopTryState.votesByParticipant === "object"
-      ? activeContinueStopTryState.votesByParticipant
+    activeState?.votesByParticipant &&
+    typeof activeState.votesByParticipant === "object"
+      ? activeState.votesByParticipant
       : EMPTY_OBJECT;
 
   const votesByParticipant = useMemo(() => {
@@ -289,9 +289,9 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   }, [notesByColumn, votesByNote]);
 
   const rawStep5Placeholders =
-    activeContinueStopTryState?.step5Placeholders &&
-    typeof activeContinueStopTryState.step5Placeholders === "object"
-      ? activeContinueStopTryState.step5Placeholders
+    activeState?.step5Placeholders &&
+    typeof activeState.step5Placeholders === "object"
+      ? activeState.step5Placeholders
       : EMPTY_OBJECT;
 
   const step5PlaceholdersByColumn = useMemo(() => {
@@ -299,9 +299,9 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   }, [rawStep5Placeholders]);
 
   const remoteParticipants =
-    activeContinueStopTryState?.participants &&
-    typeof activeContinueStopTryState.participants === "object"
-      ? activeContinueStopTryState.participants
+    activeState?.participants &&
+    typeof activeState.participants === "object"
+      ? activeState.participants
       : EMPTY_OBJECT;
 
   const participants = useMemo(() => {
@@ -389,7 +389,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
     const restoreStep1Description = async () => {
       try {
-        await setContinueStopTryStep1Description(
+        await setStep1DescriptionService(
           sessionId,
           currentParticipantId,
           lastNonEmptyStep1Description,
@@ -438,7 +438,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
 
       try {
-        await setContinueStopTryStep1Description(sessionId, currentParticipantId, description, {
+        await setStep1DescriptionService(sessionId, currentParticipantId, description, {
           expectedPreviousDescription: previousDescription,
         });
       } catch (error) {
@@ -464,7 +464,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!normalizedColumnId) return;
 
       try {
-        await setContinueStopTryStep5Placeholder(
+        await setStep5PlaceholderService(
           sessionId,
           currentParticipantId,
           normalizedColumnId,
@@ -493,7 +493,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       const text = options?.text ?? "";
 
       try {
-        return await createContinueStopTryNote(sessionId, {
+        return await createNote(sessionId, {
           authorId: currentParticipantId,
           columnId,
           text,
@@ -525,7 +525,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!note || note.authorId !== currentParticipantId) return;
 
       try {
-        await updateContinueStopTryNote(sessionId, noteId, { text });
+        await updateNote(sessionId, noteId, { text });
       } catch (error) {
         console.error("Impossible de mettre à jour la note:", error);
         setSessionError("La note n'a pas pu être mise à jour.");
@@ -544,7 +544,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!note || note.authorId !== currentParticipantId) return;
 
       try {
-        await removeContinueStopTryNote(sessionId, noteId);
+        await removeNoteService(sessionId, noteId);
       } catch (error) {
         console.error("Impossible de supprimer la note:", error);
         setSessionError("La note n'a pas pu être supprimée.");
@@ -558,7 +558,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!isEnabled || !sessionId || !participantReady || !noteId) return;
 
       try {
-        await setContinueStopTryNotePosition(sessionId, noteId, position);
+        await setNotePositionService(sessionId, noteId, position);
       } catch (error) {
         console.error("Impossible de déplacer la note:", error);
         setSessionError("La position de la note n'a pas pu être enregistrée.");
@@ -574,7 +574,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       }
 
       try {
-        return await toggleContinueStopTryVote(sessionId, currentParticipantId, noteId, {
+        return await toggleVoteService(sessionId, currentParticipantId, noteId, {
           maxVotesPerColumn: MAX_STICKERS_PER_COLUMN,
           validNoteIds: noteIdsSet,
           noteColumnsById,

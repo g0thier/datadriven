@@ -8,25 +8,25 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  addDesignThinkingIdeationComment,
-  createDesignThinkingIdeationNote,
-  createDesignThinkingPrototypeFeedbackNote,
-  createDesignThinkingSharedNote,
-  removeDesignThinkingIdeationComment,
-  removeDesignThinkingIdeationNote,
-  removeDesignThinkingPrototypeFeedbackNote,
-  removeDesignThinkingSharedNote,
-  setDesignThinkingConclusion,
-  setDesignThinkingIdeationNotePosition,
-  setDesignThinkingProblemStatement,
-  setDesignThinkingStep1Description,
-  subscribeDesignThinkingSession,
-  toggleDesignThinkingIdeationVote,
-  updateDesignThinkingIdeationComment,
-  updateDesignThinkingIdeationNote,
-  updateDesignThinkingPrototypeFeedbackNote,
-  updateDesignThinkingSharedNote,
-  upsertDesignThinkingParticipant,
+  addIdeationComment,
+  createIdeationNote,
+  createPrototypeFeedbackNote,
+  createSharedNote,
+  removeIdeationComment,
+  removeIdeationNote,
+  removePrototypeFeedbackNote as removePrototypeFeedbackNoteService,
+  removeSharedNote as removeSharedNoteService,
+  setConclusion as setConclusionService,
+  setIdeationNotePosition,
+  setProblemStatement as setProblemStatementService,
+  setStep1Description as setStep1DescriptionService,
+  subscribeSession,
+  toggleIdeationVote,
+  updateIdeationComment,
+  updateIdeationNote,
+  updatePrototypeFeedbackNote,
+  updateSharedNote,
+  upsertParticipant,
 } from "../../../firebase/workshops/design-thinking.service";
 import {
   buildGridPosition,
@@ -105,20 +105,20 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     syncError,
     syncErrorSessionId,
     setSessionError,
-    activeState: activeDesignThinkingState,
+    activeState,
     lastSnapshotSessionId,
   } = useWorkshopCollaborationCore({
     sessionId,
     session,
     isEnabled,
-    subscribeSession: subscribeDesignThinkingSession,
-    upsertParticipant: upsertDesignThinkingParticipant,
+    subscribeSession: subscribeSession,
+    upsertParticipant: upsertParticipant,
     syncErrorMessage: "Impossible de se synchroniser avec le serveur.",
     participantErrorMessage: "Impossible d'enregistrer le participant.",
   });
-  const rawStep1Description = String(activeDesignThinkingState?.step1?.description || "");
-  const rawProblemStatement = String(activeDesignThinkingState?.problemStatement?.text || "");
-  const rawConclusion = String(activeDesignThinkingState?.conclusion?.text || "");
+  const rawStep1Description = String(activeState?.step1?.description || "");
+  const rawProblemStatement = String(activeState?.problemStatement?.text || "");
+  const rawConclusion = String(activeState?.conclusion?.text || "");
 
   useEffect(() => {
     setLastNonEmptyStep1Description("");
@@ -154,34 +154,34 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   }, [rawConclusion]);
 
   const remoteParticipants =
-    activeDesignThinkingState?.participants &&
-    typeof activeDesignThinkingState.participants === "object"
-      ? activeDesignThinkingState.participants
+    activeState?.participants &&
+    typeof activeState.participants === "object"
+      ? activeState.participants
       : EMPTY_OBJECT;
   const rawSharedNotes =
-    activeDesignThinkingState?.sharedNotes &&
-    typeof activeDesignThinkingState.sharedNotes === "object"
-      ? activeDesignThinkingState.sharedNotes
+    activeState?.sharedNotes &&
+    typeof activeState.sharedNotes === "object"
+      ? activeState.sharedNotes
       : EMPTY_OBJECT;
   const rawIdeationNotes =
-    activeDesignThinkingState?.ideation?.notes &&
-    typeof activeDesignThinkingState.ideation.notes === "object"
-      ? activeDesignThinkingState.ideation.notes
+    activeState?.ideation?.notes &&
+    typeof activeState.ideation.notes === "object"
+      ? activeState.ideation.notes
       : EMPTY_OBJECT;
   const rawIdeationCommentsByNote =
-    activeDesignThinkingState?.ideation?.commentsByNote &&
-    typeof activeDesignThinkingState.ideation.commentsByNote === "object"
-      ? activeDesignThinkingState.ideation.commentsByNote
+    activeState?.ideation?.commentsByNote &&
+    typeof activeState.ideation.commentsByNote === "object"
+      ? activeState.ideation.commentsByNote
       : EMPTY_OBJECT;
   const rawIdeationVotesByParticipant =
-    activeDesignThinkingState?.ideation?.votesByParticipant &&
-    typeof activeDesignThinkingState.ideation.votesByParticipant === "object"
-      ? activeDesignThinkingState.ideation.votesByParticipant
+    activeState?.ideation?.votesByParticipant &&
+    typeof activeState.ideation.votesByParticipant === "object"
+      ? activeState.ideation.votesByParticipant
       : EMPTY_OBJECT;
   const rawPrototypeFeedbackNotes =
-    activeDesignThinkingState?.prototypeFeedback?.notes &&
-    typeof activeDesignThinkingState.prototypeFeedback.notes === "object"
-      ? activeDesignThinkingState.prototypeFeedback.notes
+    activeState?.prototypeFeedback?.notes &&
+    typeof activeState.prototypeFeedback.notes === "object"
+      ? activeState.prototypeFeedback.notes
       : EMPTY_OBJECT;
 
   const sharedNotes = useMemo(() => {
@@ -438,7 +438,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
     const restoreStep1Description = async () => {
       try {
-        await setDesignThinkingStep1Description(
+        await setStep1DescriptionService(
           sessionId,
           currentParticipantId,
           lastNonEmptyStep1Description,
@@ -478,7 +478,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
     const restoreProblemStatement = async () => {
       try {
-        await setDesignThinkingProblemStatement(
+        await setProblemStatementService(
           sessionId,
           currentParticipantId,
           lastNonEmptyProblemStatement,
@@ -518,7 +518,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
     const restoreConclusion = async () => {
       try {
-        await setDesignThinkingConclusion(
+        await setConclusionService(
           sessionId,
           currentParticipantId,
           lastNonEmptyConclusion,
@@ -553,7 +553,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
 
       try {
-        await setDesignThinkingStep1Description(sessionId, currentParticipantId, description, {
+        await setStep1DescriptionService(sessionId, currentParticipantId, description, {
           expectedPreviousDescription: previousDescription,
         });
       } catch (error) {
@@ -576,7 +576,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
 
       try {
-        await setDesignThinkingProblemStatement(sessionId, currentParticipantId, statement, {
+        await setProblemStatementService(sessionId, currentParticipantId, statement, {
           expectedPreviousStatement: previousStatement,
         });
       } catch (error) {
@@ -599,7 +599,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
 
       try {
-        await setDesignThinkingConclusion(
+        await setConclusionService(
           sessionId,
           currentParticipantId,
           nextConclusion,
@@ -627,7 +627,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return null;
 
       try {
-        return await createDesignThinkingSharedNote(sessionId, {
+        return await createSharedNote(sessionId, {
           authorId: currentParticipantId,
           text: options?.text ?? "",
         });
@@ -659,7 +659,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
           : String(previousText ?? "");
 
       try {
-        await updateDesignThinkingSharedNote(
+        await updateSharedNote(
           sessionId,
           noteId,
           { text: nextText },
@@ -689,7 +689,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!sharedNotesById[noteId]) return;
 
       try {
-        await removeDesignThinkingSharedNote(sessionId, noteId);
+        await removeSharedNoteService(sessionId, noteId);
       } catch (error) {
         console.error("Impossible de supprimer la contribution:", error);
         setSessionError("La contribution n'a pas pu être supprimée.");
@@ -714,7 +714,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       const text = options?.text ?? "";
 
       try {
-        return await createDesignThinkingIdeationNote(sessionId, {
+        return await createIdeationNote(sessionId, {
           authorId: currentParticipantId,
           text,
           position,
@@ -736,7 +736,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!columnId) return null;
 
       try {
-        return await createDesignThinkingPrototypeFeedbackNote(sessionId, {
+        return await createPrototypeFeedbackNote(sessionId, {
           authorId: currentParticipantId,
           columnId,
           text: options?.text ?? "",
@@ -769,7 +769,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
           : String(previousText ?? "");
 
       try {
-        await updateDesignThinkingPrototypeFeedbackNote(
+        await updatePrototypeFeedbackNote(
           sessionId,
           noteId,
           { text: nextText },
@@ -799,7 +799,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!prototypeFeedbackNotesById[noteId]) return;
 
       try {
-        await removeDesignThinkingPrototypeFeedbackNote(sessionId, noteId);
+        await removePrototypeFeedbackNoteService(sessionId, noteId);
       } catch (error) {
         console.error("Impossible de supprimer le feedback prototype:", error);
         setSessionError("Le feedback prototype n'a pas pu être supprimé.");
@@ -825,7 +825,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!note || note.authorId !== currentParticipantId) return;
 
       try {
-        await updateDesignThinkingIdeationNote(sessionId, noteId, { text });
+        await updateIdeationNote(sessionId, noteId, { text });
       } catch (error) {
         console.error("Impossible de mettre à jour la note:", error);
         setSessionError("La note n'a pas pu être mise à jour.");
@@ -844,7 +844,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!note || note.authorId !== currentParticipantId) return;
 
       try {
-        await removeDesignThinkingIdeationNote(sessionId, noteId);
+        await removeIdeationNote(sessionId, noteId);
       } catch (error) {
         console.error("Impossible de supprimer la note:", error);
         setSessionError("La note n'a pas pu être supprimée.");
@@ -863,7 +863,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!note || note.authorId === currentParticipantId) return null;
 
       try {
-        return await addDesignThinkingIdeationComment(sessionId, noteId, {
+        return await addIdeationComment(sessionId, noteId, {
           authorId: currentParticipantId,
           text,
         });
@@ -896,7 +896,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!comment || comment.authorId !== currentParticipantId) return;
 
       try {
-        await updateDesignThinkingIdeationComment(sessionId, noteId, commentId, { text });
+        await updateIdeationComment(sessionId, noteId, commentId, { text });
       } catch (error) {
         console.error("Impossible de mettre à jour le commentaire:", error);
         setSessionError("Le commentaire n'a pas pu être mis à jour.");
@@ -925,7 +925,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!comment || comment.authorId !== currentParticipantId) return;
 
       try {
-        await removeDesignThinkingIdeationComment(sessionId, noteId, commentId);
+        await removeIdeationComment(sessionId, noteId, commentId);
       } catch (error) {
         console.error("Impossible de supprimer le commentaire:", error);
         setSessionError("Le commentaire n'a pas pu être supprimé.");
@@ -939,7 +939,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       if (!isEnabled || !sessionId || !participantReady || !noteId) return;
 
       try {
-        await setDesignThinkingIdeationNotePosition(sessionId, noteId, position);
+        await setIdeationNotePosition(sessionId, noteId, position);
       } catch (error) {
         console.error("Impossible de déplacer la note:", error);
         setSessionError("La position de la note n'a pas pu être enregistrée.");
@@ -955,7 +955,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       }
 
       try {
-        return await toggleDesignThinkingIdeationVote(sessionId, currentParticipantId, noteId, {
+        return await toggleIdeationVote(sessionId, currentParticipantId, noteId, {
           maxVotes: MAX_STICKERS,
           validNoteIds: noteIdsSet,
         });
