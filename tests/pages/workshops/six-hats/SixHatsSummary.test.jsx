@@ -9,7 +9,7 @@ describe("SixHatsSummary", () => {
       <SixHatsSummary
         sessionTitle="Session Six Hats"
         collaboration={{
-          step1Description: "Sujet initial",
+          description: "Sujet initial",
           blueConclusion: "Conclusion finale",
           syncError: "Sync issue",
           itemsByHat: {

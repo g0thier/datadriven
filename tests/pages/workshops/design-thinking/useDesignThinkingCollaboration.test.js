@@ -13,25 +13,25 @@ const firebaseMocks = {
 };
 
 const designThinkingServiceMocks = {
-  addDesignThinkingIdeationComment: vi.fn(),
-  createDesignThinkingIdeationNote: vi.fn(),
-  createDesignThinkingPrototypeFeedbackNote: vi.fn(),
-  createDesignThinkingSharedNote: vi.fn(),
-  removeDesignThinkingIdeationComment: vi.fn(),
-  removeDesignThinkingIdeationNote: vi.fn(),
-  removeDesignThinkingPrototypeFeedbackNote: vi.fn(),
-  removeDesignThinkingSharedNote: vi.fn(),
-  setDesignThinkingConclusion: vi.fn(),
-  setDesignThinkingIdeationNotePosition: vi.fn(),
-  setDesignThinkingProblemStatement: vi.fn(),
-  setDesignThinkingStep1Description: vi.fn(),
-  subscribeDesignThinkingSession: vi.fn(),
-  toggleDesignThinkingIdeationVote: vi.fn(),
-  updateDesignThinkingIdeationComment: vi.fn(),
-  updateDesignThinkingIdeationNote: vi.fn(),
-  updateDesignThinkingPrototypeFeedbackNote: vi.fn(),
-  updateDesignThinkingSharedNote: vi.fn(),
-  upsertDesignThinkingParticipant: vi.fn(),
+  addIdeationComment: vi.fn(),
+  createIdeationNote: vi.fn(),
+  createPrototypeFeedbackNote: vi.fn(),
+  createSharedNote: vi.fn(),
+  removeIdeationComment: vi.fn(),
+  removeIdeationNote: vi.fn(),
+  removePrototypeFeedbackNote: vi.fn(),
+  removeSharedNote: vi.fn(),
+  setConclusion: vi.fn(),
+  setIdeationNotePosition: vi.fn(),
+  setProblemStatement: vi.fn(),
+  setDescription: vi.fn(),
+  subscribeSession: vi.fn(),
+  toggleIdeationVote: vi.fn(),
+  updateIdeationComment: vi.fn(),
+  updateIdeationNote: vi.fn(),
+  updatePrototypeFeedbackNote: vi.fn(),
+  updateSharedNote: vi.fn(),
+  upsertParticipant: vi.fn(),
 };
 
 vi.mock("../../../../src/firebase", () => firebaseMocks);
@@ -44,7 +44,7 @@ describe("useDesignThinkingCollaboration", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    designThinkingServiceMocks.subscribeDesignThinkingSession.mockImplementation(
+    designThinkingServiceMocks.subscribeSession.mockImplementation(
       (_sessionId, onData) => {
         onData({
           step1: { description: "Challenge" },
@@ -110,24 +110,24 @@ describe("useDesignThinkingCollaboration", () => {
       }
     );
 
-    designThinkingServiceMocks.upsertDesignThinkingParticipant.mockResolvedValue(undefined);
-    designThinkingServiceMocks.setDesignThinkingStep1Description.mockResolvedValue(undefined);
-    designThinkingServiceMocks.setDesignThinkingProblemStatement.mockResolvedValue(undefined);
-    designThinkingServiceMocks.setDesignThinkingConclusion.mockResolvedValue(undefined);
-    designThinkingServiceMocks.createDesignThinkingSharedNote.mockResolvedValue("s2");
-    designThinkingServiceMocks.updateDesignThinkingSharedNote.mockResolvedValue(undefined);
-    designThinkingServiceMocks.removeDesignThinkingSharedNote.mockResolvedValue(undefined);
-    designThinkingServiceMocks.createDesignThinkingPrototypeFeedbackNote.mockResolvedValue("pf2");
-    designThinkingServiceMocks.updateDesignThinkingPrototypeFeedbackNote.mockResolvedValue(undefined);
-    designThinkingServiceMocks.removeDesignThinkingPrototypeFeedbackNote.mockResolvedValue(undefined);
-    designThinkingServiceMocks.createDesignThinkingIdeationNote.mockResolvedValue("n3");
-    designThinkingServiceMocks.updateDesignThinkingIdeationNote.mockResolvedValue(undefined);
-    designThinkingServiceMocks.removeDesignThinkingIdeationNote.mockResolvedValue(undefined);
-    designThinkingServiceMocks.addDesignThinkingIdeationComment.mockResolvedValue("c2");
-    designThinkingServiceMocks.updateDesignThinkingIdeationComment.mockResolvedValue(undefined);
-    designThinkingServiceMocks.removeDesignThinkingIdeationComment.mockResolvedValue(undefined);
-    designThinkingServiceMocks.setDesignThinkingIdeationNotePosition.mockResolvedValue(undefined);
-    designThinkingServiceMocks.toggleDesignThinkingIdeationVote.mockResolvedValue({
+    designThinkingServiceMocks.upsertParticipant.mockResolvedValue(undefined);
+    designThinkingServiceMocks.setDescription.mockResolvedValue(undefined);
+    designThinkingServiceMocks.setProblemStatement.mockResolvedValue(undefined);
+    designThinkingServiceMocks.setConclusion.mockResolvedValue(undefined);
+    designThinkingServiceMocks.createSharedNote.mockResolvedValue("s2");
+    designThinkingServiceMocks.updateSharedNote.mockResolvedValue(undefined);
+    designThinkingServiceMocks.removeSharedNote.mockResolvedValue(undefined);
+    designThinkingServiceMocks.createPrototypeFeedbackNote.mockResolvedValue("pf2");
+    designThinkingServiceMocks.updatePrototypeFeedbackNote.mockResolvedValue(undefined);
+    designThinkingServiceMocks.removePrototypeFeedbackNote.mockResolvedValue(undefined);
+    designThinkingServiceMocks.createIdeationNote.mockResolvedValue("n3");
+    designThinkingServiceMocks.updateIdeationNote.mockResolvedValue(undefined);
+    designThinkingServiceMocks.removeIdeationNote.mockResolvedValue(undefined);
+    designThinkingServiceMocks.addIdeationComment.mockResolvedValue("c2");
+    designThinkingServiceMocks.updateIdeationComment.mockResolvedValue(undefined);
+    designThinkingServiceMocks.removeIdeationComment.mockResolvedValue(undefined);
+    designThinkingServiceMocks.setIdeationNotePosition.mockResolvedValue(undefined);
+    designThinkingServiceMocks.toggleIdeationVote.mockResolvedValue({
       committed: true,
       votes: { n2: true },
     });
@@ -171,7 +171,7 @@ describe("useDesignThinkingCollaboration", () => {
     await waitFor(() => {
       expect(hook.result.isEnabled).toBe(true);
       expect(hook.result.participantReady).toBe(true);
-      expect(hook.result.step1Description).toBe("Challenge");
+      expect(hook.result.description).toBe("Challenge");
       expect(hook.result.problemStatement).toBe("Problem");
       expect(hook.result.conclusion).toBe("Conclusion");
       expect(hook.result.sharedNotes).toHaveLength(1);
@@ -180,7 +180,7 @@ describe("useDesignThinkingCollaboration", () => {
     });
 
     await act(async () => {
-      await hook.result.actions.setStep1Description("New challenge");
+      await hook.result.actions.setDescription("New challenge");
       await hook.result.actions.setProblemStatement("New problem");
       await hook.result.actions.setConclusion("New conclusion");
 
@@ -204,34 +204,34 @@ describe("useDesignThinkingCollaboration", () => {
       await hook.result.actions.toggleVote("n2");
     });
 
-    expect(designThinkingServiceMocks.setDesignThinkingStep1Description).toHaveBeenCalled();
-    expect(designThinkingServiceMocks.setDesignThinkingProblemStatement).toHaveBeenCalled();
-    expect(designThinkingServiceMocks.setDesignThinkingConclusion).toHaveBeenCalled();
+    expect(designThinkingServiceMocks.setDescription).toHaveBeenCalled();
+    expect(designThinkingServiceMocks.setProblemStatement).toHaveBeenCalled();
+    expect(designThinkingServiceMocks.setConclusion).toHaveBeenCalled();
 
-    expect(designThinkingServiceMocks.createDesignThinkingSharedNote).toHaveBeenCalled();
-    expect(designThinkingServiceMocks.updateDesignThinkingSharedNote).toHaveBeenCalled();
-    expect(designThinkingServiceMocks.removeDesignThinkingSharedNote).toHaveBeenCalled();
+    expect(designThinkingServiceMocks.createSharedNote).toHaveBeenCalled();
+    expect(designThinkingServiceMocks.updateSharedNote).toHaveBeenCalled();
+    expect(designThinkingServiceMocks.removeSharedNote).toHaveBeenCalled();
 
-    expect(designThinkingServiceMocks.createDesignThinkingPrototypeFeedbackNote).toHaveBeenCalled();
-    expect(designThinkingServiceMocks.updateDesignThinkingPrototypeFeedbackNote).toHaveBeenCalled();
-    expect(designThinkingServiceMocks.removeDesignThinkingPrototypeFeedbackNote).toHaveBeenCalled();
+    expect(designThinkingServiceMocks.createPrototypeFeedbackNote).toHaveBeenCalled();
+    expect(designThinkingServiceMocks.updatePrototypeFeedbackNote).toHaveBeenCalled();
+    expect(designThinkingServiceMocks.removePrototypeFeedbackNote).toHaveBeenCalled();
 
-    expect(designThinkingServiceMocks.createDesignThinkingIdeationNote).toHaveBeenCalled();
-    expect(designThinkingServiceMocks.updateDesignThinkingIdeationNote).toHaveBeenCalled();
-    expect(designThinkingServiceMocks.removeDesignThinkingIdeationNote).toHaveBeenCalled();
+    expect(designThinkingServiceMocks.createIdeationNote).toHaveBeenCalled();
+    expect(designThinkingServiceMocks.updateIdeationNote).toHaveBeenCalled();
+    expect(designThinkingServiceMocks.removeIdeationNote).toHaveBeenCalled();
 
-    expect(designThinkingServiceMocks.addDesignThinkingIdeationComment).toHaveBeenCalled();
-    expect(designThinkingServiceMocks.updateDesignThinkingIdeationComment).toHaveBeenCalled();
-    expect(designThinkingServiceMocks.removeDesignThinkingIdeationComment).toHaveBeenCalled();
+    expect(designThinkingServiceMocks.addIdeationComment).toHaveBeenCalled();
+    expect(designThinkingServiceMocks.updateIdeationComment).toHaveBeenCalled();
+    expect(designThinkingServiceMocks.removeIdeationComment).toHaveBeenCalled();
 
-    expect(designThinkingServiceMocks.setDesignThinkingIdeationNotePosition).toHaveBeenCalled();
-    expect(designThinkingServiceMocks.toggleDesignThinkingIdeationVote).toHaveBeenCalled();
+    expect(designThinkingServiceMocks.setIdeationNotePosition).toHaveBeenCalled();
+    expect(designThinkingServiceMocks.toggleIdeationVote).toHaveBeenCalled();
 
     await hook.unmount();
   });
 
   it("surfaces sync error from subscription", async () => {
-    designThinkingServiceMocks.subscribeDesignThinkingSession.mockImplementation(
+    designThinkingServiceMocks.subscribeSession.mockImplementation(
       (_sessionId, _onData, onError) => {
         onError(new Error("sync failed"));
         return () => {};

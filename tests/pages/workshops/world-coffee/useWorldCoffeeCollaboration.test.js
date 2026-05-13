@@ -13,27 +13,27 @@ const firebaseMocks = {
 };
 
 const worldCoffeeServiceMocks = {
-  addWorldCoffeeCommentReply: vi.fn(),
-  addWorldCoffeeIdeaComment: vi.fn(),
-  applyWorldCoffeeReturnRotation: vi.fn(),
-  applyWorldCoffeeRound2Rotation: vi.fn(),
-  applyWorldCoffeeRound3Rotation: vi.fn(),
-  clearWorldCoffeeFacilitator: vi.fn(),
-  createWorldCoffeeDescription: vi.fn(),
-  createWorldCoffeeIdea: vi.fn(),
-  initializeWorldCoffeeSubgroups: vi.fn(),
-  removeWorldCoffeeCommentReply: vi.fn(),
-  removeWorldCoffeeDescription: vi.fn(),
-  removeWorldCoffeeIdea: vi.fn(),
-  removeWorldCoffeeIdeaComment: vi.fn(),
-  setWorldCoffeeFacilitator: vi.fn(),
-  subscribeWorldCoffeeSession: vi.fn(),
-  updateWorldCoffeeCommentReply: vi.fn(),
-  updateWorldCoffeeDescription: vi.fn(),
-  updateWorldCoffeeIdea: vi.fn(),
-  updateWorldCoffeeIdeaComment: vi.fn(),
-  updateWorldCoffeeSubgroupSynthesis: vi.fn(),
-  upsertWorldCoffeeParticipant: vi.fn(),
+  addCommentReply: vi.fn(),
+  addIdeaComment: vi.fn(),
+  applyReturnRotation: vi.fn(),
+  applyRound2Rotation: vi.fn(),
+  applyRound3Rotation: vi.fn(),
+  clearFacilitator: vi.fn(),
+  createDescription: vi.fn(),
+  createIdea: vi.fn(),
+  initializeSubgroups: vi.fn(),
+  removeCommentReply: vi.fn(),
+  removeDescription: vi.fn(),
+  removeIdea: vi.fn(),
+  removeIdeaComment: vi.fn(),
+  setFacilitator: vi.fn(),
+  subscribeSession: vi.fn(),
+  updateCommentReply: vi.fn(),
+  updateDescription: vi.fn(),
+  updateIdea: vi.fn(),
+  updateIdeaComment: vi.fn(),
+  updateSubgroupSynthesis: vi.fn(),
+  upsertParticipant: vi.fn(),
 };
 
 vi.mock("../../../../src/firebase", () => firebaseMocks);
@@ -46,7 +46,7 @@ describe("useWorldCoffeeCollaboration", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    worldCoffeeServiceMocks.subscribeWorldCoffeeSession.mockImplementation((_sessionId, onData) => {
+    worldCoffeeServiceMocks.subscribeSession.mockImplementation((_sessionId, onData) => {
       onData({
         descriptions: {
           d1: {
@@ -156,26 +156,26 @@ describe("useWorldCoffeeCollaboration", () => {
       return () => {};
     });
 
-    worldCoffeeServiceMocks.upsertWorldCoffeeParticipant.mockResolvedValue(undefined);
-    worldCoffeeServiceMocks.initializeWorldCoffeeSubgroups.mockResolvedValue(undefined);
-    worldCoffeeServiceMocks.createWorldCoffeeDescription.mockResolvedValue("d3");
-    worldCoffeeServiceMocks.updateWorldCoffeeDescription.mockResolvedValue(undefined);
-    worldCoffeeServiceMocks.removeWorldCoffeeDescription.mockResolvedValue(undefined);
-    worldCoffeeServiceMocks.setWorldCoffeeFacilitator.mockResolvedValue(undefined);
-    worldCoffeeServiceMocks.clearWorldCoffeeFacilitator.mockResolvedValue(undefined);
-    worldCoffeeServiceMocks.createWorldCoffeeIdea.mockResolvedValue("i2");
-    worldCoffeeServiceMocks.updateWorldCoffeeIdea.mockResolvedValue(undefined);
-    worldCoffeeServiceMocks.removeWorldCoffeeIdea.mockResolvedValue(undefined);
-    worldCoffeeServiceMocks.applyWorldCoffeeRound2Rotation.mockResolvedValue(undefined);
-    worldCoffeeServiceMocks.applyWorldCoffeeRound3Rotation.mockResolvedValue(undefined);
-    worldCoffeeServiceMocks.applyWorldCoffeeReturnRotation.mockResolvedValue(undefined);
-    worldCoffeeServiceMocks.addWorldCoffeeIdeaComment.mockResolvedValue("c2");
-    worldCoffeeServiceMocks.updateWorldCoffeeIdeaComment.mockResolvedValue(undefined);
-    worldCoffeeServiceMocks.removeWorldCoffeeIdeaComment.mockResolvedValue(undefined);
-    worldCoffeeServiceMocks.addWorldCoffeeCommentReply.mockResolvedValue("r2");
-    worldCoffeeServiceMocks.updateWorldCoffeeCommentReply.mockResolvedValue(undefined);
-    worldCoffeeServiceMocks.removeWorldCoffeeCommentReply.mockResolvedValue(undefined);
-    worldCoffeeServiceMocks.updateWorldCoffeeSubgroupSynthesis.mockResolvedValue(undefined);
+    worldCoffeeServiceMocks.upsertParticipant.mockResolvedValue(undefined);
+    worldCoffeeServiceMocks.initializeSubgroups.mockResolvedValue(undefined);
+    worldCoffeeServiceMocks.createDescription.mockResolvedValue("d3");
+    worldCoffeeServiceMocks.updateDescription.mockResolvedValue(undefined);
+    worldCoffeeServiceMocks.removeDescription.mockResolvedValue(undefined);
+    worldCoffeeServiceMocks.setFacilitator.mockResolvedValue(undefined);
+    worldCoffeeServiceMocks.clearFacilitator.mockResolvedValue(undefined);
+    worldCoffeeServiceMocks.createIdea.mockResolvedValue("i2");
+    worldCoffeeServiceMocks.updateIdea.mockResolvedValue(undefined);
+    worldCoffeeServiceMocks.removeIdea.mockResolvedValue(undefined);
+    worldCoffeeServiceMocks.applyRound2Rotation.mockResolvedValue(undefined);
+    worldCoffeeServiceMocks.applyRound3Rotation.mockResolvedValue(undefined);
+    worldCoffeeServiceMocks.applyReturnRotation.mockResolvedValue(undefined);
+    worldCoffeeServiceMocks.addIdeaComment.mockResolvedValue("c2");
+    worldCoffeeServiceMocks.updateIdeaComment.mockResolvedValue(undefined);
+    worldCoffeeServiceMocks.removeIdeaComment.mockResolvedValue(undefined);
+    worldCoffeeServiceMocks.addCommentReply.mockResolvedValue("r2");
+    worldCoffeeServiceMocks.updateCommentReply.mockResolvedValue(undefined);
+    worldCoffeeServiceMocks.removeCommentReply.mockResolvedValue(undefined);
+    worldCoffeeServiceMocks.updateSubgroupSynthesis.mockResolvedValue(undefined);
   });
 
   it("stays disabled for non world-cafe workshop", async () => {
@@ -227,7 +227,7 @@ describe("useWorldCoffeeCollaboration", () => {
     });
 
     await waitFor(() => {
-      expect(worldCoffeeServiceMocks.initializeWorldCoffeeSubgroups).toHaveBeenCalled();
+      expect(worldCoffeeServiceMocks.initializeSubgroups).toHaveBeenCalled();
     });
 
     await act(async () => {
@@ -251,30 +251,30 @@ describe("useWorldCoffeeCollaboration", () => {
       await hook.result.actions.updateSubgroupSynthesis("Synthese finale", "Synthese initiale");
     });
 
-    expect(worldCoffeeServiceMocks.createWorldCoffeeDescription).toHaveBeenCalled();
-    expect(worldCoffeeServiceMocks.updateWorldCoffeeDescription).toHaveBeenCalled();
-    expect(worldCoffeeServiceMocks.removeWorldCoffeeDescription).toHaveBeenCalled();
-    expect(worldCoffeeServiceMocks.setWorldCoffeeFacilitator).toHaveBeenCalled();
-    expect(worldCoffeeServiceMocks.clearWorldCoffeeFacilitator).toHaveBeenCalled();
-    expect(worldCoffeeServiceMocks.createWorldCoffeeIdea).toHaveBeenCalled();
-    expect(worldCoffeeServiceMocks.updateWorldCoffeeIdea).toHaveBeenCalled();
-    expect(worldCoffeeServiceMocks.removeWorldCoffeeIdea).toHaveBeenCalled();
-    expect(worldCoffeeServiceMocks.applyWorldCoffeeRound2Rotation).toHaveBeenCalled();
-    expect(worldCoffeeServiceMocks.applyWorldCoffeeRound3Rotation).toHaveBeenCalled();
-    expect(worldCoffeeServiceMocks.applyWorldCoffeeReturnRotation).toHaveBeenCalled();
-    expect(worldCoffeeServiceMocks.addWorldCoffeeIdeaComment).toHaveBeenCalled();
-    expect(worldCoffeeServiceMocks.updateWorldCoffeeIdeaComment).toHaveBeenCalled();
-    expect(worldCoffeeServiceMocks.removeWorldCoffeeIdeaComment).toHaveBeenCalled();
-    expect(worldCoffeeServiceMocks.addWorldCoffeeCommentReply).toHaveBeenCalled();
-    expect(worldCoffeeServiceMocks.updateWorldCoffeeCommentReply).toHaveBeenCalled();
-    expect(worldCoffeeServiceMocks.removeWorldCoffeeCommentReply).toHaveBeenCalled();
-    expect(worldCoffeeServiceMocks.updateWorldCoffeeSubgroupSynthesis).toHaveBeenCalled();
+    expect(worldCoffeeServiceMocks.createDescription).toHaveBeenCalled();
+    expect(worldCoffeeServiceMocks.updateDescription).toHaveBeenCalled();
+    expect(worldCoffeeServiceMocks.removeDescription).toHaveBeenCalled();
+    expect(worldCoffeeServiceMocks.setFacilitator).toHaveBeenCalled();
+    expect(worldCoffeeServiceMocks.clearFacilitator).toHaveBeenCalled();
+    expect(worldCoffeeServiceMocks.createIdea).toHaveBeenCalled();
+    expect(worldCoffeeServiceMocks.updateIdea).toHaveBeenCalled();
+    expect(worldCoffeeServiceMocks.removeIdea).toHaveBeenCalled();
+    expect(worldCoffeeServiceMocks.applyRound2Rotation).toHaveBeenCalled();
+    expect(worldCoffeeServiceMocks.applyRound3Rotation).toHaveBeenCalled();
+    expect(worldCoffeeServiceMocks.applyReturnRotation).toHaveBeenCalled();
+    expect(worldCoffeeServiceMocks.addIdeaComment).toHaveBeenCalled();
+    expect(worldCoffeeServiceMocks.updateIdeaComment).toHaveBeenCalled();
+    expect(worldCoffeeServiceMocks.removeIdeaComment).toHaveBeenCalled();
+    expect(worldCoffeeServiceMocks.addCommentReply).toHaveBeenCalled();
+    expect(worldCoffeeServiceMocks.updateCommentReply).toHaveBeenCalled();
+    expect(worldCoffeeServiceMocks.removeCommentReply).toHaveBeenCalled();
+    expect(worldCoffeeServiceMocks.updateSubgroupSynthesis).toHaveBeenCalled();
 
     await hook.unmount();
   });
 
   it("surfaces sync error from subscription", async () => {
-    worldCoffeeServiceMocks.subscribeWorldCoffeeSession.mockImplementation(
+    worldCoffeeServiceMocks.subscribeSession.mockImplementation(
       (_sessionId, _onData, onError) => {
         onError(new Error("sync failed"));
         return () => {};

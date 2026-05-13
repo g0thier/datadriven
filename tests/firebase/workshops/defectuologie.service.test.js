@@ -64,20 +64,20 @@ describe("firebase/workshops/defectuologie.service", () => {
     const mod = await import("../../../src/firebase/workshops/defectuologie.service.js");
 
     const cb = vi.fn();
-    mod.subscribeDefectuologieSession("s1", cb);
+    mod.subscribeSession("s1", cb);
     expect(cb).toHaveBeenCalled();
 
-    const once = await mod.fetchDefectuologieSessionOnce("s1");
+    const once = await mod.fetchSessionOnce("s1");
     expect(once).toBeTruthy();
   });
 
   it("handles participant/subgroup lifecycle and step1", async () => {
     const mod = await import("../../../src/firebase/workshops/defectuologie.service.js");
 
-    await mod.upsertDefectuologieParticipant("s1", { id: "p1", name: "Ada" });
-    await mod.initializeDefectuologieSubgroups("s1");
-    await mod.assignDefectuologieParticipantToSubgroup("s1", "p1");
-    await mod.setDefectuologieStep1Description("s1", "p1", "Nouveau sujet", {
+    await mod.upsertParticipant("s1", { id: "p1", name: "Ada" });
+    await mod.initializeSubgroups("s1");
+    await mod.assignParticipantToSubgroup("s1", "p1");
+    await mod.setDescription("s1", "p1", "Nouveau sujet", {
       expectedPreviousDescription: "Sujet",
     });
 
@@ -88,10 +88,10 @@ describe("firebase/workshops/defectuologie.service", () => {
     const mod = await import("../../../src/firebase/workshops/defectuologie.service.js");
 
     await expect(
-      mod.createDefectuologieDefect("s1", "group-1", { authorId: "p1", text: "Defaut" })
+      mod.createDefect("s1", "group-1", { authorId: "p1", text: "Defaut" })
     ).resolves.toBe("d_new");
 
-    await mod.updateDefectuologieDefect(
+    await mod.updateDefect(
       "s1",
       "group-1",
       "d_new",
@@ -99,18 +99,18 @@ describe("firebase/workshops/defectuologie.service", () => {
       { expectedPreviousText: "Defaut initial" }
     );
 
-    await mod.removeDefectuologieDefect("s1", "group-1", "d_new");
+    await mod.removeDefect("s1", "group-1", "d_new");
 
-    const defectVote = await mod.toggleDefectuologieDefectVote("s1", "p1", "d_new", {
+    const defectVote = await mod.toggleDefectVote("s1", "p1", "d_new", {
       maxVotes: 1,
       validDefectIds: new Set(["d_new"]),
     });
 
     await expect(
-      mod.createDefectuologieSolution("s1", "group-1", { authorId: "p1", text: "Solution" })
+      mod.createSolution("s1", "group-1", { authorId: "p1", text: "Solution" })
     ).resolves.toBe("s_new");
 
-    await mod.updateDefectuologieSolution(
+    await mod.updateSolution(
       "s1",
       "group-1",
       "s_new",
@@ -118,14 +118,14 @@ describe("firebase/workshops/defectuologie.service", () => {
       { expectedPreviousText: "Solution initiale" }
     );
 
-    await mod.removeDefectuologieSolution("s1", "group-1", "s_new");
+    await mod.removeSolution("s1", "group-1", "s_new");
 
-    const solutionVote = await mod.toggleDefectuologieSolutionVote("s1", "p1", "s_new", {
+    const solutionVote = await mod.toggleSolutionVote("s1", "p1", "s_new", {
       maxVotes: 1,
       validSolutionIds: new Set(["s_new"]),
     });
 
-    await mod.setDefectuologieStep6Proposal("s1", "p1", "group-1", "Proposition finale");
+    await mod.setProposal("s1", "p1", "group-1", "Proposition finale");
 
     expect(defectVote.committed).toBe(true);
     expect(solutionVote.committed).toBe(true);

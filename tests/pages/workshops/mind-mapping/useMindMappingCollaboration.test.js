@@ -13,20 +13,20 @@ const firebaseMocks = {
 };
 
 const mindMappingServiceMocks = {
-  addMindMappingConcept: vi.fn(),
-  addMindMappingComment: vi.fn(),
-  createMindMappingNote: vi.fn(),
-  removeMindMappingConcept: vi.fn(),
-  removeMindMappingComment: vi.fn(),
-  removeMindMappingNote: vi.fn(),
+  addConcept: vi.fn(),
+  addComment: vi.fn(),
+  createNote: vi.fn(),
+  removeConcept: vi.fn(),
+  removeComment: vi.fn(),
+  removeNote: vi.fn(),
   setReformulation: vi.fn(),
-  setMindMappingStep1Description: vi.fn(),
-  subscribeMindMappingSession: vi.fn(),
-  toggleMindMappingConceptVote: vi.fn(),
-  updateMindMappingConcept: vi.fn(),
-  updateMindMappingComment: vi.fn(),
-  updateMindMappingNote: vi.fn(),
-  upsertMindMappingParticipant: vi.fn(),
+  setDescription: vi.fn(),
+  subscribeSession: vi.fn(),
+  toggleConceptVote: vi.fn(),
+  updateConcept: vi.fn(),
+  updateComment: vi.fn(),
+  updateNote: vi.fn(),
+  upsertParticipant: vi.fn(),
 };
 
 vi.mock("../../../../src/firebase", () => firebaseMocks);
@@ -36,7 +36,7 @@ describe("useMindMappingCollaboration", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    mindMappingServiceMocks.subscribeMindMappingSession.mockImplementation((_sessionId, onData) => {
+    mindMappingServiceMocks.subscribeSession.mockImplementation((_sessionId, onData) => {
       onData({
         step1: { description: "Challenge" },
         notes: {
@@ -73,18 +73,18 @@ describe("useMindMappingCollaboration", () => {
       return () => {};
     });
 
-    mindMappingServiceMocks.upsertMindMappingParticipant.mockResolvedValue(undefined);
-    mindMappingServiceMocks.setMindMappingStep1Description.mockResolvedValue(undefined);
-    mindMappingServiceMocks.createMindMappingNote.mockResolvedValue("n3");
-    mindMappingServiceMocks.updateMindMappingNote.mockResolvedValue(undefined);
-    mindMappingServiceMocks.removeMindMappingNote.mockResolvedValue(undefined);
-    mindMappingServiceMocks.addMindMappingComment.mockResolvedValue("c3");
-    mindMappingServiceMocks.updateMindMappingComment.mockResolvedValue(undefined);
-    mindMappingServiceMocks.removeMindMappingComment.mockResolvedValue(undefined);
-    mindMappingServiceMocks.addMindMappingConcept.mockResolvedValue("k2");
-    mindMappingServiceMocks.updateMindMappingConcept.mockResolvedValue(undefined);
-    mindMappingServiceMocks.removeMindMappingConcept.mockResolvedValue(undefined);
-    mindMappingServiceMocks.toggleMindMappingConceptVote.mockResolvedValue({
+    mindMappingServiceMocks.upsertParticipant.mockResolvedValue(undefined);
+    mindMappingServiceMocks.setDescription.mockResolvedValue(undefined);
+    mindMappingServiceMocks.createNote.mockResolvedValue("n3");
+    mindMappingServiceMocks.updateNote.mockResolvedValue(undefined);
+    mindMappingServiceMocks.removeNote.mockResolvedValue(undefined);
+    mindMappingServiceMocks.addComment.mockResolvedValue("c3");
+    mindMappingServiceMocks.updateComment.mockResolvedValue(undefined);
+    mindMappingServiceMocks.removeComment.mockResolvedValue(undefined);
+    mindMappingServiceMocks.addConcept.mockResolvedValue("k2");
+    mindMappingServiceMocks.updateConcept.mockResolvedValue(undefined);
+    mindMappingServiceMocks.removeConcept.mockResolvedValue(undefined);
+    mindMappingServiceMocks.toggleConceptVote.mockResolvedValue({
       committed: true,
       votes: { k1: true },
     });
@@ -129,14 +129,14 @@ describe("useMindMappingCollaboration", () => {
     await waitFor(() => {
       expect(hook.result.isEnabled).toBe(true);
       expect(hook.result.participantReady).toBe(true);
-      expect(hook.result.step1Description).toBe("Challenge");
+      expect(hook.result.description).toBe("Challenge");
       expect(hook.result.notes).toHaveLength(2);
       expect(hook.result.concepts).toHaveLength(1);
       expect(hook.result.reformulationsByConcept.k1.text).toBe("Reform initiale");
     });
 
     await act(async () => {
-      await hook.result.actions.setStep1Description("Sujet mis a jour");
+      await hook.result.actions.setDescription("Sujet mis a jour");
       await hook.result.actions.addNote({ text: "Nouvelle note" });
       await hook.result.actions.updateNoteText("n1", "Note modifiee");
       await hook.result.actions.removeNote("n1");
@@ -156,24 +156,24 @@ describe("useMindMappingCollaboration", () => {
       await hook.result.actions.setReformulation("k1", "Reform finale");
     });
 
-    expect(mindMappingServiceMocks.setMindMappingStep1Description).toHaveBeenCalled();
-    expect(mindMappingServiceMocks.createMindMappingNote).toHaveBeenCalled();
-    expect(mindMappingServiceMocks.updateMindMappingNote).toHaveBeenCalled();
-    expect(mindMappingServiceMocks.removeMindMappingNote).toHaveBeenCalled();
-    expect(mindMappingServiceMocks.addMindMappingComment).toHaveBeenCalled();
-    expect(mindMappingServiceMocks.updateMindMappingComment).toHaveBeenCalled();
-    expect(mindMappingServiceMocks.removeMindMappingComment).toHaveBeenCalled();
-    expect(mindMappingServiceMocks.addMindMappingConcept).toHaveBeenCalled();
-    expect(mindMappingServiceMocks.updateMindMappingConcept).toHaveBeenCalled();
-    expect(mindMappingServiceMocks.removeMindMappingConcept).toHaveBeenCalled();
-    expect(mindMappingServiceMocks.toggleMindMappingConceptVote).toHaveBeenCalled();
+    expect(mindMappingServiceMocks.setDescription).toHaveBeenCalled();
+    expect(mindMappingServiceMocks.createNote).toHaveBeenCalled();
+    expect(mindMappingServiceMocks.updateNote).toHaveBeenCalled();
+    expect(mindMappingServiceMocks.removeNote).toHaveBeenCalled();
+    expect(mindMappingServiceMocks.addComment).toHaveBeenCalled();
+    expect(mindMappingServiceMocks.updateComment).toHaveBeenCalled();
+    expect(mindMappingServiceMocks.removeComment).toHaveBeenCalled();
+    expect(mindMappingServiceMocks.addConcept).toHaveBeenCalled();
+    expect(mindMappingServiceMocks.updateConcept).toHaveBeenCalled();
+    expect(mindMappingServiceMocks.removeConcept).toHaveBeenCalled();
+    expect(mindMappingServiceMocks.toggleConceptVote).toHaveBeenCalled();
     expect(mindMappingServiceMocks.setReformulation).toHaveBeenCalled();
 
     await hook.unmount();
   });
 
   it("surfaces sync error from subscription", async () => {
-    mindMappingServiceMocks.subscribeMindMappingSession.mockImplementation(
+    mindMappingServiceMocks.subscribeSession.mockImplementation(
       (_sessionId, _onData, onError) => {
         onError(new Error("sync failed"));
         return () => {};

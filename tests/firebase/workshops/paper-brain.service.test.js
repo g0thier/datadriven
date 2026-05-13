@@ -49,25 +49,25 @@ describe("firebase/workshops/paper-brain.service", () => {
   it("subscribes session and upserts participant", async () => {
     const mod = await import("../../../src/firebase/workshops/paper-brain.service.js");
     const cb = vi.fn();
-    mod.subscribePaperBrainSession("s1", cb);
+    mod.subscribeSession("s1", cb);
     expect(cb).toHaveBeenCalled();
 
-    await mod.upsertPaperBrainParticipant("s1", { id: "p1", name: "Ada" });
+    await mod.upsertParticipant("s1", { id: "p1", name: "Ada" });
     expect(runTransaction).toHaveBeenCalled();
   });
 
   it("creates/updates/removes notes and comments", async () => {
     const mod = await import("../../../src/firebase/workshops/paper-brain.service.js");
 
-    await expect(mod.createPaperBrainNote("s1", { authorId: "p1", text: "Idea" })).resolves.toBe("n_new");
-    await mod.updatePaperBrainNote("s1", "n1", { text: "Updated" });
-    await mod.setPaperBrainNotePosition("s1", "n1", { x: 12, y: 45 });
-    await mod.removePaperBrainNote("s1", "n1");
+    await expect(mod.createNote("s1", { authorId: "p1", text: "Idea" })).resolves.toBe("n_new");
+    await mod.updateNote("s1", "n1", { text: "Updated" });
+    await mod.setNotePosition("s1", "n1", { x: 12, y: 45 });
+    await mod.removeNote("s1", "n1");
 
     push.mockReturnValueOnce({ key: "c1" });
-    await expect(mod.addPaperBrainComment("s1", "n1", { authorId: "p2", text: "Comment" })).resolves.toBe("c1");
-    await mod.updatePaperBrainComment("s1", "n1", "c1", { text: "Edited" });
-    await mod.removePaperBrainComment("s1", "n1", "c1");
+    await expect(mod.addComment("s1", "n1", { authorId: "p2", text: "Comment" })).resolves.toBe("c1");
+    await mod.updateComment("s1", "n1", "c1", { text: "Edited" });
+    await mod.removeComment("s1", "n1", "c1");
 
     expect(set).toHaveBeenCalled();
     expect(update).toHaveBeenCalled();
@@ -76,7 +76,7 @@ describe("firebase/workshops/paper-brain.service", () => {
 
   it("toggles votes with transaction result", async () => {
     const mod = await import("../../../src/firebase/workshops/paper-brain.service.js");
-    const result = await mod.togglePaperBrainVote("s1", "p1", "n1", { maxVotes: 3, validNoteIds: new Set(["n1"]) });
+    const result = await mod.toggleVote("s1", "p1", "n1", { maxVotes: 3, validNoteIds: new Set(["n1"]) });
     expect(result.committed).toBe(true);
     expect(result.votes).toBeTruthy();
   });

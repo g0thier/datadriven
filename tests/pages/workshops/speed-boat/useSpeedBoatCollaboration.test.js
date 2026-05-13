@@ -13,20 +13,20 @@ const firebaseMocks = {
 };
 
 const speedBoatServiceMocks = {
-  createSpeedBoatBrakeNote: vi.fn(),
-  createSpeedBoatLeverNote: vi.fn(),
-  removeSpeedBoatBrakeNote: vi.fn(),
-  removeSpeedBoatLeverNote: vi.fn(),
-  setSpeedBoatBrakeNotePosition: vi.fn(),
-  setSpeedBoatLeverNotePosition: vi.fn(),
-  setSpeedBoatStep8BrakeAction: vi.fn(),
-  setSpeedBoatStep1Description: vi.fn(),
-  setSpeedBoatStep2Objective: vi.fn(),
-  subscribeSpeedBoatSession: vi.fn(),
-  toggleSpeedBoatBrakeVote: vi.fn(),
-  updateSpeedBoatBrakeNote: vi.fn(),
-  updateSpeedBoatLeverNote: vi.fn(),
-  upsertSpeedBoatParticipant: vi.fn(),
+  createBrakeNote: vi.fn(),
+  createLeverNote: vi.fn(),
+  removeBrakeNote: vi.fn(),
+  removeLeverNote: vi.fn(),
+  setBrakeNotePosition: vi.fn(),
+  setLeverNotePosition: vi.fn(),
+  setBrakeAction: vi.fn(),
+  setDescription: vi.fn(),
+  setObjective: vi.fn(),
+  subscribeSession: vi.fn(),
+  toggleBrakeVote: vi.fn(),
+  updateBrakeNote: vi.fn(),
+  updateLeverNote: vi.fn(),
+  upsertParticipant: vi.fn(),
 };
 
 vi.mock("../../../../src/firebase", () => firebaseMocks);
@@ -36,7 +36,7 @@ describe("useSpeedBoatCollaboration", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    speedBoatServiceMocks.subscribeSpeedBoatSession.mockImplementation((_sessionId, onData) => {
+    speedBoatServiceMocks.subscribeSession.mockImplementation((_sessionId, onData) => {
       onData({
         step1: { description: "Challenge" },
         step2: { objective: "Objectif" },
@@ -71,7 +71,7 @@ describe("useSpeedBoatCollaboration", () => {
           u1: { b2: true },
           u2: { b1: true },
         },
-        step8ActionsByBrake: {
+        actionsByBrake: {
           b1: { text: "Action frein 1" },
         },
         participants: {
@@ -82,22 +82,22 @@ describe("useSpeedBoatCollaboration", () => {
       return () => {};
     });
 
-    speedBoatServiceMocks.upsertSpeedBoatParticipant.mockResolvedValue(undefined);
-    speedBoatServiceMocks.createSpeedBoatBrakeNote.mockResolvedValue("b3");
-    speedBoatServiceMocks.updateSpeedBoatBrakeNote.mockResolvedValue(undefined);
-    speedBoatServiceMocks.removeSpeedBoatBrakeNote.mockResolvedValue(undefined);
-    speedBoatServiceMocks.setSpeedBoatBrakeNotePosition.mockResolvedValue(undefined);
-    speedBoatServiceMocks.createSpeedBoatLeverNote.mockResolvedValue("l2");
-    speedBoatServiceMocks.updateSpeedBoatLeverNote.mockResolvedValue(undefined);
-    speedBoatServiceMocks.removeSpeedBoatLeverNote.mockResolvedValue(undefined);
-    speedBoatServiceMocks.setSpeedBoatLeverNotePosition.mockResolvedValue(undefined);
-    speedBoatServiceMocks.toggleSpeedBoatBrakeVote.mockResolvedValue({
+    speedBoatServiceMocks.upsertParticipant.mockResolvedValue(undefined);
+    speedBoatServiceMocks.createBrakeNote.mockResolvedValue("b3");
+    speedBoatServiceMocks.updateBrakeNote.mockResolvedValue(undefined);
+    speedBoatServiceMocks.removeBrakeNote.mockResolvedValue(undefined);
+    speedBoatServiceMocks.setBrakeNotePosition.mockResolvedValue(undefined);
+    speedBoatServiceMocks.createLeverNote.mockResolvedValue("l2");
+    speedBoatServiceMocks.updateLeverNote.mockResolvedValue(undefined);
+    speedBoatServiceMocks.removeLeverNote.mockResolvedValue(undefined);
+    speedBoatServiceMocks.setLeverNotePosition.mockResolvedValue(undefined);
+    speedBoatServiceMocks.toggleBrakeVote.mockResolvedValue({
       committed: true,
       votes: { b2: true },
     });
-    speedBoatServiceMocks.setSpeedBoatStep1Description.mockResolvedValue(undefined);
-    speedBoatServiceMocks.setSpeedBoatStep2Objective.mockResolvedValue(undefined);
-    speedBoatServiceMocks.setSpeedBoatStep8BrakeAction.mockResolvedValue(undefined);
+    speedBoatServiceMocks.setDescription.mockResolvedValue(undefined);
+    speedBoatServiceMocks.setObjective.mockResolvedValue(undefined);
+    speedBoatServiceMocks.setBrakeAction.mockResolvedValue(undefined);
   });
 
   it("stays disabled for non speed-boat workshop", async () => {
@@ -138,16 +138,16 @@ describe("useSpeedBoatCollaboration", () => {
     await waitFor(() => {
       expect(hook.result.isEnabled).toBe(true);
       expect(hook.result.participantReady).toBe(true);
-      expect(hook.result.step1Description).toBe("Challenge");
-      expect(hook.result.step2Objective).toBe("Objectif");
+      expect(hook.result.description).toBe("Challenge");
+      expect(hook.result.objective).toBe("Objectif");
       expect(hook.result.brakeNotes).toHaveLength(2);
       expect(hook.result.leverNotes).toHaveLength(1);
-      expect(hook.result.step8ActionsByBrake.b1).toBe("Action frein 1");
+      expect(hook.result.actionsByBrake.b1).toBe("Action frein 1");
     });
 
     await act(async () => {
-      await hook.result.actions.setStep1Description("Nouveau challenge");
-      await hook.result.actions.setStep2Objective("Nouvel objectif");
+      await hook.result.actions.setDescription("Nouveau challenge");
+      await hook.result.actions.setObjective("Nouvel objectif");
       await hook.result.actions.addBrakeNote({ text: "Mon frein" });
       await hook.result.actions.updateBrakeNoteText("b1", "Frein modifie");
       await hook.result.actions.removeBrakeNote("b1");
@@ -157,27 +157,27 @@ describe("useSpeedBoatCollaboration", () => {
       await hook.result.actions.removeLeverNote("l1");
       await hook.result.actions.setLeverNotePosition("l1", { x: 90, y: 60 });
       await hook.result.actions.toggleBrakeVote("b2");
-      await hook.result.actions.setStep8BrakeAction("b1", "Action finale");
+      await hook.result.actions.setBrakeAction("b1", "Action finale");
     });
 
-    expect(speedBoatServiceMocks.setSpeedBoatStep1Description).toHaveBeenCalled();
-    expect(speedBoatServiceMocks.setSpeedBoatStep2Objective).toHaveBeenCalled();
-    expect(speedBoatServiceMocks.createSpeedBoatBrakeNote).toHaveBeenCalled();
-    expect(speedBoatServiceMocks.updateSpeedBoatBrakeNote).toHaveBeenCalled();
-    expect(speedBoatServiceMocks.removeSpeedBoatBrakeNote).toHaveBeenCalled();
-    expect(speedBoatServiceMocks.setSpeedBoatBrakeNotePosition).toHaveBeenCalled();
-    expect(speedBoatServiceMocks.createSpeedBoatLeverNote).toHaveBeenCalled();
-    expect(speedBoatServiceMocks.updateSpeedBoatLeverNote).toHaveBeenCalled();
-    expect(speedBoatServiceMocks.removeSpeedBoatLeverNote).toHaveBeenCalled();
-    expect(speedBoatServiceMocks.setSpeedBoatLeverNotePosition).toHaveBeenCalled();
-    expect(speedBoatServiceMocks.toggleSpeedBoatBrakeVote).toHaveBeenCalled();
-    expect(speedBoatServiceMocks.setSpeedBoatStep8BrakeAction).toHaveBeenCalled();
+    expect(speedBoatServiceMocks.setDescription).toHaveBeenCalled();
+    expect(speedBoatServiceMocks.setObjective).toHaveBeenCalled();
+    expect(speedBoatServiceMocks.createBrakeNote).toHaveBeenCalled();
+    expect(speedBoatServiceMocks.updateBrakeNote).toHaveBeenCalled();
+    expect(speedBoatServiceMocks.removeBrakeNote).toHaveBeenCalled();
+    expect(speedBoatServiceMocks.setBrakeNotePosition).toHaveBeenCalled();
+    expect(speedBoatServiceMocks.createLeverNote).toHaveBeenCalled();
+    expect(speedBoatServiceMocks.updateLeverNote).toHaveBeenCalled();
+    expect(speedBoatServiceMocks.removeLeverNote).toHaveBeenCalled();
+    expect(speedBoatServiceMocks.setLeverNotePosition).toHaveBeenCalled();
+    expect(speedBoatServiceMocks.toggleBrakeVote).toHaveBeenCalled();
+    expect(speedBoatServiceMocks.setBrakeAction).toHaveBeenCalled();
 
     await hook.unmount();
   });
 
   it("surfaces sync error from subscription", async () => {
-    speedBoatServiceMocks.subscribeSpeedBoatSession.mockImplementation(
+    speedBoatServiceMocks.subscribeSession.mockImplementation(
       (_sessionId, _onData, onError) => {
         onError(new Error("sync failed"));
         return () => {};

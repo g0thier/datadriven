@@ -3,29 +3,12 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import Step1 from "../../../../src/pages/workshops/continue-stop-try/steps/Step1.jsx";
 import Step2 from "../../../../src/pages/workshops/continue-stop-try/steps/Step2.jsx";
 import Step3 from "../../../../src/pages/workshops/continue-stop-try/steps/Step3.jsx";
 import Step4 from "../../../../src/pages/workshops/continue-stop-try/steps/Step4.jsx";
 import Step5 from "../../../../src/pages/workshops/continue-stop-try/steps/Step5.jsx";
 
 describe("continue-stop-try steps", () => {
-  it("renders step 1 and updates description", async () => {
-    const user = userEvent.setup();
-    const setStep1Description = vi.fn();
-
-    render(
-      <Step1
-        sessionTitle="CST"
-        step={{ label: "S1", description: ["desc"] }}
-        collaboration={{ step1Description: "", actions: { setStep1Description } }}
-      />
-    );
-
-    await user.type(screen.getByRole("textbox"), "Perimetre atelier");
-    expect(setStep1Description).toHaveBeenCalled();
-  });
-
   it("renders step2 and handles note actions", async () => {
     const user = userEvent.setup();
     const addNote = vi.fn(async () => "new-note");
@@ -45,7 +28,7 @@ describe("continue-stop-try steps", () => {
         sessionTitle="CST"
         session={{ sessionId: "s1" }}
         collaboration={{
-          step1Description: "Sujet",
+          description: "Sujet",
           participant: { id: "p1" },
           myNotes,
           myNotesByColumn: {
@@ -75,7 +58,7 @@ describe("continue-stop-try steps", () => {
   it("renders step3..step5 and handles votes/placeholders", async () => {
     const user = userEvent.setup();
     const toggleVote = vi.fn();
-    const setStep5Placeholder = vi.fn();
+    const setPlaceholder = vi.fn();
 
     const notes = [
       {
@@ -105,7 +88,7 @@ describe("continue-stop-try steps", () => {
     ];
 
     const shared = {
-      step1Description: "Sujet atelier",
+      description: "Sujet atelier",
       participant: { id: "p1" },
       notes,
       notesByColumn: {
@@ -125,11 +108,11 @@ describe("continue-stop-try steps", () => {
       },
       remainingVotesByColumn: { continue: 2, stop: 3, try: 3 },
       maxStickers: 3,
-      step5PlaceholdersByColumn: { continue: "", stop: "", try: "" },
+      placeholdersByColumn: { continue: "", stop: "", try: "" },
       actions: {
         setNotePosition: vi.fn(),
         toggleVote,
-        setStep5Placeholder,
+        setPlaceholder,
       },
     };
 
@@ -151,6 +134,6 @@ describe("continue-stop-try steps", () => {
       screen.getAllByPlaceholderText(/définir l'engagement/i)[0],
       "On garde les demos"
     );
-    expect(setStep5Placeholder).toHaveBeenCalled();
+    expect(setPlaceholder).toHaveBeenCalled();
   });
 });

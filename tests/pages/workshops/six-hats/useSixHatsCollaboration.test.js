@@ -13,13 +13,13 @@ const firebaseMocks = {
 };
 
 const sixHatsServiceMocks = {
-  createSixHatsItem: vi.fn(),
-  removeSixHatsItem: vi.fn(),
-  setSixHatsBlueConclusion: vi.fn(),
-  setSixHatsStep1Description: vi.fn(),
-  subscribeSixHatsSession: vi.fn(),
-  updateSixHatsItem: vi.fn(),
-  upsertSixHatsParticipant: vi.fn(),
+  createItem: vi.fn(),
+  removeItem: vi.fn(),
+  setBlueConclusion: vi.fn(),
+  setDescription: vi.fn(),
+  subscribeSession: vi.fn(),
+  updateItem: vi.fn(),
+  upsertParticipant: vi.fn(),
 };
 
 vi.mock("../../../../src/firebase", () => firebaseMocks);
@@ -29,7 +29,7 @@ describe("useSixHatsCollaboration", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    sixHatsServiceMocks.subscribeSixHatsSession.mockImplementation((_sessionId, onData) => {
+    sixHatsServiceMocks.subscribeSession.mockImplementation((_sessionId, onData) => {
       onData({
         step1: { description: "Sujet" },
         step7: { blueConclusion: { text: "Conclusion" } },
@@ -59,12 +59,12 @@ describe("useSixHatsCollaboration", () => {
       return () => {};
     });
 
-    sixHatsServiceMocks.upsertSixHatsParticipant.mockResolvedValue(undefined);
-    sixHatsServiceMocks.createSixHatsItem.mockResolvedValue("w2");
-    sixHatsServiceMocks.updateSixHatsItem.mockResolvedValue(undefined);
-    sixHatsServiceMocks.removeSixHatsItem.mockResolvedValue(undefined);
-    sixHatsServiceMocks.setSixHatsStep1Description.mockResolvedValue(undefined);
-    sixHatsServiceMocks.setSixHatsBlueConclusion.mockResolvedValue(undefined);
+    sixHatsServiceMocks.upsertParticipant.mockResolvedValue(undefined);
+    sixHatsServiceMocks.createItem.mockResolvedValue("w2");
+    sixHatsServiceMocks.updateItem.mockResolvedValue(undefined);
+    sixHatsServiceMocks.removeItem.mockResolvedValue(undefined);
+    sixHatsServiceMocks.setDescription.mockResolvedValue(undefined);
+    sixHatsServiceMocks.setBlueConclusion.mockResolvedValue(undefined);
   });
 
   it("stays disabled for non six-hats workshop", async () => {
@@ -105,31 +105,31 @@ describe("useSixHatsCollaboration", () => {
     await waitFor(() => {
       expect(hook.result.isEnabled).toBe(true);
       expect(hook.result.participantReady).toBe(true);
-      expect(hook.result.step1Description).toBe("Sujet");
+      expect(hook.result.description).toBe("Sujet");
       expect(hook.result.blueConclusion).toBe("Conclusion");
       expect(hook.result.items).toHaveLength(2);
       expect(hook.result.itemsByHat.white).toHaveLength(1);
     });
 
     await act(async () => {
-      await hook.result.actions.setStep1Description("Nouveau sujet");
+      await hook.result.actions.setDescription("Nouveau sujet");
       await hook.result.actions.addHatItem("white", { text: "Nouveau fait" });
       await hook.result.actions.updateHatItemText("white", "w1", "Fait modifie");
       await hook.result.actions.removeHatItem("white", "w1");
       await hook.result.actions.setBlueConclusion("Decision finale");
     });
 
-    expect(sixHatsServiceMocks.setSixHatsStep1Description).toHaveBeenCalled();
-    expect(sixHatsServiceMocks.createSixHatsItem).toHaveBeenCalled();
-    expect(sixHatsServiceMocks.updateSixHatsItem).toHaveBeenCalled();
-    expect(sixHatsServiceMocks.removeSixHatsItem).toHaveBeenCalled();
-    expect(sixHatsServiceMocks.setSixHatsBlueConclusion).toHaveBeenCalled();
+    expect(sixHatsServiceMocks.setDescription).toHaveBeenCalled();
+    expect(sixHatsServiceMocks.createItem).toHaveBeenCalled();
+    expect(sixHatsServiceMocks.updateItem).toHaveBeenCalled();
+    expect(sixHatsServiceMocks.removeItem).toHaveBeenCalled();
+    expect(sixHatsServiceMocks.setBlueConclusion).toHaveBeenCalled();
 
     await hook.unmount();
   });
 
   it("surfaces sync error from subscription", async () => {
-    sixHatsServiceMocks.subscribeSixHatsSession.mockImplementation(
+    sixHatsServiceMocks.subscribeSession.mockImplementation(
       (_sessionId, _onData, onError) => {
         onError(new Error("sync failed"));
         return () => {};

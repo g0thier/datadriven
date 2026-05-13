@@ -10,7 +10,7 @@ describe("DefectuologieSummary", () => {
       <DefectuologieSummary
         sessionTitle="Session Defectuologie"
         collaboration={{
-          step1Description: "Ameliorer la file d'attente",
+          description: "Ameliorer la file d'attente",
           syncError: "Sync issue",
           resultsBySubgroup: [
             {

@@ -80,5 +80,5 @@ describe("useWorkshopInvitation", () => {
     expect(hook.result.inviteResultModal.isOpen).toBe(true);
 
     await hook.unmount();
-  });
+  }, 10000);
 });

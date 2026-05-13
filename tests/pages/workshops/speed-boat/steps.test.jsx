@@ -3,7 +3,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import Step1 from "../../../../src/pages/workshops/speed-boat/steps/Step1.jsx";
 import Step2 from "../../../../src/pages/workshops/speed-boat/steps/Step2.jsx";
 import Step3 from "../../../../src/pages/workshops/speed-boat/steps/Step3.jsx";
 import Step4 from "../../../../src/pages/workshops/speed-boat/steps/Step4.jsx";
@@ -13,25 +12,9 @@ import Step7 from "../../../../src/pages/workshops/speed-boat/steps/Step7.jsx";
 import Step8 from "../../../../src/pages/workshops/speed-boat/steps/Step8.jsx";
 
 describe("speed-boat steps", () => {
-  it("renders step 1 and updates challenge", async () => {
-    const user = userEvent.setup();
-    const setStep1Description = vi.fn();
-
-    render(
-      <Step1
-        sessionTitle="SB"
-        step={{ label: "S1", description: ["desc"] }}
-        collaboration={{ step1Description: "", actions: { setStep1Description } }}
-      />
-    );
-
-    await user.type(screen.getByPlaceholderText(/écrivez ici/i), "Defi principal");
-    expect(setStep1Description).toHaveBeenCalled();
-  });
-
   it("renders step2..step8 and triggers main actions", async () => {
     const user = userEvent.setup();
-    const setStep2Objective = vi.fn();
+    const setObjective = vi.fn();
     const addBrakeNote = vi.fn(async () => "b_new");
     const updateBrakeNoteText = vi.fn();
     const removeBrakeNote = vi.fn();
@@ -41,7 +24,7 @@ describe("speed-boat steps", () => {
     const removeLeverNote = vi.fn();
     const setLeverNotePosition = vi.fn();
     const toggleBrakeVote = vi.fn();
-    const setStep8BrakeAction = vi.fn();
+    const setBrakeAction = vi.fn();
 
     const brakeNotes = [
       {
@@ -78,7 +61,7 @@ describe("speed-boat steps", () => {
     ];
 
     const shared = {
-      step1Description: "Defi atelier",
+      description: "Defi atelier",
       step2Objective: "Objectif atelier",
       participant: { id: "p1" },
       myBrakeNotes: [brakeNotes[0]],
@@ -89,11 +72,11 @@ describe("speed-boat steps", () => {
         b1: new Set(["p1", "p2"]),
         b2: new Set(["p3"]),
       },
-      step8ActionsByBrake: { b1: "Action initiale" },
+      actionsByBrake: { b1: "Action initiale" },
       remainingVotes: 2,
       maxStickers: 3,
       actions: {
-        setStep2Objective,
+        setObjective,
         addBrakeNote,
         updateBrakeNoteText,
         removeBrakeNote,
@@ -103,7 +86,7 @@ describe("speed-boat steps", () => {
         removeLeverNote,
         setLeverNotePosition,
         toggleBrakeVote,
-        setStep8BrakeAction,
+        setBrakeAction,
       },
     };
 
@@ -130,7 +113,7 @@ describe("speed-boat steps", () => {
     );
 
     await user.type(screen.getByPlaceholderText(/objectif/i), " aligne");
-    expect(setStep2Objective).toHaveBeenCalled();
+    expect(setObjective).toHaveBeenCalled();
 
     await user.type(screen.getByPlaceholderText(/écrivez un frein/i), " maj");
     expect(updateBrakeNoteText).toHaveBeenCalled();
@@ -145,7 +128,7 @@ describe("speed-boat steps", () => {
     expect(toggleBrakeVote).toHaveBeenCalled();
 
     await user.type(screen.getAllByPlaceholderText(/définir les actions à mener/i)[0], " ++");
-    expect(setStep8BrakeAction).toHaveBeenCalled();
+    expect(setBrakeAction).toHaveBeenCalled();
 
     expect(screen.getByText(/gommettes à distribuer/i)).toBeInTheDocument();
     expect(screen.getAllByText(/defi/i).length).toBeGreaterThan(0);

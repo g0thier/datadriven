@@ -13,15 +13,15 @@ const firebaseMocks = {
 };
 
 const continueStopTryServiceMocks = {
-  createContinueStopTryNote: vi.fn(),
-  removeContinueStopTryNote: vi.fn(),
-  setContinueStopTryNotePosition: vi.fn(),
-  setContinueStopTryStep1Description: vi.fn(),
-  setContinueStopTryStep5Placeholder: vi.fn(),
-  subscribeContinueStopTrySession: vi.fn(),
-  toggleContinueStopTryVote: vi.fn(),
-  updateContinueStopTryNote: vi.fn(),
-  upsertContinueStopTryParticipant: vi.fn(),
+  createNote: vi.fn(),
+  removeNote: vi.fn(),
+  setNotePosition: vi.fn(),
+  setDescription: vi.fn(),
+  setPlaceholder: vi.fn(),
+  subscribeSession: vi.fn(),
+  toggleVote: vi.fn(),
+  updateNote: vi.fn(),
+  upsertParticipant: vi.fn(),
 };
 
 vi.mock("../../../../src/firebase", () => firebaseMocks);
@@ -34,7 +34,7 @@ describe("useContinueStopTryCollaboration", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    continueStopTryServiceMocks.subscribeContinueStopTrySession.mockImplementation(
+    continueStopTryServiceMocks.subscribeSession.mockImplementation(
       (_sessionId, onData) => {
         onData({
           step1: { description: "Challenge" },
@@ -82,17 +82,17 @@ describe("useContinueStopTryCollaboration", () => {
       }
     );
 
-    continueStopTryServiceMocks.upsertContinueStopTryParticipant.mockResolvedValue(undefined);
-    continueStopTryServiceMocks.createContinueStopTryNote.mockResolvedValue("n4");
-    continueStopTryServiceMocks.updateContinueStopTryNote.mockResolvedValue(undefined);
-    continueStopTryServiceMocks.removeContinueStopTryNote.mockResolvedValue(undefined);
-    continueStopTryServiceMocks.setContinueStopTryNotePosition.mockResolvedValue(undefined);
-    continueStopTryServiceMocks.toggleContinueStopTryVote.mockResolvedValue({
+    continueStopTryServiceMocks.upsertParticipant.mockResolvedValue(undefined);
+    continueStopTryServiceMocks.createNote.mockResolvedValue("n4");
+    continueStopTryServiceMocks.updateNote.mockResolvedValue(undefined);
+    continueStopTryServiceMocks.removeNote.mockResolvedValue(undefined);
+    continueStopTryServiceMocks.setNotePosition.mockResolvedValue(undefined);
+    continueStopTryServiceMocks.toggleVote.mockResolvedValue({
       committed: true,
       votes: { n1: true },
     });
-    continueStopTryServiceMocks.setContinueStopTryStep1Description.mockResolvedValue(undefined);
-    continueStopTryServiceMocks.setContinueStopTryStep5Placeholder.mockResolvedValue(undefined);
+    continueStopTryServiceMocks.setDescription.mockResolvedValue(undefined);
+    continueStopTryServiceMocks.setPlaceholder.mockResolvedValue(undefined);
   });
 
   it("stays disabled for non continue-stop-try workshop", async () => {
@@ -134,13 +134,13 @@ describe("useContinueStopTryCollaboration", () => {
       expect(hook.result.isEnabled).toBe(true);
       expect(hook.result.participantReady).toBe(true);
       expect(hook.result.notes).toHaveLength(3);
-      expect(hook.result.step1Description).toBe("Challenge");
+      expect(hook.result.description).toBe("Challenge");
       expect(hook.result.myNotes).toHaveLength(2);
     });
 
     await act(async () => {
-      await hook.result.actions.setStep1Description("Nouveau challenge");
-      await hook.result.actions.setStep5Placeholder("continue", "On garde le rituel");
+      await hook.result.actions.setDescription("Nouveau challenge");
+      await hook.result.actions.setPlaceholder("continue", "On garde le rituel");
       await hook.result.actions.addNote({ columnId: "continue", text: "Nouvelle note" });
       await hook.result.actions.updateNoteText("n1", "Note modifiee");
       await hook.result.actions.removeNote("n1");
@@ -148,19 +148,19 @@ describe("useContinueStopTryCollaboration", () => {
       await hook.result.actions.toggleVote("n1");
     });
 
-    expect(continueStopTryServiceMocks.setContinueStopTryStep1Description).toHaveBeenCalled();
-    expect(continueStopTryServiceMocks.setContinueStopTryStep5Placeholder).toHaveBeenCalled();
-    expect(continueStopTryServiceMocks.createContinueStopTryNote).toHaveBeenCalled();
-    expect(continueStopTryServiceMocks.updateContinueStopTryNote).toHaveBeenCalled();
-    expect(continueStopTryServiceMocks.removeContinueStopTryNote).toHaveBeenCalled();
-    expect(continueStopTryServiceMocks.setContinueStopTryNotePosition).toHaveBeenCalled();
-    expect(continueStopTryServiceMocks.toggleContinueStopTryVote).toHaveBeenCalled();
+    expect(continueStopTryServiceMocks.setDescription).toHaveBeenCalled();
+    expect(continueStopTryServiceMocks.setPlaceholder).toHaveBeenCalled();
+    expect(continueStopTryServiceMocks.createNote).toHaveBeenCalled();
+    expect(continueStopTryServiceMocks.updateNote).toHaveBeenCalled();
+    expect(continueStopTryServiceMocks.removeNote).toHaveBeenCalled();
+    expect(continueStopTryServiceMocks.setNotePosition).toHaveBeenCalled();
+    expect(continueStopTryServiceMocks.toggleVote).toHaveBeenCalled();
 
     await hook.unmount();
   });
 
   it("surfaces sync error from subscription", async () => {
-    continueStopTryServiceMocks.subscribeContinueStopTrySession.mockImplementation(
+    continueStopTryServiceMocks.subscribeSession.mockImplementation(
       (_sessionId, _onData, onError) => {
         onError(new Error("sync failed"));
         return () => {};

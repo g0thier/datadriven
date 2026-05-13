@@ -3,7 +3,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import Step1 from "../../../../src/pages/workshops/design-thinking/steps/Step1.jsx";
 import Step2 from "../../../../src/pages/workshops/design-thinking/steps/Step2.jsx";
 import Step3 from "../../../../src/pages/workshops/design-thinking/steps/Step3.jsx";
 import Step4 from "../../../../src/pages/workshops/design-thinking/steps/Step4.jsx";
@@ -15,22 +14,6 @@ import Step9 from "../../../../src/pages/workshops/design-thinking/steps/Step9.j
 import Step10 from "../../../../src/pages/workshops/design-thinking/steps/Step10.jsx";
 
 describe("design-thinking steps", () => {
-  it("renders step 1 and updates challenge description", async () => {
-    const user = userEvent.setup();
-    const setStep1Description = vi.fn();
-
-    render(
-      <Step1
-        sessionTitle="DT"
-        step={{ label: "S1", description: ["desc"] }}
-        collaboration={{ step1Description: "", actions: { setStep1Description } }}
-      />
-    );
-
-    await user.type(screen.getByPlaceholderText(/écrivez ici/i), "Défi");
-    expect(setStep1Description).toHaveBeenCalled();
-  });
-
   it("renders step2..step10 in smoke mode with key sections", async () => {
     const user = userEvent.setup();
     const setConclusion = vi.fn();
@@ -83,7 +66,7 @@ describe("design-thinking steps", () => {
     ];
 
     const shared = {
-      step1Description: "Défi",
+      description: "Défi",
       problemStatement: "Comment pourrions-nous simplifier ce parcours ?",
       conclusion: "Conclusion du groupe",
       participant: { id: "p1" },

@@ -9,7 +9,7 @@ describe("MindMappingSummary", () => {
       <MindMappingSummary
         sessionTitle="Session MM"
         collaboration={{
-          step1Description: "Sujet atelier",
+          description: "Sujet atelier",
           syncError: "Sync issue",
           notes: [
             { id: "n1", text: "Note 1", createdAt: "1" },

@@ -47,38 +47,38 @@ describe("firebase/workshops/speed-boat.service", () => {
     const mod = await import("../../../src/firebase/workshops/speed-boat.service.js");
 
     const cb = vi.fn();
-    mod.subscribeSpeedBoatSession("s1", cb);
+    mod.subscribeSession("s1", cb);
     expect(cb).toHaveBeenCalled();
 
-    await mod.upsertSpeedBoatParticipant("s1", { id: "p1", name: "Ada" });
+    await mod.upsertParticipant("s1", { id: "p1", name: "Ada" });
     expect(runTransaction).toHaveBeenCalled();
   });
 
   it("sets step fields and manages brake and lever notes", async () => {
     const mod = await import("../../../src/firebase/workshops/speed-boat.service.js");
 
-    await mod.setSpeedBoatStep1Description("s1", "p1", "Challenge", {
+    await mod.setDescription("s1", "p1", "Challenge", {
       expectedPreviousDescription: "",
     });
-    await mod.setSpeedBoatStep2Objective("s1", "p1", "Objectif", {
+    await mod.setObjective("s1", "p1", "Objectif", {
       expectedPreviousObjective: "",
     });
 
     await expect(
-      mod.createSpeedBoatBrakeNote("s1", { authorId: "p1", text: "Frein nouveau" })
+      mod.createBrakeNote("s1", { authorId: "p1", text: "Frein nouveau" })
     ).resolves.toBe("n_new");
-    await mod.updateSpeedBoatBrakeNote("s1", "b1", { text: "Frein maj" });
-    await mod.setSpeedBoatBrakeNotePosition("s1", "b1", { x: 100, y: 140 });
-    await mod.removeSpeedBoatBrakeNote("s1", "b1");
+    await mod.updateBrakeNote("s1", "b1", { text: "Frein maj" });
+    await mod.setBrakeNotePosition("s1", "b1", { x: 100, y: 140 });
+    await mod.removeBrakeNote("s1", "b1");
 
     await expect(
-      mod.createSpeedBoatLeverNote("s1", { authorId: "p1", text: "Levier nouveau" })
+      mod.createLeverNote("s1", { authorId: "p1", text: "Levier nouveau" })
     ).resolves.toBe("n_new");
-    await mod.updateSpeedBoatLeverNote("s1", "l1", { text: "Levier maj" });
-    await mod.setSpeedBoatLeverNotePosition("s1", "l1", { x: 80, y: 60 });
-    await mod.removeSpeedBoatLeverNote("s1", "l1");
+    await mod.updateLeverNote("s1", "l1", { text: "Levier maj" });
+    await mod.setLeverNotePosition("s1", "l1", { x: 80, y: 60 });
+    await mod.removeLeverNote("s1", "l1");
 
-    await mod.setSpeedBoatStep8BrakeAction("s1", "p1", "b1", "Faire une action");
+    await mod.setBrakeAction("s1", "p1", "b1", "Faire une action");
 
     expect(set).toHaveBeenCalled();
     expect(update).toHaveBeenCalled();
@@ -87,7 +87,7 @@ describe("firebase/workshops/speed-boat.service", () => {
   it("toggles brake votes and returns transaction payload", async () => {
     const mod = await import("../../../src/firebase/workshops/speed-boat.service.js");
 
-    const result = await mod.toggleSpeedBoatBrakeVote("s1", "p1", "b1", {
+    const result = await mod.toggleBrakeVote("s1", "p1", "b1", {
       maxVotes: 3,
       validNoteIds: new Set(["b1", "n_existing"]),
     });

@@ -10,7 +10,7 @@ describe("DesignThinkingSummary", () => {
       <DesignThinkingSummary
         sessionTitle="Session DT"
         collaboration={{
-          step1Description: "Défi cadré",
+          description: "Défi cadré",
           sharedNotes: [
             { id: "s1", text: "Observation 1" },
             { id: "s2", text: "Observation 2" },

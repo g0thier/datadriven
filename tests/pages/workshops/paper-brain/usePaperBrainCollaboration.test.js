@@ -13,17 +13,17 @@ const firebaseMocks = {
 };
 
 const paperBrainServiceMocks = {
-  addPaperBrainComment: vi.fn(),
-  createPaperBrainNote: vi.fn(),
-  removePaperBrainComment: vi.fn(),
-  removePaperBrainNote: vi.fn(),
-  setPaperBrainNotePosition: vi.fn(),
-  setPaperBrainStep1Description: vi.fn(),
-  subscribePaperBrainSession: vi.fn(),
-  togglePaperBrainVote: vi.fn(),
-  updatePaperBrainComment: vi.fn(),
-  updatePaperBrainNote: vi.fn(),
-  upsertPaperBrainParticipant: vi.fn(),
+  addComment: vi.fn(),
+  createNote: vi.fn(),
+  removeComment: vi.fn(),
+  removeNote: vi.fn(),
+  setNotePosition: vi.fn(),
+  setDescription: vi.fn(),
+  subscribeSession: vi.fn(),
+  toggleVote: vi.fn(),
+  updateComment: vi.fn(),
+  updateNote: vi.fn(),
+  upsertParticipant: vi.fn(),
 };
 
 vi.mock("../../../../src/firebase", () => firebaseMocks);
@@ -33,7 +33,7 @@ describe("usePaperBrainCollaboration", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    paperBrainServiceMocks.subscribePaperBrainSession.mockImplementation((_sessionId, onData) => {
+    paperBrainServiceMocks.subscribeSession.mockImplementation((_sessionId, onData) => {
       onData({
         step1: { description: "Challenge" },
         notes: {
@@ -69,16 +69,16 @@ describe("usePaperBrainCollaboration", () => {
       return () => {};
     });
 
-    paperBrainServiceMocks.upsertPaperBrainParticipant.mockResolvedValue(undefined);
-    paperBrainServiceMocks.createPaperBrainNote.mockResolvedValue("n3");
-    paperBrainServiceMocks.updatePaperBrainNote.mockResolvedValue(undefined);
-    paperBrainServiceMocks.removePaperBrainNote.mockResolvedValue(undefined);
-    paperBrainServiceMocks.addPaperBrainComment.mockResolvedValue("c2");
-    paperBrainServiceMocks.updatePaperBrainComment.mockResolvedValue(undefined);
-    paperBrainServiceMocks.removePaperBrainComment.mockResolvedValue(undefined);
-    paperBrainServiceMocks.setPaperBrainNotePosition.mockResolvedValue(undefined);
-    paperBrainServiceMocks.setPaperBrainStep1Description.mockResolvedValue(undefined);
-    paperBrainServiceMocks.togglePaperBrainVote.mockResolvedValue({
+    paperBrainServiceMocks.upsertParticipant.mockResolvedValue(undefined);
+    paperBrainServiceMocks.createNote.mockResolvedValue("n3");
+    paperBrainServiceMocks.updateNote.mockResolvedValue(undefined);
+    paperBrainServiceMocks.removeNote.mockResolvedValue(undefined);
+    paperBrainServiceMocks.addComment.mockResolvedValue("c2");
+    paperBrainServiceMocks.updateComment.mockResolvedValue(undefined);
+    paperBrainServiceMocks.removeComment.mockResolvedValue(undefined);
+    paperBrainServiceMocks.setNotePosition.mockResolvedValue(undefined);
+    paperBrainServiceMocks.setDescription.mockResolvedValue(undefined);
+    paperBrainServiceMocks.toggleVote.mockResolvedValue({
       committed: true,
       votes: { n1: true },
     });
@@ -118,11 +118,11 @@ describe("usePaperBrainCollaboration", () => {
       expect(hook.result.isEnabled).toBe(true);
       expect(hook.result.participantReady).toBe(true);
       expect(hook.result.notes).toHaveLength(2);
-      expect(hook.result.step1Description).toBe("Challenge");
+      expect(hook.result.description).toBe("Challenge");
     });
 
     await act(async () => {
-      await hook.result.actions.setStep1Description("New challenge");
+      await hook.result.actions.setDescription("New challenge");
       await hook.result.actions.addNote({ text: "My note" });
       await hook.result.actions.updateNoteText("n1", "Edited");
       await hook.result.actions.removeNote("n1");
@@ -133,21 +133,21 @@ describe("usePaperBrainCollaboration", () => {
       await hook.result.actions.toggleVote("n2");
     });
 
-    expect(paperBrainServiceMocks.setPaperBrainStep1Description).toHaveBeenCalled();
-    expect(paperBrainServiceMocks.createPaperBrainNote).toHaveBeenCalled();
-    expect(paperBrainServiceMocks.updatePaperBrainNote).toHaveBeenCalled();
-    expect(paperBrainServiceMocks.removePaperBrainNote).toHaveBeenCalled();
-    expect(paperBrainServiceMocks.addPaperBrainComment).toHaveBeenCalled();
-    expect(paperBrainServiceMocks.updatePaperBrainComment).toHaveBeenCalled();
-    expect(paperBrainServiceMocks.removePaperBrainComment).toHaveBeenCalled();
-    expect(paperBrainServiceMocks.setPaperBrainNotePosition).toHaveBeenCalled();
-    expect(paperBrainServiceMocks.togglePaperBrainVote).toHaveBeenCalled();
+    expect(paperBrainServiceMocks.setDescription).toHaveBeenCalled();
+    expect(paperBrainServiceMocks.createNote).toHaveBeenCalled();
+    expect(paperBrainServiceMocks.updateNote).toHaveBeenCalled();
+    expect(paperBrainServiceMocks.removeNote).toHaveBeenCalled();
+    expect(paperBrainServiceMocks.addComment).toHaveBeenCalled();
+    expect(paperBrainServiceMocks.updateComment).toHaveBeenCalled();
+    expect(paperBrainServiceMocks.removeComment).toHaveBeenCalled();
+    expect(paperBrainServiceMocks.setNotePosition).toHaveBeenCalled();
+    expect(paperBrainServiceMocks.toggleVote).toHaveBeenCalled();
 
     await hook.unmount();
   });
 
   it("surfaces sync error from subscription", async () => {
-    paperBrainServiceMocks.subscribePaperBrainSession.mockImplementation(
+    paperBrainServiceMocks.subscribeSession.mockImplementation(
       (_sessionId, _onData, onError) => {
       onError(new Error("sync failed"));
       return () => {};

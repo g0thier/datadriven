@@ -3,7 +3,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import Step1 from "../../../../src/pages/workshops/mind-mapping/steps/Step1.jsx";
 import Step2 from "../../../../src/pages/workshops/mind-mapping/steps/Step2.jsx";
 import Step3 from "../../../../src/pages/workshops/mind-mapping/steps/Step3.jsx";
 import Step4 from "../../../../src/pages/workshops/mind-mapping/steps/Step4.jsx";
@@ -11,22 +10,6 @@ import Step5 from "../../../../src/pages/workshops/mind-mapping/steps/Step5.jsx"
 import Step6 from "../../../../src/pages/workshops/mind-mapping/steps/Step6.jsx";
 
 describe("mind-mapping steps", () => {
-  it("renders step 1 and updates challenge", async () => {
-    const user = userEvent.setup();
-    const setStep1Description = vi.fn();
-
-    render(
-      <Step1
-        sessionTitle="MM"
-        step={{ label: "S1", description: ["desc"] }}
-        collaboration={{ step1Description: "", actions: { setStep1Description } }}
-      />
-    );
-
-    await user.type(screen.getByPlaceholderText(/écrivez ici/i), "Sujet principal");
-    expect(setStep1Description).toHaveBeenCalled();
-  });
-
   it("renders step2..step5 and handles key actions", async () => {
     const user = userEvent.setup();
 
@@ -58,7 +41,7 @@ describe("mind-mapping steps", () => {
     ];
 
     const shared = {
-      step1Description: "Sujet atelier",
+      description: "Sujet atelier",
       participant: { id: "p1" },
       notes,
       commentsByNote,
@@ -106,7 +89,7 @@ describe("mind-mapping steps", () => {
     const setReformulation = vi.fn();
 
     const collaboration = {
-      step1Description: "Sujet atelier",
+      description: "Sujet atelier",
       notes: [
         { id: "n1", text: "Categorie 1", createdAt: "1" },
         { id: "n2", text: "Categorie 2", createdAt: "2" },

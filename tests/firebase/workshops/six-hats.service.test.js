@@ -51,25 +51,25 @@ describe("firebase/workshops/six-hats.service", () => {
     const mod = await import("../../../src/firebase/workshops/six-hats.service.js");
 
     const cb = vi.fn();
-    mod.subscribeSixHatsSession("s1", cb);
+    mod.subscribeSession("s1", cb);
     expect(cb).toHaveBeenCalled();
 
-    await mod.upsertSixHatsParticipant("s1", { id: "p1", name: "Ada" });
+    await mod.upsertParticipant("s1", { id: "p1", name: "Ada" });
     expect(runTransaction).toHaveBeenCalled();
   });
 
   it("sets step1, creates/updates/removes item and sets blue conclusion", async () => {
     const mod = await import("../../../src/firebase/workshops/six-hats.service.js");
 
-    await mod.setSixHatsStep1Description("s1", "p1", "Nouveau sujet", {
+    await mod.setDescription("s1", "p1", "Nouveau sujet", {
       expectedPreviousDescription: "Sujet initial",
     });
 
     await expect(
-      mod.createSixHatsItem("s1", "white", { authorId: "p1", text: "Fait" })
+      mod.createItem("s1", "white", { authorId: "p1", text: "Fait" })
     ).resolves.toBe("item_new");
 
-    await mod.updateSixHatsItem(
+    await mod.updateItem(
       "s1",
       "white",
       "w1",
@@ -77,8 +77,8 @@ describe("firebase/workshops/six-hats.service", () => {
       { expectedPreviousText: "Fait initial" }
     );
 
-    await mod.removeSixHatsItem("s1", "white", "w1");
-    await mod.setSixHatsBlueConclusion("s1", "p1", "Conclusion");
+    await mod.removeItem("s1", "white", "w1");
+    await mod.setBlueConclusion("s1", "p1", "Conclusion");
 
     expect(set).toHaveBeenCalled();
     expect(update).toHaveBeenCalled();

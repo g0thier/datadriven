@@ -9,7 +9,7 @@ describe("SpeedBoatSummary", () => {
       <SpeedBoatSummary
         sessionTitle="Session SB"
         collaboration={{
-          step1Description: "Defi atelier",
+          description: "Defi atelier",
           step2Objective: "Objectif atelier",
           participant: { id: "p1" },
           syncError: "Sync issue",
@@ -24,7 +24,7 @@ describe("SpeedBoatSummary", () => {
             b1: new Set(["p1", "p2"]),
             b2: new Set(["p3"]),
           },
-          step8ActionsByBrake: {
+          actionsByBrake: {
             b1: "Action prioritaire",
           },
         }}
@@ -47,7 +47,7 @@ describe("SpeedBoatSummary", () => {
           brakeNotes: [{ id: "b1", text: "Frein", createdAt: "1" }],
           leverNotes: [],
           votesByNote: {},
-          step8ActionsByBrake: {},
+          actionsByBrake: {},
         }}
       />
     );

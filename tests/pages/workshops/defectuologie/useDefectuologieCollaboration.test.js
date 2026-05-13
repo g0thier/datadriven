@@ -13,21 +13,21 @@ const firebaseMocks = {
 };
 
 const defectuologieServiceMocks = {
-  assignDefectuologieParticipantToSubgroup: vi.fn(),
-  createDefectuologieDefect: vi.fn(),
-  createDefectuologieSolution: vi.fn(),
-  fetchDefectuologieSessionOnce: vi.fn(),
-  initializeDefectuologieSubgroups: vi.fn(),
-  removeDefectuologieDefect: vi.fn(),
-  removeDefectuologieSolution: vi.fn(),
-  setDefectuologieStep1Description: vi.fn(),
-  setDefectuologieStep6Proposal: vi.fn(),
-  subscribeDefectuologieSession: vi.fn(),
-  toggleDefectuologieDefectVote: vi.fn(),
-  toggleDefectuologieSolutionVote: vi.fn(),
-  updateDefectuologieDefect: vi.fn(),
-  updateDefectuologieSolution: vi.fn(),
-  upsertDefectuologieParticipant: vi.fn(),
+  assignParticipantToSubgroup: vi.fn(),
+  createDefect: vi.fn(),
+  createSolution: vi.fn(),
+  fetchSessionOnce: vi.fn(),
+  initializeSubgroups: vi.fn(),
+  removeDefect: vi.fn(),
+  removeSolution: vi.fn(),
+  setDescription: vi.fn(),
+  setProposal: vi.fn(),
+  subscribeSession: vi.fn(),
+  toggleDefectVote: vi.fn(),
+  toggleSolutionVote: vi.fn(),
+  updateDefect: vi.fn(),
+  updateSolution: vi.fn(),
+  upsertParticipant: vi.fn(),
 };
 
 vi.mock("../../../../src/firebase", () => firebaseMocks);
@@ -40,7 +40,7 @@ describe("useDefectuologieCollaboration", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    defectuologieServiceMocks.subscribeDefectuologieSession.mockImplementation(
+    defectuologieServiceMocks.subscribeSession.mockImplementation(
       (_sessionId, onData) => {
         onData({
           step1: { description: "Challenge" },
@@ -102,26 +102,26 @@ describe("useDefectuologieCollaboration", () => {
       }
     );
 
-    defectuologieServiceMocks.fetchDefectuologieSessionOnce.mockResolvedValue(undefined);
-    defectuologieServiceMocks.initializeDefectuologieSubgroups.mockResolvedValue(undefined);
-    defectuologieServiceMocks.upsertDefectuologieParticipant.mockResolvedValue(undefined);
-    defectuologieServiceMocks.assignDefectuologieParticipantToSubgroup.mockResolvedValue(undefined);
-    defectuologieServiceMocks.createDefectuologieDefect.mockResolvedValue("d3");
-    defectuologieServiceMocks.updateDefectuologieDefect.mockResolvedValue(undefined);
-    defectuologieServiceMocks.removeDefectuologieDefect.mockResolvedValue(undefined);
-    defectuologieServiceMocks.toggleDefectuologieDefectVote.mockResolvedValue({
+    defectuologieServiceMocks.fetchSessionOnce.mockResolvedValue(undefined);
+    defectuologieServiceMocks.initializeSubgroups.mockResolvedValue(undefined);
+    defectuologieServiceMocks.upsertParticipant.mockResolvedValue(undefined);
+    defectuologieServiceMocks.assignParticipantToSubgroup.mockResolvedValue(undefined);
+    defectuologieServiceMocks.createDefect.mockResolvedValue("d3");
+    defectuologieServiceMocks.updateDefect.mockResolvedValue(undefined);
+    defectuologieServiceMocks.removeDefect.mockResolvedValue(undefined);
+    defectuologieServiceMocks.toggleDefectVote.mockResolvedValue({
       committed: true,
       votes: { d1: true },
     });
-    defectuologieServiceMocks.createDefectuologieSolution.mockResolvedValue("sol2");
-    defectuologieServiceMocks.updateDefectuologieSolution.mockResolvedValue(undefined);
-    defectuologieServiceMocks.removeDefectuologieSolution.mockResolvedValue(undefined);
-    defectuologieServiceMocks.toggleDefectuologieSolutionVote.mockResolvedValue({
+    defectuologieServiceMocks.createSolution.mockResolvedValue("sol2");
+    defectuologieServiceMocks.updateSolution.mockResolvedValue(undefined);
+    defectuologieServiceMocks.removeSolution.mockResolvedValue(undefined);
+    defectuologieServiceMocks.toggleSolutionVote.mockResolvedValue({
       committed: true,
       votes: { sol1: true },
     });
-    defectuologieServiceMocks.setDefectuologieStep1Description.mockResolvedValue(undefined);
-    defectuologieServiceMocks.setDefectuologieStep6Proposal.mockResolvedValue(undefined);
+    defectuologieServiceMocks.setDescription.mockResolvedValue(undefined);
+    defectuologieServiceMocks.setProposal.mockResolvedValue(undefined);
   });
 
   it("stays disabled for non defectuologie workshop", async () => {
@@ -164,11 +164,11 @@ describe("useDefectuologieCollaboration", () => {
       expect(hook.result.participantReady).toBe(true);
       expect(hook.result.activeSubgroup?.id).toBe("group-1");
       expect(hook.result.activeDefects).toHaveLength(2);
-      expect(hook.result.step1Description).toBe("Challenge");
+      expect(hook.result.description).toBe("Challenge");
     });
 
     await act(async () => {
-      await hook.result.actions.setStep1Description("New challenge");
+      await hook.result.actions.setDescription("New challenge");
       await hook.result.actions.addDefect({ text: "Mon defaut" });
       await hook.result.actions.updateDefectText("d1", "Defaut modifie", "Defaut 1");
       await hook.result.actions.removeDefect("d1");
@@ -177,25 +177,25 @@ describe("useDefectuologieCollaboration", () => {
       await hook.result.actions.updateSolutionText("sol1", "Solution modifiee", "Solution 1");
       await hook.result.actions.removeSolution("sol1");
       await hook.result.actions.toggleSolutionVote("sol1");
-      await hook.result.actions.setStep6Proposal("Concept final");
+      await hook.result.actions.setProposal("Concept final");
     });
 
-    expect(defectuologieServiceMocks.setDefectuologieStep1Description).toHaveBeenCalled();
-    expect(defectuologieServiceMocks.createDefectuologieDefect).toHaveBeenCalled();
-    expect(defectuologieServiceMocks.updateDefectuologieDefect).toHaveBeenCalled();
-    expect(defectuologieServiceMocks.removeDefectuologieDefect).toHaveBeenCalled();
-    expect(defectuologieServiceMocks.toggleDefectuologieDefectVote).toHaveBeenCalled();
-    expect(defectuologieServiceMocks.createDefectuologieSolution).toHaveBeenCalled();
-    expect(defectuologieServiceMocks.updateDefectuologieSolution).toHaveBeenCalled();
-    expect(defectuologieServiceMocks.removeDefectuologieSolution).toHaveBeenCalled();
-    expect(defectuologieServiceMocks.toggleDefectuologieSolutionVote).toHaveBeenCalled();
-    expect(defectuologieServiceMocks.setDefectuologieStep6Proposal).toHaveBeenCalled();
+    expect(defectuologieServiceMocks.setDescription).toHaveBeenCalled();
+    expect(defectuologieServiceMocks.createDefect).toHaveBeenCalled();
+    expect(defectuologieServiceMocks.updateDefect).toHaveBeenCalled();
+    expect(defectuologieServiceMocks.removeDefect).toHaveBeenCalled();
+    expect(defectuologieServiceMocks.toggleDefectVote).toHaveBeenCalled();
+    expect(defectuologieServiceMocks.createSolution).toHaveBeenCalled();
+    expect(defectuologieServiceMocks.updateSolution).toHaveBeenCalled();
+    expect(defectuologieServiceMocks.removeSolution).toHaveBeenCalled();
+    expect(defectuologieServiceMocks.toggleSolutionVote).toHaveBeenCalled();
+    expect(defectuologieServiceMocks.setProposal).toHaveBeenCalled();
 
     await hook.unmount();
   });
 
   it("surfaces sync error from subscription", async () => {
-    defectuologieServiceMocks.subscribeDefectuologieSession.mockImplementation(
+    defectuologieServiceMocks.subscribeSession.mockImplementation(
       (_sessionId, _onData, onError) => {
         onError(new Error("sync failed"));
         return () => {};

@@ -3,34 +3,17 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import Step1 from "../../../../src/pages/workshops/paper-brain/steps/Step1.jsx";
 import Step2 from "../../../../src/pages/workshops/paper-brain/steps/Step2.jsx";
 import Step3 from "../../../../src/pages/workshops/paper-brain/steps/Step3.jsx";
 import Step4 from "../../../../src/pages/workshops/paper-brain/steps/Step4.jsx";
 import Step5 from "../../../../src/pages/workshops/paper-brain/steps/Step5.jsx";
 
 describe("paper-brain steps", () => {
-  it("renders step 1 and updates description", async () => {
-    const user = userEvent.setup();
-    const setStep1Description = vi.fn();
-
-    render(
-      <Step1
-        sessionTitle="PB"
-        step={{ label: "S1", description: ["desc"] }}
-        collaboration={{ step1Description: "", actions: { setStep1Description } }}
-      />
-    );
-
-    await user.type(screen.getByPlaceholderText(/écrivez ici/i), "Défi");
-    expect(setStep1Description).toHaveBeenCalled();
-  });
-
   it("renders step2..step5 in smoke mode", async () => {
     const addNote = vi.fn(async () => "n1");
 
     const shared = {
-      step1Description: "Défi",
+      description: "Défi",
       participant: { id: "p1" },
       notes: [{ id: "n1", text: "Idea", authorId: "p2", position: { x: 10, y: 10 } }],
       myNotes: [{ id: "n1", text: "Idea" }],

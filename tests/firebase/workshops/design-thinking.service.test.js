@@ -62,23 +62,23 @@ describe("firebase/workshops/design-thinking.service", () => {
     const mod = await import("../../../src/firebase/workshops/design-thinking.service.js");
 
     const cb = vi.fn();
-    mod.subscribeDesignThinkingSession("s1", cb);
+    mod.subscribeSession("s1", cb);
     expect(cb).toHaveBeenCalled();
 
-    await mod.upsertDesignThinkingParticipant("s1", { id: "p1", name: "Ada" });
+    await mod.upsertParticipant("s1", { id: "p1", name: "Ada" });
     expect(runTransaction).toHaveBeenCalled();
   });
 
   it("sets challenge/problem/conclusion fields", async () => {
     const mod = await import("../../../src/firebase/workshops/design-thinking.service.js");
 
-    await mod.setDesignThinkingStep1Description("s1", "p1", "Challenge", {
+    await mod.setDescription("s1", "p1", "Challenge", {
       expectedPreviousDescription: "",
     });
-    await mod.setDesignThinkingProblemStatement("s1", "p1", "Problem", {
+    await mod.setProblemStatement("s1", "p1", "Problem", {
       expectedPreviousStatement: "",
     });
-    await mod.setDesignThinkingConclusion("s1", "p1", "Conclusion", {
+    await mod.setConclusion("s1", "p1", "Conclusion", {
       expectedPreviousConclusion: "",
     });
 
@@ -90,17 +90,17 @@ describe("firebase/workshops/design-thinking.service", () => {
 
     push.mockReturnValueOnce({ key: "s_new" });
     await expect(
-      mod.createDesignThinkingSharedNote("s1", { authorId: "p1", text: "Observation" })
+      mod.createSharedNote("s1", { authorId: "p1", text: "Observation" })
     ).resolves.toBe("s_new");
 
-    await mod.updateDesignThinkingSharedNote(
+    await mod.updateSharedNote(
       "s1",
       "s_new",
       { text: "Observation MAJ" },
       { expectedPreviousText: "Observation" }
     );
 
-    await mod.removeDesignThinkingSharedNote("s1", "s_new");
+    await mod.removeSharedNote("s1", "s_new");
 
     expect(set).toHaveBeenCalled();
     expect(runTransaction).toHaveBeenCalled();
@@ -112,24 +112,24 @@ describe("firebase/workshops/design-thinking.service", () => {
 
     push.mockReturnValueOnce({ key: "pf_new" });
     await expect(
-      mod.createDesignThinkingPrototypeFeedbackNote("s1", {
+      mod.createPrototypeFeedbackNote("s1", {
         authorId: "p1",
         columnId: "works",
         text: "Feedback",
       })
     ).resolves.toBe("pf_new");
 
-    await mod.updateDesignThinkingPrototypeFeedbackNote(
+    await mod.updatePrototypeFeedbackNote(
       "s1",
       "pf_new",
       { text: "Feedback MAJ", columnId: "problems" },
       { expectedPreviousText: "Feedback" }
     );
 
-    await mod.removeDesignThinkingPrototypeFeedbackNote("s1", "pf_new");
+    await mod.removePrototypeFeedbackNote("s1", "pf_new");
 
     await expect(
-      mod.createDesignThinkingPrototypeFeedbackNote("s1", {
+      mod.createPrototypeFeedbackNote("s1", {
         authorId: "p1",
         columnId: "invalid",
         text: "x",
@@ -137,7 +137,7 @@ describe("firebase/workshops/design-thinking.service", () => {
     ).rejects.toThrow(/columnId invalide/i);
 
     await expect(
-      mod.updateDesignThinkingPrototypeFeedbackNote("s1", "pf_new", {
+      mod.updatePrototypeFeedbackNote("s1", "pf_new", {
         columnId: "invalid",
       })
     ).rejects.toThrow(/columnId invalide/i);
@@ -152,34 +152,34 @@ describe("firebase/workshops/design-thinking.service", () => {
 
     push.mockReturnValueOnce({ key: "n_new" });
     await expect(
-      mod.createDesignThinkingIdeationNote("s1", {
+      mod.createIdeationNote("s1", {
         authorId: "p1",
         text: "Idée",
         position: { x: 10, y: 20 },
       })
     ).resolves.toBe("n_new");
 
-    await mod.updateDesignThinkingIdeationNote("s1", "n_new", {
+    await mod.updateIdeationNote("s1", "n_new", {
       text: "Idée MAJ",
       position: { x: 30, y: 40 },
     });
 
-    await mod.setDesignThinkingIdeationNotePosition("s1", "n_new", { x: 50, y: 60 });
+    await mod.setIdeationNotePosition("s1", "n_new", { x: 50, y: 60 });
 
     push.mockReturnValueOnce({ key: "c_new" });
     await expect(
-      mod.addDesignThinkingIdeationComment("s1", "n_new", {
+      mod.addIdeationComment("s1", "n_new", {
         authorId: "p2",
         text: "Comment",
       })
     ).resolves.toBe("c_new");
 
-    await mod.updateDesignThinkingIdeationComment("s1", "n_new", "c_new", {
+    await mod.updateIdeationComment("s1", "n_new", "c_new", {
       text: "Comment MAJ",
     });
 
-    await mod.removeDesignThinkingIdeationComment("s1", "n_new", "c_new");
-    await mod.removeDesignThinkingIdeationNote("s1", "n_new");
+    await mod.removeIdeationComment("s1", "n_new", "c_new");
+    await mod.removeIdeationNote("s1", "n_new");
 
     expect(set).toHaveBeenCalled();
     expect(update).toHaveBeenCalled();
@@ -189,7 +189,7 @@ describe("firebase/workshops/design-thinking.service", () => {
   it("toggles ideation votes and returns transaction payload", async () => {
     const mod = await import("../../../src/firebase/workshops/design-thinking.service.js");
 
-    const result = await mod.toggleDesignThinkingIdeationVote("s1", "p1", "n1", {
+    const result = await mod.toggleIdeationVote("s1", "p1", "n1", {
       maxVotes: 3,
       validNoteIds: new Set(["n1", "n_existing"]),
     });

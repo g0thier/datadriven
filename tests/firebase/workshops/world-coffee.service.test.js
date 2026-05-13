@@ -63,14 +63,14 @@ describe("firebase/workshops/world-coffee.service", () => {
     const mod = await import("../../../src/firebase/workshops/world-coffee.service.js");
 
     const cb = vi.fn();
-    mod.subscribeWorldCoffeeSession("s1", cb);
+    mod.subscribeSession("s1", cb);
     expect(cb).toHaveBeenCalled();
 
     const emptyCb = vi.fn();
-    mod.subscribeWorldCoffeeSession("", emptyCb);
+    mod.subscribeSession("", emptyCb);
     expect(emptyCb).toHaveBeenCalledWith(null);
 
-    await mod.upsertWorldCoffeeParticipant("s1", {
+    await mod.upsertParticipant("s1", {
       id: "u1",
       name: "Ada",
       email: "ada@example.com",
@@ -99,7 +99,7 @@ describe("firebase/workshops/world-coffee.service", () => {
       participantToSubgroup: { u1: "group-1" },
     });
 
-    await mod.initializeWorldCoffeeSubgroups("s1", [
+    await mod.initializeSubgroups("s1", [
       { id: "u1", name: "Ada" },
       { id: "u2", name: "Alan" },
     ]);
@@ -126,7 +126,7 @@ describe("firebase/workshops/world-coffee.service", () => {
       participantToSubgroup: {},
     });
 
-    await mod.initializeWorldCoffeeSubgroups("s1", [
+    await mod.initializeSubgroups("s1", [
       { id: "u1", firstName: "Ada", lastName: "Lovelace" },
       { id: "u2", firstName: "Alan", lastName: "Turing" },
       { id: "u3", firstName: "Grace", lastName: "Hopper" },
@@ -175,7 +175,7 @@ describe("firebase/workshops/world-coffee.service", () => {
       },
     });
 
-    await mod.applyWorldCoffeeRound2Rotation("s1");
+    await mod.applyRound2Rotation("s1");
     const rotated = deepClone(transactionStateByPath.get(ROOT_PATH));
 
     expect(rotated.participantToSubgroup).toMatchObject({
@@ -188,7 +188,7 @@ describe("firebase/workshops/world-coffee.service", () => {
     });
     expect(rotated.round2RotationAppliedAt).toBeTruthy();
 
-    await mod.applyWorldCoffeeRound2Rotation("s1");
+    await mod.applyRound2Rotation("s1");
     const second = transactionStateByPath.get(ROOT_PATH);
     expect(second).toEqual(rotated);
   });
@@ -224,7 +224,7 @@ describe("firebase/workshops/world-coffee.service", () => {
       },
     });
 
-    await mod.applyWorldCoffeeRound3Rotation("s1");
+    await mod.applyRound3Rotation("s1");
     const rotated = deepClone(transactionStateByPath.get(ROOT_PATH));
 
     expect(rotated.participantToSubgroup).toMatchObject({
@@ -237,7 +237,7 @@ describe("firebase/workshops/world-coffee.service", () => {
     });
     expect(rotated.round3RotationAppliedAt).toBeTruthy();
 
-    await mod.applyWorldCoffeeRound3Rotation("s1");
+    await mod.applyRound3Rotation("s1");
     const second = transactionStateByPath.get(ROOT_PATH);
     expect(second).toEqual(rotated);
   });
@@ -280,7 +280,7 @@ describe("firebase/workshops/world-coffee.service", () => {
       },
     });
 
-    await mod.applyWorldCoffeeReturnRotation("s1");
+    await mod.applyReturnRotation("s1");
     const rotated = deepClone(transactionStateByPath.get(ROOT_PATH));
 
     expect(rotated.participantToSubgroup).toMatchObject({
@@ -295,7 +295,7 @@ describe("firebase/workshops/world-coffee.service", () => {
     });
     expect(rotated.returnRotationAppliedAt).toBeTruthy();
 
-    await mod.applyWorldCoffeeReturnRotation("s1");
+    await mod.applyReturnRotation("s1");
     const second = transactionStateByPath.get(ROOT_PATH);
     expect(second).toEqual(rotated);
   });
@@ -305,10 +305,10 @@ describe("firebase/workshops/world-coffee.service", () => {
 
     push.mockReturnValueOnce({ key: "d_new" });
     await expect(
-      mod.createWorldCoffeeDescription("s1", { authorId: "u1", text: "Nouveau sujet" })
+      mod.createDescription("s1", { authorId: "u1", text: "Nouveau sujet" })
     ).resolves.toBe("d_new");
 
-    await expect(mod.createWorldCoffeeDescription("s1", { text: "x" })).rejects.toThrow(
+    await expect(mod.createDescription("s1", { text: "x" })).rejects.toThrow(
       /authorId manquant/i
     );
 
@@ -320,7 +320,7 @@ describe("firebase/workshops/world-coffee.service", () => {
       updatedAt: "2026-01-01T10:00:00.000Z",
     });
 
-    await mod.updateWorldCoffeeDescription(
+    await mod.updateDescription(
       "s1",
       "d1",
       { text: "Texte maj" },
@@ -328,7 +328,7 @@ describe("firebase/workshops/world-coffee.service", () => {
     );
     expect(transactionStateByPath.get(descriptionPath).text).toBe("Texte maj");
 
-    await mod.updateWorldCoffeeDescription(
+    await mod.updateDescription(
       "s1",
       "d1",
       { text: "Ne doit pas passer" },
@@ -336,13 +336,13 @@ describe("firebase/workshops/world-coffee.service", () => {
     );
     expect(transactionStateByPath.get(descriptionPath).text).toBe("Texte maj");
 
-    await mod.updateWorldCoffeeDescription("s1", "d1", {});
+    await mod.updateDescription("s1", "d1", {});
     expect(update).toHaveBeenCalledWith(
       `${ROOT_PATH}/descriptions/d1`,
       expect.objectContaining({ updatedAt: expect.any(String) })
     );
 
-    await mod.updateWorldCoffeeSubgroupSynthesis(
+    await mod.updateSubgroupSynthesis(
       "s1",
       "group-1",
       { text: "Synthese 1", authorId: "u1" },
@@ -367,12 +367,12 @@ describe("firebase/workshops/world-coffee.service", () => {
       },
     });
 
-    await mod.setWorldCoffeeFacilitator("s1", "d2", "u1");
+    await mod.setFacilitator("s1", "d2", "u1");
     expect(transactionStateByPath.get(ROOT_PATH).facilitatorByDescriptionId).toEqual({
       d2: "u1",
     });
 
-    await mod.clearWorldCoffeeFacilitator("s1", "d2");
+    await mod.clearFacilitator("s1", "d2");
     expect(transactionStateByPath.get(ROOT_PATH).facilitatorByDescriptionId).toEqual({});
   });
 
@@ -381,7 +381,7 @@ describe("firebase/workshops/world-coffee.service", () => {
 
     push.mockReturnValueOnce({ key: "i_new" });
     await expect(
-      mod.createWorldCoffeeIdea("s1", "group-1", { authorId: "u1", text: "Idee" })
+      mod.createIdea("s1", "group-1", { authorId: "u1", text: "Idee" })
     ).resolves.toBe("i_new");
 
     expect(set).toHaveBeenCalledWith(
@@ -393,7 +393,7 @@ describe("firebase/workshops/world-coffee.service", () => {
       })
     );
 
-    await expect(mod.createWorldCoffeeIdea("s1", "group-1", { text: "x" })).rejects.toThrow(
+    await expect(mod.createIdea("s1", "group-1", { text: "x" })).rejects.toThrow(
       /authorId manquant/i
     );
 
@@ -404,7 +404,7 @@ describe("firebase/workshops/world-coffee.service", () => {
       authorId: "u1",
     });
 
-    await mod.updateWorldCoffeeIdea(
+    await mod.updateIdea(
       "s1",
       "group-1",
       "i_new",
@@ -413,13 +413,13 @@ describe("firebase/workshops/world-coffee.service", () => {
     );
     expect(transactionStateByPath.get(ideaPath).text).toBe("Idee maj");
 
-    await mod.updateWorldCoffeeIdea("s1", "group-1", "i_new", {});
+    await mod.updateIdea("s1", "group-1", "i_new", {});
     expect(update).toHaveBeenCalledWith(
       `${ROOT_PATH}/ideasBySubgroup/group-1/i_new`,
       expect.objectContaining({ updatedAt: expect.any(String) })
     );
 
-    await mod.removeWorldCoffeeIdea("s1", "group-1", "i_new");
+    await mod.removeIdea("s1", "group-1", "i_new");
     expect(update).toHaveBeenCalledWith("root", {
       [`${ROOT_PATH}/ideasBySubgroup/group-1/i_new`]: null,
       [`${ROOT_PATH}/commentsByIdea/i_new`]: null,
@@ -428,7 +428,7 @@ describe("firebase/workshops/world-coffee.service", () => {
 
     push.mockReturnValueOnce({ key: "c_new" });
     await expect(
-      mod.addWorldCoffeeIdeaComment("s1", "i_new", { authorId: "u2", text: "Commentaire" })
+      mod.addIdeaComment("s1", "i_new", { authorId: "u2", text: "Commentaire" })
     ).resolves.toBe("c_new");
     expect(set).toHaveBeenCalledWith(
       expect.anything(),
@@ -439,17 +439,17 @@ describe("firebase/workshops/world-coffee.service", () => {
       })
     );
 
-    await expect(mod.addWorldCoffeeIdeaComment("s1", "i_new", { text: "x" })).rejects.toThrow(
+    await expect(mod.addIdeaComment("s1", "i_new", { text: "x" })).rejects.toThrow(
       /authorId manquant/i
     );
 
-    await mod.updateWorldCoffeeIdeaComment("s1", "i_new", "c_new", { text: "Commentaire maj" });
+    await mod.updateIdeaComment("s1", "i_new", "c_new", { text: "Commentaire maj" });
     expect(update).toHaveBeenCalledWith(
       `${ROOT_PATH}/commentsByIdea/i_new/c_new`,
       expect.objectContaining({ text: "Commentaire maj", updatedAt: expect.any(String) })
     );
 
-    await mod.removeWorldCoffeeIdeaComment("s1", "i_new", "c_new");
+    await mod.removeIdeaComment("s1", "i_new", "c_new");
     expect(update).toHaveBeenCalledWith("root", {
       [`${ROOT_PATH}/commentsByIdea/i_new/c_new`]: null,
       [`${ROOT_PATH}/repliesByComment/c_new`]: null,
@@ -457,7 +457,7 @@ describe("firebase/workshops/world-coffee.service", () => {
 
     push.mockReturnValueOnce({ key: "r_new" });
     await expect(
-      mod.addWorldCoffeeCommentReply("s1", "c_new", { authorId: "u3", text: "Reponse" })
+      mod.addCommentReply("s1", "c_new", { authorId: "u3", text: "Reponse" })
     ).resolves.toBe("r_new");
     expect(set).toHaveBeenCalledWith(
       expect.anything(),
@@ -468,22 +468,22 @@ describe("firebase/workshops/world-coffee.service", () => {
       })
     );
 
-    await expect(mod.addWorldCoffeeCommentReply("s1", "c_new", { text: "x" })).rejects.toThrow(
+    await expect(mod.addCommentReply("s1", "c_new", { text: "x" })).rejects.toThrow(
       /authorId manquant/i
     );
 
-    await mod.updateWorldCoffeeCommentReply("s1", "c_new", "r_new", { text: "Reponse maj" });
+    await mod.updateCommentReply("s1", "c_new", "r_new", { text: "Reponse maj" });
     expect(update).toHaveBeenCalledWith(
       `${ROOT_PATH}/repliesByComment/c_new/r_new`,
       expect.objectContaining({ text: "Reponse maj", updatedAt: expect.any(String) })
     );
 
-    await mod.removeWorldCoffeeCommentReply("s1", "c_new", "r_new");
+    await mod.removeCommentReply("s1", "c_new", "r_new");
     expect(update).toHaveBeenCalledWith("root", {
       [`${ROOT_PATH}/repliesByComment/c_new/r_new`]: null,
     });
 
-    await mod.removeWorldCoffeeDescription("s1", "d1");
+    await mod.removeDescription("s1", "d1");
     expect(update).toHaveBeenCalledWith("root", {
       [`${ROOT_PATH}/descriptions/d1`]: null,
       [`${ROOT_PATH}/facilitatorByDescriptionId/d1`]: null,

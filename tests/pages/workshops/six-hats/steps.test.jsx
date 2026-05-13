@@ -3,7 +3,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import Step1 from "../../../../src/pages/workshops/six-hats/steps/Step1.jsx";
 import Step2 from "../../../../src/pages/workshops/six-hats/steps/Step2.jsx";
 import Step3 from "../../../../src/pages/workshops/six-hats/steps/Step3.jsx";
 import Step4 from "../../../../src/pages/workshops/six-hats/steps/Step4.jsx";
@@ -12,22 +11,6 @@ import Step6 from "../../../../src/pages/workshops/six-hats/steps/Step6.jsx";
 import Step7 from "../../../../src/pages/workshops/six-hats/steps/Step7.jsx";
 
 describe("six-hats steps", () => {
-  it("renders step 1 and updates description", async () => {
-    const user = userEvent.setup();
-    const setStep1Description = vi.fn();
-
-    render(
-      <Step1
-        sessionTitle="Six Hats"
-        step={{ label: "S1", description: ["desc"] }}
-        collaboration={{ step1Description: "", actions: { setStep1Description } }}
-      />
-    );
-
-    await user.type(screen.getByPlaceholderText(/écrivez ici/i), "Sujet");
-    expect(setStep1Description).toHaveBeenCalled();
-  });
-
   it("updates and adds white hat contributions in step 2", async () => {
     const user = userEvent.setup();
     const addHatItem = vi.fn(async () => "w2");
@@ -39,7 +22,7 @@ describe("six-hats steps", () => {
         step={{ label: "S2", description: [] }}
         sessionTitle="Six Hats"
         collaboration={{
-          step1Description: "Sujet",
+          description: "Sujet",
           participant: { id: "p1" },
           itemsByHat: {
             white: [{ id: "w1", text: "Fait initial", authorId: "p1" }],
@@ -68,7 +51,7 @@ describe("six-hats steps", () => {
     const setBlueConclusion = vi.fn();
 
     const shared = {
-      step1Description: "Sujet atelier",
+      description: "Sujet atelier",
       participant: { id: "p1" },
       blueConclusion: "",
       itemsByHat: {

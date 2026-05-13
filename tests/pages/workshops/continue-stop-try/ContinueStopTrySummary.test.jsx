@@ -9,7 +9,7 @@ describe("ContinueStopTrySummary", () => {
       <ContinueStopTrySummary
         sessionTitle="Session CST"
         collaboration={{
-          step1Description: "Ameliorer la collaboration d'equipe",
+          description: "Ameliorer la collaboration d'equipe",
           participant: { id: "p1" },
           syncError: "Sync issue",
           notes: [
@@ -30,7 +30,7 @@ describe("ContinueStopTrySummary", () => {
             n1: new Set(["p1", "p2"]),
             n2: new Set(["p3"]),
           },
-          step5PlaceholdersByColumn: {
+          placeholdersByColumn: {
             continue: "Maintenir le rituel quotidien",
             stop: "Limiter les reunions a 30 minutes",
             try: "",

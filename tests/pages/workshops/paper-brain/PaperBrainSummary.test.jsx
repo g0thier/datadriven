@@ -9,7 +9,7 @@ describe("PaperBrainSummary", () => {
       <PaperBrainSummary
         sessionTitle="Session PB"
         collaboration={{
-          step1Description: "Défi",
+          description: "Défi",
           participant: { id: "p1" },
           syncError: "Sync issue",
           notes: [
