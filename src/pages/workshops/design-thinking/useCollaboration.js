@@ -29,10 +29,25 @@ import {
   updateDesignThinkingSharedNote,
   upsertDesignThinkingParticipant,
 } from "../../../firebase/workshops/design-thinking.service";
+import {
+  buildGridPosition,
+  EMPTY_ARRAY,
+  EMPTY_OBJECT,
+  makeParticipantFallbackLabel,
+  normalizePosition,
+  resolveGuestName,
+  resolveParticipantIdentity,
+  sortByCreatedAt,
+} from "../collaboration.shared.js";
 
 const MAX_STICKERS = 3;
-const EMPTY_ARRAY = Object.freeze([]);
-const EMPTY_OBJECT = Object.freeze({});
+const GRID_POSITION_CONFIG = Object.freeze({
+  columns: 5,
+  startX: 40,
+  startY: 40,
+  gapX: 290,
+  gapY: 220,
+});
 const PROTOTYPE_FEEDBACK_COLUMNS = Object.freeze([
   {
     id: "works",
@@ -60,90 +75,9 @@ const PROTOTYPE_FEEDBACK_COLUMN_IDS_SET = new Set(
   PROTOTYPE_FEEDBACK_COLUMNS.map((column) => column.id)
 );
 
-const sortByCreatedAt = (a, b) => {
-  const createdA = a?.createdAt || "";
-  const createdB = b?.createdAt || "";
-
-  if (createdA !== createdB) {
-    return createdA.localeCompare(createdB);
-  }
-
-  return String(a?.id || "").localeCompare(String(b?.id || ""));
-};
-
-const buildGridPosition = (index = 0) => {
-  const col = index % 5;
-  const row = Math.floor(index / 5);
-
-  return {
-    x: 40 + col * 290,
-    y: 40 + row * 220,
-  };
-};
-
-const normalizePosition = (position = {}, fallback = buildGridPosition(0)) => {
-  const x = Number(position?.x);
-  const y = Number(position?.y);
-
-  return {
-    x: Number.isFinite(x) ? x : fallback.x,
-    y: Number.isFinite(y) ? y : fallback.y,
-  };
-};
-
 const normalizePrototypeFeedbackColumnId = (value) => {
   const normalized = String(value || "").trim().toLowerCase();
   return PROTOTYPE_FEEDBACK_COLUMN_IDS_SET.has(normalized) ? normalized : "";
-};
-
-const resolveGuestName = (guest = {}) => {
-  const firstName = String(guest?.firstName || "").trim();
-  const lastName = String(guest?.lastName || "").trim();
-  const fullName = `${firstName} ${lastName}`.trim();
-
-  return (
-    fullName ||
-    String(guest?.name || "").trim() ||
-    String(guest?.label || "").trim() ||
-    String(guest?.email || "").trim() ||
-    ""
-  );
-};
-
-const makeParticipantFallbackLabel = (participantId) => {
-  const id = String(participantId || "");
-  const suffix = id.slice(-4).toUpperCase();
-  return suffix ? `Participant ${suffix}` : "Participant";
-};
-
-const resolveParticipantIdentity = ({ sessionGuests, authUser }) => {
-  const authUid = String(authUser?.uid || "").trim();
-  if (!authUid) return null;
-
-  const authEmail = String(authUser?.email || "").trim();
-  const authDisplayName = String(authUser?.displayName || "").trim();
-
-  const matchingGuest = sessionGuests.find((guest) => {
-    if (!guest) return false;
-
-    const guestId = String(guest?.id || "").trim();
-    const guestEmail = String(guest?.email || "").trim().toLowerCase();
-
-    if (guestId && guestId === authUid) return true;
-    if (authEmail && guestEmail && guestEmail === authEmail.toLowerCase()) return true;
-    return false;
-  });
-
-  return {
-    id: authUid,
-    name:
-      resolveGuestName(matchingGuest) ||
-      authDisplayName ||
-      authEmail ||
-      makeParticipantFallbackLabel(authUid),
-    email: authEmail,
-    isAuthenticated: true,
-  };
 };
 
 /**
@@ -377,7 +311,10 @@ export function useCollaboration({ sessionId, session, workshopId }) {
         id: String(data?.id || noteId),
         authorId: String(data?.authorId || ""),
         text: data?.text ?? "",
-        position: normalizePosition(data?.position, buildGridPosition(index)),
+        position: normalizePosition(
+          data?.position,
+          buildGridPosition(index, GRID_POSITION_CONFIG)
+        ),
         createdAt: String(data?.createdAt || ""),
         updatedAt: String(data?.updatedAt || ""),
       }))
@@ -834,7 +771,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     async (options = {}) => {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return null;
 
-      const fallbackPosition = buildGridPosition(notes.length);
+      const fallbackPosition = buildGridPosition(notes.length, GRID_POSITION_CONFIG);
       const position = normalizePosition(options?.position, fallbackPosition);
       const text = options?.text ?? "";
 

@@ -16,71 +16,15 @@ import {
   updateMindMappingNote,
   upsertMindMappingParticipant,
 } from "../../../firebase/workshops/mind-mapping.service";
-
-const EMPTY_OBJECT = Object.freeze({});
-const EMPTY_ARRAY = Object.freeze([]);
+import {
+  EMPTY_ARRAY,
+  EMPTY_OBJECT,
+  makeParticipantFallbackLabel,
+  resolveGuestName,
+  resolveParticipantIdentity,
+  sortByCreatedAt,
+} from "../collaboration.shared.js";
 const MAX_STICKERS = 3;
-
-const sortByCreatedAt = (a, b) => {
-  const createdA = a?.createdAt || "";
-  const createdB = b?.createdAt || "";
-
-  if (createdA !== createdB) {
-    return createdA.localeCompare(createdB);
-  }
-
-  return String(a?.id || "").localeCompare(String(b?.id || ""));
-};
-
-const resolveGuestName = (guest = {}) => {
-  const firstName = String(guest?.firstName || "").trim();
-  const lastName = String(guest?.lastName || "").trim();
-  const fullName = `${firstName} ${lastName}`.trim();
-
-  return (
-    fullName ||
-    String(guest?.name || "").trim() ||
-    String(guest?.label || "").trim() ||
-    String(guest?.email || "").trim() ||
-    ""
-  );
-};
-
-const makeParticipantFallbackLabel = (participantId) => {
-  const id = String(participantId || "");
-  const suffix = id.slice(-4).toUpperCase();
-  return suffix ? `Participant ${suffix}` : "Participant";
-};
-
-const resolveParticipantIdentity = ({ sessionGuests, authUser }) => {
-  const authUid = String(authUser?.uid || "").trim();
-  if (!authUid) return null;
-
-  const authEmail = String(authUser?.email || "").trim();
-  const authDisplayName = String(authUser?.displayName || "").trim();
-
-  const matchingGuest = sessionGuests.find((guest) => {
-    if (!guest) return false;
-
-    const guestId = String(guest?.id || "").trim();
-    const guestEmail = String(guest?.email || "").trim().toLowerCase();
-
-    if (guestId && guestId === authUid) return true;
-    if (authEmail && guestEmail && guestEmail === authEmail.toLowerCase()) return true;
-    return false;
-  });
-
-  return {
-    id: authUid,
-    name:
-      resolveGuestName(matchingGuest) ||
-      authDisplayName ||
-      authEmail ||
-      makeParticipantFallbackLabel(authUid),
-    email: authEmail,
-    isAuthenticated: true,
-  };
-};
 
 export function useCollaboration({ sessionId, session, workshopId }) {
   const isEnabled = Boolean(sessionId) && workshopId === "mind-mapping";

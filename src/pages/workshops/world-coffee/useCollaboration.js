@@ -31,45 +31,16 @@ import {
   updateWorldCoffeeSubgroupSynthesis,
   upsertWorldCoffeeParticipant,
 } from "../../../firebase/workshops/world-coffee.service";
-
-const EMPTY_OBJECT = Object.freeze({});
-const EMPTY_ARRAY = Object.freeze([]);
-
-const sortByCreatedAt = (a, b) => {
-  const createdA = a?.createdAt || "";
-  const createdB = b?.createdAt || "";
-
-  if (createdA !== createdB) {
-    return createdA.localeCompare(createdB);
-  }
-
-  return String(a?.id || "").localeCompare(String(b?.id || ""));
-};
-
-const resolveGuestName = (guest = {}) => {
-  const firstName = String(guest?.firstName || "").trim();
-  const lastName = String(guest?.lastName || "").trim();
-  const fullName = `${firstName} ${lastName}`.trim();
-
-  return (
-    fullName ||
-    String(guest?.name || "").trim() ||
-    String(guest?.label || "").trim() ||
-    String(guest?.email || "").trim() ||
-    ""
-  );
-};
-
-const makeParticipantFallbackLabel = (participantId) => {
-  const id = String(participantId || "");
-  const suffix = id.slice(-4).toUpperCase();
-  return suffix ? `Participant ${suffix}` : "Participant";
-};
-
-const parseGroupIndex = (groupId) => {
-  const match = String(groupId || "").match(/group-(\d+)/);
-  return match ? Number(match[1]) : 0;
-};
+import {
+  EMPTY_ARRAY,
+  EMPTY_OBJECT,
+  makeParticipantFallbackLabel,
+  normalizeParticipantToSubgroup,
+  parseGroupIndex,
+  resolveGuestName,
+  resolveParticipantIdentity,
+  sortByCreatedAt,
+} from "../collaboration.shared.js";
 
 const IDEA_REPLY_KEY_PREFIX = "idea-";
 
@@ -123,19 +94,6 @@ const normalizeSubgroups = (value = {}) => {
 
       return String(a.label || "").localeCompare(String(b.label || ""), "fr");
     });
-};
-
-const normalizeParticipantToSubgroup = (value = {}) => {
-  if (!value || typeof value !== "object") return {};
-
-  return Object.entries(value).reduce((accumulator, [participantId, subgroupId]) => {
-    const cleanedParticipantId = String(participantId || "").trim();
-    const cleanedSubgroupId = String(subgroupId || "").trim();
-    if (!cleanedParticipantId || !cleanedSubgroupId) return accumulator;
-
-    accumulator[cleanedParticipantId] = cleanedSubgroupId;
-    return accumulator;
-  }, {});
 };
 
 const normalizeIdeasBySubgroup = (value = {}) => {
@@ -254,35 +212,6 @@ const normalizeSynthesisBySubgroup = (value = {}) => {
     };
     return accumulator;
   }, {});
-};
-
-const resolveParticipantIdentity = ({ sessionGuests, authUser }) => {
-  const authUid = String(authUser?.uid || "").trim();
-  if (!authUid) return null;
-
-  const authEmail = String(authUser?.email || "").trim();
-  const authDisplayName = String(authUser?.displayName || "").trim();
-
-  const matchingGuest = sessionGuests.find((guest) => {
-    if (!guest) return false;
-    const guestId = String(guest.id || "").trim();
-    const guestEmail = String(guest.email || "").trim().toLowerCase();
-
-    if (guestId && guestId === authUid) return true;
-    if (authEmail && guestEmail && guestEmail === authEmail.toLowerCase()) return true;
-    return false;
-  });
-
-  return {
-    id: authUid,
-    name:
-      resolveGuestName(matchingGuest) ||
-      authDisplayName ||
-      authEmail ||
-      makeParticipantFallbackLabel(authUid),
-    email: authEmail,
-    isAuthenticated: true,
-  };
 };
 
 /**
