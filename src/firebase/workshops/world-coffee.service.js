@@ -1,5 +1,6 @@
-import { onValue, push, ref, runTransaction, set, update } from "firebase/database";
+import { push, ref, runTransaction, set, update } from "firebase/database";
 import { database } from "../index";
+import { createSubscribeSession, createUpsertParticipant, nowIso } from "./workshop-service.shared";
 
 /**
  * @module firebase/workshops/world-coffee.service
@@ -8,12 +9,6 @@ import { database } from "../index";
  * @version 1.0.0
  * @license proprietary
  */
-
-/**
- * Returns current time in ISO format.
- * @returns {string} ISO datetime.
- */
-const nowIso = () => new Date().toISOString();
 
 /**
  * Builds the world-cafe root path for a session.
@@ -174,25 +169,7 @@ const sortGroupIds = (groupIds = []) => {
  * @param {Function} [onError=() => {}] - Error callback.
  * @returns {Function} Unsubscribe callback.
  */
-export const subscribeSession = (
-  sessionId,
-  callback,
-  onError = () => {}
-) => {
-  if (!sessionId) {
-    callback(null);
-    return () => {};
-  }
-
-  const worldCoffeeRef = ref(database, toWorldCoffeePath(sessionId));
-  return onValue(
-    worldCoffeeRef,
-    (snapshot) => {
-      callback(snapshot.exists() ? snapshot.val() : null);
-    },
-    onError
-  );
-};
+export const subscribeSession = createSubscribeSession(toWorldCoffeePath);
 
 /**
  * Initializes or reconciles World Cafe subgroups from invited guests and facilitator mapping.
@@ -623,33 +600,7 @@ export const applyReturnRotation = async (sessionId) => {
  * @param {{id:string, name?:string, email?:string, isAuthenticated?:boolean}} [participant={}] - Participant payload.
  * @returns {Promise<void>} Upsert completion.
  */
-export const upsertParticipant = async (
-  sessionId,
-  participant = {}
-) => {
-  if (!sessionId || !participant?.id) return;
-
-  const participantRef = ref(
-    database,
-    `${toWorldCoffeePath(sessionId)}/participants/${participant.id}`
-  );
-  const now = nowIso();
-
-  await runTransaction(participantRef, (current) => {
-    const currentData = current && typeof current === "object" ? current : {};
-
-    return {
-      id: participant.id,
-      name: participant.name || currentData.name || "",
-      email: participant.email || currentData.email || "",
-      isAuthenticated: Boolean(
-        participant.isAuthenticated ?? currentData.isAuthenticated
-      ),
-      joinedAt: currentData.joinedAt || now,
-      lastSeenAt: now,
-    };
-  });
-};
+export const upsertParticipant = createUpsertParticipant(toWorldCoffeePath);
 
 /**
  * Creates a World Cafe description line.

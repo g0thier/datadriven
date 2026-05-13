@@ -35,6 +35,7 @@ import {
   toById,
 } from "../collaboration.shared.js";
 import { useWorkshopCollaborationCore } from "../useWorkshopCollaborationCore.js";
+import { useWorkshopGuardedAction } from "../useWorkshopGuardedAction.js";
 import { useWorkshopParticipants } from "../useWorkshopParticipants.js";
 
 const MAX_STICKERS = 3;
@@ -155,6 +156,13 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   });
 
   const currentParticipantId = participant?.id || "";
+  const { runGuardedAction } = useWorkshopGuardedAction({
+    isEnabled,
+    sessionId,
+    participantReady,
+    participantId: currentParticipantId,
+    setSessionError,
+  });
   const description = rawDescription;
   const objective = rawObjective;
   const myBrakeNotes = useMemo(
@@ -176,255 +184,193 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
   const setDescription = useCallback(
     async (description, previousDescription = description) => {
-      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
-
-      try {
-        await setDescriptionService(sessionId, currentParticipantId, description, {
+      await runGuardedAction({
+        errorLog: "Impossible de mettre à jour la description:",
+        errorMessage: "La description n'a pas pu être enregistrée.",
+        execute: () =>
+          setDescriptionService(sessionId, currentParticipantId, description, {
           expectedPreviousDescription: previousDescription,
-        });
-      } catch (error) {
-        console.error("Impossible de mettre à jour la description:", error);
-        setSessionError("La description n'a pas pu être enregistrée.");
-      }
+          }),
+      });
     },
-    [
-      currentParticipantId,
-      isEnabled,
-      participantReady,
-      sessionId,
-      setSessionError
-    ]
+    [currentParticipantId, runGuardedAction, sessionId]
   );
 
   const setObjective = useCallback(
     async (objective, previousObjective = objective) => {
-      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
-
-      try {
-        await setObjectiveService(sessionId, currentParticipantId, objective, {
+      await runGuardedAction({
+        errorLog: "Impossible de mettre à jour l'objectif:",
+        errorMessage: "L'objectif n'a pas pu être enregistré.",
+        execute: () =>
+          setObjectiveService(sessionId, currentParticipantId, objective, {
           expectedPreviousObjective: previousObjective,
-        });
-      } catch (error) {
-        console.error("Impossible de mettre à jour l'objectif:", error);
-        setSessionError("L'objectif n'a pas pu être enregistré.");
-      }
+          }),
+      });
     },
-    [
-      currentParticipantId,
-      isEnabled,
-      participantReady,
-      sessionId,
-      setSessionError
-    ]
+    [currentParticipantId, runGuardedAction, sessionId]
   );
 
   const addBrakeNote = useCallback(
     async (options = {}) => {
-      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return null;
-
-      try {
-        return await createBrakeNote(sessionId, {
+      return runGuardedAction({
+        errorLog: "Impossible d'ajouter le frein:",
+        errorMessage: "Le frein n'a pas pu être ajouté.",
+        fallback: null,
+        execute: () =>
+          createBrakeNote(sessionId, {
           authorId: currentParticipantId,
           text: options?.text ?? "",
-        });
-      } catch (error) {
-        console.error("Impossible d'ajouter le frein:", error);
-        setSessionError("Le frein n'a pas pu être ajouté.");
-        return null;
-      }
+          }),
+      });
     },
-    [currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]
+    [currentParticipantId, runGuardedAction, sessionId]
   );
 
   const updateBrakeNoteText = useCallback(
     async (noteId, text) => {
-      if (!isEnabled || !sessionId || !participantReady || !noteId || !currentParticipantId) {
+      if (!noteId) {
         return;
       }
 
       const note = brakeNotesById[noteId];
       if (!note || note.authorId !== currentParticipantId) return;
 
-      try {
-        await updateBrakeNote(sessionId, noteId, { text });
-      } catch (error) {
-        console.error("Impossible de mettre à jour le frein:", error);
-        setSessionError("Le frein n'a pas pu être mis à jour.");
-      }
+      await runGuardedAction({
+        errorLog: "Impossible de mettre à jour le frein:",
+        errorMessage: "Le frein n'a pas pu être mis à jour.",
+        execute: () => updateBrakeNote(sessionId, noteId, { text }),
+      });
     },
-    [
-      brakeNotesById,
-      currentParticipantId,
-      isEnabled,
-      participantReady,
-      sessionId,
-      setSessionError,
-    ]
+    [brakeNotesById, currentParticipantId, runGuardedAction, sessionId]
   );
 
   const removeBrakeNote = useCallback(
     async (noteId) => {
-      if (!isEnabled || !sessionId || !participantReady || !noteId || !currentParticipantId) {
+      if (!noteId) {
         return;
       }
 
       const note = brakeNotesById[noteId];
       if (!note || note.authorId !== currentParticipantId) return;
 
-      try {
-        await removeBrakeNoteService(sessionId, noteId);
-      } catch (error) {
-        console.error("Impossible de supprimer le frein:", error);
-        setSessionError("Le frein n'a pas pu être supprimé.");
-      }
+      await runGuardedAction({
+        errorLog: "Impossible de supprimer le frein:",
+        errorMessage: "Le frein n'a pas pu être supprimé.",
+        execute: () => removeBrakeNoteService(sessionId, noteId),
+      });
     },
-    [
-      brakeNotesById,
-      currentParticipantId,
-      isEnabled,
-      participantReady,
-      sessionId,
-      setSessionError,
-    ]
+    [brakeNotesById, currentParticipantId, runGuardedAction, sessionId]
   );
 
   const setBrakeNotePosition = useCallback(
     async (noteId, position) => {
-      if (!isEnabled || !sessionId || !participantReady || !noteId) return;
+      if (!noteId) return;
 
-      try {
-        await setBrakeNotePositionService(sessionId, noteId, position);
-      } catch (error) {
-        console.error("Impossible de déplacer le frein:", error);
-        setSessionError("La position du frein n'a pas pu être enregistrée.");
-      }
+      await runGuardedAction({
+        errorLog: "Impossible de déplacer le frein:",
+        errorMessage: "La position du frein n'a pas pu être enregistrée.",
+        execute: () => setBrakeNotePositionService(sessionId, noteId, position),
+      });
     },
-    [isEnabled, participantReady, sessionId, setSessionError]
+    [runGuardedAction, sessionId]
   );
 
   const addLeverNote = useCallback(
     async (options = {}) => {
-      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return null;
-
-      try {
-        return await createLeverNote(sessionId, {
+      return runGuardedAction({
+        errorLog: "Impossible d'ajouter le levier:",
+        errorMessage: "Le levier n'a pas pu être ajouté.",
+        fallback: null,
+        execute: () =>
+          createLeverNote(sessionId, {
           authorId: currentParticipantId,
           text: options?.text ?? "",
-        });
-      } catch (error) {
-        console.error("Impossible d'ajouter le levier:", error);
-        setSessionError("Le levier n'a pas pu être ajouté.");
-        return null;
-      }
+          }),
+      });
     },
-    [currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]
+    [currentParticipantId, runGuardedAction, sessionId]
   );
 
   const updateLeverNoteText = useCallback(
     async (noteId, text) => {
-      if (!isEnabled || !sessionId || !participantReady || !noteId || !currentParticipantId) {
+      if (!noteId) {
         return;
       }
 
       const note = leverNotesById[noteId];
       if (!note || note.authorId !== currentParticipantId) return;
 
-      try {
-        await updateLeverNote(sessionId, noteId, { text });
-      } catch (error) {
-        console.error("Impossible de mettre à jour le levier:", error);
-        setSessionError("Le levier n'a pas pu être mis à jour.");
-      }
+      await runGuardedAction({
+        errorLog: "Impossible de mettre à jour le levier:",
+        errorMessage: "Le levier n'a pas pu être mis à jour.",
+        execute: () => updateLeverNote(sessionId, noteId, { text }),
+      });
     },
-    [
-      currentParticipantId,
-      isEnabled,
-      leverNotesById,
-      participantReady,
-      sessionId,
-      setSessionError,
-    ]
+    [currentParticipantId, leverNotesById, runGuardedAction, sessionId]
   );
 
   const removeLeverNote = useCallback(
     async (noteId) => {
-      if (!isEnabled || !sessionId || !participantReady || !noteId || !currentParticipantId) {
+      if (!noteId) {
         return;
       }
 
       const note = leverNotesById[noteId];
       if (!note || note.authorId !== currentParticipantId) return;
 
-      try {
-        await removeLeverNoteService(sessionId, noteId);
-      } catch (error) {
-        console.error("Impossible de supprimer le levier:", error);
-        setSessionError("Le levier n'a pas pu être supprimé.");
-      }
+      await runGuardedAction({
+        errorLog: "Impossible de supprimer le levier:",
+        errorMessage: "Le levier n'a pas pu être supprimé.",
+        execute: () => removeLeverNoteService(sessionId, noteId),
+      });
     },
-    [
-      currentParticipantId,
-      isEnabled,
-      leverNotesById,
-      participantReady,
-      sessionId,
-      setSessionError,
-    ]
+    [currentParticipantId, leverNotesById, runGuardedAction, sessionId]
   );
 
   const setLeverNotePosition = useCallback(
     async (noteId, position) => {
-      if (!isEnabled || !sessionId || !participantReady || !noteId) return;
+      if (!noteId) return;
 
-      try {
-        await setLeverNotePositionService(sessionId, noteId, position);
-      } catch (error) {
-        console.error("Impossible de déplacer le levier:", error);
-        setSessionError("La position du levier n'a pas pu être enregistrée.");
-      }
+      await runGuardedAction({
+        errorLog: "Impossible de déplacer le levier:",
+        errorMessage: "La position du levier n'a pas pu être enregistrée.",
+        execute: () => setLeverNotePositionService(sessionId, noteId, position),
+      });
     },
-    [isEnabled, participantReady, sessionId, setSessionError]
+    [runGuardedAction, sessionId]
   );
 
   const toggleBrakeVote = useCallback(
     async (noteId) => {
-      if (!isEnabled || !sessionId || !participantReady || !noteId || !currentParticipantId) {
+      if (!noteId) {
         return { committed: false, votes: {} };
       }
 
-      try {
-        return await toggleBrakeVoteService(sessionId, currentParticipantId, noteId, {
+      return runGuardedAction({
+        errorLog: "Impossible de modifier le vote:",
+        errorMessage: "Le vote n'a pas pu être enregistré.",
+        fallback: { committed: false, votes: {} },
+        execute: () =>
+          toggleBrakeVoteService(sessionId, currentParticipantId, noteId, {
           maxVotes: MAX_STICKERS,
           validNoteIds: noteIdsSet,
-        });
-      } catch (error) {
-        console.error("Impossible de modifier le vote:", error);
-        setSessionError("Le vote n'a pas pu être enregistré.");
-        return { committed: false, votes: {} };
-      }
+          }),
+      });
     },
-    [
-      currentParticipantId,
-      isEnabled,
-      noteIdsSet,
-      participantReady,
-      sessionId,
-      setSessionError,
-    ]
+    [currentParticipantId, noteIdsSet, runGuardedAction, sessionId]
   );
 
   const setBrakeAction = useCallback(
     async (brakeId, text) => {
-      if (!isEnabled || !sessionId || !participantReady || !brakeId) return;
+      if (!brakeId) return;
 
-      try {
-        await setBrakeActionService(sessionId, currentParticipantId, brakeId, text);
-      } catch (error) {
-        console.error("Impossible d'enregistrer l'action du frein:", error);
-        setSessionError("L'action du frein n'a pas pu être enregistrée.");
-      }
+      await runGuardedAction({
+        errorLog: "Impossible d'enregistrer l'action du frein:",
+        errorMessage: "L'action du frein n'a pas pu être enregistrée.",
+        execute: () => setBrakeActionService(sessionId, currentParticipantId, brakeId, text),
+      });
     },
-    [currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]
+    [currentParticipantId, runGuardedAction, sessionId]
   );
 
   const actions = useMemo(

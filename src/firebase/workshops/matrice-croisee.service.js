@@ -1,5 +1,11 @@
-import { onValue, push, ref, runTransaction, set, update } from "firebase/database";
+import { push, ref, runTransaction, set, update } from "firebase/database";
 import { database } from "../index";
+import {
+  createSubscribeSession,
+  createUpsertParticipant,
+  nowIso,
+  setTextFieldWithStaleClearGuard,
+} from "./workshop-service.shared";
 
 /**
  * @module firebase/workshops/matrice-croisee.service
@@ -9,11 +15,6 @@ import { database } from "../index";
  * @license proprietary
  */
 
-/**
- * Returns current time in ISO format.
- * @returns {string} ISO datetime.
- */
-const nowIso = () => new Date().toISOString();
 const MATRICE_CROISEE_MAX_STICKERS = 1;
 const STEP2_COLUMN_SEED_IDS = ["column-1", "column-2", "column-3"];
 const STEP2_ROW_SEED_IDS = ["row-1", "row-2", "row-3"];
@@ -171,25 +172,7 @@ const toMatriceCroiseeCellNotesPath = (sessionId, rowId, columnId) => {
  * @param {Function} [onError=() => {}] - Error callback.
  * @returns {Function} Unsubscribe callback.
  */
-export const subscribeSession = (
-  sessionId,
-  callback,
-  onError = () => {}
-) => {
-  if (!sessionId) {
-    callback(null);
-    return () => {};
-  }
-
-  const matriceCroiseeRef = ref(database, toMatriceCroiseePath(sessionId));
-  return onValue(
-    matriceCroiseeRef,
-    (snapshot) => {
-      callback(snapshot.exists() ? snapshot.val() : null);
-    },
-    onError
-  );
-};
+export const subscribeSession = createSubscribeSession(toMatriceCroiseePath);
 
 /**
  * Upserts a Matrice croisee participant with presence timestamps.
@@ -197,33 +180,7 @@ export const subscribeSession = (
  * @param {{id:string, name?:string, email?:string, isAuthenticated?:boolean}} [participant={}] - Participant payload.
  * @returns {Promise<void>} Upsert completion.
  */
-export const upsertParticipant = async (
-  sessionId,
-  participant = {}
-) => {
-  if (!sessionId || !participant?.id) return;
-
-  const participantRef = ref(
-    database,
-    `${toMatriceCroiseePath(sessionId)}/participants/${participant.id}`
-  );
-  const now = nowIso();
-
-  await runTransaction(participantRef, (current) => {
-    const currentData = current && typeof current === "object" ? current : {};
-
-    return {
-      id: participant.id,
-      name: participant.name || currentData.name || "",
-      email: participant.email || currentData.email || "",
-      isAuthenticated: Boolean(
-        participant.isAuthenticated ?? currentData.isAuthenticated
-      ),
-      joinedAt: currentData.joinedAt || now,
-      lastSeenAt: now,
-    };
-  });
-};
+export const upsertParticipant = createUpsertParticipant(toMatriceCroiseePath);
 
 /**
  * Sets step-1 challenge description for the session board.
@@ -241,39 +198,13 @@ export const setDescription = async (
 ) => {
   if (!sessionId) return;
 
-  const nextDescription = String(description ?? "");
-  const hasExpectedPreviousDescription = Object.prototype.hasOwnProperty.call(
-    options,
-    "expectedPreviousDescription"
-  );
-  const expectedPreviousDescription = hasExpectedPreviousDescription
-    ? String(options.expectedPreviousDescription ?? "")
-    : null;
-
-  await runTransaction(ref(database, `${toMatriceCroiseePath(sessionId)}/step1`), (current) => {
-    const currentData = current && typeof current === "object" ? current : {};
-    const currentDescription = String(currentData.description ?? "");
-
-    // Prevent non-empty descriptions from being cleared by stale or implicit client writes.
-    if (nextDescription === "" && currentDescription !== "") {
-      return;
-    }
-
-    const shouldRejectStaleClear =
-      nextDescription === "" &&
-      expectedPreviousDescription !== null &&
-      expectedPreviousDescription !== currentDescription &&
-      currentDescription !== "";
-
-    if (shouldRejectStaleClear) {
-      return;
-    }
-
-    return {
-      description: nextDescription,
-      updatedAt: nowIso(),
-      updatedBy: participantId || "",
-    };
+  await setTextFieldWithStaleClearGuard({
+    path: `${toMatriceCroiseePath(sessionId)}/step1`,
+    fieldName: "description",
+    value: description,
+    participantId,
+    expectedPreviousValue: options?.expectedPreviousDescription,
+    rejectWhenCurrentNonEmpty: true,
   });
 };
 

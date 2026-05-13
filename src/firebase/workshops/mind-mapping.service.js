@@ -1,5 +1,11 @@
-import { onValue, push, ref, remove, runTransaction, set, update } from "firebase/database";
+import { push, ref, remove, runTransaction, set, update } from "firebase/database";
 import { database } from "../index";
+import {
+  createSubscribeSession,
+  createUpsertParticipant,
+  nowIso,
+  setTextFieldWithStaleClearGuard,
+} from "./workshop-service.shared";
 
 /**
  * @module firebase/workshops/mind-mapping.service
@@ -9,7 +15,6 @@ import { database } from "../index";
  * @license proprietary
  */
 
-const nowIso = () => new Date().toISOString();
 const MIND_MAPPING_MAX_STICKERS = 3;
 
 const toMindMappingPath = (sessionId) => `workshopSessions/${sessionId}/mindMapping`;
@@ -21,21 +26,7 @@ const toMindMappingPath = (sessionId) => `workshopSessions/${sessionId}/mindMapp
  * @param {Function} [onError=() => {}] - Error callback.
  * @returns {Function} Unsubscribe callback.
  */
-export const subscribeSession = (sessionId, callback, onError = () => {}) => {
-  if (!sessionId) {
-    callback(null);
-    return () => {};
-  }
-
-  const mindMappingRef = ref(database, toMindMappingPath(sessionId));
-  return onValue(
-    mindMappingRef,
-    (snapshot) => {
-      callback(snapshot.exists() ? snapshot.val() : null);
-    },
-    onError
-  );
-};
+export const subscribeSession = createSubscribeSession(toMindMappingPath);
 
 /**
  * Upserts a Mind Mapping participant with presence timestamps.
@@ -43,28 +34,7 @@ export const subscribeSession = (sessionId, callback, onError = () => {}) => {
  * @param {{id:string, name?:string, email?:string, isAuthenticated?:boolean}} [participant={}] - Participant payload.
  * @returns {Promise<void>} Upsert completion.
  */
-export const upsertParticipant = async (sessionId, participant = {}) => {
-  if (!sessionId || !participant?.id) return;
-
-  const participantRef = ref(
-    database,
-    `${toMindMappingPath(sessionId)}/participants/${participant.id}`
-  );
-  const now = nowIso();
-
-  await runTransaction(participantRef, (current) => {
-    const currentData = current && typeof current === "object" ? current : {};
-
-    return {
-      id: participant.id,
-      name: participant.name || currentData.name || "",
-      email: participant.email || currentData.email || "",
-      isAuthenticated: Boolean(participant.isAuthenticated ?? currentData.isAuthenticated),
-      joinedAt: currentData.joinedAt || now,
-      lastSeenAt: now,
-    };
-  });
-};
+export const upsertParticipant = createUpsertParticipant(toMindMappingPath);
 
 /**
  * Sets step-1 central topic description for the session board.
@@ -82,34 +52,12 @@ export const setDescription = async (
 ) => {
   if (!sessionId) return;
 
-  const nextDescription = String(description ?? "");
-  const hasExpectedPreviousDescription = Object.prototype.hasOwnProperty.call(
-    options,
-    "expectedPreviousDescription"
-  );
-  const expectedPreviousDescription = hasExpectedPreviousDescription
-    ? String(options.expectedPreviousDescription ?? "")
-    : null;
-
-  await runTransaction(ref(database, `${toMindMappingPath(sessionId)}/step1`), (current) => {
-    const currentData = current && typeof current === "object" ? current : {};
-    const currentDescription = String(currentData.description ?? "");
-
-    const shouldRejectStaleClear =
-      nextDescription === "" &&
-      expectedPreviousDescription !== null &&
-      expectedPreviousDescription !== currentDescription &&
-      currentDescription !== "";
-
-    if (shouldRejectStaleClear) {
-      return;
-    }
-
-    return {
-      description: nextDescription,
-      updatedAt: nowIso(),
-      updatedBy: participantId || "",
-    };
+  await setTextFieldWithStaleClearGuard({
+    path: `${toMindMappingPath(sessionId)}/step1`,
+    fieldName: "description",
+    value: description,
+    participantId,
+    expectedPreviousValue: options?.expectedPreviousDescription,
   });
 };
 

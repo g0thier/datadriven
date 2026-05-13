@@ -1,15 +1,17 @@
 import {
-  onValue,
   push,
   ref,
-  runTransaction,
   set,
   update,
 } from "firebase/database";
 import { database } from "../index";
 import { normalizeHatId } from "../../pages/workshops/six-hats/sixHats.constants";
-
-const nowIso = () => new Date().toISOString();
+import {
+  createSubscribeSession,
+  createUpsertParticipant,
+  nowIso,
+  setTextFieldWithStaleClearGuard,
+} from "./workshop-service.shared";
 
 const toSixHatsPath = (sessionId) => `workshopSessions/${sessionId}/sixHats`;
 
@@ -25,45 +27,9 @@ const normalizeTextPatch = (patch = {}) => {
   return payload;
 };
 
-export const subscribeSession = (sessionId, callback, onError = () => {}) => {
-  if (!sessionId) {
-    callback(null);
-    return () => {};
-  }
+export const subscribeSession = createSubscribeSession(toSixHatsPath);
 
-  const sixHatsRef = ref(database, toSixHatsPath(sessionId));
-
-  return onValue(
-    sixHatsRef,
-    (snapshot) => {
-      callback(snapshot.exists() ? snapshot.val() : null);
-    },
-    onError
-  );
-};
-
-export const upsertParticipant = async (sessionId, participant = {}) => {
-  if (!sessionId || !participant?.id) return;
-
-  const participantRef = ref(
-    database,
-    `${toSixHatsPath(sessionId)}/participants/${participant.id}`
-  );
-  const now = nowIso();
-
-  await runTransaction(participantRef, (current) => {
-    const currentData = current && typeof current === "object" ? current : {};
-
-    return {
-      id: participant.id,
-      name: participant.name || currentData.name || "",
-      email: participant.email || currentData.email || "",
-      isAuthenticated: Boolean(participant.isAuthenticated ?? currentData.isAuthenticated),
-      joinedAt: currentData.joinedAt || now,
-      lastSeenAt: now,
-    };
-  });
-};
+export const upsertParticipant = createUpsertParticipant(toSixHatsPath);
 
 export const setDescription = async (
   sessionId,
@@ -73,34 +39,12 @@ export const setDescription = async (
 ) => {
   if (!sessionId) return;
 
-  const nextDescription = String(description ?? "");
-  const hasExpectedPreviousDescription = Object.prototype.hasOwnProperty.call(
-    options,
-    "expectedPreviousDescription"
-  );
-  const expectedPreviousDescription = hasExpectedPreviousDescription
-    ? String(options.expectedPreviousDescription ?? "")
-    : null;
-
-  await runTransaction(ref(database, `${toSixHatsPath(sessionId)}/step1`), (current) => {
-    const currentData = current && typeof current === "object" ? current : {};
-    const currentDescription = String(currentData.description ?? "");
-
-    const shouldRejectStaleClear =
-      nextDescription === "" &&
-      expectedPreviousDescription !== null &&
-      expectedPreviousDescription !== currentDescription &&
-      currentDescription !== "";
-
-    if (shouldRejectStaleClear) {
-      return;
-    }
-
-    return {
-      description: nextDescription,
-      updatedAt: nowIso(),
-      updatedBy: participantId || "",
-    };
+  await setTextFieldWithStaleClearGuard({
+    path: `${toSixHatsPath(sessionId)}/step1`,
+    fieldName: "description",
+    value: description,
+    participantId,
+    expectedPreviousValue: options?.expectedPreviousDescription,
   });
 };
 
@@ -151,35 +95,13 @@ export const updateItem = async (
     return;
   }
 
-  const nextText = String(patch.text ?? "");
-  const hasExpectedPreviousText = Object.prototype.hasOwnProperty.call(
-    options,
-    "expectedPreviousText"
-  );
-  const expectedPreviousText = hasExpectedPreviousText
-    ? String(options.expectedPreviousText ?? "")
-    : null;
-
-  await runTransaction(ref(database, itemPath), (current) => {
-    if (!current || typeof current !== "object") return current;
-
-    const currentText = String(current.text ?? "");
-
-    const shouldRejectStaleClear =
-      nextText === "" &&
-      expectedPreviousText !== null &&
-      expectedPreviousText !== currentText &&
-      currentText !== "";
-
-    if (shouldRejectStaleClear) {
-      return;
-    }
-
-    return {
-      ...current,
-      text: nextText,
-      updatedAt: nowIso(),
-    };
+  await setTextFieldWithStaleClearGuard({
+    path: itemPath,
+    fieldName: "text",
+    value: patch.text,
+    participantId: "",
+    expectedPreviousValue: options?.expectedPreviousText,
+    preserveCurrent: true,
   });
 };
 

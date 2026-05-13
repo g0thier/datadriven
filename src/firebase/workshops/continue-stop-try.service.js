@@ -1,6 +1,5 @@
 import {
   get,
-  onValue,
   push,
   ref,
   runTransaction,
@@ -8,6 +7,12 @@ import {
   update,
 } from "firebase/database";
 import { database } from "../index";
+import {
+  createSubscribeSession,
+  createUpsertParticipant,
+  nowIso,
+  setTextFieldWithStaleClearGuard,
+} from "./workshop-service.shared";
 
 /**
  * @module firebase/workshops/continue-stop-try.service
@@ -20,12 +25,6 @@ import { database } from "../index";
 const WORKSHOP_MAX_STICKERS_PER_COLUMN = 3;
 
 const VALID_COLUMN_IDS = new Set(["continue", "stop", "try"]);
-
-/**
- * Returns current time in ISO format.
- * @returns {string} ISO datetime.
- */
-const nowIso = () => new Date().toISOString();
 
 /**
  * Builds the continue-stop-try root path for a session.
@@ -67,25 +66,7 @@ const normalizePosition = (position = {}, fallback = { x: 40, y: 40 }) => {
  * @param {Function} [onError=() => {}] - Error callback.
  * @returns {Function} Unsubscribe callback.
  */
-export const subscribeSession = (
-  sessionId,
-  callback,
-  onError = () => {}
-) => {
-  if (!sessionId) {
-    callback(null);
-    return () => {};
-  }
-
-  const continueStopTryRef = ref(database, toContinueStopTryPath(sessionId));
-  return onValue(
-    continueStopTryRef,
-    (snapshot) => {
-      callback(snapshot.exists() ? snapshot.val() : null);
-    },
-    onError
-  );
-};
+export const subscribeSession = createSubscribeSession(toContinueStopTryPath);
 
 /**
  * Upserts a Continue Stop Try participant with presence timestamps.
@@ -93,33 +74,7 @@ export const subscribeSession = (
  * @param {{id:string, name?:string, email?:string, isAuthenticated?:boolean}} [participant={}] - Participant payload.
  * @returns {Promise<void>} Upsert completion.
  */
-export const upsertParticipant = async (
-  sessionId,
-  participant = {}
-) => {
-  if (!sessionId || !participant?.id) return;
-
-  const participantRef = ref(
-    database,
-    `${toContinueStopTryPath(sessionId)}/participants/${participant.id}`
-  );
-  const now = nowIso();
-
-  await runTransaction(participantRef, (current) => {
-    const currentData = current && typeof current === "object" ? current : {};
-
-    return {
-      id: participant.id,
-      name: participant.name || currentData.name || "",
-      email: participant.email || currentData.email || "",
-      isAuthenticated: Boolean(
-        participant.isAuthenticated ?? currentData.isAuthenticated
-      ),
-      joinedAt: currentData.joinedAt || now,
-      lastSeenAt: now,
-    };
-  });
-};
+export const upsertParticipant = createUpsertParticipant(toContinueStopTryPath);
 
 /**
  * Sets step-1 challenge description for the session board.
@@ -136,39 +91,13 @@ export const setDescription = async (
 ) => {
   if (!sessionId) return;
 
-  const nextDescription = String(description ?? "");
-  const hasExpectedPreviousDescription = Object.prototype.hasOwnProperty.call(
-    options,
-    "expectedPreviousDescription"
-  );
-  const expectedPreviousDescription = hasExpectedPreviousDescription
-    ? String(options.expectedPreviousDescription ?? "")
-    : null;
-
-  await runTransaction(ref(database, `${toContinueStopTryPath(sessionId)}/step1`), (current) => {
-    const currentData = current && typeof current === "object" ? current : {};
-    const currentDescription = String(currentData.description ?? "");
-
-    // Prevent non-empty descriptions from being cleared by stale or implicit client writes.
-    if (nextDescription === "" && currentDescription !== "") {
-      return;
-    }
-
-    const shouldRejectStaleClear =
-      nextDescription === "" &&
-      expectedPreviousDescription !== null &&
-      expectedPreviousDescription !== currentDescription &&
-      currentDescription !== "";
-
-    if (shouldRejectStaleClear) {
-      return;
-    }
-
-    return {
-      description: nextDescription,
-      updatedAt: nowIso(),
-      updatedBy: participantId || "",
-    };
+  await setTextFieldWithStaleClearGuard({
+    path: `${toContinueStopTryPath(sessionId)}/step1`,
+    fieldName: "description",
+    value: description,
+    participantId,
+    expectedPreviousValue: options?.expectedPreviousDescription,
+    rejectWhenCurrentNonEmpty: true,
   });
 };
 

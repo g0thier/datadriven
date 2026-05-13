@@ -2,29 +2,13 @@ import { useMemo, useState } from "react";
 import WorkshopEmptyStateCard from "../../../components/workshops/WorkshopEmptyStateCard.jsx";
 import WorkshopSummaryLayout from "../../../components/workshops/WorkshopSummaryLayout.jsx";
 import WorkshopSyncErrorAlert from "../../../components/workshops/WorkshopSyncErrorAlert.jsx";
+import {
+  buildGridPosition,
+  normalizePosition,
+} from "../../../components/workshops/workshopBoardGeometry.js";
 
 const EMPTY_ARRAY = Object.freeze([]);
 const EMPTY_OBJECT = Object.freeze({});
-
-function buildGridPosition(index = 0) {
-  const col = index % 5;
-  const row = Math.floor(index / 5);
-
-  return {
-    x: 40 + col * 290,
-    y: 40 + row * 220,
-  };
-}
-
-function normalizePosition(position = {}, fallback = buildGridPosition(0)) {
-  const x = Number(position?.x);
-  const y = Number(position?.y);
-
-  return {
-    x: Number.isFinite(x) ? x : fallback.x,
-    y: Number.isFinite(y) ? y : fallback.y,
-  };
-}
 
 function NotesDashboard({
   title,

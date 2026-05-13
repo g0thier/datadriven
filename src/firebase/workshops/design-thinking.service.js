@@ -1,5 +1,11 @@
-import { get, onValue, push, ref, runTransaction, set, update } from "firebase/database";
+import { get, push, ref, runTransaction, set, update } from "firebase/database";
 import { database } from "../index";
+import {
+  createSubscribeSession,
+  createUpsertParticipant,
+  nowIso,
+  setTextFieldWithStaleClearGuard,
+} from "./workshop-service.shared";
 
 /**
  * @module firebase/workshops/design-thinking.service
@@ -9,11 +15,6 @@ import { database } from "../index";
  * @license proprietary
  */
 
-/**
- * Returns current time in ISO format.
- * @returns {string} ISO datetime.
- */
-const nowIso = () => new Date().toISOString();
 const DESIGN_THINKING_IDEATION_MAX_STICKERS = 3;
 const DESIGN_THINKING_PROTOTYPE_FEEDBACK_COLUMN_IDS = new Set([
   "works",
@@ -53,26 +54,7 @@ const normalizePrototypeFeedbackColumnId = (columnId) => {
  * @param {Function} [onError=() => {}] - Error callback.
  * @returns {Function} Unsubscribe callback.
  */
-export const subscribeSession = (
-  sessionId,
-  callback,
-  onError = () => {}
-) => {
-  if (!sessionId) {
-    callback(null);
-    return () => {};
-  }
-
-  const designThinkingRef = ref(database, toDesignThinkingPath(sessionId));
-
-  return onValue(
-    designThinkingRef,
-    (snapshot) => {
-      callback(snapshot.exists() ? snapshot.val() : null);
-    },
-    onError
-  );
-};
+export const subscribeSession = createSubscribeSession(toDesignThinkingPath);
 
 /**
  * Upserts a Design Thinking participant with presence timestamps.
@@ -80,33 +62,7 @@ export const subscribeSession = (
  * @param {{id:string, name?:string, email?:string, isAuthenticated?:boolean}} [participant={}] - Participant payload.
  * @returns {Promise<void>} Upsert completion.
  */
-export const upsertParticipant = async (
-  sessionId,
-  participant = {}
-) => {
-  if (!sessionId || !participant?.id) return;
-
-  const participantRef = ref(
-    database,
-    `${toDesignThinkingPath(sessionId)}/participants/${participant.id}`
-  );
-  const now = nowIso();
-
-  await runTransaction(participantRef, (current) => {
-    const currentData = current && typeof current === "object" ? current : {};
-
-    return {
-      id: participant.id,
-      name: participant.name || currentData.name || "",
-      email: participant.email || currentData.email || "",
-      isAuthenticated: Boolean(
-        participant.isAuthenticated ?? currentData.isAuthenticated
-      ),
-      joinedAt: currentData.joinedAt || now,
-      lastSeenAt: now,
-    };
-  });
-};
+export const upsertParticipant = createUpsertParticipant(toDesignThinkingPath);
 
 /**
  * Sets step-1 challenge description for the session board.
@@ -124,39 +80,13 @@ export const setDescription = async (
 ) => {
   if (!sessionId) return;
 
-  const nextDescription = String(description ?? "");
-  const hasExpectedPreviousDescription = Object.prototype.hasOwnProperty.call(
-    options,
-    "expectedPreviousDescription"
-  );
-  const expectedPreviousDescription = hasExpectedPreviousDescription
-    ? String(options.expectedPreviousDescription ?? "")
-    : null;
-
-  await runTransaction(ref(database, `${toDesignThinkingPath(sessionId)}/step1`), (current) => {
-    const currentData = current && typeof current === "object" ? current : {};
-    const currentDescription = String(currentData.description ?? "");
-
-    // Prevent non-empty descriptions from being cleared by stale or implicit client writes.
-    if (nextDescription === "" && currentDescription !== "") {
-      return;
-    }
-
-    const shouldRejectStaleClear =
-      nextDescription === "" &&
-      expectedPreviousDescription !== null &&
-      expectedPreviousDescription !== currentDescription &&
-      currentDescription !== "";
-
-    if (shouldRejectStaleClear) {
-      return;
-    }
-
-    return {
-      description: nextDescription,
-      updatedAt: nowIso(),
-      updatedBy: participantId || "",
-    };
+  await setTextFieldWithStaleClearGuard({
+    path: `${toDesignThinkingPath(sessionId)}/step1`,
+    fieldName: "description",
+    value: description,
+    participantId,
+    expectedPreviousValue: options?.expectedPreviousDescription,
+    rejectWhenCurrentNonEmpty: true,
   });
 };
 
@@ -279,39 +209,13 @@ export const setProblemStatement = async (
 ) => {
   if (!sessionId) return;
 
-  const nextStatement = String(statement ?? "");
-  const hasExpectedPreviousStatement = Object.prototype.hasOwnProperty.call(
-    options,
-    "expectedPreviousStatement"
-  );
-  const expectedPreviousStatement = hasExpectedPreviousStatement
-    ? String(options.expectedPreviousStatement ?? "")
-    : null;
-
-  await runTransaction(ref(database, `${toDesignThinkingPath(sessionId)}/problemStatement`), (current) => {
-    const currentData = current && typeof current === "object" ? current : {};
-    const currentStatement = String(currentData.text ?? "");
-
-    // Prevent non-empty statements from being cleared by stale or implicit client writes.
-    if (nextStatement === "" && currentStatement !== "") {
-      return;
-    }
-
-    const shouldRejectStaleClear =
-      nextStatement === "" &&
-      expectedPreviousStatement !== null &&
-      expectedPreviousStatement !== currentStatement &&
-      currentStatement !== "";
-
-    if (shouldRejectStaleClear) {
-      return;
-    }
-
-    return {
-      text: nextStatement,
-      updatedAt: nowIso(),
-      updatedBy: participantId || "",
-    };
+  await setTextFieldWithStaleClearGuard({
+    path: `${toDesignThinkingPath(sessionId)}/problemStatement`,
+    fieldName: "text",
+    value: statement,
+    participantId,
+    expectedPreviousValue: options?.expectedPreviousStatement,
+    rejectWhenCurrentNonEmpty: true,
   });
 };
 
@@ -331,39 +235,13 @@ export const setConclusion = async (
 ) => {
   if (!sessionId) return;
 
-  const nextConclusion = String(conclusion ?? "");
-  const hasExpectedPreviousConclusion = Object.prototype.hasOwnProperty.call(
-    options,
-    "expectedPreviousConclusion"
-  );
-  const expectedPreviousConclusion = hasExpectedPreviousConclusion
-    ? String(options.expectedPreviousConclusion ?? "")
-    : null;
-
-  await runTransaction(ref(database, `${toDesignThinkingPath(sessionId)}/conclusion`), (current) => {
-    const currentData = current && typeof current === "object" ? current : {};
-    const currentConclusion = String(currentData.text ?? "");
-
-    // Prevent non-empty conclusions from being cleared by stale or implicit client writes.
-    if (nextConclusion === "" && currentConclusion !== "") {
-      return;
-    }
-
-    const shouldRejectStaleClear =
-      nextConclusion === "" &&
-      expectedPreviousConclusion !== null &&
-      expectedPreviousConclusion !== currentConclusion &&
-      currentConclusion !== "";
-
-    if (shouldRejectStaleClear) {
-      return;
-    }
-
-    return {
-      text: nextConclusion,
-      updatedAt: nowIso(),
-      updatedBy: participantId || "",
-    };
+  await setTextFieldWithStaleClearGuard({
+    path: `${toDesignThinkingPath(sessionId)}/conclusion`,
+    fieldName: "text",
+    value: conclusion,
+    participantId,
+    expectedPreviousValue: options?.expectedPreviousConclusion,
+    rejectWhenCurrentNonEmpty: true,
   });
 };
 

@@ -13,6 +13,7 @@ import {
   sortByCreatedAt,
 } from "../collaboration.shared.js";
 import { useWorkshopCollaborationCore } from "../useWorkshopCollaborationCore.js";
+import { useWorkshopGuardedAction } from "../useWorkshopGuardedAction.js";
 import { useWorkshopParticipants } from "../useWorkshopParticipants.js";
 import { HAT_CONFIG, HAT_IDS, normalizeHatId } from "./sixHats.constants";
 
@@ -112,53 +113,50 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   const currentParticipantId = participant?.id || "";
   const description = rawDescription;
   const blueConclusion = String(activeState?.step7?.blueConclusion?.text || "");
+  const { runGuardedAction } = useWorkshopGuardedAction({
+    isEnabled,
+    sessionId,
+    participantReady,
+    participantId: currentParticipantId,
+    setSessionError,
+  });
 
   const setDescription = useCallback(
     async (description, previousDescription = description) => {
-      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
-
-      try {
-        await setDescriptionService(sessionId, currentParticipantId, description, {
+      await runGuardedAction({
+        errorLog: "Impossible de mettre à jour le sujet:",
+        errorMessage: "Le sujet n'a pas pu être enregistré.",
+        execute: () =>
+          setDescriptionService(sessionId, currentParticipantId, description, {
           expectedPreviousDescription: previousDescription,
-        });
-      } catch (error) {
-        console.error("Impossible de mettre à jour le sujet:", error);
-        setSessionError("Le sujet n'a pas pu être enregistré.");
-      }
+          }),
+      });
     },
-    [
-      currentParticipantId,
-      isEnabled,
-      participantReady,
-      sessionId,
-      setSessionError
-    ]
+    [currentParticipantId, runGuardedAction, sessionId]
   );
 
   const addHatItem = useCallback(
     async (hatId, options = {}) => {
-      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return null;
-
       const normalizedHatId = normalizeHatId(hatId);
       if (!normalizedHatId) return null;
 
-      try {
-        return await createItem(sessionId, normalizedHatId, {
+      return runGuardedAction({
+        errorLog: "Impossible d'ajouter la contribution:",
+        errorMessage: "La contribution n'a pas pu être ajoutée.",
+        fallback: null,
+        execute: () =>
+          createItem(sessionId, normalizedHatId, {
           authorId: currentParticipantId,
           text: options?.text ?? "",
-        });
-      } catch (error) {
-        console.error("Impossible d'ajouter la contribution:", error);
-        setSessionError("La contribution n'a pas pu être ajoutée.");
-        return null;
-      }
+          }),
+      });
     },
-    [currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]
+    [currentParticipantId, runGuardedAction, sessionId]
   );
 
   const updateHatItemText = useCallback(
     async (hatId, itemId, text, previousText = null) => {
-      if (!isEnabled || !sessionId || !participantReady || !itemId || !currentParticipantId) {
+      if (!itemId) {
         return;
       }
 
@@ -176,25 +174,25 @@ export function useCollaboration({ sessionId, session, workshopId }) {
           ? currentText
           : String(previousText ?? "");
 
-      try {
-        await updateItem(
-          sessionId,
-          normalizedHatId,
-          itemId,
-          { text },
-          { expectedPreviousText }
-        );
-      } catch (error) {
-        console.error("Impossible de mettre à jour la contribution:", error);
-        setSessionError("La contribution n'a pas pu être mise à jour.");
-      }
+      await runGuardedAction({
+        errorLog: "Impossible de mettre à jour la contribution:",
+        errorMessage: "La contribution n'a pas pu être mise à jour.",
+        execute: () =>
+          updateItem(
+            sessionId,
+            normalizedHatId,
+            itemId,
+            { text },
+            { expectedPreviousText }
+          ),
+      });
     },
-    [currentParticipantId, isEnabled, itemsById, participantReady, sessionId, setSessionError]
+    [currentParticipantId, itemsById, runGuardedAction, sessionId]
   );
 
   const removeHatItem = useCallback(
     async (hatId, itemId) => {
-      if (!isEnabled || !sessionId || !participantReady || !itemId || !currentParticipantId) {
+      if (!itemId) {
         return;
       }
 
@@ -204,28 +202,24 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       const item = itemsById[itemId];
       if (!item || item.authorId !== currentParticipantId || item.hatId !== normalizedHatId) return;
 
-      try {
-        await removeItem(sessionId, normalizedHatId, itemId);
-      } catch (error) {
-        console.error("Impossible de supprimer la contribution:", error);
-        setSessionError("La contribution n'a pas pu être supprimée.");
-      }
+      await runGuardedAction({
+        errorLog: "Impossible de supprimer la contribution:",
+        errorMessage: "La contribution n'a pas pu être supprimée.",
+        execute: () => removeItem(sessionId, normalizedHatId, itemId),
+      });
     },
-    [currentParticipantId, isEnabled, itemsById, participantReady, sessionId, setSessionError]
+    [currentParticipantId, itemsById, runGuardedAction, sessionId]
   );
 
   const setBlueConclusion = useCallback(
     async (text) => {
-      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
-
-      try {
-        await setBlueConclusionService(sessionId, currentParticipantId, text);
-      } catch (error) {
-        console.error("Impossible de mettre à jour la conclusion:", error);
-        setSessionError("La conclusion n'a pas pu être enregistrée.");
-      }
+      await runGuardedAction({
+        errorLog: "Impossible de mettre à jour la conclusion:",
+        errorMessage: "La conclusion n'a pas pu être enregistrée.",
+        execute: () => setBlueConclusionService(sessionId, currentParticipantId, text),
+      });
     },
-    [currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]
+    [currentParticipantId, runGuardedAction, sessionId]
   );
 
   const actions = useMemo(

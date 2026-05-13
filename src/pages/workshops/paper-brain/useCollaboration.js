@@ -33,6 +33,7 @@ import {
   toById,
 } from "../collaboration.shared.js";
 import { useWorkshopCollaborationCore } from "../useWorkshopCollaborationCore.js";
+import { useWorkshopGuardedAction } from "../useWorkshopGuardedAction.js";
 import { useWorkshopParticipants } from "../useWorkshopParticipants.js";
 
 const MAX_STICKERS = 3;
@@ -169,6 +170,13 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
   const currentParticipantId = participant?.id || "";
   const description = rawDescription || lastNonEmptyDescription;
+  const { runGuardedAction } = useWorkshopGuardedAction({
+    isEnabled,
+    sessionId,
+    participantReady,
+    participantId: currentParticipantId,
+    setSessionError,
+  });
 
   useEffect(() => {
     if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
@@ -226,120 +234,101 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
   const setDescription = useCallback(
     async (description, previousDescription = description) => {
-      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
-
-      try {
-        await setDescriptionService(sessionId, currentParticipantId, description, {
+      await runGuardedAction({
+        errorLog: "Impossible de mettre à jour la description:",
+        errorMessage: "La description n'a pas pu être enregistrée.",
+        execute: () =>
+          setDescriptionService(sessionId, currentParticipantId, description, {
           expectedPreviousDescription: previousDescription,
-        });
-      } catch (error) {
-        console.error("Impossible de mettre à jour la description:", error);
-        setSessionError("La description n'a pas pu être enregistrée.");
-      }
+          }),
+      });
     },
-    [
-      currentParticipantId,
-      isEnabled,
-      participantReady,
-      sessionId,
-      setSessionError
-    ]
+    [currentParticipantId, runGuardedAction, sessionId]
   );
 
   const addNote = useCallback(
     async (options = {}) => {
-      if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return null;
-
       const fallbackPosition = buildGridPosition(notes.length, GRID_POSITION_CONFIG);
       const position = normalizePosition(options?.position, fallbackPosition);
       const text = options?.text ?? "";
 
-      try {
-        return await createNote(sessionId, {
+      return runGuardedAction({
+        errorLog: "Impossible d'ajouter la note:",
+        errorMessage: "La note n'a pas pu être ajoutée.",
+        fallback: null,
+        execute: () =>
+          createNote(sessionId, {
           authorId: currentParticipantId,
           text,
           position,
-        });
-      } catch (error) {
-        console.error("Impossible d'ajouter la note:", error);
-        setSessionError("La note n'a pas pu être ajoutée.");
-        return null;
-      }
+          }),
+      });
     },
-    [currentParticipantId, isEnabled, notes.length, participantReady, sessionId, setSessionError]
+    [currentParticipantId, notes.length, runGuardedAction, sessionId]
   );
 
   const updateNoteText = useCallback(
     async (noteId, text) => {
-      if (!isEnabled || !sessionId || !participantReady || !noteId || !currentParticipantId) {
+      if (!noteId) {
         return;
       }
 
       const note = notesById[noteId];
       if (!note || note.authorId !== currentParticipantId) return;
 
-      try {
-        await updateNote(sessionId, noteId, { text });
-      } catch (error) {
-        console.error("Impossible de mettre à jour la note:", error);
-        setSessionError("La note n'a pas pu être mise à jour.");
-      }
+      await runGuardedAction({
+        errorLog: "Impossible de mettre à jour la note:",
+        errorMessage: "La note n'a pas pu être mise à jour.",
+        execute: () => updateNote(sessionId, noteId, { text }),
+      });
     },
-    [currentParticipantId, isEnabled, notesById, participantReady, sessionId, setSessionError]
+    [currentParticipantId, notesById, runGuardedAction, sessionId]
   );
 
   const removeNote = useCallback(
     async (noteId) => {
-      if (!isEnabled || !sessionId || !participantReady || !noteId || !currentParticipantId) {
+      if (!noteId) {
         return;
       }
 
       const note = notesById[noteId];
       if (!note || note.authorId !== currentParticipantId) return;
 
-      try {
-        await removeNoteService(sessionId, noteId);
-      } catch (error) {
-        console.error("Impossible de supprimer la note:", error);
-        setSessionError("La note n'a pas pu être supprimée.");
-      }
+      await runGuardedAction({
+        errorLog: "Impossible de supprimer la note:",
+        errorMessage: "La note n'a pas pu être supprimée.",
+        execute: () => removeNoteService(sessionId, noteId),
+      });
     },
-    [currentParticipantId, isEnabled, notesById, participantReady, sessionId, setSessionError]
+    [currentParticipantId, notesById, runGuardedAction, sessionId]
   );
 
   const addComment = useCallback(
     async (noteId, text = "") => {
-      if (!isEnabled || !sessionId || !participantReady || !noteId || !currentParticipantId) {
+      if (!noteId) {
         return null;
       }
 
       const note = notesById[noteId];
       if (!note || note.authorId === currentParticipantId) return null;
 
-      try {
-        return await addCommentService(sessionId, noteId, {
+      return runGuardedAction({
+        errorLog: "Impossible d'ajouter le commentaire:",
+        errorMessage: "Le commentaire n'a pas pu être ajouté.",
+        fallback: null,
+        execute: () =>
+          addCommentService(sessionId, noteId, {
           authorId: currentParticipantId,
           text,
-        });
-      } catch (error) {
-        console.error("Impossible d'ajouter le commentaire:", error);
-        setSessionError("Le commentaire n'a pas pu être ajouté.");
-        return null;
-      }
+          }),
+      });
     },
-    [currentParticipantId, isEnabled, notesById, participantReady, sessionId, setSessionError]
+    [currentParticipantId, notesById, runGuardedAction, sessionId]
   );
 
   const updateCommentText = useCallback(
     async (noteId, commentId, text) => {
-      if (
-        !isEnabled ||
-        !sessionId ||
-        !participantReady ||
-        !noteId ||
-        !commentId ||
-        !currentParticipantId
-      ) {
+      if (!noteId || !commentId) {
         return;
       }
 
@@ -349,26 +338,18 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
       if (!comment || comment.authorId !== currentParticipantId) return;
 
-      try {
-        await updateComment(sessionId, noteId, commentId, { text });
-      } catch (error) {
-        console.error("Impossible de mettre à jour le commentaire:", error);
-        setSessionError("Le commentaire n'a pas pu être mis à jour.");
-      }
+      await runGuardedAction({
+        errorLog: "Impossible de mettre à jour le commentaire:",
+        errorMessage: "Le commentaire n'a pas pu être mis à jour.",
+        execute: () => updateComment(sessionId, noteId, commentId, { text }),
+      });
     },
-    [commentsByNote, currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]
+    [commentsByNote, currentParticipantId, runGuardedAction, sessionId]
   );
 
   const removeComment = useCallback(
     async (noteId, commentId) => {
-      if (
-        !isEnabled ||
-        !sessionId ||
-        !participantReady ||
-        !noteId ||
-        !commentId ||
-        !currentParticipantId
-      ) {
+      if (!noteId || !commentId) {
         return;
       }
 
@@ -378,54 +359,50 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
       if (!comment || comment.authorId !== currentParticipantId) return;
 
-      try {
-        await removeCommentService(sessionId, noteId, commentId);
-      } catch (error) {
-        console.error("Impossible de supprimer le commentaire:", error);
-        setSessionError("Le commentaire n'a pas pu être supprimé.");
-      }
+      await runGuardedAction({
+        errorLog: "Impossible de supprimer le commentaire:",
+        errorMessage: "Le commentaire n'a pas pu être supprimé.",
+        execute: () => removeCommentService(sessionId, noteId, commentId),
+      });
     },
-    [commentsByNote, currentParticipantId, isEnabled, participantReady, sessionId, setSessionError]
+    [commentsByNote, currentParticipantId, runGuardedAction, sessionId]
   );
 
   const setNotePosition = useCallback(
     async (noteId, position) => {
-      if (!isEnabled || !sessionId || !participantReady || !noteId) return;
+      if (!noteId) return;
 
-      try {
-        await setNotePositionService(sessionId, noteId, position);
-      } catch (error) {
-        console.error("Impossible de déplacer la note:", error);
-        setSessionError("La position de la note n'a pas pu être enregistrée.");
-      }
+      await runGuardedAction({
+        errorLog: "Impossible de déplacer la note:",
+        errorMessage: "La position de la note n'a pas pu être enregistrée.",
+        execute: () => setNotePositionService(sessionId, noteId, position),
+      });
     },
-    [isEnabled, participantReady, sessionId, setSessionError]
+    [runGuardedAction, sessionId]
   );
 
   const toggleVote = useCallback(
     async (noteId) => {
-      if (!isEnabled || !sessionId || !participantReady || !noteId || !currentParticipantId) {
+      if (!noteId) {
         return { committed: false, votes: {} };
       }
 
-      try {
-        return await toggleVoteService(sessionId, currentParticipantId, noteId, {
+      return runGuardedAction({
+        errorLog: "Impossible de modifier le vote:",
+        errorMessage: "Le vote n'a pas pu être enregistré.",
+        fallback: { committed: false, votes: {} },
+        execute: () =>
+          toggleVoteService(sessionId, currentParticipantId, noteId, {
           maxVotes: MAX_STICKERS,
           validNoteIds: noteIdsSet,
-        });
-      } catch (error) {
-        console.error("Impossible de modifier le vote:", error);
-        setSessionError("Le vote n'a pas pu être enregistré.");
-        return { committed: false, votes: {} };
-      }
+          }),
+      });
     },
     [
       currentParticipantId,
-      isEnabled,
       noteIdsSet,
-      participantReady,
+      runGuardedAction,
       sessionId,
-      setSessionError,
     ]
   );
 

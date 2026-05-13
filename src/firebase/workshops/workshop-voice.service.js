@@ -10,6 +10,7 @@ import {
   update,
 } from "firebase/database";
 import { database } from "../index";
+import { nowIso } from "./workshop-service.shared";
 
 /**
  * @module firebase/workshop-voice.service
@@ -36,12 +37,6 @@ const toVoicePath = (roomId, channelId = "general") => {
 
   return `workshopSessions/${roomId}/voiceChannels/${normalizedChannelId}`;
 };
-
-/**
- * Returns current time in ISO format.
- * @returns {string} ISO datetime.
- */
-const nowIso = () => new Date().toISOString();
 
 /**
  * Normalizes participant payload for persistence.

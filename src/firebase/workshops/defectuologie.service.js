@@ -1,6 +1,5 @@
 import {
   get,
-  onValue,
   push,
   ref,
   runTransaction,
@@ -8,12 +7,11 @@ import {
   update,
 } from "firebase/database";
 import { database } from "../index";
+import { createSubscribeSession, createUpsertParticipant, nowIso } from "./workshop-service.shared";
 
 const MAX_VOTES_PER_STEP = 1;
 const SUBGROUP_MIN_SIZE = 4;
 const SUBGROUP_MAX_SIZE = 8;
-
-const nowIso = () => new Date().toISOString();
 
 const toDefectuologiePath = (sessionId) => `workshopSessions/${sessionId}/defectuologie`;
 
@@ -432,26 +430,7 @@ const normalizeVotesByParticipant = (votesByParticipant = {}, validIds = null) =
   }, {});
 };
 
-export const subscribeSession = (
-  sessionId,
-  callback,
-  onError = () => {}
-) => {
-  if (!sessionId) {
-    callback(null);
-    return () => {};
-  }
-
-  const defectuologieRef = ref(database, toDefectuologiePath(sessionId));
-
-  return onValue(
-    defectuologieRef,
-    (snapshot) => {
-      callback(snapshot.exists() ? snapshot.val() : null);
-    },
-    onError
-  );
-};
+export const subscribeSession = createSubscribeSession(toDefectuologiePath);
 
 export const fetchSessionOnce = async (sessionId) => {
   if (!sessionId) return null;
@@ -460,32 +439,7 @@ export const fetchSessionOnce = async (sessionId) => {
   return snapshot.exists() ? snapshot.val() : null;
 };
 
-export const upsertParticipant = async (
-  sessionId,
-  participant = {}
-) => {
-  if (!sessionId || !participant?.id) return;
-
-  const participantRef = ref(
-    database,
-    `${toDefectuologiePath(sessionId)}/participants/${participant.id}`
-  );
-
-  const now = nowIso();
-
-  await runTransaction(participantRef, (current) => {
-    const currentData = current && typeof current === "object" ? current : {};
-
-    return {
-      id: participant.id,
-      name: participant.name || currentData.name || "",
-      email: participant.email || currentData.email || "",
-      isAuthenticated: Boolean(participant.isAuthenticated ?? currentData.isAuthenticated),
-      joinedAt: currentData.joinedAt || now,
-      lastSeenAt: now,
-    };
-  });
-};
+export const upsertParticipant = createUpsertParticipant(toDefectuologiePath);
 
 export const initializeSubgroups = async (sessionId) => {
   if (!sessionId) return;
