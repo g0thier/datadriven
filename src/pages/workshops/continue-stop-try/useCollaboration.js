@@ -19,11 +19,15 @@ import {
   upsertParticipant,
 } from "../../../firebase/workshops/continue-stop-try.service";
 import {
+  asObject,
+  buildVotesByItem,
   buildGridPosition,
   EMPTY_ARRAY,
   EMPTY_OBJECT,
+  normalizeVotesByParticipant,
   normalizePosition,
   sortByCreatedAt,
+  toById,
 } from "../collaboration.shared.js";
 import { useWorkshopCollaborationCore } from "../useWorkshopCollaborationCore.js";
 import { useWorkshopParticipants } from "../useWorkshopParticipants.js";
@@ -133,10 +137,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     );
   }, [rawDescription]);
 
-  const rawNotes =
-    activeState?.notes && typeof activeState.notes === "object"
-      ? activeState.notes
-      : EMPTY_OBJECT;
+  const rawNotes = asObject(activeState?.notes);
 
   const notes = useMemo(() => {
     return Object.entries(rawNotes)
@@ -171,14 +172,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     return grouped;
   }, [notes]);
 
-  const notesById = useMemo(
-    () =>
-      notes.reduce((accumulator, note) => {
-        accumulator[note.id] = note;
-        return accumulator;
-      }, {}),
-    [notes]
-  );
+  const notesById = useMemo(() => toById(notes), [notes]);
 
   const noteIdsSet = useMemo(() => new Set(notes.map((note) => note.id)), [notes]);
 
@@ -189,50 +183,16 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     }, {});
   }, [notes]);
 
-  const rawVotesByParticipant =
-    activeState?.votesByParticipant &&
-    typeof activeState.votesByParticipant === "object"
-      ? activeState.votesByParticipant
-      : EMPTY_OBJECT;
+  const rawVotesByParticipant = asObject(activeState?.votesByParticipant);
+  const votesByParticipant = useMemo(
+    () => normalizeVotesByParticipant(rawVotesByParticipant, { validIdsSet: noteIdsSet }),
+    [noteIdsSet, rawVotesByParticipant]
+  );
 
-  const votesByParticipant = useMemo(() => {
-    const normalizedVotes = {};
-
-    Object.entries(rawVotesByParticipant).forEach(([participantId, votes]) => {
-      if (!votes || typeof votes !== "object") return;
-
-      const cleanedVotes = Object.entries(votes).reduce((accumulator, [noteId, enabled]) => {
-        if (!enabled) return accumulator;
-        if (!noteIdsSet.has(noteId)) return accumulator;
-        accumulator[noteId] = true;
-        return accumulator;
-      }, {});
-
-      if (Object.keys(cleanedVotes).length > 0) {
-        normalizedVotes[participantId] = cleanedVotes;
-      }
-    });
-
-    return normalizedVotes;
-  }, [noteIdsSet, rawVotesByParticipant]);
-
-  const votesByNote = useMemo(() => {
-    const byNote = {};
-
-    Object.entries(votesByParticipant).forEach(([participantId, votes]) => {
-      Object.keys(votes).forEach((noteId) => {
-        if (!noteIdsSet.has(noteId)) return;
-
-        if (!byNote[noteId]) {
-          byNote[noteId] = new Set();
-        }
-
-        byNote[noteId].add(participantId);
-      });
-    });
-
-    return byNote;
-  }, [noteIdsSet, votesByParticipant]);
+  const votesByNote = useMemo(
+    () => buildVotesByItem(votesByParticipant, { validIdsSet: noteIdsSet }),
+    [noteIdsSet, votesByParticipant]
+  );
 
   const myVotes = useMemo(() => {
     const currentParticipantId = participant?.id || "";
@@ -287,21 +247,13 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     });
   }, [notesByColumn, votesByNote]);
 
-  const rawPlaceholders =
-    activeState?.step5Placeholders &&
-    typeof activeState.step5Placeholders === "object"
-      ? activeState.step5Placeholders
-      : EMPTY_OBJECT;
+  const rawPlaceholders = asObject(activeState?.step5Placeholders);
 
   const placeholdersByColumn = useMemo(() => {
     return makeEmptyByColumn((columnId) => String(rawPlaceholders?.[columnId]?.text || ""));
   }, [rawPlaceholders]);
 
-  const remoteParticipants =
-    activeState?.participants &&
-    typeof activeState.participants === "object"
-      ? activeState.participants
-      : EMPTY_OBJECT;
+  const remoteParticipants = asObject(activeState?.participants);
 
   const authoredParticipantIds = useMemo(
     () => notes.map((note) => note.authorId),

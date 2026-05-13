@@ -16,8 +16,13 @@ import {
   upsertParticipant,
 } from "../../../firebase/workshops/mind-mapping.service";
 import {
+  asObject,
+  buildVotesByItem,
+  countVotes,
   EMPTY_OBJECT,
+  normalizeVotesByParticipant,
   sortByCreatedAt,
+  toById,
 } from "../collaboration.shared.js";
 import { useWorkshopCollaborationCore } from "../useWorkshopCollaborationCore.js";
 import { useWorkshopParticipants } from "../useWorkshopParticipants.js";
@@ -46,10 +51,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   });
   const rawDescription = String(activeState?.step1?.description || "");
 
-  const rawNotes =
-    activeState?.notes && typeof activeState.notes === "object"
-      ? activeState.notes
-      : EMPTY_OBJECT;
+  const rawNotes = asObject(activeState?.notes);
 
   const notes = useMemo(() => {
     return Object.entries(rawNotes)
@@ -63,20 +65,9 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       .sort(sortByCreatedAt);
   }, [rawNotes]);
 
-  const notesById = useMemo(
-    () =>
-      notes.reduce((accumulator, note) => {
-        accumulator[note.id] = note;
-        return accumulator;
-      }, {}),
-    [notes]
-  );
+  const notesById = useMemo(() => toById(notes), [notes]);
 
-  const rawCommentsByNote =
-    activeState?.commentsByNote &&
-    typeof activeState.commentsByNote === "object"
-      ? activeState.commentsByNote
-      : EMPTY_OBJECT;
+  const rawCommentsByNote = asObject(activeState?.commentsByNote);
 
   const commentsByNote = useMemo(() => {
     const normalizedComments = {};
@@ -98,10 +89,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     return normalizedComments;
   }, [rawCommentsByNote]);
 
-  const rawConcepts =
-    activeState?.concepts && typeof activeState.concepts === "object"
-      ? activeState.concepts
-      : EMPTY_OBJECT;
+  const rawConcepts = asObject(activeState?.concepts);
 
   const concepts = useMemo(() => {
     return Object.entries(rawConcepts)
@@ -130,14 +118,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       .sort(sortByCreatedAt);
   }, [rawConcepts]);
 
-  const conceptsById = useMemo(
-    () =>
-      concepts.reduce((accumulator, concept) => {
-        accumulator[concept.id] = concept;
-        return accumulator;
-      }, {}),
-    [concepts]
-  );
+  const conceptsById = useMemo(() => toById(concepts), [concepts]);
   const conceptIdsSet = useMemo(() => new Set(concepts.map((concept) => concept.id)), [concepts]);
 
   const ideaKeySet = useMemo(() => {
@@ -156,10 +137,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     return keys;
   }, [commentsByNote]);
 
-  const remoteParticipants =
-    activeState?.participants && typeof activeState.participants === "object"
-      ? activeState.participants
-      : EMPTY_OBJECT;
+  const remoteParticipants = asObject(activeState?.participants);
 
   const authoredParticipantIds = useMemo(
     () => notes.map((note) => note.authorId),
@@ -176,55 +154,17 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
   const currentParticipantId = participant?.id || "";
   const description = rawDescription;
-  const rawVotesByParticipant =
-    activeState?.votesByParticipant &&
-    typeof activeState.votesByParticipant === "object"
-      ? activeState.votesByParticipant
-      : EMPTY_OBJECT;
+  const rawVotesByParticipant = asObject(activeState?.votesByParticipant);
+  const votesByParticipant = useMemo(
+    () => normalizeVotesByParticipant(rawVotesByParticipant, { validIdsSet: conceptIdsSet }),
+    [conceptIdsSet, rawVotesByParticipant]
+  );
 
-  const votesByParticipant = useMemo(() => {
-    const normalizedVotes = {};
-
-    Object.entries(rawVotesByParticipant).forEach(([participantId, votes]) => {
-      if (!votes || typeof votes !== "object") return;
-
-      const voteMap = {};
-
-      Object.entries(votes).forEach(([conceptId, enabled]) => {
-        if (!enabled) return;
-        if (!conceptIdsSet.has(conceptId)) return;
-        voteMap[conceptId] = true;
-      });
-
-      if (Object.keys(voteMap).length > 0) {
-        normalizedVotes[participantId] = voteMap;
-      }
-    });
-
-    return normalizedVotes;
-  }, [conceptIdsSet, rawVotesByParticipant]);
-
-  const votesByConcept = useMemo(() => {
-    const groupedVotes = {};
-    concepts.forEach((concept) => {
-      groupedVotes[concept.id] = new Set();
-    });
-
-    Object.entries(votesByParticipant).forEach(([participantId, votes]) => {
-      Object.entries(votes).forEach(([conceptId, enabled]) => {
-        if (!enabled) return;
-        if (!groupedVotes[conceptId]) return;
-        groupedVotes[conceptId].add(participantId);
-      });
-    });
-
-    return groupedVotes;
-  }, [concepts, votesByParticipant]);
-  const rawReformulationsByConcept =
-    activeState?.reformulationsByConcept &&
-    typeof activeState.reformulationsByConcept === "object"
-      ? activeState.reformulationsByConcept
-      : EMPTY_OBJECT;
+  const votesByConcept = useMemo(
+    () => buildVotesByItem(votesByParticipant, { validIdsSet: conceptIdsSet, seedIds: conceptIdsSet }),
+    [conceptIdsSet, votesByParticipant]
+  );
+  const rawReformulationsByConcept = asObject(activeState?.reformulationsByConcept);
 
   const reformulationsByConcept = useMemo(() => {
     return concepts.reduce((accumulator, concept) => {
@@ -238,13 +178,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   }, [concepts, rawReformulationsByConcept]);
 
   const myVotes = currentParticipantId ? votesByParticipant[currentParticipantId] || EMPTY_OBJECT : EMPTY_OBJECT;
-  const myVoteCount = useMemo(() => {
-    return Object.entries(myVotes).reduce((count, [conceptId, enabled]) => {
-      if (!enabled) return count;
-      if (!conceptIdsSet.has(conceptId)) return count;
-      return count + 1;
-    }, 0);
-  }, [conceptIdsSet, myVotes]);
+  const myVoteCount = useMemo(() => countVotes(myVotes, conceptIdsSet), [conceptIdsSet, myVotes]);
 
   const remainingVotes = Math.max(0, MAX_STICKERS - myVoteCount);
 

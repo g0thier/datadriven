@@ -21,11 +21,16 @@ import {
   upsertParticipant,
 } from "../../../firebase/workshops/paper-brain.service";
 import {
+  asObject,
+  buildVotesByItem,
   buildGridPosition,
+  countVotes,
   EMPTY_ARRAY,
   EMPTY_OBJECT,
+  normalizeVotesByParticipant,
   normalizePosition,
   sortByCreatedAt,
+  toById,
 } from "../collaboration.shared.js";
 import { useWorkshopCollaborationCore } from "../useWorkshopCollaborationCore.js";
 import { useWorkshopParticipants } from "../useWorkshopParticipants.js";
@@ -97,10 +102,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     );
   }, [rawDescription]);
 
-  const rawNotes =
-    activeState?.notes && typeof activeState.notes === "object"
-      ? activeState.notes
-      : EMPTY_OBJECT;
+  const rawNotes = asObject(activeState?.notes);
 
   const notes = useMemo(() => {
     return Object.entries(rawNotes)
@@ -118,20 +120,9 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       .sort(sortByCreatedAt);
   }, [rawNotes]);
 
-  const notesById = useMemo(
-    () =>
-      notes.reduce((accumulator, note) => {
-        accumulator[note.id] = note;
-        return accumulator;
-      }, {}),
-    [notes]
-  );
+  const notesById = useMemo(() => toById(notes), [notes]);
 
-  const rawCommentsByNote =
-    activeState?.commentsByNote &&
-    typeof activeState.commentsByNote === "object"
-      ? activeState.commentsByNote
-      : EMPTY_OBJECT;
+  const rawCommentsByNote = asObject(activeState?.commentsByNote);
 
   const commentsByNote = useMemo(() => {
     const normalizedComments = {};
@@ -153,57 +144,20 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     return normalizedComments;
   }, [rawCommentsByNote]);
 
-  const rawVotesByParticipant =
-    activeState?.votesByParticipant &&
-    typeof activeState.votesByParticipant === "object"
-      ? activeState.votesByParticipant
-      : EMPTY_OBJECT;
-
-  const votesByParticipant = useMemo(() => {
-    const normalizedVotes = {};
-
-    Object.entries(rawVotesByParticipant).forEach(([participantId, votes]) => {
-      if (!votes || typeof votes !== "object") return;
-
-      const cleanedVotes = Object.entries(votes).reduce((accumulator, [noteId, enabled]) => {
-        if (!enabled) return accumulator;
-        accumulator[noteId] = true;
-        return accumulator;
-      }, {});
-
-      if (Object.keys(cleanedVotes).length > 0) {
-        normalizedVotes[participantId] = cleanedVotes;
-      }
-    });
-
-    return normalizedVotes;
-  }, [rawVotesByParticipant]);
+  const rawVotesByParticipant = asObject(activeState?.votesByParticipant);
+  const votesByParticipant = useMemo(
+    () => normalizeVotesByParticipant(rawVotesByParticipant),
+    [rawVotesByParticipant]
+  );
 
   const noteIdsSet = useMemo(() => new Set(notes.map((note) => note.id)), [notes]);
 
-  const votesByNote = useMemo(() => {
-    const byNote = {};
+  const votesByNote = useMemo(
+    () => buildVotesByItem(votesByParticipant, { validIdsSet: noteIdsSet }),
+    [noteIdsSet, votesByParticipant]
+  );
 
-    Object.entries(votesByParticipant).forEach(([participantId, votes]) => {
-      Object.keys(votes).forEach((noteId) => {
-        if (!noteIdsSet.has(noteId)) return;
-
-        if (!byNote[noteId]) {
-          byNote[noteId] = new Set();
-        }
-
-        byNote[noteId].add(participantId);
-      });
-    });
-
-    return byNote;
-  }, [noteIdsSet, votesByParticipant]);
-
-  const remoteParticipants =
-    activeState?.participants &&
-    typeof activeState.participants === "object"
-      ? activeState.participants
-      : EMPTY_OBJECT;
+  const remoteParticipants = asObject(activeState?.participants);
 
   const authoredParticipantIds = useMemo(
     () => notes.map((note) => note.authorId),
@@ -271,12 +225,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       ? votesByParticipant[currentParticipantId]
       : EMPTY_OBJECT;
 
-  const myVoteCount = useMemo(() => {
-    return Object.keys(myVotes).reduce((count, noteId) => {
-      if (!noteIdsSet.has(noteId)) return count;
-      return count + 1;
-    }, 0);
-  }, [myVotes, noteIdsSet]);
+  const myVoteCount = useMemo(() => countVotes(myVotes, noteIdsSet), [myVotes, noteIdsSet]);
 
   const remainingVotes = Math.max(0, MAX_STICKERS - myVoteCount);
 

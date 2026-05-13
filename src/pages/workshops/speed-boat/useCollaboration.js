@@ -24,10 +24,15 @@ import {
   upsertParticipant,
 } from "../../../firebase/workshops/speed-boat.service";
 import {
+  asObject,
+  buildVotesByItem,
   buildGridPosition,
+  countVotes,
   EMPTY_OBJECT,
+  normalizeVotesByParticipant,
   normalizePosition,
   sortByCreatedAt,
+  toById,
 } from "../collaboration.shared.js";
 import { useWorkshopCollaborationCore } from "../useWorkshopCollaborationCore.js";
 import { useWorkshopParticipants } from "../useWorkshopParticipants.js";
@@ -73,32 +78,12 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   });
   const rawDescription = String(activeState?.step1?.description || "");
   const rawObjective = String(activeState?.step2?.objective || "");
-  const rawBrakeNotes =
-    activeState?.notesByType?.brakes &&
-    typeof activeState.notesByType.brakes === "object"
-      ? activeState.notesByType.brakes
-      : EMPTY_OBJECT;
-  const rawLeverNotes =
-    activeState?.notesByType?.levers &&
-    typeof activeState.notesByType.levers === "object"
-      ? activeState.notesByType.levers
-      : EMPTY_OBJECT;
-  const rawVotesByParticipant =
-    activeState?.votesByParticipant &&
-    typeof activeState.votesByParticipant === "object"
-      ? activeState.votesByParticipant
-      : EMPTY_OBJECT;
-  const rawActionsByBrake =
-    activeState?.actionsByBrake &&
-    typeof activeState.actionsByBrake === "object"
-      ? activeState.actionsByBrake
-      : EMPTY_OBJECT;
+  const rawBrakeNotes = asObject(activeState?.notesByType?.brakes);
+  const rawLeverNotes = asObject(activeState?.notesByType?.levers);
+  const rawVotesByParticipant = asObject(activeState?.votesByParticipant);
+  const rawActionsByBrake = asObject(activeState?.actionsByBrake);
 
-  const remoteParticipants =
-    activeState?.participants &&
-    typeof activeState.participants === "object"
-      ? activeState.participants
-      : EMPTY_OBJECT;
+  const remoteParticipants = asObject(activeState?.participants);
 
   const brakeNotes = useMemo(() => {
     return Object.entries(rawBrakeNotes)
@@ -132,25 +117,10 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       .sort(sortByCreatedAt);
   }, [rawLeverNotes]);
 
-  const votesByParticipant = useMemo(() => {
-    const normalizedVotes = {};
-
-    Object.entries(rawVotesByParticipant).forEach(([participantId, votes]) => {
-      if (!votes || typeof votes !== "object") return;
-
-      const cleanedVotes = Object.entries(votes).reduce((accumulator, [noteId, enabled]) => {
-        if (!enabled) return accumulator;
-        accumulator[noteId] = true;
-        return accumulator;
-      }, {});
-
-      if (Object.keys(cleanedVotes).length > 0) {
-        normalizedVotes[participantId] = cleanedVotes;
-      }
-    });
-
-    return normalizedVotes;
-  }, [rawVotesByParticipant]);
+  const votesByParticipant = useMemo(
+    () => normalizeVotesByParticipant(rawVotesByParticipant),
+    [rawVotesByParticipant]
+  );
 
   const actionsByBrake = useMemo(() => {
     return Object.entries(rawActionsByBrake).reduce((accumulator, [brakeId, payload]) => {
@@ -164,41 +134,14 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
   const noteIdsSet = useMemo(() => new Set(brakeNotes.map((note) => note.id)), [brakeNotes]);
 
-  const votesByNote = useMemo(() => {
-    const byNote = {};
-
-    Object.entries(votesByParticipant).forEach(([participantId, votes]) => {
-      Object.keys(votes).forEach((noteId) => {
-        if (!noteIdsSet.has(noteId)) return;
-
-        if (!byNote[noteId]) {
-          byNote[noteId] = new Set();
-        }
-
-        byNote[noteId].add(participantId);
-      });
-    });
-
-    return byNote;
-  }, [noteIdsSet, votesByParticipant]);
-
-  const brakeNotesById = useMemo(
-    () =>
-      brakeNotes.reduce((accumulator, note) => {
-        accumulator[note.id] = note;
-        return accumulator;
-      }, {}),
-    [brakeNotes]
+  const votesByNote = useMemo(
+    () => buildVotesByItem(votesByParticipant, { validIdsSet: noteIdsSet }),
+    [noteIdsSet, votesByParticipant]
   );
 
-  const leverNotesById = useMemo(
-    () =>
-      leverNotes.reduce((accumulator, note) => {
-        accumulator[note.id] = note;
-        return accumulator;
-      }, {}),
-    [leverNotes]
-  );
+  const brakeNotesById = useMemo(() => toById(brakeNotes), [brakeNotes]);
+
+  const leverNotesById = useMemo(() => toById(leverNotes), [leverNotes]);
 
   const authoredParticipantIds = useMemo(
     () => [
@@ -232,12 +175,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       ? votesByParticipant[currentParticipantId]
       : EMPTY_OBJECT;
 
-  const myVoteCount = useMemo(() => {
-    return Object.keys(myVotes).reduce((count, noteId) => {
-      if (!noteIdsSet.has(noteId)) return count;
-      return count + 1;
-    }, 0);
-  }, [myVotes, noteIdsSet]);
+  const myVoteCount = useMemo(() => countVotes(myVotes, noteIdsSet), [myVotes, noteIdsSet]);
 
   const remainingVotes = Math.max(0, MAX_STICKERS - myVoteCount);
 

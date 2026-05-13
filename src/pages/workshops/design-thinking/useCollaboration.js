@@ -29,11 +29,16 @@ import {
   upsertParticipant,
 } from "../../../firebase/workshops/design-thinking.service";
 import {
+  asObject,
+  buildVotesByItem,
   buildGridPosition,
+  countVotes,
   EMPTY_ARRAY,
   EMPTY_OBJECT,
+  normalizeVotesByParticipant,
   normalizePosition,
   sortByCreatedAt,
+  toById,
 } from "../collaboration.shared.js";
 import { useWorkshopCollaborationCore } from "../useWorkshopCollaborationCore.js";
 import { useWorkshopParticipants } from "../useWorkshopParticipants.js";
@@ -152,36 +157,12 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     );
   }, [rawConclusion]);
 
-  const remoteParticipants =
-    activeState?.participants &&
-    typeof activeState.participants === "object"
-      ? activeState.participants
-      : EMPTY_OBJECT;
-  const rawSharedNotes =
-    activeState?.sharedNotes &&
-    typeof activeState.sharedNotes === "object"
-      ? activeState.sharedNotes
-      : EMPTY_OBJECT;
-  const rawIdeationNotes =
-    activeState?.ideation?.notes &&
-    typeof activeState.ideation.notes === "object"
-      ? activeState.ideation.notes
-      : EMPTY_OBJECT;
-  const rawIdeationCommentsByNote =
-    activeState?.ideation?.commentsByNote &&
-    typeof activeState.ideation.commentsByNote === "object"
-      ? activeState.ideation.commentsByNote
-      : EMPTY_OBJECT;
-  const rawIdeationVotesByParticipant =
-    activeState?.ideation?.votesByParticipant &&
-    typeof activeState.ideation.votesByParticipant === "object"
-      ? activeState.ideation.votesByParticipant
-      : EMPTY_OBJECT;
-  const rawPrototypeFeedbackNotes =
-    activeState?.prototypeFeedback?.notes &&
-    typeof activeState.prototypeFeedback.notes === "object"
-      ? activeState.prototypeFeedback.notes
-      : EMPTY_OBJECT;
+  const remoteParticipants = asObject(activeState?.participants);
+  const rawSharedNotes = asObject(activeState?.sharedNotes);
+  const rawIdeationNotes = asObject(activeState?.ideation?.notes);
+  const rawIdeationCommentsByNote = asObject(activeState?.ideation?.commentsByNote);
+  const rawIdeationVotesByParticipant = asObject(activeState?.ideation?.votesByParticipant);
+  const rawPrototypeFeedbackNotes = asObject(activeState?.prototypeFeedback?.notes);
 
   const sharedNotes = useMemo(() => {
     return Object.entries(rawSharedNotes)
@@ -195,12 +176,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       .sort(sortByCreatedAt);
   }, [rawSharedNotes]);
 
-  const sharedNotesById = useMemo(() => {
-    return sharedNotes.reduce((accumulator, note) => {
-      accumulator[note.id] = note;
-      return accumulator;
-    }, {});
-  }, [sharedNotes]);
+  const sharedNotesById = useMemo(() => toById(sharedNotes), [sharedNotes]);
 
   const prototypeFeedbackNotes = useMemo(() => {
     return Object.entries(rawPrototypeFeedbackNotes)
@@ -221,12 +197,10 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       .sort(sortByCreatedAt);
   }, [rawPrototypeFeedbackNotes]);
 
-  const prototypeFeedbackNotesById = useMemo(() => {
-    return prototypeFeedbackNotes.reduce((accumulator, note) => {
-      accumulator[note.id] = note;
-      return accumulator;
-    }, {});
-  }, [prototypeFeedbackNotes]);
+  const prototypeFeedbackNotesById = useMemo(
+    () => toById(prototypeFeedbackNotes),
+    [prototypeFeedbackNotes]
+  );
 
   const prototypeFeedbackNotesByColumn = useMemo(() => {
     const grouped = PROTOTYPE_FEEDBACK_COLUMNS.reduce((accumulator, column) => {
@@ -258,12 +232,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       .sort(sortByCreatedAt);
   }, [rawIdeationNotes]);
 
-  const notesById = useMemo(() => {
-    return notes.reduce((accumulator, note) => {
-      accumulator[note.id] = note;
-      return accumulator;
-    }, {});
-  }, [notes]);
+  const notesById = useMemo(() => toById(notes), [notes]);
 
   const commentsByNote = useMemo(() => {
     const normalizedComments = {};
@@ -285,45 +254,17 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     return normalizedComments;
   }, [rawIdeationCommentsByNote]);
 
-  const votesByParticipant = useMemo(() => {
-    const normalizedVotes = {};
-
-    Object.entries(rawIdeationVotesByParticipant).forEach(([participantId, votes]) => {
-      if (!votes || typeof votes !== "object") return;
-
-      const cleanedVotes = Object.entries(votes).reduce((accumulator, [noteId, enabled]) => {
-        if (!enabled) return accumulator;
-        accumulator[noteId] = true;
-        return accumulator;
-      }, {});
-
-      if (Object.keys(cleanedVotes).length > 0) {
-        normalizedVotes[participantId] = cleanedVotes;
-      }
-    });
-
-    return normalizedVotes;
-  }, [rawIdeationVotesByParticipant]);
+  const votesByParticipant = useMemo(
+    () => normalizeVotesByParticipant(rawIdeationVotesByParticipant),
+    [rawIdeationVotesByParticipant]
+  );
 
   const noteIdsSet = useMemo(() => new Set(notes.map((note) => note.id)), [notes]);
 
-  const votesByNote = useMemo(() => {
-    const byNote = {};
-
-    Object.entries(votesByParticipant).forEach(([participantId, votes]) => {
-      Object.keys(votes).forEach((noteId) => {
-        if (!noteIdsSet.has(noteId)) return;
-
-        if (!byNote[noteId]) {
-          byNote[noteId] = new Set();
-        }
-
-        byNote[noteId].add(participantId);
-      });
-    });
-
-    return byNote;
-  }, [noteIdsSet, votesByParticipant]);
+  const votesByNote = useMemo(
+    () => buildVotesByItem(votesByParticipant, { validIdsSet: noteIdsSet }),
+    [noteIdsSet, votesByParticipant]
+  );
 
   const authoredParticipantIds = useMemo(
     () => [
@@ -356,12 +297,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       ? votesByParticipant[currentParticipantId]
       : EMPTY_OBJECT;
 
-  const myVoteCount = useMemo(() => {
-    return Object.keys(myVotes).reduce((count, noteId) => {
-      if (!noteIdsSet.has(noteId)) return count;
-      return count + 1;
-    }, 0);
-  }, [myVotes, noteIdsSet]);
+  const myVoteCount = useMemo(() => countVotes(myVotes, noteIdsSet), [myVotes, noteIdsSet]);
 
   const remainingVotes = Math.max(0, MAX_STICKERS - myVoteCount);
 

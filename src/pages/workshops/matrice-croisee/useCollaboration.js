@@ -26,9 +26,14 @@ import {
   upsertParticipant,
 } from "../../../firebase/workshops/matrice-croisee.service";
 import {
+  asObject,
+  buildVotesByItem,
+  countVotes,
   EMPTY_ARRAY,
   EMPTY_OBJECT,
+  normalizeVotesByParticipant,
   sortByCreatedAt,
+  toById,
 } from "../collaboration.shared.js";
 import { useWorkshopCollaborationCore } from "../useWorkshopCollaborationCore.js";
 import { useWorkshopParticipants } from "../useWorkshopParticipants.js";
@@ -70,26 +75,10 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   });
   const rawDescription = String(activeState?.step1?.description || "");
   const rawConcept = String(activeState?.step5?.concept?.text || "");
-  const rawColumnItems =
-    activeState?.step2?.itemsColumns &&
-    typeof activeState.step2.itemsColumns === "object"
-      ? activeState.step2.itemsColumns
-      : EMPTY_OBJECT;
-  const rawRowItems =
-    activeState?.step2?.itemsRows &&
-    typeof activeState.step2.itemsRows === "object"
-      ? activeState.step2.itemsRows
-      : EMPTY_OBJECT;
-  const rawCellNotesByCell =
-    activeState?.step3?.notesByCell &&
-    typeof activeState.step3.notesByCell === "object"
-      ? activeState.step3.notesByCell
-      : EMPTY_OBJECT;
-  const rawVotesByParticipant =
-    activeState?.votesByParticipant &&
-    typeof activeState.votesByParticipant === "object"
-      ? activeState.votesByParticipant
-      : EMPTY_OBJECT;
+  const rawColumnItems = asObject(activeState?.step2?.itemsColumns);
+  const rawRowItems = asObject(activeState?.step2?.itemsRows);
+  const rawCellNotesByCell = asObject(activeState?.step3?.notesByCell);
+  const rawVotesByParticipant = asObject(activeState?.votesByParticipant);
 
   useEffect(() => {
     setLastNonEmptyDescription("");
@@ -130,23 +119,9 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       .sort(sortByCreatedAt);
   }, [rawRowItems]);
 
-  const columnItemsById = useMemo(
-    () =>
-      columnItems.reduce((accumulator, item) => {
-        accumulator[item.id] = item;
-        return accumulator;
-      }, {}),
-    [columnItems]
-  );
+  const columnItemsById = useMemo(() => toById(columnItems), [columnItems]);
 
-  const rowItemsById = useMemo(
-    () =>
-      rowItems.reduce((accumulator, item) => {
-        accumulator[item.id] = item;
-        return accumulator;
-      }, {}),
-    [rowItems]
-  );
+  const rowItemsById = useMemo(() => toById(rowItems), [rowItems]);
 
   const cellNotesByKey = useMemo(() => {
     const normalizedByKey = {};
@@ -171,25 +146,10 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     return normalizedByKey;
   }, [rawCellNotesByCell]);
 
-  const votesByParticipant = useMemo(() => {
-    const normalizedVotes = {};
-
-    Object.entries(rawVotesByParticipant).forEach(([participantId, votes]) => {
-      if (!votes || typeof votes !== "object") return;
-
-      const cleanedVotes = Object.entries(votes).reduce((accumulator, [noteId, enabled]) => {
-        if (!enabled) return accumulator;
-        accumulator[noteId] = true;
-        return accumulator;
-      }, {});
-
-      if (Object.keys(cleanedVotes).length > 0) {
-        normalizedVotes[participantId] = cleanedVotes;
-      }
-    });
-
-    return normalizedVotes;
-  }, [rawVotesByParticipant]);
+  const votesByParticipant = useMemo(
+    () => normalizeVotesByParticipant(rawVotesByParticipant),
+    [rawVotesByParticipant]
+  );
 
   const noteIdsSet = useMemo(() => {
     const ids = new Set();
@@ -207,23 +167,10 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     return ids;
   }, [cellNotesByKey]);
 
-  const votesByNote = useMemo(() => {
-    const byNote = {};
-
-    Object.entries(votesByParticipant).forEach(([participantId, votes]) => {
-      Object.keys(votes).forEach((noteId) => {
-        if (!noteIdsSet.has(noteId)) return;
-
-        if (!byNote[noteId]) {
-          byNote[noteId] = new Set();
-        }
-
-        byNote[noteId].add(participantId);
-      });
-    });
-
-    return byNote;
-  }, [noteIdsSet, votesByParticipant]);
+  const votesByNote = useMemo(
+    () => buildVotesByItem(votesByParticipant, { validIdsSet: noteIdsSet }),
+    [noteIdsSet, votesByParticipant]
+  );
 
   const selectedTopIdea = useMemo(() => {
     const rankedNotes = [];
@@ -296,11 +243,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     };
   }, [cellNotesByKey, columnItems, rowItems, votesByNote]);
 
-  const remoteParticipants =
-    activeState?.participants &&
-    typeof activeState.participants === "object"
-      ? activeState.participants
-      : EMPTY_OBJECT;
+  const remoteParticipants = asObject(activeState?.participants);
 
   const { participants, getParticipantLabel } = useWorkshopParticipants({
     sessionGuests,
@@ -318,13 +261,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     if (!currentParticipantId) return EMPTY_OBJECT;
     return votesByParticipant[currentParticipantId] || EMPTY_OBJECT;
   }, [currentParticipantId, votesByParticipant]);
-  const myVoteCount = useMemo(() => {
-    return Object.entries(myVotes).reduce((count, [noteId, enabled]) => {
-      if (!enabled) return count;
-      if (!noteIdsSet.has(noteId)) return count;
-      return count + 1;
-    }, 0);
-  }, [myVotes, noteIdsSet]);
+  const myVoteCount = useMemo(() => countVotes(myVotes, noteIdsSet), [myVotes, noteIdsSet]);
   const remainingVotes = Math.max(0, MAX_STICKERS - myVoteCount);
 
   useEffect(() => {
