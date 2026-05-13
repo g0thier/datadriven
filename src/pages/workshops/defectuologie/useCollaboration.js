@@ -17,18 +17,22 @@ import {
   upsertParticipant,
 } from "../../../firebase/workshops/defectuologie.service";
 import {
-  buildVotesByItem,
   hasTopVoteTie,
   pickSelectedItem,
   rankItemsWithVotes,
 } from "./defectuologie.helpers";
 import {
+  asObject,
+  buildVotesByItem,
+  countVotes,
   EMPTY_ARRAY,
   EMPTY_OBJECT,
   makeParticipantFallbackLabel,
   normalizeParticipantToSubgroup,
+  normalizeVotesByParticipant,
   parseGroupIndex,
   sortByCreatedAt,
+  toById,
 } from "../collaboration.shared.js";
 import { useWorkshopCollaborationCore } from "../useWorkshopCollaborationCore.js";
 import { useWorkshopParticipants } from "../useWorkshopParticipants.js";
@@ -94,7 +98,9 @@ const normalizeSubgroups = (value = {}) => {
 };
 
 const normalizeItemsBySubgroup = (value = {}) => {
-  if (!value || typeof value !== "object") {
+  const safeItemsBySubgroup = asObject(value);
+
+  if (Object.keys(safeItemsBySubgroup).length === 0) {
     return {
       items: EMPTY_ARRAY,
       itemsBySubgroup: EMPTY_OBJECT,
@@ -105,7 +111,7 @@ const normalizeItemsBySubgroup = (value = {}) => {
   const itemsBySubgroup = {};
   const items = [];
 
-  Object.entries(value).forEach(([rawSubgroupId, rawItems]) => {
+  Object.entries(safeItemsBySubgroup).forEach(([rawSubgroupId, rawItems]) => {
     const subgroupId = String(rawSubgroupId || "").trim();
     if (!subgroupId) return;
     if (!rawItems || typeof rawItems !== "object") return;
@@ -126,38 +132,13 @@ const normalizeItemsBySubgroup = (value = {}) => {
     items.push(...subgroupItems);
   });
 
-  const itemsById = items.reduce((accumulator, item) => {
-    accumulator[item.id] = item;
-    return accumulator;
-  }, {});
+  const itemsById = toById(items);
 
   return {
     items,
     itemsBySubgroup,
     itemsById,
   };
-};
-
-const normalizeVotesByParticipant = (value = {}, validIdsSet = null) => {
-  if (!value || typeof value !== "object") return {};
-
-  return Object.entries(value).reduce((accumulator, [participantId, votes]) => {
-    if (!votes || typeof votes !== "object") return accumulator;
-
-    const cleanedVotes = Object.entries(votes).reduce((votesAccumulator, [itemId, enabled]) => {
-      if (!enabled) return votesAccumulator;
-      if (validIdsSet instanceof Set && !validIdsSet.has(itemId)) return votesAccumulator;
-
-      votesAccumulator[itemId] = true;
-      return votesAccumulator;
-    }, {});
-
-    if (Object.keys(cleanedVotes).length > 0) {
-      accumulator[participantId] = cleanedVotes;
-    }
-
-    return accumulator;
-  }, {});
 };
 
 const buildStoredSubgroupKey = (sessionId, participantId) => {
@@ -357,10 +338,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     };
   }, [effectiveParticipant?.id, isEnabled, sessionId, writeReady]);
 
-  const remoteParticipants =
-    activeState?.participants && typeof activeState.participants === "object"
-      ? activeState.participants
-      : EMPTY_OBJECT;
+  const remoteParticipants = asObject(activeState?.participants);
 
   const participantToSubgroup = useMemo(
     () => normalizeParticipantToSubgroup(activeState?.participantToSubgroup),
@@ -369,12 +347,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
   const subgroups = useMemo(() => normalizeSubgroups(activeState?.subgroups), [activeState?.subgroups]);
 
-  const subgroupById = useMemo(() => {
-    return subgroups.reduce((accumulator, subgroup) => {
-      accumulator[subgroup.id] = subgroup;
-      return accumulator;
-    }, {});
-  }, [subgroups]);
+  const subgroupById = useMemo(() => toById(subgroups), [subgroups]);
 
   const description = rawDescription || lastNonEmptyDescription;
 
@@ -426,34 +399,26 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   const defectIdsSet = useMemo(() => new Set(defects.map((defect) => defect.id)), [defects]);
   const solutionIdsSet = useMemo(() => new Set(solutions.map((solution) => solution.id)), [solutions]);
 
-  const rawDefectVotesByParticipant =
-    activeState?.defectVotesByParticipant && typeof activeState.defectVotesByParticipant === "object"
-      ? activeState.defectVotesByParticipant
-      : EMPTY_OBJECT;
-
-  const rawSolutionVotesByParticipant =
-    activeState?.solutionVotesByParticipant &&
-    typeof activeState.solutionVotesByParticipant === "object"
-      ? activeState.solutionVotesByParticipant
-      : EMPTY_OBJECT;
+  const rawDefectVotesByParticipant = asObject(activeState?.defectVotesByParticipant);
+  const rawSolutionVotesByParticipant = asObject(activeState?.solutionVotesByParticipant);
 
   const defectVotesByParticipant = useMemo(
-    () => normalizeVotesByParticipant(rawDefectVotesByParticipant, defectIdsSet),
+    () => normalizeVotesByParticipant(rawDefectVotesByParticipant, { validIdsSet: defectIdsSet }),
     [defectIdsSet, rawDefectVotesByParticipant]
   );
 
   const solutionVotesByParticipant = useMemo(
-    () => normalizeVotesByParticipant(rawSolutionVotesByParticipant, solutionIdsSet),
+    () => normalizeVotesByParticipant(rawSolutionVotesByParticipant, { validIdsSet: solutionIdsSet }),
     [rawSolutionVotesByParticipant, solutionIdsSet]
   );
 
   const defectVotesByItem = useMemo(
-    () => buildVotesByItem(defectVotesByParticipant, defectIdsSet),
+    () => buildVotesByItem(defectVotesByParticipant, { validIdsSet: defectIdsSet }),
     [defectIdsSet, defectVotesByParticipant]
   );
 
   const solutionVotesByItem = useMemo(
-    () => buildVotesByItem(solutionVotesByParticipant, solutionIdsSet),
+    () => buildVotesByItem(solutionVotesByParticipant, { validIdsSet: solutionIdsSet }),
     [solutionIdsSet, solutionVotesByParticipant]
   );
 
@@ -725,19 +690,15 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       ? solutionVotesByParticipant[currentParticipantId]
       : EMPTY_OBJECT;
 
-  const myDefectVoteCount = useMemo(() => {
-    return Object.keys(myDefectVotes).reduce((count, itemId) => {
-      if (!activeDefectIdsSet.has(itemId)) return count;
-      return count + 1;
-    }, 0);
-  }, [activeDefectIdsSet, myDefectVotes]);
+  const myDefectVoteCount = useMemo(
+    () => countVotes(myDefectVotes, activeDefectIdsSet),
+    [activeDefectIdsSet, myDefectVotes]
+  );
 
-  const mySolutionVoteCount = useMemo(() => {
-    return Object.keys(mySolutionVotes).reduce((count, itemId) => {
-      if (!activeSolutionIdsSet.has(itemId)) return count;
-      return count + 1;
-    }, 0);
-  }, [activeSolutionIdsSet, mySolutionVotes]);
+  const mySolutionVoteCount = useMemo(
+    () => countVotes(mySolutionVotes, activeSolutionIdsSet),
+    [activeSolutionIdsSet, mySolutionVotes]
+  );
 
   const remainingDefectVotes = Math.max(0, MAX_STICKERS_PER_STEP - myDefectVoteCount);
   const remainingSolutionVotes = Math.max(0, MAX_STICKERS_PER_STEP - mySolutionVoteCount);
@@ -793,10 +754,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   const defectTopTie = Boolean(defectTopTieBySubgroup[effectiveSubgroupId]);
   const solutionTopTie = Boolean(solutionTopTieBySubgroup[effectiveSubgroupId]);
 
-  const rawProposalsBySubgroup =
-    activeState?.proposalsBySubgroup && typeof activeState.proposalsBySubgroup === "object"
-      ? activeState.proposalsBySubgroup
-      : EMPTY_OBJECT;
+  const rawProposalsBySubgroup = asObject(activeState?.proposalsBySubgroup);
 
   const proposalsBySubgroup = useMemo(() => {
     return subgroups.reduce((accumulator, subgroup) => {

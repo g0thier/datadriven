@@ -31,11 +31,13 @@ import {
   upsertParticipant,
 } from "../../../firebase/workshops/world-coffee.service";
 import {
+  asObject,
   EMPTY_ARRAY,
   EMPTY_OBJECT,
   normalizeParticipantToSubgroup,
   parseGroupIndex,
   sortByCreatedAt,
+  toById,
 } from "../collaboration.shared.js";
 import { useWorkshopCollaborationCore } from "../useWorkshopCollaborationCore.js";
 import { useWorkshopParticipants } from "../useWorkshopParticipants.js";
@@ -129,10 +131,7 @@ const normalizeIdeasBySubgroup = (value = {}) => {
     ideas.push(...subgroupIdeas);
   });
 
-  const ideasById = ideas.reduce((accumulator, idea) => {
-    accumulator[idea.id] = idea;
-    return accumulator;
-  }, {});
+  const ideasById = toById(ideas);
 
   return {
     ideas,
@@ -240,10 +239,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     upsertParticipant: upsertParticipant,
   });
 
-  const rawDescriptions =
-    activeState?.descriptions && typeof activeState.descriptions === "object"
-      ? activeState.descriptions
-      : EMPTY_OBJECT;
+  const rawDescriptions = asObject(activeState?.descriptions);
   const descriptions = useMemo(() => {
     return Object.entries(rawDescriptions)
       .map(([descriptionId, description]) => ({
@@ -257,19 +253,9 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       .sort(sortByCreatedAt);
   }, [rawDescriptions]);
 
-  const descriptionsById = useMemo(
-    () =>
-      descriptions.reduce((accumulator, description) => {
-        accumulator[description.id] = description;
-        return accumulator;
-      }, {}),
-    [descriptions]
-  );
+  const descriptionsById = useMemo(() => toById(descriptions), [descriptions]);
 
-  const remoteParticipants =
-    activeState?.participants && typeof activeState.participants === "object"
-      ? activeState.participants
-      : EMPTY_OBJECT;
+  const remoteParticipants = asObject(activeState?.participants);
 
   const { participants, getParticipantLabel } = useWorkshopParticipants({
     sessionGuests,
@@ -286,11 +272,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     [descriptions]
   );
 
-  const rawFacilitatorByDescriptionId =
-    activeState?.facilitatorByDescriptionId &&
-    typeof activeState.facilitatorByDescriptionId === "object"
-      ? activeState.facilitatorByDescriptionId
-      : EMPTY_OBJECT;
+  const rawFacilitatorByDescriptionId = asObject(activeState?.facilitatorByDescriptionId);
   const facilitatorByDescriptionId = useMemo(() => {
     const nextMapping = {};
 
@@ -313,23 +295,11 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   }, [descriptions, facilitatorByDescriptionId]);
   const hasUnassignedDescriptions = descriptionsWithoutFacilitatorCount > 0;
 
-  const rawSubgroups =
-    activeState?.subgroups && typeof activeState.subgroups === "object"
-      ? activeState.subgroups
-      : EMPTY_OBJECT;
+  const rawSubgroups = asObject(activeState?.subgroups);
   const subgroups = useMemo(() => normalizeSubgroups(rawSubgroups), [rawSubgroups]);
-  const subgroupById = useMemo(() => {
-    return subgroups.reduce((accumulator, subgroup) => {
-      accumulator[subgroup.id] = subgroup;
-      return accumulator;
-    }, {});
-  }, [subgroups]);
+  const subgroupById = useMemo(() => toById(subgroups), [subgroups]);
 
-  const rawParticipantToSubgroup =
-    activeState?.participantToSubgroup &&
-    typeof activeState.participantToSubgroup === "object"
-      ? activeState.participantToSubgroup
-      : EMPTY_OBJECT;
+  const rawParticipantToSubgroup = asObject(activeState?.participantToSubgroup);
   const participantToSubgroup = useMemo(
     () => normalizeParticipantToSubgroup(rawParticipantToSubgroup),
     [rawParticipantToSubgroup]
@@ -341,10 +311,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     return descriptionsById[activeSubgroup.descriptionId] || null;
   }, [activeSubgroup?.descriptionId, descriptionsById]);
 
-  const rawIdeasBySubgroup =
-    activeState?.ideasBySubgroup && typeof activeState.ideasBySubgroup === "object"
-      ? activeState.ideasBySubgroup
-      : EMPTY_OBJECT;
+  const rawIdeasBySubgroup = asObject(activeState?.ideasBySubgroup);
   const {
     ideas,
     ideasBySubgroup,
@@ -357,31 +324,18 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     () => new Set(activeIdeas.map((idea) => idea.id)),
     [activeIdeas]
   );
-  const ideaIdsInActiveSubgroup = useMemo(
-    () => new Set(activeIdeas.map((idea) => idea.id)),
-    [activeIdeas]
-  );
 
-  const rawCommentsByIdea =
-    activeState?.commentsByIdea && typeof activeState.commentsByIdea === "object"
-      ? activeState.commentsByIdea
-      : EMPTY_OBJECT;
+  const rawCommentsByIdea = asObject(activeState?.commentsByIdea);
   const commentsByIdea = useMemo(
     () => normalizeCommentsByIdea(rawCommentsByIdea),
     [rawCommentsByIdea]
   );
-  const rawRepliesByComment =
-    activeState?.repliesByComment && typeof activeState.repliesByComment === "object"
-      ? activeState.repliesByComment
-      : EMPTY_OBJECT;
+  const rawRepliesByComment = asObject(activeState?.repliesByComment);
   const repliesByComment = useMemo(
     () => normalizeRepliesByComment(rawRepliesByComment),
     [rawRepliesByComment]
   );
-  const rawSynthesisBySubgroup =
-    activeState?.synthesisBySubgroup && typeof activeState.synthesisBySubgroup === "object"
-      ? activeState.synthesisBySubgroup
-      : EMPTY_OBJECT;
+  const rawSynthesisBySubgroup = asObject(activeState?.synthesisBySubgroup);
   const synthesisBySubgroup = useMemo(
     () => normalizeSynthesisBySubgroup(rawSynthesisBySubgroup),
     [rawSynthesisBySubgroup]
@@ -775,7 +729,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     async (ideaId, commentId, text) => {
       if (!isEnabled || !sessionId || !participantReady || !ideaId || !commentId) return;
       if (!subgroupId) return;
-      if (!ideaIdsInActiveSubgroup.has(ideaId)) return;
+      if (!activeIdeaIds.has(ideaId)) return;
 
       const comment = (commentsByIdea[ideaId] || EMPTY_ARRAY).find(
         (currentComment) => currentComment.id === commentId
@@ -795,7 +749,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     },
     [
       commentsByIdea,
-      ideaIdsInActiveSubgroup,
+      activeIdeaIds,
       isEnabled,
       participantReady,
       sessionId,
@@ -808,7 +762,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     async (ideaId, commentId) => {
       if (!isEnabled || !sessionId || !participantReady || !ideaId || !commentId) return;
       if (!subgroupId) return;
-      if (!ideaIdsInActiveSubgroup.has(ideaId)) return;
+      if (!activeIdeaIds.has(ideaId)) return;
 
       const comment = (commentsByIdea[ideaId] || EMPTY_ARRAY).find(
         (currentComment) => currentComment.id === commentId
@@ -824,7 +778,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     },
     [
       commentsByIdea,
-      ideaIdsInActiveSubgroup,
+      activeIdeaIds,
       isEnabled,
       participantReady,
       sessionId,
