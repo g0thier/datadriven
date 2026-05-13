@@ -65,7 +65,7 @@ export const upsertParticipant = async (sessionId, participant = {}) => {
   });
 };
 
-export const setStep1Description = async (
+export const setDescription = async (
   sessionId,
   participantId,
   description,

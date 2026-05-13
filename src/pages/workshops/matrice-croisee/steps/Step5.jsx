@@ -27,7 +27,7 @@ const getRowPlaceholder = (index) => ROW_PLACEHOLDERS[index] || `Rang ${index + 
 export default function Step5({ step, sessionTitle, collaboration }) {
   const isLoading = Boolean(collaboration?.isLoading);
   const syncError = collaboration?.syncError || "";
-  const step1Description = String(collaboration?.step1Description || "").trim() || "Le sujet de l'atelier sera affiché ici dès qu'il sera renseigné.";
+  const description = String(collaboration?.description || "").trim() || "Le sujet de l'atelier sera affiché ici dès qu'il sera renseigné.";
   const concept = String(collaboration?.concept || "");
   const selectedTopIdea = collaboration?.selectedTopIdea || null;
 
@@ -52,7 +52,7 @@ export default function Step5({ step, sessionTitle, collaboration }) {
   return (
     <WorkshopStepLayout title={sessionTitle} stepLabel={step.label} description={step.description}>
       <div className="bg-white rounded-2xl shadow-md p-6 mb-4">
-        <p className="text-gray-600 mb-1 text-sm">{step1Description}</p>
+        <p className="text-gray-600 mb-1 text-sm">{description}</p>
       </div>
 
       <WorkshopSyncErrorAlert message={syncError} className="mb-3" />

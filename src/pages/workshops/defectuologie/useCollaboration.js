@@ -7,8 +7,8 @@ import {
   initializeSubgroups,
   removeDefect as removeDefectService,
   removeSolution as removeSolutionService,
-  setStep1Description as setStep1DescriptionService,
-  setStep6Proposal as setStep6ProposalService,
+  setDescription as setDescriptionService,
+  setProposal as setProposalService,
   subscribeSession,
   toggleDefectVote as toggleDefectVoteService,
   toggleSolutionVote as toggleSolutionVoteService,
@@ -197,12 +197,12 @@ const writeStoredSubgroupId = (sessionId, participantId, subgroupId) => {
 export function useCollaboration({ sessionId, session, workshopId }) {
   const isEnabled = Boolean(sessionId) && workshopId === "defectuologie";
 
-  const [lastNonEmptyStep1Description, setLastNonEmptyStep1Description] = useState("");
+  const [lastNonEmptyDescription, setLastNonEmptyDescription] = useState("");
   const [isInitialServerReadReady, setIsInitialServerReadReady] = useState(false);
   const [lockedParticipantId, setLockedParticipantId] = useState("");
   const [lockedSubgroupId, setLockedSubgroupId] = useState("");
   const [lastContentfulSubgroupId, setLastContentfulSubgroupId] = useState("");
-  const step1RestoreInFlightRef = useRef(false);
+  const descriptionRestoreInFlightRef = useRef(false);
   const subgroupRestoreInFlightRef = useRef(false);
   const lastKnownSubgroupByParticipantRef = useRef({});
   const lastMissingSubgroupWarningKeyRef = useRef("");
@@ -297,24 +297,24 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     };
   }, [isEnabled, sessionId, setSessionError]);
 
-  const rawStep1Description = String(activeState?.step1?.description || "");
+  const rawDescription = String(activeState?.step1?.description || "");
 
   useEffect(() => {
-    setLastNonEmptyStep1Description("");
+    setLastNonEmptyDescription("");
     setLockedSubgroupId("");
     setLastContentfulSubgroupId("");
-    step1RestoreInFlightRef.current = false;
+    descriptionRestoreInFlightRef.current = false;
     subgroupRestoreInFlightRef.current = false;
     lastKnownSubgroupByParticipantRef.current = {};
   }, [isEnabled, sessionId]);
 
   useEffect(() => {
-    if (!rawStep1Description) return;
+    if (!rawDescription) return;
 
-    setLastNonEmptyStep1Description((currentValue) =>
-      currentValue === rawStep1Description ? currentValue : rawStep1Description
+    setLastNonEmptyDescription((currentValue) =>
+      currentValue === rawDescription ? currentValue : rawDescription
     );
-  }, [rawStep1Description]);
+  }, [rawDescription]);
 
   useEffect(() => {
     if (!isEnabled || !sessionId || !writeReady || !effectiveParticipant?.id) return () => {};
@@ -379,7 +379,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     }, {});
   }, [subgroups]);
 
-  const step1Description = rawStep1Description || lastNonEmptyStep1Description;
+  const description = rawDescription || lastNonEmptyDescription;
 
   const {
     items: defects,
@@ -732,18 +732,18 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
   useEffect(() => {
     if (!isEnabled || !sessionId || !writeReady || !currentParticipantId) return;
-    if (rawStep1Description || !lastNonEmptyStep1Description) return;
-    if (step1RestoreInFlightRef.current) return;
+    if (rawDescription || !lastNonEmptyDescription) return;
+    if (descriptionRestoreInFlightRef.current) return;
 
     let cancelled = false;
-    step1RestoreInFlightRef.current = true;
+    descriptionRestoreInFlightRef.current = true;
 
-    const restoreStep1Description = async () => {
+    const restoreDescription = async () => {
       try {
-        await setStep1DescriptionService(
+        await setDescriptionService(
           sessionId,
           currentParticipantId,
-          lastNonEmptyStep1Description,
+          lastNonEmptyDescription,
           { expectedPreviousDescription: "" }
         );
       } catch (error) {
@@ -751,12 +751,12 @@ export function useCollaboration({ sessionId, session, workshopId }) {
         console.error("Impossible de restaurer le sujet:", error);
       } finally {
         if (!cancelled) {
-          step1RestoreInFlightRef.current = false;
+          descriptionRestoreInFlightRef.current = false;
         }
       }
     };
 
-    restoreStep1Description();
+    restoreDescription();
 
     return () => {
       cancelled = true;
@@ -764,9 +764,9 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   }, [
     currentParticipantId,
     isEnabled,
-    lastNonEmptyStep1Description,
+    lastNonEmptyDescription,
     writeReady,
-    rawStep1Description,
+    rawDescription,
     sessionId,
   ]);
 
@@ -857,23 +857,23 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   const defectTopTie = Boolean(defectTopTieBySubgroup[effectiveSubgroupId]);
   const solutionTopTie = Boolean(solutionTopTieBySubgroup[effectiveSubgroupId]);
 
-  const rawStep6BySubgroup =
-    activeState?.step6BySubgroup && typeof activeState.step6BySubgroup === "object"
-      ? activeState.step6BySubgroup
+  const rawProposalsBySubgroup =
+    activeState?.proposalsBySubgroup && typeof activeState.proposalsBySubgroup === "object"
+      ? activeState.proposalsBySubgroup
       : EMPTY_OBJECT;
 
-  const step6BySubgroup = useMemo(() => {
+  const proposalsBySubgroup = useMemo(() => {
     return subgroups.reduce((accumulator, subgroup) => {
       accumulator[subgroup.id] = {
-        text: String(rawStep6BySubgroup?.[subgroup.id]?.text || ""),
-        updatedAt: String(rawStep6BySubgroup?.[subgroup.id]?.updatedAt || ""),
-        updatedBy: String(rawStep6BySubgroup?.[subgroup.id]?.updatedBy || ""),
+        text: String(rawProposalsBySubgroup?.[subgroup.id]?.text || ""),
+        updatedAt: String(rawProposalsBySubgroup?.[subgroup.id]?.updatedAt || ""),
+        updatedBy: String(rawProposalsBySubgroup?.[subgroup.id]?.updatedBy || ""),
       };
       return accumulator;
     }, {});
-  }, [rawStep6BySubgroup, subgroups]);
+  }, [rawProposalsBySubgroup, subgroups]);
 
-  const step6Proposal = String(step6BySubgroup?.[effectiveSubgroupId]?.text || "");
+  const proposal = String(proposalsBySubgroup?.[effectiveSubgroupId]?.text || "");
 
   const resultsBySubgroup = useMemo(() => {
     return subgroups.map((subgroup) => ({
@@ -881,17 +881,17 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       subgroupLabel: subgroup.label,
       selectedDefect: selectedDefectBySubgroup[subgroup.id] || null,
       selectedSolution: selectedSolutionBySubgroup[subgroup.id] || null,
-      proposalText: String(step6BySubgroup?.[subgroup.id]?.text || ""),
+      proposalText: String(proposalsBySubgroup?.[subgroup.id]?.text || ""),
       participantCount: subgroup.participantIds.length,
     }));
-  }, [selectedDefectBySubgroup, selectedSolutionBySubgroup, step6BySubgroup, subgroups]);
+  }, [selectedDefectBySubgroup, selectedSolutionBySubgroup, proposalsBySubgroup, subgroups]);
 
-  const setStep1Description = useCallback(
-    async (description, previousDescription = step1Description) => {
+  const setDescription = useCallback(
+    async (description, previousDescription = description) => {
       if (!isEnabled || !sessionId || !writeReady || !currentParticipantId) return;
 
       try {
-        await setStep1DescriptionService(sessionId, currentParticipantId, description, {
+        await setDescriptionService(sessionId, currentParticipantId, description, {
           expectedPreviousDescription: previousDescription,
         });
       } catch (error) {
@@ -904,8 +904,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       isEnabled,
       writeReady,
       sessionId,
-      setSessionError,
-      step1Description,
+      setSessionError
     ]
   );
 
@@ -1139,7 +1138,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     ]
   );
 
-  const setStep6Proposal = useCallback(
+  const setProposal = useCallback(
     async (text) => {
       if (
         !isEnabled ||
@@ -1152,7 +1151,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       }
 
       try {
-        await setStep6ProposalService(
+        await setProposalService(
           sessionId,
           currentParticipantId,
           effectiveSubgroupId,
@@ -1175,7 +1174,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
   const actions = useMemo(
     () => ({
-      setStep1Description,
+      setDescription,
       addDefect,
       updateDefectText,
       removeDefect,
@@ -1184,15 +1183,15 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       updateSolutionText,
       removeSolution,
       toggleSolutionVote,
-      setStep6Proposal,
+      setProposal,
     }),
     [
       addDefect,
       addSolution,
       removeDefect,
       removeSolution,
-      setStep1Description,
-      setStep6Proposal,
+      setDescription,
+      setProposal,
       toggleDefectVote,
       toggleSolutionVote,
       updateDefectText,
@@ -1215,7 +1214,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     participant: effectiveParticipant,
     participants,
     getParticipantLabel,
-    step1Description,
+    description,
     subgroups,
     subgroupId: effectiveSubgroupId,
     activeSubgroup,
@@ -1245,8 +1244,8 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     mySolutionVoteCount,
     remainingSolutionVotes,
     maxStickers: MAX_STICKERS_PER_STEP,
-    step6BySubgroup,
-    step6Proposal,
+    proposalsBySubgroup,
+    proposal,
     resultsBySubgroup,
     actions,
   };

@@ -36,7 +36,7 @@ function Step3({ step, sessionTitle, collaboration }) {
   const syncError = collaboration?.syncError || "";
 
   const challenge =
-    String(collaboration?.step1Description || "").trim() ||
+    String(collaboration?.description || "").trim() ||
     "Le défi sera visible ici dès qu'il est défini à l'étape 1.";
 
   const participantNotes = useMemo(() => {

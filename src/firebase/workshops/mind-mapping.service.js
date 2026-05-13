@@ -74,7 +74,7 @@ export const upsertParticipant = async (sessionId, participant = {}) => {
  * @param {{expectedPreviousDescription?:string}} [options={}] - Optional stale-write protection.
  * @returns {Promise<void>} Update completion.
  */
-export const setStep1Description = async (
+export const setDescription = async (
   sessionId,
   participantId,
   description,

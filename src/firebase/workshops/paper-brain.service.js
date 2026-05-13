@@ -117,7 +117,7 @@ export const upsertParticipant = async (
  * @param {string} description - Step description text.
  * @returns {Promise<void>} Update completion.
  */
-export const setStep1Description = async (
+export const setDescription = async (
   sessionId,
   participantId,
   description,

@@ -42,7 +42,7 @@ export default function PaperBrainSummary({ sessionTitle, collaboration }) {
   const currentParticipantId = collaboration?.participant?.id || "";
 
   const challenge =
-    String(collaboration?.step1Description || "").trim() ||
+    String(collaboration?.description || "").trim() ||
     "Le défi n'a pas été renseigné pendant l'atelier.";
 
   const rankedNotes = useMemo(() => {

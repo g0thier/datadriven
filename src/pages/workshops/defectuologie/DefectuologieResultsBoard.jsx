@@ -3,10 +3,10 @@ import WorkshopInfoCard from "../../../components/workshops/WorkshopInfoCard.jsx
 
 export default function DefectuologieResultsBoard({
   resultsBySubgroup = [],
-  step1Description = "",
+  description = "",
 }) {
   const challenge =
-    String(step1Description || "").trim() ||
+    String(description || "").trim() ||
     "Le défi n'a pas été renseigné pendant l'atelier.";
 
   return (

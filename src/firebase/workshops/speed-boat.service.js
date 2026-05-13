@@ -94,7 +94,7 @@ export const upsertParticipant = async (
  * @param {{expectedPreviousDescription?:string}} [options={}] - Concurrency guards.
  * @returns {Promise<void>} Update completion.
  */
-export const setStep1Description = async (
+export const setDescription = async (
   sessionId,
   participantId,
   description,
@@ -146,7 +146,7 @@ export const setStep1Description = async (
  * @param {{expectedPreviousObjective?:string}} [options={}] - Concurrency guards.
  * @returns {Promise<void>} Update completion.
  */
-export const setStep2Objective = async (
+export const setObjective = async (
   sessionId,
   participantId,
   objective,
@@ -445,7 +445,7 @@ export const toggleBrakeVote = async (
  * @param {string} text - Action text.
  * @returns {Promise<void>} Update completion.
  */
-export const setStep8BrakeAction = async (
+export const setBrakeAction = async (
   sessionId,
   participantId,
   brakeId,

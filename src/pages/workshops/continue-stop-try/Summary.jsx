@@ -103,17 +103,17 @@ export default function ContinueStopTrySummary({ sessionTitle, collaboration }) 
       ? collaboration.rankedNotesByColumn
       : buildRankedNotesByColumn(notesByColumn, votesByNote);
 
-  const step5PlaceholdersByColumn =
-    collaboration?.step5PlaceholdersByColumn &&
-    typeof collaboration.step5PlaceholdersByColumn === "object"
-      ? collaboration.step5PlaceholdersByColumn
+  const placeholdersByColumn =
+    collaboration?.placeholdersByColumn &&
+    typeof collaboration.placeholdersByColumn === "object"
+      ? collaboration.placeholdersByColumn
       : { continue: "", stop: "", try: "" };
 
   const currentParticipantId = collaboration?.participant?.id || "";
   const syncError = collaboration?.syncError || "";
 
   const challenge =
-    String(collaboration?.step1Description || "").trim() ||
+    String(collaboration?.description || "").trim() ||
     "Le défi n'a pas été renseigné pendant l'atelier.";
 
   return (
@@ -128,7 +128,7 @@ export default function ContinueStopTrySummary({ sessionTitle, collaboration }) 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
         {columns.map((column) => {
             const rankedNotes = rankedNotesByColumn[column.id] || [];
-            const placeholderText = String(step5PlaceholdersByColumn[column.id] || "").trim();
+            const placeholderText = String(placeholdersByColumn[column.id] || "").trim();
 
             return (
               <section

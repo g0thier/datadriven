@@ -7,7 +7,7 @@ import speedBoatBoatImg from "../../../../assets/workshops/speed-boat/speed-boat
 import WorkshopStep1ChallengeInput from "../../../../components/workshops/WorkshopStep1ChallengeInput.jsx";
 
 export default function Step1({ sessionTitle, step, collaboration }) {
-  const description = collaboration?.step1Description ?? "";
+  const description = collaboration?.description ?? "";
   const isLoading = Boolean(collaboration?.isLoading);
   const syncError = collaboration?.syncError || "";
 
@@ -19,7 +19,7 @@ export default function Step1({ sessionTitle, step, collaboration }) {
       isLoading={isLoading}
       syncError={syncError}
       onChange={(nextDescription, previousDescription) => {
-        collaboration?.actions?.setStep1Description?.(nextDescription, previousDescription);
+        collaboration?.actions?.setDescription?.(nextDescription, previousDescription);
       }}
       footer={
         <div className="mt-4 bg-white rounded-2xl shadow-md overflow-hidden">

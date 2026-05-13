@@ -4,7 +4,7 @@ import WorkshopInfoCard from "../../../components/workshops/WorkshopInfoCard.jsx
 const EMPTY_ARRAY = Object.freeze([]);
 
 export default function SixHatsResultsBoard({
-  step1Description = "",
+  description = "",
   itemsByHat = {},
   blueConclusion = "",
   isBlueEditable = false,
@@ -12,7 +12,7 @@ export default function SixHatsResultsBoard({
   onBlueConclusionChange,
 }) {
   const challenge =
-    String(step1Description || "").trim() ||
+    String(description || "").trim() ||
     "Le sujet n'a pas été renseigné pendant l'atelier.";
 
   const normalizedBlueConclusion = String(blueConclusion || "");

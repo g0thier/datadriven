@@ -14,7 +14,7 @@ export default function Step2({ step, sessionTitle, collaboration }) {
   const syncError = collaboration?.syncError || "";
 
   const challenge =
-    String(collaboration?.step1Description || "").trim() ||
+    String(collaboration?.description || "").trim() ||
     "Le sujet sera visible ici dès qu'il est défini à l'étape 1.";
 
   const addDefectAction = collaboration?.actions?.addDefect;

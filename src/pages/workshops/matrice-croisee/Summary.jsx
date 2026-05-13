@@ -29,7 +29,7 @@ export default function MatriceCroiseeSummary({ sessionTitle, collaboration }) {
   const concept = String(collaboration?.concept || "").trim();
 
   const challenge =
-    String(collaboration?.step1Description || "").trim() ||
+    String(collaboration?.description || "").trim() ||
     "Le défi n'a pas été renseigné pendant l'atelier.";
 
   const rowIndex = Number(selectedTopIdea?.rowIndex);

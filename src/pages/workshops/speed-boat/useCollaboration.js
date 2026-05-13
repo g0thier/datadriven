@@ -14,9 +14,9 @@ import {
   removeLeverNote as removeLeverNoteService,
   setBrakeNotePosition as setBrakeNotePositionService,
   setLeverNotePosition as setLeverNotePositionService,
-  setStep8BrakeAction as setStep8BrakeActionService,
-  setStep1Description as setStep1DescriptionService,
-  setStep2Objective as setStep2ObjectiveService,
+  setBrakeAction as setBrakeActionService,
+  setDescription as setDescriptionService,
+  setObjective as setObjectiveService,
   subscribeSession,
   toggleBrakeVote as toggleBrakeVoteService,
   updateBrakeNote,
@@ -72,8 +72,8 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     syncErrorMessage: "Impossible de se synchroniser avec le serveur.",
     participantErrorMessage: "Impossible d'enregistrer le participant.",
   });
-  const rawStep1Description = String(activeState?.step1?.description || "");
-  const rawStep2Objective = String(activeState?.step2?.objective || "");
+  const rawDescription = String(activeState?.step1?.description || "");
+  const rawObjective = String(activeState?.step2?.objective || "");
   const rawBrakeNotes =
     activeState?.notesByType?.brakes &&
     typeof activeState.notesByType.brakes === "object"
@@ -89,10 +89,10 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     typeof activeState.votesByParticipant === "object"
       ? activeState.votesByParticipant
       : EMPTY_OBJECT;
-  const rawStep8ActionsByBrake =
-    activeState?.step8ActionsByBrake &&
-    typeof activeState.step8ActionsByBrake === "object"
-      ? activeState.step8ActionsByBrake
+  const rawActionsByBrake =
+    activeState?.actionsByBrake &&
+    typeof activeState.actionsByBrake === "object"
+      ? activeState.actionsByBrake
       : EMPTY_OBJECT;
 
   const remoteParticipants =
@@ -153,15 +153,15 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     return normalizedVotes;
   }, [rawVotesByParticipant]);
 
-  const step8ActionsByBrake = useMemo(() => {
-    return Object.entries(rawStep8ActionsByBrake).reduce((accumulator, [brakeId, payload]) => {
+  const actionsByBrake = useMemo(() => {
+    return Object.entries(rawActionsByBrake).reduce((accumulator, [brakeId, payload]) => {
       const noteId = String(brakeId || "").trim();
       if (!noteId) return accumulator;
 
       accumulator[noteId] = String(payload?.text || "");
       return accumulator;
     }, {});
-  }, [rawStep8ActionsByBrake]);
+  }, [rawActionsByBrake]);
 
   const noteIdsSet = useMemo(() => new Set(brakeNotes.map((note) => note.id)), [brakeNotes]);
 
@@ -278,8 +278,8 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   );
 
   const currentParticipantId = participant?.id || "";
-  const step1Description = rawStep1Description;
-  const step2Objective = rawStep2Objective;
+  const description = rawDescription;
+  const objective = rawObjective;
   const myBrakeNotes = useMemo(
     () => brakeNotes.filter((note) => note.authorId === currentParticipantId),
     [brakeNotes, currentParticipantId]
@@ -302,12 +302,12 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
   const remainingVotes = Math.max(0, MAX_STICKERS - myVoteCount);
 
-  const setStep1Description = useCallback(
-    async (description, previousDescription = step1Description) => {
+  const setDescription = useCallback(
+    async (description, previousDescription = description) => {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
 
       try {
-        await setStep1DescriptionService(sessionId, currentParticipantId, description, {
+        await setDescriptionService(sessionId, currentParticipantId, description, {
           expectedPreviousDescription: previousDescription,
         });
       } catch (error) {
@@ -320,17 +320,16 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       isEnabled,
       participantReady,
       sessionId,
-      setSessionError,
-      step1Description,
+      setSessionError
     ]
   );
 
-  const setStep2Objective = useCallback(
-    async (objective, previousObjective = step2Objective) => {
+  const setObjective = useCallback(
+    async (objective, previousObjective = objective) => {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
 
       try {
-        await setStep2ObjectiveService(sessionId, currentParticipantId, objective, {
+        await setObjectiveService(sessionId, currentParticipantId, objective, {
           expectedPreviousObjective: previousObjective,
         });
       } catch (error) {
@@ -343,8 +342,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       isEnabled,
       participantReady,
       sessionId,
-      setSessionError,
-      step2Objective,
+      setSessionError
     ]
   );
 
@@ -543,12 +541,12 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     ]
   );
 
-  const setStep8BrakeAction = useCallback(
+  const setBrakeAction = useCallback(
     async (brakeId, text) => {
       if (!isEnabled || !sessionId || !participantReady || !brakeId) return;
 
       try {
-        await setStep8BrakeActionService(sessionId, currentParticipantId, brakeId, text);
+        await setBrakeActionService(sessionId, currentParticipantId, brakeId, text);
       } catch (error) {
         console.error("Impossible d'enregistrer l'action du frein:", error);
         setSessionError("L'action du frein n'a pas pu être enregistrée.");
@@ -559,8 +557,8 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
   const actions = useMemo(
     () => ({
-      setStep1Description,
-      setStep2Objective,
+      setDescription,
+      setObjective,
       addBrakeNote,
       updateBrakeNoteText,
       removeBrakeNote,
@@ -570,7 +568,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       removeLeverNote,
       setLeverNotePosition,
       toggleBrakeVote,
-      setStep8BrakeAction,
+      setBrakeAction,
     }),
     [
       addLeverNote,
@@ -579,9 +577,9 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       removeBrakeNote,
       setBrakeNotePosition,
       setLeverNotePosition,
-      setStep8BrakeAction,
-      setStep1Description,
-      setStep2Objective,
+      setBrakeAction,
+      setDescription,
+      setObjective,
       toggleBrakeVote,
       updateLeverNoteText,
       updateBrakeNoteText,
@@ -602,8 +600,8 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     participant,
     participants,
     getParticipantLabel,
-    step1Description,
-    step2Objective,
+    description,
+    objective,
     brakeNotes,
     myBrakeNotes,
     votesByParticipant,
@@ -611,7 +609,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     myVoteCount,
     remainingVotes,
     maxStickers: MAX_STICKERS,
-    step8ActionsByBrake,
+    actionsByBrake,
     leverNotes,
     myLeverNotes,
     actions,

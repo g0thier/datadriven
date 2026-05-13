@@ -26,7 +26,7 @@ export default function Step3({ sessionTitle, step, collaboration }) {
   );
 
   const challenge =
-    String(collaboration?.step1Description || "").trim() ||
+    String(collaboration?.description || "").trim() ||
     "Le défi sera visible ici dès qu'il est défini à l'étape 1.";
   const problemStatement = String(collaboration?.problemStatement || "");
   const isLoading = Boolean(collaboration?.isLoading);

@@ -155,16 +155,16 @@ export default function SpeedBoatSummary({ sessionTitle, collaboration }) {
     collaboration?.votesByNote && typeof collaboration.votesByNote === "object"
       ? collaboration.votesByNote
       : EMPTY_OBJECT;
-  const step8ActionsByBrake =
-    collaboration?.step8ActionsByBrake && typeof collaboration.step8ActionsByBrake === "object"
-      ? collaboration.step8ActionsByBrake
+  const actionsByBrake =
+    collaboration?.actionsByBrake && typeof collaboration.actionsByBrake === "object"
+      ? collaboration.actionsByBrake
       : EMPTY_OBJECT;
 
   const currentParticipantId = collaboration?.participant?.id || "";
   const syncError = collaboration?.syncError || "";
 
   const challenge =
-    String(collaboration?.step1Description || "").trim() ||
+    String(collaboration?.description || "").trim() ||
     "Le défi n'a pas été renseigné pendant l'atelier.";
   const objective =
     String(collaboration?.step2Objective || "").trim() ||
@@ -261,7 +261,7 @@ export default function SpeedBoatSummary({ sessionTitle, collaboration }) {
           ) : (
             <div className="space-y-4">
               {rankedBrakes.map((brake, index) => {
-                const actionText = String(step8ActionsByBrake[brake.id] || "").trim();
+                const actionText = String(actionsByBrake[brake.id] || "").trim();
 
                 return (
                   <div key={brake.id} className="space-y-3">

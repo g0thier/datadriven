@@ -28,7 +28,7 @@ export default function Step2({ sessionTitle, step, collaboration }) {
   const isLoading = Boolean(collaboration?.isLoading);
   const syncError = collaboration?.syncError || "";
   const challenge =
-    String(collaboration?.step1Description || "").trim() ||
+    String(collaboration?.description || "").trim() ||
     "Le défi sera visible ici dès qu'il est défini à l'étape 1.";
 
   const addSharedNoteAction = collaboration?.actions?.addSharedNote;

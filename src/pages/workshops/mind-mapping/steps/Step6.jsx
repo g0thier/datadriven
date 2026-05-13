@@ -24,7 +24,7 @@ function Step6({ step, sessionTitle, collaboration }) {
   const setReformulationAction = collaboration?.actions?.setReformulation;
 
   const challenge =
-    String(collaboration?.step1Description || "").trim() ||
+    String(collaboration?.description || "").trim() ||
     "Le sujet sera visible ici dès qu'il est défini à l'étape 1.";
 
   const rankedConceptCards = useMemo(

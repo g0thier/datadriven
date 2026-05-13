@@ -13,7 +13,7 @@ import {
   removeComment as removeCommentService,
   removeNote as removeNoteService,
   setNotePosition as setNotePositionService,
-  setStep1Description as setStep1DescriptionService,
+  setDescription as setDescriptionService,
   subscribeSession,
   toggleVote as toggleVoteService,
   updateComment,
@@ -62,8 +62,8 @@ const GRID_POSITION_CONFIG = Object.freeze({
 export function useCollaboration({ sessionId, session, workshopId }) {
   const isEnabled = Boolean(sessionId) && workshopId === "paper-brain";
 
-  const [lastNonEmptyStep1Description, setLastNonEmptyStep1Description] = useState("");
-  const step1RestoreInFlightRef = useRef(false);
+  const [lastNonEmptyDescription, setLastNonEmptyDescription] = useState("");
+  const descriptionRestoreInFlightRef = useRef(false);
 
   const {
     sessionGuests,
@@ -83,20 +83,20 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     syncErrorMessage: "Impossible de se synchroniser avec le serveur.",
     participantErrorMessage: "Impossible d'enregistrer le participant.",
   });
-  const rawStep1Description = String(activeState?.step1?.description || "");
+  const rawDescription = String(activeState?.step1?.description || "");
 
   useEffect(() => {
-    setLastNonEmptyStep1Description("");
-    step1RestoreInFlightRef.current = false;
+    setLastNonEmptyDescription("");
+    descriptionRestoreInFlightRef.current = false;
   }, [isEnabled, sessionId]);
 
   useEffect(() => {
-    if (!rawStep1Description) return;
+    if (!rawDescription) return;
 
-    setLastNonEmptyStep1Description((currentValue) =>
-      currentValue === rawStep1Description ? currentValue : rawStep1Description
+    setLastNonEmptyDescription((currentValue) =>
+      currentValue === rawDescription ? currentValue : rawDescription
     );
-  }, [rawStep1Description]);
+  }, [rawDescription]);
 
   const rawNotes =
     activeState?.notes && typeof activeState.notes === "object"
@@ -282,22 +282,22 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   );
 
   const currentParticipantId = participant?.id || "";
-  const step1Description = rawStep1Description || lastNonEmptyStep1Description;
+  const description = rawDescription || lastNonEmptyDescription;
 
   useEffect(() => {
     if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
-    if (rawStep1Description || !lastNonEmptyStep1Description) return;
-    if (step1RestoreInFlightRef.current) return;
+    if (rawDescription || !lastNonEmptyDescription) return;
+    if (descriptionRestoreInFlightRef.current) return;
 
     let cancelled = false;
-    step1RestoreInFlightRef.current = true;
+    descriptionRestoreInFlightRef.current = true;
 
-    const restoreStep1Description = async () => {
+    const restoreDescription = async () => {
       try {
-        await setStep1DescriptionService(
+        await setDescriptionService(
           sessionId,
           currentParticipantId,
-          lastNonEmptyStep1Description,
+          lastNonEmptyDescription,
           { expectedPreviousDescription: "" }
         );
       } catch (error) {
@@ -305,12 +305,12 @@ export function useCollaboration({ sessionId, session, workshopId }) {
         console.error("Impossible de restaurer la description:", error);
       } finally {
         if (!cancelled) {
-          step1RestoreInFlightRef.current = false;
+          descriptionRestoreInFlightRef.current = false;
         }
       }
     };
 
-    restoreStep1Description();
+    restoreDescription();
 
     return () => {
       cancelled = true;
@@ -318,9 +318,9 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   }, [
     currentParticipantId,
     isEnabled,
-    lastNonEmptyStep1Description,
+    lastNonEmptyDescription,
     participantReady,
-    rawStep1Description,
+    rawDescription,
     sessionId,
   ]);
 
@@ -343,12 +343,12 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
   const remainingVotes = Math.max(0, MAX_STICKERS - myVoteCount);
 
-  const setStep1Description = useCallback(
-    async (description, previousDescription = step1Description) => {
+  const setDescription = useCallback(
+    async (description, previousDescription = description) => {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
 
       try {
-        await setStep1DescriptionService(sessionId, currentParticipantId, description, {
+        await setDescriptionService(sessionId, currentParticipantId, description, {
           expectedPreviousDescription: previousDescription,
         });
       } catch (error) {
@@ -361,8 +361,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       isEnabled,
       participantReady,
       sessionId,
-      setSessionError,
-      step1Description,
+      setSessionError
     ]
   );
 
@@ -551,7 +550,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
   const actions = useMemo(
     () => ({
-      setStep1Description,
+      setDescription,
       addNote,
       updateNoteText,
       removeNote,
@@ -567,7 +566,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       removeComment,
       removeNote,
       setNotePosition,
-      setStep1Description,
+      setDescription,
       toggleVote,
       updateCommentText,
       updateNoteText,
@@ -588,7 +587,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     participant,
     participants,
     getParticipantLabel,
-    step1Description,
+    description,
     notes,
     myNotes,
     commentsByNote,

@@ -6,19 +6,19 @@ export default function Step6({ step, sessionTitle, collaboration }) {
   const subgroupLabel = subgroup?.label || "Sous-groupe";
   const selectedDefect = collaboration?.selectedDefect || null;
   const selectedSolution = collaboration?.selectedSolution || null;
-  const proposalText = String(collaboration?.step6Proposal || "");
+  const proposalText = String(collaboration?.proposal || "");
   const isLoading = Boolean(collaboration?.isLoading);
   const syncError = collaboration?.syncError || "";
 
   const challenge =
-    String(collaboration?.step1Description || "").trim() ||
+    String(collaboration?.description || "").trim() ||
     "Le sujet sera visible ici dès qu'il est défini à l'étape 1.";
 
   const handleChange = (event) => {
     const nextProposal = event.target.value;
     if (isLoading || nextProposal === proposalText) return;
 
-    collaboration?.actions?.setStep6Proposal?.(nextProposal);
+    collaboration?.actions?.setProposal?.(nextProposal);
   };
 
   return (

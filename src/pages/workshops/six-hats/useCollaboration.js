@@ -3,7 +3,7 @@ import {
   createItem,
   removeItem,
   setBlueConclusion as setBlueConclusionService,
-  setStep1Description as setStep1DescriptionService,
+  setDescription as setDescriptionService,
   subscribeSession,
   updateItem,
   upsertParticipant,
@@ -45,7 +45,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     syncErrorMessage: "Impossible de se synchroniser avec le serveur.",
     participantErrorMessage: "Impossible d'enregistrer le participant.",
   });
-  const rawStep1Description = String(activeState?.step1?.description || "");
+  const rawDescription = String(activeState?.step1?.description || "");
 
   const rawItemsByHat =
     activeState?.itemsByHat && typeof activeState.itemsByHat === "object"
@@ -175,15 +175,15 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   );
 
   const currentParticipantId = participant?.id || "";
-  const step1Description = rawStep1Description;
+  const description = rawDescription;
   const blueConclusion = String(activeState?.step7?.blueConclusion?.text || "");
 
-  const setStep1Description = useCallback(
-    async (description, previousDescription = step1Description) => {
+  const setDescription = useCallback(
+    async (description, previousDescription = description) => {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
 
       try {
-        await setStep1DescriptionService(sessionId, currentParticipantId, description, {
+        await setDescriptionService(sessionId, currentParticipantId, description, {
           expectedPreviousDescription: previousDescription,
         });
       } catch (error) {
@@ -196,8 +196,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       isEnabled,
       participantReady,
       sessionId,
-      setSessionError,
-      step1Description,
+      setSessionError
     ]
   );
 
@@ -296,13 +295,13 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
   const actions = useMemo(
     () => ({
-      setStep1Description,
+      setDescription,
       addHatItem,
       updateHatItemText,
       removeHatItem,
       setBlueConclusion,
     }),
-    [addHatItem, removeHatItem, setBlueConclusion, setStep1Description, updateHatItemText]
+    [addHatItem, removeHatItem, setBlueConclusion, setDescription, updateHatItemText]
   );
 
   const effectiveSyncError = isEnabled && syncErrorSessionId === sessionId ? syncError : "";
@@ -317,8 +316,8 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     participant,
     participants,
     getParticipantLabel,
+    description,
     hats: HAT_CONFIG,
-    step1Description,
     blueConclusion,
     items,
     itemsByHat,

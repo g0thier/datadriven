@@ -659,7 +659,7 @@ export const assignParticipantToSubgroup = async (
   });
 };
 
-export const setStep1Description = async (
+export const setDescription = async (
   sessionId,
   participantId,
   description,
@@ -1052,7 +1052,7 @@ export const toggleSolutionVote = async (
   };
 };
 
-export const setStep6Proposal = async (
+export const setProposal = async (
   sessionId,
   participantId,
   subgroupId,

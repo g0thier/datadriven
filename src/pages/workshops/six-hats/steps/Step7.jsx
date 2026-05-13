@@ -5,7 +5,7 @@ import SixHatsResultsBoard from "../SixHatsResultsBoard.jsx";
 export default function Step7({ step, sessionTitle, collaboration }) {
   const syncError = collaboration?.syncError || "";
   const isLoading = Boolean(collaboration?.isLoading);
-  const step1Description = String(collaboration?.step1Description || "");
+  const description = String(collaboration?.description || "");
   const blueConclusion = String(collaboration?.blueConclusion || "");
   const itemsByHat =
     collaboration?.itemsByHat && typeof collaboration.itemsByHat === "object"
@@ -22,7 +22,7 @@ export default function Step7({ step, sessionTitle, collaboration }) {
       <WorkshopSyncErrorAlert message={syncError} className="mb-3" />
 
       <SixHatsResultsBoard
-        step1Description={step1Description}
+        description={description}
         itemsByHat={itemsByHat}
         blueConclusion={blueConclusion}
         isBlueEditable

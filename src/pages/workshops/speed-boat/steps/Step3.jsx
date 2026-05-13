@@ -30,7 +30,7 @@ export default function Step3({ step, sessionTitle, collaboration, session }) {
   const participantId = collaboration?.participant?.id || "";
   const sessionId = session?.sessionId || session?.id || "";
   const initialNoteKey = `${sessionId}:${participantId}`;
-  const challenge = String(collaboration?.step1Description || "").trim() || "Le sujet de l'atelier sera affiché ici dès qu'il sera renseigné.";
+  const challenge = String(collaboration?.description || "").trim() || "Le sujet de l'atelier sera affiché ici dès qu'il sera renseigné.";
   const objective = String(collaboration?.step2Objective || "").trim() || "L'objectif de l'atelier sera affiché ici dès qu'il sera renseigné.";
   const addBrakeNote = collaboration?.actions?.addBrakeNote;
   const updateBrakeNoteText = collaboration?.actions?.updateBrakeNoteText;

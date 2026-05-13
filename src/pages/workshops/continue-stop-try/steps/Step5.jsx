@@ -101,10 +101,10 @@ function Step5({ step, sessionTitle, collaboration }) {
       ? collaboration.rankedNotesByColumn
       : buildRankedNotesByColumn(notesByColumn, votesByNote);
 
-  const step5PlaceholdersByColumn =
-    collaboration?.step5PlaceholdersByColumn &&
-    typeof collaboration.step5PlaceholdersByColumn === "object"
-      ? collaboration.step5PlaceholdersByColumn
+  const placeholdersByColumn =
+    collaboration?.placeholdersByColumn &&
+    typeof collaboration.placeholdersByColumn === "object"
+      ? collaboration.placeholdersByColumn
       : { continue: "", stop: "", try: "" };
 
   const currentParticipantId = collaboration?.participant?.id || "";
@@ -112,16 +112,16 @@ function Step5({ step, sessionTitle, collaboration }) {
   const syncError = collaboration?.syncError || "";
 
   const challenge =
-    String(collaboration?.step1Description || "").trim() ||
+    String(collaboration?.description || "").trim() ||
     "Le défi sera visible ici dès qu'il est défini à l'étape 1.";
 
   const handlePlaceholderChange = (columnId, value) => {
     if (isLoading) return;
 
-    const currentValue = String(step5PlaceholdersByColumn[columnId] || "");
+    const currentValue = String(placeholdersByColumn[columnId] || "");
     if (currentValue === value) return;
 
-    collaboration?.actions?.setStep5Placeholder?.(columnId, value);
+    collaboration?.actions?.setPlaceholder?.(columnId, value);
   };
 
   return (
@@ -139,7 +139,7 @@ function Step5({ step, sessionTitle, collaboration }) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
         {columns.map((column) => {
           const rankedNotes = rankedNotesByColumn[column.id] || [];
-          const placeholderText = step5PlaceholdersByColumn[column.id] || "";
+          const placeholderText = placeholdersByColumn[column.id] || "";
 
           return (
             <section

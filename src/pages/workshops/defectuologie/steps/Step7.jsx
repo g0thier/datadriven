@@ -4,7 +4,7 @@ import DefectuologieResultsBoard from "../DefectuologieResultsBoard.jsx";
 
 export default function Step7({ step, sessionTitle, collaboration }) {
   const syncError = collaboration?.syncError || "";
-  const step1Description = String(collaboration?.step1Description || "");
+  const description = String(collaboration?.description || "");
   const resultsBySubgroup = Array.isArray(collaboration?.resultsBySubgroup)
     ? collaboration.resultsBySubgroup
     : [];
@@ -15,7 +15,7 @@ export default function Step7({ step, sessionTitle, collaboration }) {
 
       <DefectuologieResultsBoard
         resultsBySubgroup={resultsBySubgroup}
-        step1Description={step1Description}
+        description={description}
       />
     </WorkshopStepLayout>
   );

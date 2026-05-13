@@ -7,7 +7,7 @@ import {
   removeComment as removeCommentService,
   removeNote as removeNoteService,
   setReformulation as setMindMappingReformulation,
-  setStep1Description as setStep1DescriptionService,
+  setDescription as setDescriptionService,
   subscribeSession,
   toggleConceptVote as toggleConceptVoteService,
   updateConcept,
@@ -45,7 +45,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     syncErrorMessage: "Impossible de se synchroniser avec le serveur.",
     participantErrorMessage: "Impossible d'enregistrer le participant.",
   });
-  const rawStep1Description = String(activeState?.step1?.description || "");
+  const rawDescription = String(activeState?.step1?.description || "");
 
   const rawNotes =
     activeState?.notes && typeof activeState.notes === "object"
@@ -234,7 +234,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   );
 
   const currentParticipantId = participant?.id || "";
-  const step1Description = rawStep1Description;
+  const description = rawDescription;
   const rawVotesByParticipant =
     activeState?.votesByParticipant &&
     typeof activeState.votesByParticipant === "object"
@@ -307,12 +307,12 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
   const remainingVotes = Math.max(0, MAX_STICKERS - myVoteCount);
 
-  const setStep1Description = useCallback(
-    async (description, previousDescription = step1Description) => {
+  const setDescription = useCallback(
+    async (description, previousDescription = description) => {
       if (!isEnabled || !sessionId || !participantReady || !currentParticipantId) return;
 
       try {
-        await setStep1DescriptionService(sessionId, currentParticipantId, description, {
+        await setDescriptionService(sessionId, currentParticipantId, description, {
           expectedPreviousDescription: previousDescription,
         });
       } catch (error) {
@@ -325,8 +325,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       isEnabled,
       participantReady,
       sessionId,
-      setSessionError,
-      step1Description,
+      setSessionError
     ]
   );
 
@@ -641,7 +640,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
   const actions = useMemo(
     () => ({
-      setStep1Description,
+      setDescription,
       addNote,
       updateNoteText,
       removeNote,
@@ -661,7 +660,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       removeConcept,
       removeComment,
       removeNote,
-      setStep1Description,
+      setDescription,
       setReformulation,
       toggleConceptVote,
       updateConceptText,
@@ -682,7 +681,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     participant,
     participants,
     getParticipantLabel,
-    step1Description,
+    description,
     notes,
     commentsByNote,
     concepts,

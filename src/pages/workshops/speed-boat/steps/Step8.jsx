@@ -47,14 +47,14 @@ export default function Step8({ step, sessionTitle, collaboration }) {
     () => collaboration?.votesByNote || {},
     [collaboration?.votesByNote]
   );
-  const step8ActionsByBrake = useMemo(
-    () => collaboration?.step8ActionsByBrake || {},
-    [collaboration?.step8ActionsByBrake]
+  const actionsByBrake = useMemo(
+    () => collaboration?.actionsByBrake || {},
+    [collaboration?.actionsByBrake]
   );
   const isLoading = Boolean(collaboration?.isLoading);
   const syncError = collaboration?.syncError || "";
 
-  const challenge = String(collaboration?.step1Description || "").trim() || "Le sujet de l'atelier sera affiché ici dès qu'il sera renseigné.";
+  const challenge = String(collaboration?.description || "").trim() || "Le sujet de l'atelier sera affiché ici dès qu'il sera renseigné.";
   const objective = String(collaboration?.step2Objective || "").trim() || "L'objectif de l'atelier sera affiché ici dès qu'il sera renseigné.";
 
   const [zoom, setZoom] = useState(50);
@@ -95,10 +95,10 @@ export default function Step8({ step, sessionTitle, collaboration }) {
   const handleBrakeActionChange = (brakeId, nextValue) => {
     if (isLoading) return;
 
-    const currentValue = String(step8ActionsByBrake[brakeId] || "");
+    const currentValue = String(actionsByBrake[brakeId] || "");
     if (currentValue === nextValue) return;
 
-    collaboration?.actions?.setStep8BrakeAction?.(brakeId, nextValue);
+    collaboration?.actions?.setBrakeAction?.(brakeId, nextValue);
   };
 
   const CANVAS_WIDTH = 2800;
@@ -239,7 +239,7 @@ export default function Step8({ step, sessionTitle, collaboration }) {
                   <textarea
                     className="w-full h-28 p-3 bg-white border border-emerald-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     placeholder="Définir les actions à mener..."
-                    value={String(step8ActionsByBrake[brake.id] || "")}
+                    value={String(actionsByBrake[brake.id] || "")}
                     onChange={(event) => handleBrakeActionChange(brake.id, event.target.value)}
                     disabled={isLoading}
                   />

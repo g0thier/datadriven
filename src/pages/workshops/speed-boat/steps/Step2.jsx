@@ -28,7 +28,7 @@ export default function Step2({ sessionTitle, step, collaboration }) {
     const nextObjective = event.target.value;
     if (isLoading || nextObjective === objective) return;
 
-    collaboration?.actions?.setStep2Objective?.(nextObjective, objective);
+    collaboration?.actions?.setObjective?.(nextObjective, objective);
   };
 
   return (
