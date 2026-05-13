@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { auth, onAuthStateChangedListener } from "../../../firebase";
+import { useCallback, useMemo } from "react";
 import {
   addMindMappingConcept,
   addMindMappingComment,
@@ -17,75 +16,35 @@ import {
   upsertMindMappingParticipant,
 } from "../../../firebase/workshops/mind-mapping.service";
 import {
-  EMPTY_ARRAY,
   EMPTY_OBJECT,
   makeParticipantFallbackLabel,
   resolveGuestName,
-  resolveParticipantIdentity,
   sortByCreatedAt,
 } from "../collaboration.shared.js";
+import { useWorkshopCollaborationCore } from "../useWorkshopCollaborationCore.js";
 const MAX_STICKERS = 3;
 
 export function useCollaboration({ sessionId, session, workshopId }) {
   const isEnabled = Boolean(sessionId) && workshopId === "mind-mapping";
 
-  const [authUser, setAuthUser] = useState(() => auth.currentUser ?? null);
-  const [isAuthResolved, setIsAuthResolved] = useState(false);
-  const [mindMappingState, setMindMappingState] = useState(null);
-  const [lastSnapshotSessionId, setLastSnapshotSessionId] = useState("");
-  const [syncError, setSyncError] = useState("");
-  const [syncErrorSessionId, setSyncErrorSessionId] = useState("");
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChangedListener((nextAuthUser) => {
-      setAuthUser(nextAuthUser);
-      setIsAuthResolved(true);
-    });
-
-    return unsubscribe;
-  }, []);
-
-  const sessionGuests = useMemo(
-    () => (Array.isArray(session?.allGuests) ? session.allGuests : EMPTY_ARRAY),
-    [session?.allGuests]
-  );
-
-  const participant = useMemo(
-    () => (isAuthResolved ? resolveParticipantIdentity({ sessionGuests, authUser }) : null),
-    [authUser, isAuthResolved, sessionGuests]
-  );
-  const participantReady = Boolean(isEnabled && isAuthResolved && participant?.id);
-
-  const setSessionError = useCallback(
-    (message) => {
-      setSyncError(message);
-      setSyncErrorSessionId(sessionId || "");
-    },
-    [sessionId]
-  );
-
-  useEffect(() => {
-    if (!isEnabled || !sessionId) return () => {};
-
-    const unsubscribe = subscribeMindMappingSession(
-      sessionId,
-      (nextState) => {
-        setMindMappingState(nextState || {});
-        setLastSnapshotSessionId(sessionId);
-        setSessionError("");
-      },
-      (error) => {
-        console.error("Erreur de synchronisation Mind Mapping:", error);
-        setLastSnapshotSessionId(sessionId);
-        setSessionError("Impossible de synchroniser l'atelier en direct.");
-      }
-    );
-
-    return unsubscribe;
-  }, [isEnabled, sessionId, setSessionError]);
-
-  const activeMindMappingState =
-    isEnabled && lastSnapshotSessionId === sessionId ? mindMappingState : null;
+  const {
+    sessionGuests,
+    participant,
+    participantReady,
+    syncError,
+    syncErrorSessionId,
+    setSessionError,
+    activeState: activeMindMappingState,
+    lastSnapshotSessionId,
+  } = useWorkshopCollaborationCore({
+    sessionId,
+    session,
+    isEnabled,
+    subscribeSession: subscribeMindMappingSession,
+    upsertParticipant: upsertMindMappingParticipant,
+    syncErrorMessage: "Impossible de se synchroniser avec le serveur.",
+    participantErrorMessage: "Impossible d'enregistrer le participant.",
+  });
   const rawStep1Description = String(activeMindMappingState?.step1?.description || "");
 
   const rawNotes =
@@ -197,29 +156,6 @@ export function useCollaboration({ sessionId, session, workshopId }) {
 
     return keys;
   }, [commentsByNote]);
-
-  useEffect(() => {
-    if (!isEnabled || !sessionId || !participantReady || !participant?.id) return () => {};
-
-    let isCancelled = false;
-
-    const syncParticipant = async () => {
-      try {
-        await upsertMindMappingParticipant(sessionId, participant);
-      } catch (error) {
-        if (isCancelled) return;
-        console.error("Impossible d'enregistrer le participant:", error);
-      }
-    };
-
-    syncParticipant();
-    const intervalId = setInterval(syncParticipant, 30_000);
-
-    return () => {
-      isCancelled = true;
-      clearInterval(intervalId);
-    };
-  }, [isEnabled, participant, participantReady, sessionId]);
 
   const remoteParticipants =
     activeMindMappingState?.participants && typeof activeMindMappingState.participants === "object"

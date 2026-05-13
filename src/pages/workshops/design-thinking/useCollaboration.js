@@ -7,7 +7,6 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { auth, onAuthStateChangedListener } from "../../../firebase";
 import {
   addDesignThinkingIdeationComment,
   createDesignThinkingIdeationNote,
@@ -36,9 +35,9 @@ import {
   makeParticipantFallbackLabel,
   normalizePosition,
   resolveGuestName,
-  resolveParticipantIdentity,
   sortByCreatedAt,
 } from "../collaboration.shared.js";
+import { useWorkshopCollaborationCore } from "../useWorkshopCollaborationCore.js";
 
 const MAX_STICKERS = 3;
 const GRID_POSITION_CONFIG = Object.freeze({
@@ -92,12 +91,6 @@ const normalizePrototypeFeedbackColumnId = (value) => {
 export function useCollaboration({ sessionId, session, workshopId }) {
   const isEnabled = Boolean(sessionId) && workshopId === "design-thinking";
 
-  const [authUser, setAuthUser] = useState(() => auth.currentUser ?? null);
-  const [isAuthResolved, setIsAuthResolved] = useState(false);
-  const [designThinkingState, setDesignThinkingState] = useState(null);
-  const [lastSnapshotSessionId, setLastSnapshotSessionId] = useState("");
-  const [syncError, setSyncError] = useState("");
-  const [syncErrorSessionId, setSyncErrorSessionId] = useState("");
   const [lastNonEmptyStep1Description, setLastNonEmptyStep1Description] = useState("");
   const [lastNonEmptyProblemStatement, setLastNonEmptyProblemStatement] = useState("");
   const [lastNonEmptyConclusion, setLastNonEmptyConclusion] = useState("");
@@ -105,56 +98,24 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   const problemStatementRestoreInFlightRef = useRef(false);
   const conclusionRestoreInFlightRef = useRef(false);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChangedListener((nextAuthUser) => {
-      setAuthUser(nextAuthUser);
-      setIsAuthResolved(true);
-    });
-
-    return unsubscribe;
-  }, []);
-
-  const sessionGuests = useMemo(
-    () => (Array.isArray(session?.allGuests) ? session.allGuests : EMPTY_ARRAY),
-    [session?.allGuests]
-  );
-
-  const participant = useMemo(
-    () => (isAuthResolved ? resolveParticipantIdentity({ sessionGuests, authUser }) : null),
-    [authUser, isAuthResolved, sessionGuests]
-  );
-  const participantReady = Boolean(isEnabled && isAuthResolved && participant?.id);
-
-  const setSessionError = useCallback(
-    (message) => {
-      setSyncError(message);
-      setSyncErrorSessionId(sessionId || "");
-    },
-    [sessionId]
-  );
-
-  useEffect(() => {
-    if (!isEnabled || !sessionId) return () => {};
-
-    const unsubscribe = subscribeDesignThinkingSession(
-      sessionId,
-      (nextState) => {
-        setDesignThinkingState(nextState || {});
-        setLastSnapshotSessionId(sessionId);
-        setSessionError("");
-      },
-      (error) => {
-        console.error("Erreur de synchronisation Design Thinking:", error);
-        setLastSnapshotSessionId(sessionId);
-        setSessionError("Impossible de synchroniser l'atelier en direct.");
-      }
-    );
-
-    return unsubscribe;
-  }, [isEnabled, sessionId, setSessionError]);
-
-  const activeDesignThinkingState =
-    isEnabled && lastSnapshotSessionId === sessionId ? designThinkingState : null;
+  const {
+    sessionGuests,
+    participant,
+    participantReady,
+    syncError,
+    syncErrorSessionId,
+    setSessionError,
+    activeState: activeDesignThinkingState,
+    lastSnapshotSessionId,
+  } = useWorkshopCollaborationCore({
+    sessionId,
+    session,
+    isEnabled,
+    subscribeSession: subscribeDesignThinkingSession,
+    upsertParticipant: upsertDesignThinkingParticipant,
+    syncErrorMessage: "Impossible de se synchroniser avec le serveur.",
+    participantErrorMessage: "Impossible d'enregistrer le participant.",
+  });
   const rawStep1Description = String(activeDesignThinkingState?.step1?.description || "");
   const rawProblemStatement = String(activeDesignThinkingState?.problemStatement?.text || "");
   const rawConclusion = String(activeDesignThinkingState?.conclusion?.text || "");
@@ -191,29 +152,6 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       currentValue === rawConclusion ? currentValue : rawConclusion
     );
   }, [rawConclusion]);
-
-  useEffect(() => {
-    if (!isEnabled || !sessionId || !participantReady || !participant?.id) return () => {};
-
-    let isCancelled = false;
-
-    const syncParticipant = async () => {
-      try {
-        await upsertDesignThinkingParticipant(sessionId, participant);
-      } catch (error) {
-        if (isCancelled) return;
-        console.error("Impossible d'enregistrer le participant:", error);
-      }
-    };
-
-    syncParticipant();
-    const intervalId = setInterval(syncParticipant, 30_000);
-
-    return () => {
-      isCancelled = true;
-      clearInterval(intervalId);
-    };
-  }, [isEnabled, participant, participantReady, sessionId]);
 
   const remoteParticipants =
     activeDesignThinkingState?.participants &&

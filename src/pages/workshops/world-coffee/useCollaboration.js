@@ -6,8 +6,7 @@
  * @license proprietary
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { auth, onAuthStateChangedListener } from "../../../firebase";
+import { useCallback, useEffect, useMemo } from "react";
 import {
   addWorldCoffeeCommentReply,
   addWorldCoffeeIdeaComment,
@@ -38,9 +37,9 @@ import {
   normalizeParticipantToSubgroup,
   parseGroupIndex,
   resolveGuestName,
-  resolveParticipantIdentity,
   sortByCreatedAt,
 } from "../collaboration.shared.js";
+import { useWorkshopCollaborationCore } from "../useWorkshopCollaborationCore.js";
 
 const IDEA_REPLY_KEY_PREFIX = "idea-";
 
@@ -226,85 +225,24 @@ const normalizeSynthesisBySubgroup = (value = {}) => {
 export function useCollaboration({ sessionId, session, workshopId }) {
   const isEnabled = Boolean(sessionId) && workshopId === "world-cafe";
 
-  const [authUser, setAuthUser] = useState(() => auth.currentUser ?? null);
-  const [isAuthResolved, setIsAuthResolved] = useState(false);
-  const [worldCoffeeState, setWorldCoffeeState] = useState(null);
-  const [lastSnapshotSessionId, setLastSnapshotSessionId] = useState("");
-  const [syncError, setSyncError] = useState("");
-  const [syncErrorSessionId, setSyncErrorSessionId] = useState("");
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChangedListener((nextAuthUser) => {
-      setAuthUser(nextAuthUser);
-      setIsAuthResolved(true);
-    });
-
-    return unsubscribe;
-  }, []);
-
-  const sessionGuests = useMemo(
-    () => (Array.isArray(session?.allGuests) ? session.allGuests : EMPTY_ARRAY),
-    [session?.allGuests]
-  );
-
-  const participant = useMemo(
-    () => (isAuthResolved ? resolveParticipantIdentity({ sessionGuests, authUser }) : null),
-    [authUser, isAuthResolved, sessionGuests]
-  );
-  const participantReady = Boolean(isEnabled && isAuthResolved && participant?.id);
-
-  const setSessionError = useCallback(
-    (message) => {
-      setSyncError(message);
-      setSyncErrorSessionId(sessionId || "");
-    },
-    [sessionId]
-  );
-
-  useEffect(() => {
-    if (!isEnabled || !sessionId) return () => {};
-
-    const unsubscribe = subscribeWorldCoffeeSession(
-      sessionId,
-      (nextState) => {
-        setWorldCoffeeState(nextState || {});
-        setLastSnapshotSessionId(sessionId);
-        setSessionError("");
-      },
-      (error) => {
-        console.error("Erreur de synchronisation World Cafe:", error);
-        setLastSnapshotSessionId(sessionId);
-        setSessionError("Impossible de synchroniser l'atelier en direct.");
-      }
-    );
-
-    return unsubscribe;
-  }, [isEnabled, sessionId, setSessionError]);
-
-  const activeState = isEnabled && lastSnapshotSessionId === sessionId ? worldCoffeeState : null;
-
-  useEffect(() => {
-    if (!isEnabled || !sessionId || !participantReady || !participant?.id) return () => {};
-
-    let isCancelled = false;
-
-    const syncParticipant = async () => {
-      try {
-        await upsertWorldCoffeeParticipant(sessionId, participant);
-      } catch (error) {
-        if (isCancelled) return;
-        console.error("Impossible d'enregistrer le participant:", error);
-      }
-    };
-
-    syncParticipant();
-    const intervalId = setInterval(syncParticipant, 30_000);
-
-    return () => {
-      isCancelled = true;
-      clearInterval(intervalId);
-    };
-  }, [isEnabled, participant, participantReady, sessionId]);
+  const {
+    sessionGuests,
+    participant,
+    participantReady,
+    syncError,
+    syncErrorSessionId,
+    setSessionError,
+    activeState,
+    lastSnapshotSessionId,
+  } = useWorkshopCollaborationCore({
+    sessionId,
+    session,
+    isEnabled,
+    subscribeSession: subscribeWorldCoffeeSession,
+    upsertParticipant: upsertWorldCoffeeParticipant,
+    syncErrorMessage: "Impossible de se synchroniser avec le serveur.",
+    participantErrorMessage: "Impossible d'enregistrer le participant.",
+  });
 
   const rawDescriptions =
     activeState?.descriptions && typeof activeState.descriptions === "object"

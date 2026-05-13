@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { auth, onAuthStateChangedListener } from "../../../firebase";
 import {
   assignDefectuologieParticipantToSubgroup,
   createDefectuologieDefect,
@@ -30,9 +29,9 @@ import {
   normalizeParticipantToSubgroup,
   parseGroupIndex,
   resolveGuestName,
-  resolveParticipantIdentity,
   sortByCreatedAt,
 } from "../collaboration.shared.js";
+import { useWorkshopCollaborationCore } from "../useWorkshopCollaborationCore.js";
 
 const MAX_STICKERS_PER_STEP = 1;
 
@@ -198,12 +197,6 @@ const writeStoredSubgroupId = (sessionId, participantId, subgroupId) => {
 export function useCollaboration({ sessionId, session, workshopId }) {
   const isEnabled = Boolean(sessionId) && workshopId === "defectuologie";
 
-  const [authUser, setAuthUser] = useState(() => auth.currentUser ?? null);
-  const [isAuthResolved, setIsAuthResolved] = useState(false);
-  const [state, setState] = useState(null);
-  const [lastSnapshotSessionId, setLastSnapshotSessionId] = useState("");
-  const [syncError, setSyncError] = useState("");
-  const [syncErrorSessionId, setSyncErrorSessionId] = useState("");
   const [lastNonEmptyStep1Description, setLastNonEmptyStep1Description] = useState("");
   const [isInitialServerReadReady, setIsInitialServerReadReady] = useState(false);
   const [lockedParticipantId, setLockedParticipantId] = useState("");
@@ -214,24 +207,25 @@ export function useCollaboration({ sessionId, session, workshopId }) {
   const lastKnownSubgroupByParticipantRef = useRef({});
   const lastMissingSubgroupWarningKeyRef = useRef("");
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChangedListener((nextAuthUser) => {
-      setAuthUser(nextAuthUser);
-      setIsAuthResolved(true);
-    });
-
-    return unsubscribe;
-  }, []);
-
-  const sessionGuests = useMemo(
-    () => (Array.isArray(session?.allGuests) ? session.allGuests : EMPTY_ARRAY),
-    [session?.allGuests]
-  );
-
-  const participant = useMemo(
-    () => (isAuthResolved ? resolveParticipantIdentity({ sessionGuests, authUser }) : null),
-    [authUser, isAuthResolved, sessionGuests]
-  );
+  const {
+    sessionGuests,
+    participant,
+    participantReady,
+    syncError,
+    syncErrorSessionId,
+    setSessionError,
+    activeState,
+    lastSnapshotSessionId,
+  } = useWorkshopCollaborationCore({
+    sessionId,
+    session,
+    isEnabled,
+    subscribeSession: subscribeDefectuologieSession,
+    upsertParticipant: upsertDefectuologieParticipant,
+    syncErrorMessage: "Impossible de se synchroniser avec le serveur.",
+    participantErrorMessage: "Impossible d'enregistrer le participant.",
+    canSyncParticipant: () => false,
+  });
 
   useEffect(() => {
     setLockedParticipantId("");
@@ -258,36 +252,7 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     };
   }, [lockedParticipantId, participant]);
 
-  const participantReady = Boolean(isEnabled && isAuthResolved && participant?.id);
   const writeReady = Boolean(isEnabled && participantReady && isInitialServerReadReady);
-
-  const setSessionError = useCallback(
-    (message) => {
-      setSyncError(message);
-      setSyncErrorSessionId(sessionId || "");
-    },
-    [sessionId]
-  );
-
-  useEffect(() => {
-    if (!isEnabled || !sessionId) return () => {};
-
-    const unsubscribe = subscribeDefectuologieSession(
-      sessionId,
-      (nextState) => {
-        setState(nextState || {});
-        setLastSnapshotSessionId(sessionId);
-        setSessionError("");
-      },
-      (error) => {
-        console.error("Erreur de synchronisation Defectuologie:", error);
-        setLastSnapshotSessionId(sessionId);
-        setSessionError("Impossible de synchroniser l'atelier en direct.");
-      }
-    );
-
-    return unsubscribe;
-  }, [isEnabled, sessionId, setSessionError]);
 
   useEffect(() => {
     setIsInitialServerReadReady(false);
@@ -332,7 +297,6 @@ export function useCollaboration({ sessionId, session, workshopId }) {
     };
   }, [isEnabled, sessionId, setSessionError]);
 
-  const activeState = isEnabled && lastSnapshotSessionId === sessionId ? state : null;
   const rawStep1Description = String(activeState?.step1?.description || "");
 
   useEffect(() => {

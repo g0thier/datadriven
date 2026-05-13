@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { auth, onAuthStateChangedListener } from "../../../firebase";
+import { useCallback, useMemo } from "react";
 import {
   createSixHatsItem,
   removeSixHatsItem,
@@ -10,13 +9,12 @@ import {
   upsertSixHatsParticipant,
 } from "../../../firebase/workshops/six-hats.service";
 import {
-  EMPTY_ARRAY,
   EMPTY_OBJECT,
   makeParticipantFallbackLabel,
   resolveGuestName,
-  resolveParticipantIdentity,
   sortByCreatedAt,
 } from "../collaboration.shared.js";
+import { useWorkshopCollaborationCore } from "../useWorkshopCollaborationCore.js";
 import { HAT_CONFIG, HAT_IDS, normalizeHatId } from "./sixHats.constants";
 
 const makeEmptyByHat = (initialValueFactory) => {
@@ -29,86 +27,25 @@ const makeEmptyByHat = (initialValueFactory) => {
 export function useCollaboration({ sessionId, session, workshopId }) {
   const isEnabled = Boolean(sessionId) && workshopId === "six-chapeaux-bono";
 
-  const [authUser, setAuthUser] = useState(() => auth.currentUser ?? null);
-  const [isAuthResolved, setIsAuthResolved] = useState(false);
-  const [sixHatsState, setSixHatsState] = useState(null);
-  const [lastSnapshotSessionId, setLastSnapshotSessionId] = useState("");
-  const [syncError, setSyncError] = useState("");
-  const [syncErrorSessionId, setSyncErrorSessionId] = useState("");
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChangedListener((nextAuthUser) => {
-      setAuthUser(nextAuthUser);
-      setIsAuthResolved(true);
-    });
-
-    return unsubscribe;
-  }, []);
-
-  const sessionGuests = useMemo(
-    () => (Array.isArray(session?.allGuests) ? session.allGuests : EMPTY_ARRAY),
-    [session?.allGuests]
-  );
-
-  const participant = useMemo(
-    () => (isAuthResolved ? resolveParticipantIdentity({ sessionGuests, authUser }) : null),
-    [authUser, isAuthResolved, sessionGuests]
-  );
-  const participantReady = Boolean(isEnabled && isAuthResolved && participant?.id);
-
-  const setSessionError = useCallback(
-    (message) => {
-      setSyncError(message);
-      setSyncErrorSessionId(sessionId || "");
-    },
-    [sessionId]
-  );
-
-  useEffect(() => {
-    if (!isEnabled || !sessionId) return () => {};
-
-    const unsubscribe = subscribeSixHatsSession(
-      sessionId,
-      (nextState) => {
-        setSixHatsState(nextState || {});
-        setLastSnapshotSessionId(sessionId);
-        setSessionError("");
-      },
-      (error) => {
-        console.error("Erreur de synchronisation Six chapeaux:", error);
-        setLastSnapshotSessionId(sessionId);
-        setSessionError("Impossible de synchroniser l'atelier en direct.");
-      }
-    );
-
-    return unsubscribe;
-  }, [isEnabled, sessionId, setSessionError]);
-
-  const activeSixHatsState = isEnabled && lastSnapshotSessionId === sessionId ? sixHatsState : null;
+  const {
+    sessionGuests,
+    participant,
+    participantReady,
+    syncError,
+    syncErrorSessionId,
+    setSessionError,
+    activeState: activeSixHatsState,
+    lastSnapshotSessionId,
+  } = useWorkshopCollaborationCore({
+    sessionId,
+    session,
+    isEnabled,
+    subscribeSession: subscribeSixHatsSession,
+    upsertParticipant: upsertSixHatsParticipant,
+    syncErrorMessage: "Impossible de se synchroniser avec le serveur.",
+    participantErrorMessage: "Impossible d'enregistrer le participant.",
+  });
   const rawStep1Description = String(activeSixHatsState?.step1?.description || "");
-
-  useEffect(() => {
-    if (!isEnabled || !sessionId || !participantReady || !participant?.id) return () => {};
-
-    let isCancelled = false;
-
-    const syncParticipant = async () => {
-      try {
-        await upsertSixHatsParticipant(sessionId, participant);
-      } catch (error) {
-        if (isCancelled) return;
-        console.error("Impossible d'enregistrer le participant:", error);
-      }
-    };
-
-    syncParticipant();
-    const intervalId = setInterval(syncParticipant, 30_000);
-
-    return () => {
-      isCancelled = true;
-      clearInterval(intervalId);
-    };
-  }, [isEnabled, participant, participantReady, sessionId]);
 
   const rawItemsByHat =
     activeSixHatsState?.itemsByHat && typeof activeSixHatsState.itemsByHat === "object"

@@ -7,7 +7,6 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { auth, onAuthStateChangedListener } from "../../../firebase";
 import {
   buildMatriceCroiseeCellKey,
   createMatriceCroiseeCellNote,
@@ -31,9 +30,9 @@ import {
   EMPTY_OBJECT,
   makeParticipantFallbackLabel,
   resolveGuestName,
-  resolveParticipantIdentity,
   sortByCreatedAt,
 } from "../collaboration.shared.js";
+import { useWorkshopCollaborationCore } from "../useWorkshopCollaborationCore.js";
 
 const MAX_STICKERS = 1;
 
@@ -49,65 +48,27 @@ const MAX_STICKERS = 1;
 export function useCollaboration({ sessionId, session, workshopId }) {
   const isEnabled = Boolean(sessionId) && workshopId === "matrice-croisee";
 
-  const [authUser, setAuthUser] = useState(() => auth.currentUser ?? null);
-  const [isAuthResolved, setIsAuthResolved] = useState(false);
-  const [matriceCroiseeState, setMatriceCroiseeState] = useState(null);
-  const [lastSnapshotSessionId, setLastSnapshotSessionId] = useState("");
-  const [syncError, setSyncError] = useState("");
-  const [syncErrorSessionId, setSyncErrorSessionId] = useState("");
   const [lastNonEmptyStep1Description, setLastNonEmptyStep1Description] = useState("");
   const step1RestoreInFlightRef = useRef(false);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChangedListener((nextAuthUser) => {
-      setAuthUser(nextAuthUser);
-      setIsAuthResolved(true);
-    });
-
-    return unsubscribe;
-  }, []);
-
-  const sessionGuests = useMemo(
-    () => (Array.isArray(session?.allGuests) ? session.allGuests : EMPTY_ARRAY),
-    [session?.allGuests]
-  );
-
-  const participant = useMemo(
-    () => (isAuthResolved ? resolveParticipantIdentity({ sessionGuests, authUser }) : null),
-    [authUser, isAuthResolved, sessionGuests]
-  );
-  const participantReady = Boolean(isEnabled && isAuthResolved && participant?.id);
-
-  const setSessionError = useCallback(
-    (message) => {
-      setSyncError(message);
-      setSyncErrorSessionId(sessionId || "");
-    },
-    [sessionId]
-  );
-
-  useEffect(() => {
-    if (!isEnabled || !sessionId) return () => {};
-
-    const unsubscribe = subscribeMatriceCroiseeSession(
-      sessionId,
-      (nextState) => {
-        setMatriceCroiseeState(nextState || {});
-        setLastSnapshotSessionId(sessionId);
-        setSessionError("");
-      },
-      (error) => {
-        console.error("Erreur de synchronisation Matrice croisee:", error);
-        setLastSnapshotSessionId(sessionId);
-        setSessionError("Impossible de synchroniser l'atelier en direct.");
-      }
-    );
-
-    return unsubscribe;
-  }, [isEnabled, sessionId, setSessionError]);
-
-  const activeMatriceCroiseeState =
-    isEnabled && lastSnapshotSessionId === sessionId ? matriceCroiseeState : null;
+  const {
+    sessionGuests,
+    participant,
+    participantReady,
+    syncError,
+    syncErrorSessionId,
+    setSessionError,
+    activeState: activeMatriceCroiseeState,
+    lastSnapshotSessionId,
+  } = useWorkshopCollaborationCore({
+    sessionId,
+    session,
+    isEnabled,
+    subscribeSession: subscribeMatriceCroiseeSession,
+    upsertParticipant: upsertMatriceCroiseeParticipant,
+    syncErrorMessage: "Impossible de se synchroniser avec le serveur.",
+    participantErrorMessage: "Impossible d'enregistrer le participant.",
+  });
   const rawStep1Description = String(activeMatriceCroiseeState?.step1?.description || "");
   const rawConcept = String(activeMatriceCroiseeState?.step5?.concept?.text || "");
   const rawColumnItems =
@@ -143,29 +104,6 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       currentValue === rawStep1Description ? currentValue : rawStep1Description
     );
   }, [rawStep1Description]);
-
-  useEffect(() => {
-    if (!isEnabled || !sessionId || !participantReady || !participant?.id) return () => {};
-
-    let isCancelled = false;
-
-    const syncParticipant = async () => {
-      try {
-        await upsertMatriceCroiseeParticipant(sessionId, participant);
-      } catch (error) {
-        if (isCancelled) return;
-        console.error("Impossible d'enregistrer le participant:", error);
-      }
-    };
-
-    syncParticipant();
-    const intervalId = setInterval(syncParticipant, 30_000);
-
-    return () => {
-      isCancelled = true;
-      clearInterval(intervalId);
-    };
-  }, [isEnabled, participant, participantReady, sessionId]);
 
   const columnItems = useMemo(() => {
     return Object.entries(rawColumnItems)
