@@ -34,6 +34,7 @@ export const innovationLinks = [
  */
 export const teamLinks = [
   { label: "Annuaire", to: "/team/annuaire", icon: "conversation", end: true },
+  { label: "Motivation", to: "/team/motivation", icon: "theater_comedy", end: true },
   { label: "À venir", to: "/soon", icon: "select", end: true },
 ];
 

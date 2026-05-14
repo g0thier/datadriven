@@ -30,6 +30,7 @@ const Abonnement = lazy(() => import('./pages/management/Abonnement.jsx'));
 const WorkshopInvitation = lazy(() => import('./pages/innovation/WorkshopInvitation.jsx'));
 const Innovation = lazy(() => import('./pages/innovation/Innovation.jsx'));
 const Team = lazy(() => import('./pages/Team.jsx'));
+const Motivation = lazy(() => import('./pages/team/Motivation.jsx'));
 const Soon = lazy(() => import('./pages/Soon.jsx'));
 
 function App() {
@@ -57,6 +58,7 @@ function App() {
             {/* Team routes */}
             <Route path="/team" element={<SectionRouteRedirect links={teamLinks} />} />
             <Route path="/team/annuaire" element={<Team />} />
+            <Route path="/team/motivation" element={<Motivation />} />
             <Route path="/soon" element={<Soon />} />
 
             {/* Management routes */}
