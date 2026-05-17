@@ -79,7 +79,7 @@ exports.sendWorkshopInvite = onRequest(
         workshopDate = "",
         workshopTime = "",
         workshopTimezone = "UTC",
-        workshopLink = "https://zzzbre.com/innovation/paper-brain/jyw-qfgi-cjs",
+        workshopLink = "",
         sendInviterConfirmation = false,
         invitedCount = 0,
       } = req.body || {};
@@ -95,6 +95,11 @@ exports.sendWorkshopInvite = onRequest(
       const scheduleTimezone = String(
         workshopSchedule?.timezone || workshopTimezone || "UTC"
       ).trim();
+      const normalizedWorkshopLink = String(workshopLink || "").trim();
+
+      if (!normalizedWorkshopLink) {
+        return res.status(400).json({ error: "workshopLink requis" });
+      }
 
       if (!normalizedWorkshopStartIso && scheduleDate && scheduleTime) {
         normalizedWorkshopStartIso = toWorkshopStartIso(
@@ -135,7 +140,7 @@ exports.sendWorkshopInvite = onRequest(
         description,
         startDate,
         endDate,
-        url: workshopLink,
+        url: normalizedWorkshopLink,
         organizerName: workshopOrganizerName,
         organizerEmail: workshopOrganizerEmail,
       });
@@ -147,7 +152,7 @@ exports.sendWorkshopInvite = onRequest(
         workshopTitle,
         workshopDate: resolvedWorkshopDateLabel,
         workshopDuration: `${durationMinutes} minutes`,
-        workshopLink,
+        workshopLink: normalizedWorkshopLink,
       });
 
       const info = await transporter.sendMail({
@@ -164,7 +169,7 @@ exports.sendWorkshopInvite = onRequest(
           `Atelier : ${workshopTitle}`,
           `Date : ${resolvedWorkshopDateLabel}`,
           `Durée : ${durationMinutes} minutes`,
-          `Lien atelier : ${workshopLink}`,
+          `Lien atelier : ${normalizedWorkshopLink}`,
         ].join("\n"),
         /*
         icalEvent: {
@@ -202,7 +207,7 @@ exports.sendWorkshopInvite = onRequest(
             workshopTitle,
             workshopDate: resolvedWorkshopDateLabel,
             workshopDuration: `${durationMinutes} minutes`,
-            workshopLink,
+            workshopLink: normalizedWorkshopLink,
             emailVariant: "inviterConfirmation",
             invitedCount,
           });
@@ -221,7 +226,7 @@ exports.sendWorkshopInvite = onRequest(
               `Atelier : ${workshopTitle}`,
               `Date : ${resolvedWorkshopDateLabel}`,
               `Durée : ${durationMinutes} minutes`,
-              `Lien atelier : ${workshopLink}`,
+              `Lien atelier : ${normalizedWorkshopLink}`,
             ].join("\n"),
             alternatives: [
               {
