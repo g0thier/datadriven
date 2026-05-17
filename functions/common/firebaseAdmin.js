@@ -12,7 +12,12 @@ function getAdminDatabase() {
   return admin.database();
 }
 
+function getAdminMessaging() {
+  return admin.messaging();
+}
+
 module.exports = {
   getAdminAuth,
   getAdminDatabase,
+  getAdminMessaging,
 };

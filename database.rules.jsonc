@@ -42,6 +42,21 @@
       }
     },
 
+    "quizInvitations": {
+      // Optimisation : Permet de récupérer toutes les invitations d'une entreprise donnée
+      ".indexOn": ["companyId"],
+
+      "$invitationId": {
+        // LECTURE : Seuls les membres de la même entreprise que l'invitation peuvent la voir
+        ".read": "auth != null && root.child('users').child(auth.uid).child('companyId').val() === data.child('companyId').val()",
+
+        // ÉCRITURE : On vérifie le companyId.
+        // Si l'invitation existe déjà (data.exists()), on garde le companyId actuel.
+        // Si c'est une création, on vérifie que le companyId envoyé (newData) est bien celui de l'utilisateur.
+        ".write": "auth != null && root.child('users').child(auth.uid).child('companyId').val() === (data.exists() ? data.child('companyId').val() : newData.child('companyId').val())"
+      }
+    },
+
     "stripe": {
       // Sécurité maximale : Personne ne peut lire ou écrire via le SDK client (Frontend).
       // Seul ton Backend (Node.js/Cloud Functions) peut y accéder via l'Admin SDK.
