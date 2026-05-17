@@ -23,7 +23,7 @@ const description1 = [
 
 const description2 = [
   { type: "paragraph", text: "Chaque participant note ses idées :" },
-  { type: "list", items: ["Une idée par post-it", "Sans discussion, ni autocensure"] },
+  { type: "list", items: ["Une idée par note", "Sans discussion, ni autocensure"] },
   { type: "hint", text: "Objectifs : éviter l’influence, libérer les introvertis et favoriser l’originalité." },
 ];
 
@@ -36,7 +36,7 @@ const description3 = [
 
 const description4 = [
   { type: "paragraph", text: "Le groupe met les idées en commun :" },
-  { type: "list", items: ["Les post-it sont affichés au mur", "Les idées similaires sont regroupées", "Les participants peuvent clarifier certaines propositions"] },
+  { type: "list", items: ["Les notes sont affichées au mur", "Les idées similaires sont regroupées", "Les participants peuvent clarifier certaines propositions"] },
   { type: "hint", text: "L’objectif est d’organiser et comprendre les idées, sans les juger." },
 ];
 

@@ -518,8 +518,8 @@ export function useCollaboration({ sessionId, session, workshopId }) {
           { text: options?.text ?? "" }
         );
       } catch (error) {
-        console.error("Impossible d'ajouter un post-it:", error);
-        setSessionError("Le post-it n'a pas pu être ajouté.");
+        console.error("Impossible d'ajouter une note:", error);
+        setSessionError("La note n'a pas pu être ajoutée.");
         return null;
       }
     },
@@ -563,8 +563,8 @@ export function useCollaboration({ sessionId, session, workshopId }) {
           { expectedPreviousText }
         );
       } catch (error) {
-        console.error("Impossible de mettre à jour le post-it:", error);
-        setSessionError("Le post-it n'a pas pu être mis à jour.");
+        console.error("Impossible de mettre à jour la note:", error);
+        setSessionError("La note n'a pas pu être mise à jour.");
       }
     },
     [
@@ -586,8 +586,8 @@ export function useCollaboration({ sessionId, session, workshopId }) {
       try {
         await removeCellNoteService(sessionId, rowId, columnId, noteId);
       } catch (error) {
-        console.error("Impossible de supprimer le post-it:", error);
-        setSessionError("Le post-it n'a pas pu être supprimé.");
+        console.error("Impossible de supprimer la note:", error);
+        setSessionError("La note n'a pas pu être supprimée.");
       }
     },
     [isEnabled, participantReady, sessionId, setSessionError]

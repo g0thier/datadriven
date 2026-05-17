@@ -30,13 +30,13 @@ const description2 = [
 
 const description3 = [
   { type: "paragraph", text: "Chaque participant identifie les freins qui ralentissent le bateau." },
-  { type: "paragraph", text: "Une idée par post-it : contraintes, irritants, peurs, obstacles." },
+  { type: "paragraph", text: "Une idée par note : contraintes, irritants, peurs, obstacles." },
   { type: "hint", text: "Objectif : faire émerger les ancres du projet." },
 ];
 
 const description4 = [
   { type: "paragraph", text: "Le groupe met en commun les freins identifiés." },
-  { type: "paragraph", text: "Les post-it sont regroupés par grandes catégories." },
+  { type: "paragraph", text: "Les notes sont regroupées par grandes catégories." },
   { type: "hint", text: "Objectif : clarifier les principaux blocages." },
 ];
 
@@ -48,7 +48,7 @@ const description5 = [
 
 const description6 = [
   { type: "paragraph", text: "Le groupe met en commun les leviers identifiés." },
-  { type: "paragraph", text: "Les post-it sont regroupés par grandes catégories." },
+  { type: "paragraph", text: "Les notes sont regroupées par grandes catégories." },
   { type: "hint", text: "Objectif : clarifier les principaux moteurs d’action." },
 ];
 

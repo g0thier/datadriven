@@ -270,7 +270,7 @@ export default function Step3({ step, sessionTitle, collaboration, session }) {
                               type="button"
                               onClick={() => addCellNote(rowItem.id, columnItem.id)}
                               className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-violet-500 text-white flex items-center justify-center shadow-md hover:bg-violet-600 transition"
-                              aria-label="Ajouter un post-it"
+                              aria-label="Ajouter une note"
                             >
                               +
                             </button>
@@ -319,7 +319,7 @@ export default function Step3({ step, sessionTitle, collaboration, session }) {
                                           removeCellNote(rowItem.id, columnItem.id, note.id)
                                         }
                                         className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-xs"
-                                        aria-label="Supprimer le post-it"
+                                        aria-label="Supprimer la note"
                                       >
                                         ✕
                                       </button>
@@ -332,7 +332,7 @@ export default function Step3({ step, sessionTitle, collaboration, session }) {
                                 type="button"
                                 onClick={() => addCellNote(rowItem.id, columnItem.id)}
                                 className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-violet-500 text-white flex items-center justify-center shadow-md hover:bg-violet-600 transition"
-                                aria-label="Ajouter un post-it"
+                                aria-label="Ajouter une note"
                               >
                                 +
                               </button>

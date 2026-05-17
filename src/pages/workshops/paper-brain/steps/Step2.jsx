@@ -43,7 +43,7 @@ function Step2({ step, sessionTitle, collaboration, session }) {
   const updateNoteText = collaboration?.actions?.updateNoteText;
   const removeNoteAction = collaboration?.actions?.removeNote;
 
-  // Conserve l'UX d'origine: toujours au moins un post-it visible.
+  // Conserve l'UX d'origine: toujours au moins une note visible.
   useEffect(() => {
     if (isLoading) return;
     if (myNotes.length > 0) return;
