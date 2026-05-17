@@ -34,8 +34,8 @@ function WorkshopDateTimeCard({
   onTimezoneChange,
 }) {
   const timezoneOptions = useMemo(
-    () => getWorkshopTimeZoneOptions(timezone),
-    [timezone]
+    () => getWorkshopTimeZoneOptions(timezone, { date, time }),
+    [timezone, date, time]
   );
 
   return (
@@ -64,8 +64,8 @@ function WorkshopDateTimeCard({
           className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
         >
           {timezoneOptions.map((zone) => (
-            <option key={zone} value={zone}>
-              {zone}
+            <option key={zone.value} value={zone.value}>
+              {zone.label}
             </option>
           ))}
         </select>

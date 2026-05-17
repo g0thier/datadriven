@@ -14,7 +14,7 @@ vi.mock("../../../src/hooks/useWorkshopInvitation", () => ({
     atelier: { title: "Paper Brain" },
     workshopDate: "2026-03-25",
     workshopTime: "10:30",
-    workshopTimezone: "UTC+01:00",
+    workshopTimezone: "Europe/Zurich",
     setWorkshopDate,
     setWorkshopTime,
     setWorkshopTimezone: vi.fn(),

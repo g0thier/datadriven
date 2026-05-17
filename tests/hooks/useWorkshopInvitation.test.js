@@ -45,7 +45,7 @@ vi.mock("../../src/workshops", () => ({
 }));
 
 vi.mock("../../src/utils/workshopDateTime", () => ({
-  resolveDefaultWorkshopTimeZone: () => "UTC+01:00",
+  resolveDefaultWorkshopTimeZone: () => "Europe/Zurich",
   toWorkshopStartIso: vi.fn(() => "2026-03-25T09:30:00.000Z"),
 }));
 

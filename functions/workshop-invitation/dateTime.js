@@ -1,4 +1,6 @@
-const WORKSHOP_TIMEZONE_FALLBACK = "UTC+01:00";
+const {DateTime, FixedOffsetZone, Info} = require("luxon");
+
+const WORKSHOP_TIMEZONE_FALLBACK = "UTC";
 const MIN_UTC_OFFSET_MINUTES = -12 * 60;
 const MAX_UTC_OFFSET_MINUTES = 14 * 60;
 
@@ -11,7 +13,7 @@ function parseUtcOffsetToMinutes(timeZone) {
   const hours = Number(match[2]);
   const minutes = Number(match[3]);
   if (hours > 14) return null;
-  if (![0, 15, 30, 45].includes(minutes)) return null;
+  if (minutes < 0 || minutes > 59) return null;
 
   const totalMinutes = sign * (hours * 60 + minutes);
   if (totalMinutes < MIN_UTC_OFFSET_MINUTES) return null;
@@ -54,27 +56,31 @@ function toWorkshopStartIso(date, time, timeZone) {
   const parsed = parseDateAndTime(date, time);
   if (!parsed) return "";
 
-  const parsedOffset = parseUtcOffsetToMinutes(timeZone);
-  const fallbackOffset = parseUtcOffsetToMinutes(WORKSHOP_TIMEZONE_FALLBACK);
-  const offsetMinutes = parsedOffset ?? fallbackOffset;
-  if (offsetMinutes === null) return "";
+  const normalizedTimeZone = String(timeZone || "").trim();
+  const parsedOffset = parseUtcOffsetToMinutes(normalizedTimeZone);
 
-  const localAsUtcTimestamp = Date.UTC(
-      parsed.year,
-      parsed.month - 1,
-      parsed.day,
-      parsed.hour,
-      parsed.minute,
-      parsed.second,
-      0,
+  let zone = WORKSHOP_TIMEZONE_FALLBACK;
+  if (parsedOffset !== null) {
+    zone = FixedOffsetZone.instance(parsedOffset);
+  } else if (Info.isValidIANAZone(normalizedTimeZone)) {
+    zone = normalizedTimeZone;
+  }
+
+  const zonedDateTime = DateTime.fromObject(
+      {
+        year: parsed.year,
+        month: parsed.month,
+        day: parsed.day,
+        hour: parsed.hour,
+        minute: parsed.minute,
+        second: parsed.second,
+        millisecond: 0,
+      },
+      {zone},
   );
 
-  const utcTimestamp = localAsUtcTimestamp - offsetMinutes * 60 * 1000;
-
-  const instant = new Date(utcTimestamp);
-  if (Number.isNaN(instant.getTime())) return "";
-
-  return instant.toISOString();
+  if (!zonedDateTime.isValid) return "";
+  return zonedDateTime.toUTC().toJSDate().toISOString();
 }
 
 module.exports = {

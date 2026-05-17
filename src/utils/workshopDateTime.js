@@ -1,15 +1,17 @@
 /**
  * @module utils/workshopDateTime
- * @description Date/time utilities for workshop scheduling with UTC offset handling.
+ * @description Date/time utilities for workshop scheduling with timezone handling.
  * @author Gauthier Rammault
- * @version 1.0.0
+ * @version 2.0.0
  * @license proprietary
  */
 
-const WORKSHOP_TIMEZONE_FALLBACK = "UTC+01:00";
+import { getTimeZones } from "@vvo/tzdb";
+import { DateTime, FixedOffsetZone, Info } from "luxon";
+
+const WORKSHOP_TIMEZONE_FALLBACK = "UTC";
 const MIN_UTC_OFFSET_MINUTES = -12 * 60;
 const MAX_UTC_OFFSET_MINUTES = 14 * 60;
-const UTC_OFFSET_STEP_MINUTES = 15;
 
 /**
  * Left-pads a numeric value to two digits.
@@ -50,7 +52,7 @@ function parseUtcOffsetToMinutes(timeZone) {
   const hours = Number(match[2]);
   const minutes = Number(match[3]);
   if (hours > 14) return null;
-  if (![0, 15, 30, 45].includes(minutes)) return null;
+  if (minutes < 0 || minutes > 59) return null;
 
   const totalMinutes = sign * (hours * 60 + minutes);
   if (totalMinutes < MIN_UTC_OFFSET_MINUTES) return null;
@@ -96,68 +98,178 @@ function parseDateAndTime(date, time) {
 }
 
 /**
+ * Validates an IANA time zone string.
+ * @param {string} value - Candidate time zone.
+ * @returns {boolean} `true` when valid.
+ */
+function isValidIanaTimeZone(value) {
+  const candidate = String(value || "").trim();
+  if (!candidate) return false;
+  return Info.isValidIANAZone(candidate);
+}
+
+/**
+ * Resolves browser timezone if available and valid.
+ * @returns {string|null} Browser timezone or `null`.
+ */
+function resolveBrowserTimeZone() {
+  try {
+    const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return isValidIanaTimeZone(browserTz) ? browserTz : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Builds a stable reference datetime to compute dynamic offsets.
+ * @param {string} date - Date in `YYYY-MM-DD` format.
+ * @param {string} time - Time in `HH:mm` or `HH:mm:ss` format.
+ * @returns {DateTime} Reference datetime in UTC.
+ */
+function buildReferenceDateTime(date, time) {
+  const parsed = parseDateAndTime(date, time);
+  if (parsed) {
+    return DateTime.utc(
+      parsed.year,
+      parsed.month,
+      parsed.day,
+      parsed.hour,
+      parsed.minute,
+      parsed.second,
+      0
+    );
+  }
+
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(date || "").trim());
+  if (dateOnlyMatch) {
+    return DateTime.utc(
+      Number(dateOnlyMatch[1]),
+      Number(dateOnlyMatch[2]),
+      Number(dateOnlyMatch[3]),
+      12,
+      0,
+      0,
+      0
+    );
+  }
+
+  return DateTime.utc();
+}
+
+/**
+ * Resolves a conversion zone from IANA or legacy UTC offsets.
+ * @param {string} timeZone - Candidate timezone.
+ * @returns {{zone:string|Object, timezone:string}} Normalized conversion metadata.
+ */
+function resolveConversionZone(timeZone) {
+  const normalized = String(timeZone || "").trim();
+
+  const legacyOffset = parseUtcOffsetToMinutes(normalized);
+  if (legacyOffset !== null) {
+    return {
+      zone: FixedOffsetZone.instance(legacyOffset),
+      timezone: formatUtcOffset(legacyOffset),
+    };
+  }
+
+  if (isValidIanaTimeZone(normalized)) {
+    return {
+      zone: normalized,
+      timezone: normalized,
+    };
+  }
+
+  return {
+    zone: WORKSHOP_TIMEZONE_FALLBACK,
+    timezone: WORKSHOP_TIMEZONE_FALLBACK,
+  };
+}
+
+/**
  * Returns the default workshop timezone used by the app.
  * @returns {string} Default timezone string.
  */
 export function resolveDefaultWorkshopTimeZone() {
-  return WORKSHOP_TIMEZONE_FALLBACK;
+  return resolveBrowserTimeZone() || WORKSHOP_TIMEZONE_FALLBACK;
 }
 
 /**
- * Returns all valid UTC offset options, ensuring selected offset is included.
+ * Returns all valid timezone options, ensuring selected timezone is included.
  * @param {string} selectedTimeZone - Currently selected timezone.
- * @returns {string[]} Ordered unique timezone options.
+ * @param {{date?:string,time?:string}} [reference={}] - Optional workshop date/time context.
+ * @returns {{value:string,label:string}[]} Ordered unique timezone options.
  */
-export function getWorkshopTimeZoneOptions(selectedTimeZone) {
-  const allOffsets = [];
-  for (
-    let minutes = MIN_UTC_OFFSET_MINUTES;
-    minutes <= MAX_UTC_OFFSET_MINUTES;
-    minutes += UTC_OFFSET_STEP_MINUTES
-  ) {
-    allOffsets.push(formatUtcOffset(minutes));
+export function getWorkshopTimeZoneOptions(selectedTimeZone, reference = {}) {
+  const referenceDateTime = buildReferenceDateTime(reference.date, reference.time);
+
+  const allNames = getTimeZones({ includeUtc: true }).flatMap((zone) => {
+    if (Array.isArray(zone.group) && zone.group.length > 0) {
+      return zone.group;
+    }
+    return [zone.name];
+  });
+
+  const uniqueIanaNames = Array.from(new Set(allNames.filter(isValidIanaTimeZone))).sort(
+    (a, b) => a.localeCompare(b)
+  );
+
+  const selectedZone = resolveConversionZone(selectedTimeZone).timezone;
+  const selectedIsIana = isValidIanaTimeZone(selectedZone);
+  const allZoneNames = selectedIsIana
+    ? [selectedZone, ...uniqueIanaNames]
+    : uniqueIanaNames;
+
+  const uniqueNames = Array.from(new Set(allZoneNames));
+
+  const options = uniqueNames.map((zoneName) => {
+    const zoneAtReference = referenceDateTime.setZone(zoneName);
+    const offsetLabel = zoneAtReference.isValid
+      ? formatUtcOffset(zoneAtReference.offset)
+      : "UTC+00:00";
+
+    return {
+      value: zoneName,
+      label: `${zoneName} (${offsetLabel})`,
+    };
+  });
+
+  if (!selectedIsIana) {
+    options.unshift({
+      value: selectedZone,
+      label: `${selectedZone} (legacy)`,
+    });
   }
 
-  const selectedOffsetMinutes = parseUtcOffsetToMinutes(selectedTimeZone);
-  const selectedOffset =
-    selectedOffsetMinutes === null
-      ? WORKSHOP_TIMEZONE_FALLBACK
-      : formatUtcOffset(selectedOffsetMinutes);
-
-  const zones = [selectedOffset, ...allOffsets];
-  return Array.from(new Set(zones));
+  return options;
 }
 
 /**
- * Converts workshop local date/time and UTC offset into an ISO UTC instant.
+ * Converts workshop local date/time and timezone into an ISO UTC instant.
  * @param {string} date - Date in `YYYY-MM-DD` format.
  * @param {string} time - Time in `HH:mm` or `HH:mm:ss` format.
- * @param {string} timeZone - Time zone as `UTC±HH:MM`.
+ * @param {string} timeZone - Time zone as IANA (`Europe/Zurich`) or legacy `UTC±HH:MM`.
  * @returns {string} ISO datetime string, or empty string when input is invalid.
  */
 export function toWorkshopStartIso(date, time, timeZone) {
   const parsed = parseDateAndTime(date, time);
   if (!parsed) return "";
 
-  const parsedOffset = parseUtcOffsetToMinutes(timeZone);
-  const fallbackOffset = parseUtcOffsetToMinutes(WORKSHOP_TIMEZONE_FALLBACK);
-  const offsetMinutes = parsedOffset ?? fallbackOffset;
-  if (offsetMinutes === null) return "";
-
-  const localAsUtcTimestamp = Date.UTC(
-    parsed.year,
-    parsed.month - 1,
-    parsed.day,
-    parsed.hour,
-    parsed.minute,
-    parsed.second,
-    0
+  const resolved = resolveConversionZone(timeZone);
+  const zonedDateTime = DateTime.fromObject(
+    {
+      year: parsed.year,
+      month: parsed.month,
+      day: parsed.day,
+      hour: parsed.hour,
+      minute: parsed.minute,
+      second: parsed.second,
+      millisecond: 0,
+    },
+    { zone: resolved.zone }
   );
 
-  const utcTimestamp = localAsUtcTimestamp - offsetMinutes * 60 * 1000;
+  if (!zonedDateTime.isValid) return "";
 
-  const instant = new Date(utcTimestamp);
-  if (Number.isNaN(instant.getTime())) return "";
-
-  return instant.toISOString();
+  return zonedDateTime.toUTC().toJSDate().toISOString();
 }

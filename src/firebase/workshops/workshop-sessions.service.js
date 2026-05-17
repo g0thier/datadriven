@@ -35,7 +35,7 @@ const normalizeGuests = (guests = []) =>
 const normalizeWorkshopSchedule = (schedule = {}, payload = {}) => ({
   date: schedule?.date ?? payload?.workshopDate ?? "",
   time: schedule?.time ?? payload?.workshopTime ?? "",
-  timezone: schedule?.timezone ?? payload?.workshopTimezone ?? "UTC+01:00",
+  timezone: schedule?.timezone ?? payload?.workshopTimezone ?? "UTC",
 });
 
 /**

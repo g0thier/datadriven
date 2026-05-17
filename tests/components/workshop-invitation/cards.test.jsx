@@ -106,7 +106,10 @@ describe("workshop invitation components", () => {
     await user.clear(timeInput);
     await user.type(timeInput, "10:30");
     const timezoneSelect = screen.getByRole("combobox");
-    await user.selectOptions(timezoneSelect, timezoneSelect.querySelector("option")?.value || "UTC+01:00");
+    await user.selectOptions(
+      timezoneSelect,
+      timezoneSelect.querySelector("option")?.value || "Europe/Zurich"
+    );
 
     expect(onSearchMember).toHaveBeenCalled();
     expect(onSearchDepartment).toHaveBeenCalled();

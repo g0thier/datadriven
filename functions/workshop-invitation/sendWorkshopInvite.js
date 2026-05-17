@@ -78,7 +78,7 @@ exports.sendWorkshopInvite = onRequest(
         workshopSchedule = {},
         workshopDate = "",
         workshopTime = "",
-        workshopTimezone = "UTC+01:00",
+        workshopTimezone = "UTC",
         workshopLink = "https://zzzbre.com/innovation/paper-brain/jyw-qfgi-cjs",
         sendInviterConfirmation = false,
         invitedCount = 0,
@@ -93,7 +93,7 @@ exports.sendWorkshopInvite = onRequest(
       const scheduleDate = String(workshopSchedule?.date || workshopDate || "").trim();
       const scheduleTime = String(workshopSchedule?.time || workshopTime || "").trim();
       const scheduleTimezone = String(
-        workshopSchedule?.timezone || workshopTimezone || "UTC+01:00"
+        workshopSchedule?.timezone || workshopTimezone || "UTC"
       ).trim();
 
       if (!normalizedWorkshopStartIso && scheduleDate && scheduleTime) {
