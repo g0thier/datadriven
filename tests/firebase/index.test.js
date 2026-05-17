@@ -7,6 +7,7 @@ describe("firebase/index", () => {
       createCompany: expect.any(Function),
       subscribeCompanyMembers: expect.any(Function),
       createWorkshopSession: expect.any(Function),
+      createQuizInvitation: expect.any(Function),
       setWorkshopVoiceParticipant: expect.any(Function),
     });
   });
