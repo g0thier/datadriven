@@ -173,7 +173,21 @@ export default function WorkshopRunner() {
 
           return (
             <div className="min-h-screen">
-              <StepTime sessionData={sessionData} startAt={startAt} />
+              <div className="fixed right-6 top-6 bottom-6 w-80 z-9999 flex flex-col gap-4">
+                <StepTime
+                  sessionData={sessionData}
+                  startAt={startAt}
+                  className="flex-1 min-h-0"
+                />
+
+                <WorkshopVoiceOverlay
+                  roomId={sessionId}
+                  channelId={voiceChannelId}
+                  workshopActive={isWorkshopActive}
+                  stepAudioEnabled={stepAudioEnabled}
+                  maxParticipants={8}
+                />
+              </div>
 
               {isFinished ? (
                 SummaryComponent ? (
@@ -194,14 +208,6 @@ export default function WorkshopRunner() {
               ) : (
                 <RouteFallback />
               )}
-
-              <WorkshopVoiceOverlay
-                roomId={sessionId}
-                channelId={voiceChannelId}
-                workshopActive={isWorkshopActive}
-                stepAudioEnabled={stepAudioEnabled}
-                maxParticipants={8}
-              />
             </div>
           );
         }}

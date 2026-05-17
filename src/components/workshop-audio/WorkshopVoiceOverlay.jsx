@@ -13,9 +13,11 @@ import useWorkshopVoiceRoom from "../../hooks/useWorkshopVoiceRoom.js";
  * Renders the WorkshopVoiceOverlay component.
  * @param {Object} props - Component props.
  * @param {*} props.roomId - roomId prop.
+ * @param {*} props.channelId - channelId prop.
  * @param {*} props.workshopActive - workshopActive prop.
  * @param {*} props.stepAudioEnabled - stepAudioEnabled prop.
  * @param {number} [props.maxParticipants=8] - maxParticipants prop.
+ * @param {string} [props.className] - Optional container classes for embedding in layouts.
  * @returns {JSX.Element|null} Rendered component output.
  *
  * @example
@@ -30,6 +32,7 @@ export default function WorkshopVoiceOverlay({
   workshopActive,
   stepAudioEnabled,
   maxParticipants = 8,
+  className = "",
 }) {
   const voiceRoom = useWorkshopVoiceRoom({
     roomId,
@@ -62,6 +65,13 @@ export default function WorkshopVoiceOverlay({
     return null;
   }
 
+  const panelClassName = [
+    "bg-white rounded-2xl shadow-md border border-gray-100",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   const othersAreSpeaking = remoteSpeakingCount > 0;
   const isLocalTransmissionActive = localIndicatorState === "talking";
   const localButtonBorderClassName = isLocalTransmissionActive
@@ -89,7 +99,7 @@ export default function WorkshopVoiceOverlay({
 
   if (isJoined && isCollapsed) {
     return (
-      <aside className="fixed left-6 bottom-6 z-9999 bg-white rounded-2xl shadow-md border border-gray-100 p-2.5">
+      <aside className={`${panelClassName} self-end p-2.5`}>
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -154,11 +164,11 @@ export default function WorkshopVoiceOverlay({
   }
 
   return (
-    <aside className="fixed left-6 bottom-6 z-9999 w-[min(22rem,calc(100vw-3rem))] bg-white rounded-2xl shadow-md border border-gray-100 p-4">
+    <aside className={`${panelClassName} w-full p-4`}>
       <div className="flex items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2 min-w-0">
           <MaterialIcon name="headset_mic" size={20} className="text-violet-600" />
-          <h2 className="font-semibold text-gray-800 truncate">Audio atelier</h2>
+          <h2 className="font-semibold text-gray-800 truncate">Audio</h2>
         </div>
 
         {isJoined ? (
