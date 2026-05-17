@@ -1,9 +1,9 @@
 {
     "nom": "Théorie du mimétisme",
     "auteur": "René Girard",
-    "definition": "Le désir mimétique, signifie que nous désirons un objet parce qu’un modèle le désire, formant une relation triangulaire entre sujet, modèle et objet. Ce n’est donc pas l’objet en lui-même qui attire, mais le regard et le désir de l’autre qui lui donnent sa valeur.",
+    "definition": "La théorie du désir mimétique montre que nos envies se forment en observant des modèles. La valeur d'un objectif dépend du regard d'autrui et de l'objet.",
     "titre": "Mimétisme",
-    "description": "Ce quiz met en valeur les aspirations du collaborateur par le biais de modèles de réussite pour comprendre ses leviers de motivation.",
+    "description": "Ce quiz convient quand vous voulez comprendre quelles figures inspirent un collaborateur. Il aide à relier aspirations, modèles de réussite et engagement.",
     "image": "src/assets/quiz/mimetisme.png",
     "template_quiz": "src/module/mimetisme/quiz.js",
     "template_vizz": "src/module/mimetisme/vizz.js",

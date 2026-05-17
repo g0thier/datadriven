@@ -1,9 +1,9 @@
 {
     "nom": "Pyramide des besoins",
     "auteur": "Abraham Maslow",
-    "definition": "La motivation humaine s'organise autour de cinq niveaux de besoins : physiologiques, sécurité, appartenance et amour, estime, puis accomplissement de soi. Les besoins les plus fondamentaux tendent à être satisfaits en priorité avant que les besoins supérieurs ne deviennent dominants.",
+    "definition": "Maslow classe cinq niveaux: physiologie, sécurité, appartenance, estime et accomplissement. Une base satisfaite libère l'élan vers le niveau suivant.",
     "titre": "Besoins de Maslow",
-    "description": "Ce quiz identifie les niveaux de besoins actuellement les plus présents dans votre expérience professionnelle.",
+    "description": "Ce quiz est pertinent pour repérer le besoin le plus actif chez une personne. Il aide à ajuster les priorités managériales au niveau de motivation du moment.",
     "image": "src/assets/quiz/pyramide-besoins.png",
     "template_quiz": "src/module/pyramide-besoins/quiz.js",
     "template_vizz": "src/module/pyramide-besoins/vizz.js",

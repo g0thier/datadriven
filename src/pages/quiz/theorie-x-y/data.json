@@ -1,9 +1,9 @@
 {
     "nom": "Théorie X et Y",
     "auteur": "Douglas McGregor",
-    "definition": "La théorie X et Y propose deux visions du management et de la motivation. La théorie X repose sur le contrôle, la direction et la sanction, tandis que la théorie Y valorise le sens, l'autodétermination et la responsabilité.",
+    "definition": "La théorie X-Y oppose deux visions du management: contrôle contraint d'un côté, autonomie de l'autre. Ces postulats influencent confiance et motivation.",
     "titre": "Théorie X-Y",
-    "description": "Cela mesure l'évolution du management vers le leadership de l'équipe.",
+    "description": "Ce quiz est utile quand vous voulez situer un style de management sur l'axe X-Y. Il aide à orienter les pratiques vers plus d'autonomie et d'engagement.",
     "image": "src/assets/quiz/theorie-x-y.png",
     "template_quiz": "src/module/theorie-x-y/quiz.js",
     "template_vizz": "src/module/theorie-x-y/vizz.js",

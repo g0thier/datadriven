@@ -1,9 +1,9 @@
 {
     "nom": "Théorie des attentes",
     "auteur": "Victor Vroom",
-    "definition": "La motivation dépend de trois facteurs : l’expectation (probabilité perçue que l’effort mène à la performance), l’instrumentalité (probabilité perçue que la performance mène à une récompense) et la valence (valeur accordée à la récompense). Si l’un de ces facteurs est faible, la motivation globale diminue.",
+    "definition": "Théorie des attentes: la motivation dépend de trois perceptions, effort, performance-récompense et valeur du gain. Si l'une baisse, l'engagement recule.",
     "titre": "Attentes",
-    "description": "Ce quiz explore les leviers de motivation.",
+    "description": "Ce quiz est utile quand l'effort produit peu d'élan dans l'équipe. Il aide à repérer si le frein vient de l'effort, de la récompense ou de la valeur.",
     "image": "src/assets/quiz/attentes.png",
     "template_quiz": "src/module/attentes/quiz.js",
     "template_vizz": "src/module/attentes/vizz.js",

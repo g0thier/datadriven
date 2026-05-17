@@ -1,9 +1,9 @@
 {
     "nom": "Identité professionnelle",
     "auteur": "Claude Dubar",
-    "definition": "L’identité professionnelle se construit dans l’articulation entre l’identité pour soi et l’identité pour autrui. Elle évolue à travers les expériences, les interactions et la reconnaissance au travail.",
+    "definition": "L'identité professionnelle se construit entre l'image de soi et le regard d'autrui. Elle évolue avec expériences, interactions et reconnaissance au travail.",
     "titre": "Identité Pro",
-    "description": "Ce module décrit des traits d’identité professionnelle selon deux dimensions: identité de soi et identité perçue au travail avec pour objectif l'alignement des deux.",
+    "description": "Ce quiz est utile pour clarifier l'alignement entre vécu personnel et perception collective. Il aide à cibler les écarts qui influencent posture et engagement.",
     "image": "src/assets/quiz/identite-pro.png",
     "dimensions_identite": [
         {

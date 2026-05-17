@@ -1,9 +1,9 @@
 {
     "nom": "Théorie des besoins acquis",
     "auteur": "David McClelland",
-    "definition": "La motivation au travail repose principalement sur trois besoins acquis : le besoin d'accomplissement (nAch), le besoin de pouvoir (nPow) et le besoin d'affiliation (nAff). Chaque personne présente une combinaison propre de ces besoins, qui influence ses préférences et ses comportements professionnels.",
+    "definition": "La théorie de McClelland décrit trois besoins acquis: accomplissement, pouvoir et affiliation. Leur combinaison influence priorités et comportements au travail.",
     "titre": "Besoins acquis",
-    "description": "Ce quiz identifie vos leviers de motivation dominants selon la théorie de McClelland.",
+    "description": "Ce quiz convient quand vous cherchez le levier motivationnel dominant d'un collaborateur. Il aide à ajuster missions, feedbacks et responsabilités à son profil.",
     "image": "src/assets/quiz/besoins-acquis.png",
     "template_quiz": "src/module/besoins-acquis/quiz.js",
     "template_vizz": "src/module/besoins-acquis/vizz.js",

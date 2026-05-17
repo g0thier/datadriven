@@ -1,9 +1,9 @@
 {
     "nom": "Théorie de l'équité",
     "auteur": "John Stacey Adams",
-    "definition": "La théorie de l'équité repose sur la comparaison entre les contributions fournies et les rétributions reçues. La perception d'un déséquilibre peut réduire l'engagement et la motivation.",
+    "definition": "La théorie de l'équité compare ce que chacun investit au travail et ce qu'il reçoit. Un écart perçu entre contributions et rétributions affaiblit l'engagement.",
     "titre": "Équité",
-    "description": "Ce module explore la perception d'équité entre contributions et rétributions.",
+    "description": "Ce quiz est pertinent quand des tensions apparaissent sur la reconnaissance ou la charge. Il aide à objectiver l'équité entre contributions et rétributions.",
     "image": "src/assets/quiz/equite.png",
     "template_quiz": "src/module/equite/quiz.js",
     "template_vizz": "src/module/equite/vizz.js",

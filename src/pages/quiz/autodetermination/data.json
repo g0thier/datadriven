@@ -1,9 +1,9 @@
 {
     "nom": "Théorie de l'autodétermination",
     "auteur": "Edward Deci",
-    "definition": "La théorie de l'autodétermination distingue la motivation extrinsèque, orientée vers des récompenses externes, et la motivation intrinsèque, orientée vers l'intérêt et le plaisir de l'activité. Elle s'appuie notamment sur trois besoins psychologiques fondamentaux : l'autonomie, la compétence et l'affiliation.",
+    "definition": "La théorie de l'autodétermination distingue motivation intrinsèque/extrinsèque selon l'origine de l'élan. Elle repose sur autonomie, compétence et lien social.",
     "titre": "Autodétermination",
-    "description": "Ce module identifie, par thème, si vos choix sont plutôt guidés par une motivation extrinsèque ou intrinsèque.",
+    "description": "Ce quiz est utile quand vous voulez comprendre ce qui soutient l'envie d'agir. Il montre si la motivation vient du sens interne ou d'incitations externes.",
     "image": "src/assets/quiz/autodetermination.png",
     "template_quiz": "src/module/autodetermination/quiz.js",
     "template_vizz": "src/module/autodetermination/vizz.js",
