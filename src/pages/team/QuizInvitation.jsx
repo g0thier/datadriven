@@ -16,9 +16,20 @@ import {
 import { teamLinks } from "../../constants/navigationLinks.js";
 import useQuizInvitation from "../../hooks/useQuizInvitation";
 
+function resolveQuestionCount(quiz) {
+  if (Array.isArray(quiz?.affirmations)) return quiz.affirmations.length;
+  if (Array.isArray(quiz?.questions)) return quiz.questions.length;
+  if (Array.isArray(quiz?.traits)) return quiz.traits.length;
+  if (Array.isArray(quiz?.oppositions)) return quiz.oppositions.length;
+  if (Array.isArray(quiz?.modèles)) return quiz.modèles.length;
+  return 0;
+}
+
 function QuizHeroCard({ quiz }) {
+  const questionCount = resolveQuestionCount(quiz);
+
   return (
-    <div className="relative rounded-2xl shadow-sm border border-slate-200 mb-6 overflow-hidden min-h-56">
+    <div className="relative rounded-2xl shadow-sm border border-slate-200 mb-6 overflow-hidden">
       {quiz?.image && (
         <img
           src={quiz.image}
@@ -27,21 +38,19 @@ function QuizHeroCard({ quiz }) {
         />
       )}
 
-      <div className="absolute inset-0 bg-linear-to-b from-black/50 via-black/30 to-black/10" />
+      <div className="absolute inset-0 bg-linear-to-b from-black/40 via-black/20 to-transparent" />
 
-      <div className="relative z-10 p-6 space-y-3">
-        <p className="text-xs text-white/80">Quiz sélectionné</p>
-        <h2 className="text-white text-2xl font-bold leading-tight">{quiz?.title ?? "Quiz"}</h2>
+      <div className="relative z-10 p-6 space-y-4">
+        <div>
+          <p className="text-xs text-white/80">Quiz sélectionné</p>
+          <h2 className="text-white text-2xl font-bold leading-tight">{quiz?.title ?? "Quiz"}</h2>
+        </div>
 
-        {quiz?.author && (
-          <p className="text-sm text-white/90">
-            Auteur: <span className="font-semibold">{quiz.author}</span>
-          </p>
-        )}
-
-        {quiz?.description && (
-          <p className="text-sm text-white/95 max-w-prose">{quiz.description}</p>
-        )}
+        <div className="flex flex-wrap gap-2">
+          <span className="inline-flex items-center gap-2 rounded-full bg-white text-slate-700 px-3 py-1 text-sm">
+            🧠 {questionCount > 0 ? `${questionCount} questions` : "Sans questions"}
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -62,10 +71,6 @@ function QuizResponseDelayCard({ responseDelayDays, onChange }) {
         onChange={(event) => onChange(event.target.value)}
         className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
       />
-
-      <p className="mt-3 text-sm text-slate-600">
-        Les invités auront <strong>{responseDelayDays}</strong> jour(s) pour répondre.
-      </p>
     </div>
   );
 }

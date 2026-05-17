@@ -7,6 +7,8 @@
  */
 import Navbar from "../../components/Navbar.jsx";
 import SectionNavButtons from "../../components/SectionNavButtons.jsx";
+import MaterialIcon from "../../components/MaterialIcon.jsx";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { teamLinks } from "../../constants/navigationLinks.js";
 import { QUIZZES } from "../quiz/index.js";
@@ -34,6 +36,7 @@ function resolveQuestionCount(quiz) {
 export default function Motivation() {
   const navigate = useNavigate();
   const quizCards = Object.values(QUIZZES || {});
+  const [hoveredInfoQuizId, setHoveredInfoQuizId] = useState(null);
 
   return (
     <>
@@ -75,19 +78,43 @@ export default function Motivation() {
 
                   <div className="p-6 space-y-4">
                     <div className="flex justify-between text-sm text-gray-500">
-                      <span>🧠 Quiz motivation</span>
-                      <span>{questionCount > 0 ? `${questionCount} items` : "Sans compteur"}</span>
+                      <span
+                        className="inline-flex items-center gap-1 text-gray-500"
+                        onMouseEnter={() => setHoveredInfoQuizId(quiz.id)}
+                        onMouseLeave={() => setHoveredInfoQuizId(null)}
+                        onFocus={() => setHoveredInfoQuizId(quiz.id)}
+                        onBlur={() => setHoveredInfoQuizId(null)}
+                        tabIndex={0}
+                        role="button"
+                        aria-label={`Plus d'infos sur ${quiz.title}`}
+                      >
+                        <MaterialIcon name="info" size={16} className="text-gray-500" />
+                        <span>plus d'infos</span>
+                      </span>
+                      <span>
+                        🧠 {questionCount > 0 ? `${questionCount} questions` : "Sans questions"}
+                      </span>
                     </div>
 
-                    {quiz.author && (
-                      <p className="text-sm text-slate-700">
-                        <span className="font-semibold">Auteur:</span> {quiz.author}
-                      </p>
-                    )}
-
-                    <p className="text-sm text-gray-600 line-clamp-3">
-                      {quiz.description || "Description indisponible."}
-                    </p>
+                    <div>
+                      {hoveredInfoQuizId === quiz.id ? (
+                        <div>
+                          <p className="font-semibold text-gray-700 mb-2">
+                            {quiz.author || "Auteur non renseigné."}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {quiz.definition || "Définition indisponible."}
+                          </p>
+                        </div>
+                      ) : (
+                        <div>
+                          <p className="font-semibold text-gray-700 mb-2">Quand l'utiliser :</p>
+                          <p className="text-sm text-gray-600">
+                            {quiz.description || "Description indisponible."}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
