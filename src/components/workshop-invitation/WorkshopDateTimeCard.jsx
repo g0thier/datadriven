@@ -5,7 +5,7 @@
  * @version 1.0.0
  * @license proprietary
  */
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { getWorkshopTimeZoneOptions } from "../../utils/workshopDateTime";
 
 /**
@@ -33,6 +33,32 @@ function WorkshopDateTimeCard({
   onTimeChange,
   onTimezoneChange,
 }) {
+  const todayDate = useMemo(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }, []);
+  const currentTime = useMemo(() => {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    return `${hours}:${minutes}`;
+  }, []);
+
+  useEffect(() => {
+    if (!date) {
+      onDateChange(todayDate);
+    }
+  }, [date, onDateChange, todayDate]);
+
+  useEffect(() => {
+    if (!time) {
+      onTimeChange(currentTime);
+    }
+  }, [time, onTimeChange, currentTime]);
+
   const timezoneOptions = useMemo(
     () => getWorkshopTimeZoneOptions(timezone, { date, time }),
     [timezone, date, time]
@@ -47,14 +73,14 @@ function WorkshopDateTimeCard({
       <div className="grid grid-cols-3 gap-3">
         <input
           type="date"
-          value={date}
+          value={date || todayDate}
           onChange={(event) => onDateChange(event.target.value)}
           className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
         />
 
         <input
           type="time"
-          value={time}
+          value={time || currentTime}
           onChange={(event) => onTimeChange(event.target.value)}
           className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
         />
