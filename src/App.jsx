@@ -32,6 +32,7 @@ const Innovation = lazy(() => import('./pages/innovation/Innovation.jsx'));
 const Team = lazy(() => import('./pages/Team.jsx'));
 const Motivation = lazy(() => import('./pages/team/Motivation.jsx'));
 const QuizInvitation = lazy(() => import('./pages/team/QuizInvitation.jsx'));
+const MyQuizEvents = lazy(() => import('./pages/team/MyQuizEvents.jsx'));
 const Soon = lazy(() => import('./pages/Soon.jsx'));
 
 function App() {
@@ -61,6 +62,7 @@ function App() {
             <Route path="/team/annuaire" element={<Team />} />
             <Route path="/team/motivation" element={<Motivation />} />
             <Route path="/team/motivation/invitation" element={<QuizInvitation />} />
+            <Route path="/team/motivation/scheduled" element={<MyQuizEvents />} />
             <Route path="/soon" element={<Soon />} />
 
             {/* Management routes */}

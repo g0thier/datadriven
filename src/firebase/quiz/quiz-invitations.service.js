@@ -1,4 +1,4 @@
-import { push, ref, update } from "firebase/database";
+import { onValue, push, ref, update } from "firebase/database";
 import { database } from "../index";
 
 /**
@@ -23,6 +23,10 @@ const normalizeGuests = (guests = []) =>
   }));
 
 const normalizeUserId = (value) => String(value || "").trim();
+const toTimestamp = (value) => {
+  const time = new Date(String(value || "")).getTime();
+  return Number.isFinite(time) ? time : 0;
+};
 
 /**
  * Creates a quiz invitation and links it to company and participant users.
@@ -111,4 +115,57 @@ export const createQuizInvitation = async (companyId, payload = {}) => {
   await update(ref(database), updates);
 
   return { invitationId, companyInvitationSummary, invitationDetails };
+};
+
+/**
+ * Subscribes to quiz invitations linked to a user.
+ * @param {string} userId - User id.
+ * @param {Function} callback - Listener receiving invitation summaries.
+ * @param {Function} [onError] - Optional error callback.
+ * @returns {Function} Unsubscribe callback.
+ */
+export const subscribeUserQuizInvitations = (userId, callback, onError) => {
+  const safeCallback = typeof callback === "function" ? callback : () => {};
+  const safeOnError = typeof onError === "function" ? onError : null;
+
+  if (!userId) {
+    safeCallback([]);
+    return () => {};
+  }
+
+  const userInvitationsRef = ref(database, `users/${userId}/quizInvitations`);
+  return onValue(
+    userInvitationsRef,
+    (snapshot) => {
+      const invitationsRaw = snapshot.val() || {};
+      const invitations = Object.entries(invitationsRaw)
+        .map(([id, data]) => ({
+          id,
+          invitationId: data?.invitationId || id,
+          quizId: data?.quizId || "",
+          quizTitle: data?.quizTitle || "",
+          responseDeadline: data?.responseDeadline || "",
+          responseDelayDays:
+            typeof data?.responseDelayDays === "number" ? data.responseDelayDays : 0,
+          status: data?.status || "",
+          createdAt: data?.createdAt || "",
+          updatedAt: data?.updatedAt || "",
+        }))
+        .sort(
+          (a, b) =>
+            toTimestamp(b.responseDeadline || b.createdAt) -
+            toTimestamp(a.responseDeadline || a.createdAt)
+        );
+
+      safeCallback(invitations);
+    },
+    (error) => {
+      console.error("Impossible de charger les invitations quiz utilisateur :", error);
+      if (safeOnError) {
+        safeOnError(error);
+        return;
+      }
+      safeCallback([]);
+    }
+  );
 };

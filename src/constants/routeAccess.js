@@ -32,6 +32,7 @@ export const COLAB_RESTRICTED_LINKS = [
   "/team/annuaire",
   "/team/motivation",
   "/team/motivation/invitation",
+  "/team/motivation/scheduled",
   "/management",
   "/management/comptes",
   "/management/abonnement",
