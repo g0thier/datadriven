@@ -13,15 +13,13 @@ import slugify from "../utils/string";
 
 /**
  * @module hooks/useQuizInvitation
- * @description Hook to prepare quiz invitations and dispatch FCM notifications.
+ * @description Hook to prepare quiz invitations and dispatch invite emails.
  * @author Gauthier Rammault
  * @version 1.0.0
  * @license proprietary
  */
 
-const SEND_QUIZ_INVITE_FCM_URL = import.meta.env.VITE_SEND_QUIZ_INVITE_FCM_URL;
-const FIREBASE_PROJECT_ID = import.meta.env.VITE_FIREBASE_PROJECT_ID;
-const FIREBASE_FUNCTION_REGION = import.meta.env.VITE_FIREBASE_FUNCTION_REGION;
+const SEND_QUIZ_INVITE_URL = import.meta.env.VITE_SEND_QUIZ_INVITE_URL;
 
 const DEFAULT_QUIZ = Object.values(QUIZZES)[0] ?? { title: "Quiz Motivation" };
 
@@ -39,17 +37,8 @@ const resolveQuizId = (quiz) => {
   return Object.keys(QUIZZES)[0] || "";
 };
 
-function buildDefaultFunctionUrl(functionName) {
-  const projectId = String(FIREBASE_PROJECT_ID || "").trim();
-  const region = String(FIREBASE_FUNCTION_REGION || "").trim();
-  if (!projectId || !region) return "";
-  return `https://${region}-${projectId}.cloudfunctions.net/${functionName}`;
-}
-
-function resolveQuizInviteFcmUrl() {
-  const explicitUrl = String(SEND_QUIZ_INVITE_FCM_URL || "").trim();
-  if (explicitUrl) return explicitUrl;
-  return buildDefaultFunctionUrl("sendQuizInviteFcm");
+function resolveQuizInviteUrl() {
+  return String(SEND_QUIZ_INVITE_URL || "").trim();
 }
 
 function toPositiveInteger(value, fallback = 14) {
@@ -281,24 +270,28 @@ function useQuizInvitation() {
       return;
     }
 
-    const sendQuizInviteFcmUrl = resolveQuizInviteFcmUrl();
-    if (!sendQuizInviteFcmUrl) {
-      alert("URL d'envoi FCM introuvable. Configure VITE_SEND_QUIZ_INVITE_FCM_URL.");
+    const sendQuizInviteUrl = resolveQuizInviteUrl();
+    if (!sendQuizInviteUrl) {
+      alert("URL d'envoi email introuvable. Configure VITE_SEND_QUIZ_INVITE_URL.");
       return;
     }
 
     setIsSending(true);
 
     try {
-      const idToken = await auth.currentUser?.getIdToken?.();
-      const normalizedIdToken = String(idToken || "").trim();
-      if (!normalizedIdToken) {
-        throw new Error("auth_required");
+      const recipientsWithEmail = allGuests.filter((guest) =>
+        Boolean(String(guest.email || "").trim())
+      );
+      if (recipientsWithEmail.length === 0) {
+        alert("Aucun invité sélectionné avec une adresse email valide.");
+        return;
       }
+
+      const quizTitle = quiz?.title || quiz?.titre || "Quiz Motivation";
 
       const { invitationId } = await createQuizInvitation(companyId, {
         quizId,
-        quizTitle: quiz?.title || quiz?.titre || "Quiz Motivation",
+        quizTitle,
         quizDescription: quiz?.description || "",
         responseDelayDays: resolvedResponseDelayDays,
         responseDeadline: resolvedResponseDeadline,
@@ -328,69 +321,59 @@ function useQuizInvitation() {
         totalGuestCount: totalUniqueGuestCount,
       });
 
-      const response = await fetch(sendQuizInviteFcmUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${normalizedIdToken}`,
-        },
-        body: JSON.stringify({
-          invitationId,
-          companyId,
-          quizId,
-          quizTitle: quiz?.title || quiz?.titre || "Quiz Motivation",
-          responseDeadline: resolvedResponseDeadline,
-          responseDelayDays: resolvedResponseDelayDays,
-          recipients: allGuests.map((guest) => ({
-            uid: String(guest.uid || guest.id || ""),
-            id: String(guest.id || ""),
-            label: guest.label || "",
-            email: guest.email || "",
-            firstName: guest.firstName || "",
-            lastName: guest.lastName || "",
-            name: guest.name || "",
-            sources: Array.isArray(guest.sources) ? guest.sources : [],
-          })),
-          inviter: {
-            uid: auth.currentUser?.uid || "",
-            firstName: inviterFirstName,
-            lastName: inviterLastName,
-            email: inviterEmail,
-          },
-        }),
-      });
+      const quizLink = new URL(
+        `/team/motivation/${encodeURIComponent(quizId)}/${encodeURIComponent(invitationId)}`,
+        window.location.origin
+      ).toString();
 
-      if (!response.ok) {
-        const errorBody = await response.json().catch(() => null);
-        throw new Error(errorBody?.error || `HTTP ${response.status}`);
-      }
+      const results = await Promise.allSettled(
+        recipientsWithEmail.map((guest, index) =>
+          fetch(sendQuizInviteUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              inviteeEmail: guest.email,
+              inviteeName: guest.firstName || guest.name || guest.label,
+              inviterFirstName,
+              inviterLastName,
+              inviterEmail,
+              quizTitle,
+              responseDeadline: resolvedResponseDeadline,
+              responseDelayDays: resolvedResponseDelayDays,
+              quizLink,
+              invitationId,
+              quizId,
+              sendInviterConfirmation: index === 0,
+              invitedCount: recipientsWithEmail.length,
+            }),
+          }).then(async (response) => {
+            if (!response.ok) {
+              const errorBody = await response.json().catch(() => null);
+              throw new Error(errorBody?.error || `HTTP ${response.status}`);
+            }
+            return response.json();
+          })
+        )
+      );
 
-      const sendResult = await response.json().catch(() => ({}));
-
-      const sentCount = Number(sendResult?.sentCount || 0);
-      const failedCount = Number(sendResult?.failedCount || 0);
-      const skippedCount = Number(sendResult?.skippedCount || 0);
+      const failedCount = results.filter((result) => result.status === "rejected").length;
+      const sentCount = results.length - failedCount;
 
       if (failedCount === 0) {
         setInviteResultModal({
           isOpen: true,
           variant: "success",
           title: "Invitations envoyées",
-          lines: [
-            `${sentCount} notification(s) envoyée(s).`,
-            skippedCount > 0 ? `${skippedCount} invité(s) ignoré(s) (sans token).` : "",
-          ].filter(Boolean),
+          lines: [`${sentCount} email(s) envoyé(s).`],
         });
       } else {
         setInviteResultModal({
           isOpen: true,
           variant: "warning",
           title: "Envoi terminé avec erreurs",
-          lines: [
-            `Succès: ${sentCount}`,
-            `Échecs: ${failedCount}`,
-            skippedCount > 0 ? `Ignorés: ${skippedCount}` : "",
-          ].filter(Boolean),
+          lines: [`Succès: ${sentCount}`, `Échecs: ${failedCount}`],
         });
       }
     } catch (error) {

@@ -27,6 +27,18 @@ const toTimestamp = (value) => {
   const time = new Date(String(value || "")).getTime();
   return Number.isFinite(time) ? time : 0;
 };
+const normalizeInvitationSummary = (id, data = {}) => ({
+  id,
+  invitationId: data?.invitationId || id,
+  quizId: data?.quizId || "",
+  quizTitle: data?.quizTitle || "",
+  responseDeadline: data?.responseDeadline || "",
+  responseDelayDays:
+    typeof data?.responseDelayDays === "number" ? data.responseDelayDays : 0,
+  status: data?.status || "",
+  createdAt: data?.createdAt || "",
+  updatedAt: data?.updatedAt || "",
+});
 
 /**
  * Creates a quiz invitation and links it to company and participant users.
@@ -139,18 +151,7 @@ export const subscribeUserQuizInvitations = (userId, callback, onError) => {
     (snapshot) => {
       const invitationsRaw = snapshot.val() || {};
       const invitations = Object.entries(invitationsRaw)
-        .map(([id, data]) => ({
-          id,
-          invitationId: data?.invitationId || id,
-          quizId: data?.quizId || "",
-          quizTitle: data?.quizTitle || "",
-          responseDeadline: data?.responseDeadline || "",
-          responseDelayDays:
-            typeof data?.responseDelayDays === "number" ? data.responseDelayDays : 0,
-          status: data?.status || "",
-          createdAt: data?.createdAt || "",
-          updatedAt: data?.updatedAt || "",
-        }))
+        .map(([id, data]) => normalizeInvitationSummary(id, data))
         .sort(
           (a, b) =>
             toTimestamp(b.responseDeadline || b.createdAt) -
@@ -166,6 +167,50 @@ export const subscribeUserQuizInvitations = (userId, callback, onError) => {
         return;
       }
       safeCallback([]);
+    }
+  );
+};
+
+/**
+ * Subscribes to a single quiz invitation linked to a user.
+ * @param {string} userId - User id.
+ * @param {string} invitationId - Invitation id.
+ * @param {Function} callback - Listener receiving invitation summary or null.
+ * @param {Function} [onError] - Optional error callback.
+ * @returns {Function} Unsubscribe callback.
+ */
+export const subscribeUserQuizInvitation = (userId, invitationId, callback, onError) => {
+  const safeCallback = typeof callback === "function" ? callback : () => {};
+  const safeOnError = typeof onError === "function" ? onError : null;
+  const normalizedUserId = normalizeUserId(userId);
+  const normalizedInvitationId = normalizeUserId(invitationId);
+
+  if (!normalizedUserId || !normalizedInvitationId) {
+    safeCallback(null);
+    return () => {};
+  }
+
+  const invitationRef = ref(
+    database,
+    `users/${normalizedUserId}/quizInvitations/${normalizedInvitationId}`
+  );
+  return onValue(
+    invitationRef,
+    (snapshot) => {
+      if (!snapshot.exists()) {
+        safeCallback(null);
+        return;
+      }
+
+      safeCallback(normalizeInvitationSummary(normalizedInvitationId, snapshot.val() || {}));
+    },
+    (error) => {
+      console.error("Impossible de charger l'invitation quiz utilisateur :", error);
+      if (safeOnError) {
+        safeOnError(error);
+        return;
+      }
+      safeCallback(null);
     }
   );
 };

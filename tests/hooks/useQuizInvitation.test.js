@@ -48,15 +48,15 @@ vi.mock("../../src/pages/quiz/index.js", () => ({
 describe("useQuizInvitation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubEnv("VITE_SEND_QUIZ_INVITE_FCM_URL", "https://example.com/fcm");
+    vi.stubEnv("VITE_SEND_QUIZ_INVITE_URL", "https://example.com/email");
     createQuizInvitation.mockResolvedValue({ invitationId: "q1" });
-    global.fetch.mockResolvedValue({
+    globalThis.fetch.mockResolvedValue({
       ok: true,
-      json: vi.fn().mockResolvedValue({ sentCount: 1, failedCount: 0, skippedCount: 0 }),
+      json: vi.fn().mockResolvedValue({ success: true }),
     });
   });
 
-  it("builds selection, persists and sends FCM invites", async () => {
+  it("builds selection, persists and sends email invites", async () => {
     const { default: useQuizInvitation } = await import("../../src/hooks/useQuizInvitation.js");
     const hook = await renderHook(() => useQuizInvitation());
 
@@ -76,8 +76,8 @@ describe("useQuizInvitation", () => {
       expect.objectContaining({ quizId: "theorie-x-y", totalGuestCount: 1 })
     );
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      "https://example.com/fcm",
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      "https://example.com/email",
       expect.objectContaining({ method: "POST" })
     );
 

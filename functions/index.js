@@ -43,8 +43,8 @@ exports.helloWorld = onRequest((request, response) => {
 
 exports.sendWorkshopInvite =
   require("./workshop-invitation/sendWorkshopInvite").sendWorkshopInvite;
-exports.sendQuizInviteFcm =
-  require("./quiz-invitation/sendQuizInviteFcm").sendQuizInviteFcm;
+exports.sendQuizInvite =
+  require("./quiz-invitation/sendQuizInvite").sendQuizInvite;
 exports.createCheckoutSession = stripeHandlers.createCheckoutSession;
 exports.createPortalSession = stripeHandlers.createPortalSession;
 exports.stripeWebhook = stripeHandlers.stripeWebhook;
