@@ -6,9 +6,6 @@ import { describe, expect, it, vi } from "vitest";
 import Step2 from "../../../../src/pages/workshops/design-thinking/steps/Step2.jsx";
 import Step3 from "../../../../src/pages/workshops/design-thinking/steps/Step3.jsx";
 import Step4 from "../../../../src/pages/workshops/design-thinking/steps/Step4.jsx";
-import Step5 from "../../../../src/pages/workshops/design-thinking/steps/Step5.jsx";
-import Step6 from "../../../../src/pages/workshops/design-thinking/steps/Step6.jsx";
-import Step7 from "../../../../src/pages/workshops/design-thinking/steps/Step7.jsx";
 import Step8 from "../../../../src/pages/workshops/design-thinking/steps/Step8.jsx";
 import Step9 from "../../../../src/pages/workshops/design-thinking/steps/Step9.jsx";
 import Step10 from "../../../../src/pages/workshops/design-thinking/steps/Step10.jsx";
@@ -118,9 +115,6 @@ describe("design-thinking steps", () => {
         <Step2 step={stepMeta("S2")} sessionTitle="DT" collaboration={shared} />
         <Step3 step={stepMeta("S3")} sessionTitle="DT" collaboration={shared} />
         <Step4 step={stepMeta("S4")} sessionTitle="DT" collaboration={shared} session={{ sessionId: "s1" }} />
-        <Step5 step={stepMeta("S5")} sessionTitle="DT" collaboration={shared} />
-        <Step6 step={stepMeta("S6")} sessionTitle="DT" collaboration={shared} />
-        <Step7 step={stepMeta("S7")} sessionTitle="DT" collaboration={shared} />
         <Step8 step={stepMeta("S8")} sessionTitle="DT" collaboration={shared} />
         <Step9 step={stepMeta("S9")} sessionTitle="DT" collaboration={shared} />
         <Step10 step={stepMeta("S10")} sessionTitle="DT" collaboration={shared} />

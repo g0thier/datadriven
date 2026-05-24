@@ -1,29 +1,32 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import SixHatsSummary from "../../../../src/pages/workshops/six-hats/Summary.jsx";
 
 describe("SixHatsSummary", () => {
   it("renders summary content and hides empty list items", () => {
     render(
-      <SixHatsSummary
-        sessionTitle="Session Six Hats"
-        collaboration={{
-          description: "Sujet initial",
-          blueConclusion: "Conclusion finale",
-          syncError: "Sync issue",
-          itemsByHat: {
-            white: [
-              { id: "w1", text: "Fait 1" },
-              { id: "w2", text: "   " },
-            ],
-            red: [{ id: "r1", text: "Ressenti" }],
-            black: [],
-            yellow: [],
-            green: [],
-          },
-        }}
-      />
+      <MemoryRouter>
+        <SixHatsSummary
+          sessionTitle="Session Six Hats"
+          collaboration={{
+            description: "Sujet initial",
+            blueConclusion: "Conclusion finale",
+            syncError: "Sync issue",
+            itemsByHat: {
+              white: [
+                { id: "w1", text: "Fait 1" },
+                { id: "w2", text: "   " },
+              ],
+              red: [{ id: "r1", text: "Ressenti" }],
+              black: [],
+              yellow: [],
+              green: [],
+            },
+          }}
+        />
+      </MemoryRouter>
     );
 
     expect(screen.getByText("Session Six Hats")).toBeInTheDocument();

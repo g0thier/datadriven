@@ -63,7 +63,7 @@ function App() {
             <Route path="/team/annuaire" element={<Team />} />
             <Route path="/team/motivation" element={<Motivation />} />
             <Route path="/team/motivation/invitation" element={<QuizInvitation />} />
-            <Route path="/team/motivation/:quizId/:invitationId" element={<QuizInvitationDetail />} />
+            <Route path="/team/motivation/:quizId/:sessionId" element={<QuizInvitationDetail />} />
             <Route path="/team/motivation/scheduled" element={<MyQuizEvents />} />
             <Route path="/soon" element={<Soon />} />
 

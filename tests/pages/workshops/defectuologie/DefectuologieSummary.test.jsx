@@ -1,5 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
 import DefectuologieSummary from "../../../../src/pages/workshops/defectuologie/Summary.jsx";
@@ -7,23 +8,25 @@ import DefectuologieSummary from "../../../../src/pages/workshops/defectuologie/
 describe("DefectuologieSummary", () => {
   it("renders challenge, subgroup results and sync error", () => {
     render(
-      <DefectuologieSummary
-        sessionTitle="Session Defectuologie"
-        collaboration={{
-          description: "Ameliorer la file d'attente",
-          syncError: "Sync issue",
-          resultsBySubgroup: [
-            {
-              subgroupId: "group-1",
-              subgroupLabel: "Sous-groupe 1",
-              selectedDefect: { id: "d1", text: "Attente trop longue" },
-              selectedSolution: { id: "s1", text: "File virtuelle" },
-              proposalText: "Application mobile de ticketing",
-              participantCount: 4,
-            },
-          ],
-        }}
-      />
+      <MemoryRouter>
+        <DefectuologieSummary
+          sessionTitle="Session Defectuologie"
+          collaboration={{
+            description: "Ameliorer la file d'attente",
+            syncError: "Sync issue",
+            resultsBySubgroup: [
+              {
+                subgroupId: "group-1",
+                subgroupLabel: "Sous-groupe 1",
+                selectedDefect: { id: "d1", text: "Attente trop longue" },
+                selectedSolution: { id: "s1", text: "File virtuelle" },
+                proposalText: "Application mobile de ticketing",
+                participantCount: 4,
+              },
+            ],
+          }}
+        />
+      </MemoryRouter>
     );
 
     expect(screen.getByText("Session Defectuologie")).toBeInTheDocument();

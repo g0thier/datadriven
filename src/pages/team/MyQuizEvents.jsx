@@ -10,7 +10,8 @@ import MaterialIcon from "../../components/MaterialIcon.jsx";
 import Navbar from "../../components/Navbar.jsx";
 import SectionNavButtons from "../../components/SectionNavButtons.jsx";
 import { teamLinks } from "../../constants/navigationLinks.js";
-import { auth, onAuthStateChangedListener, subscribeUserQuizInvitations } from "../../firebase";
+import { getQuiz } from "../quiz/index.js";
+import { auth, onAuthStateChangedListener, subscribeUserQuizSessions } from "../../firebase";
 
 const toTimestamp = (value) => {
   const time = new Date(String(value || "")).getTime();
@@ -49,11 +50,13 @@ const sortPast = (a, b) => {
 };
 
 function QuizCard({ quiz, isPast }) {
+  const resolvedQuizTitle = getQuiz(quiz.quizId)?.title || "Quiz motivation";
+
   const handleOpenAlert = () => {
     alert(
       [
-        `Quiz: ${quiz.quizTitle || "Quiz motivation"}`,
-        `Invitation ID: ${quiz.invitationId || quiz.id || "N/A"}`,
+        `Quiz: ${resolvedQuizTitle}`,
+        `Session ID: ${quiz.sessionId || quiz.id || "N/A"}`,
         `Deadline: ${quiz.responseDeadline || "Non renseignée"}`,
         `Statut: ${quiz.status || "invited"}`,
       ].join("\n")
@@ -64,7 +67,7 @@ function QuizCard({ quiz, isPast }) {
     <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-lg font-semibold text-slate-800">{quiz.quizTitle || "Quiz"}</h3>
+          <h3 className="text-lg font-semibold text-slate-800">{resolvedQuizTitle}</h3>
           <p className="mt-1 text-sm text-slate-500">
             Date limite: {formatDateTime(quiz.responseDeadline)}
           </p>
@@ -95,7 +98,7 @@ function QuizCard({ quiz, isPast }) {
  */
 export default function MyQuizEvents() {
   const [uid, setUid] = useState(() => auth.currentUser?.uid || "");
-  const [quizInvitations, setQuizInvitations] = useState([]);
+  const [quizSessions, setQuizSessions] = useState([]);
   const [isLoading, setIsLoading] = useState(() => Boolean(auth.currentUser?.uid));
   const [loadError, setLoadError] = useState("");
   const [snapshotNowMs, setSnapshotNowMs] = useState(() => Date.now());
@@ -113,7 +116,7 @@ export default function MyQuizEvents() {
       setUid(nextUid);
 
       if (!nextUid) {
-        setQuizInvitations([]);
+        setQuizSessions([]);
         setLoadError("");
         setIsLoading(false);
         return;
@@ -131,16 +134,16 @@ export default function MyQuizEvents() {
   useEffect(() => {
     if (!uid) return () => {};
 
-    const unsubscribe = subscribeUserQuizInvitations(
+    const unsubscribe = subscribeUserQuizSessions(
       uid,
-      (nextInvitations) => {
-        setQuizInvitations(nextInvitations);
+      (nextSessions) => {
+        setQuizSessions(nextSessions);
         setSnapshotNowMs(Date.now());
         setLoadError("");
         setIsLoading(false);
       },
       () => {
-        setQuizInvitations([]);
+        setQuizSessions([]);
         setLoadError("Impossible de charger les quiz pour le moment.");
         setIsLoading(false);
       }
@@ -153,7 +156,7 @@ export default function MyQuizEvents() {
     const upcoming = [];
     const past = [];
 
-    quizInvitations.forEach((quiz) => {
+    quizSessions.forEach((quiz) => {
       const deadlineTs = toTimestamp(quiz.responseDeadline);
       if (deadlineTs !== null && deadlineTs < snapshotNowMs) {
         past.push(quiz);
@@ -167,7 +170,7 @@ export default function MyQuizEvents() {
     past.sort(sortPast);
 
     return { upcomingQuiz: upcoming, pastQuiz: past };
-  }, [quizInvitations, snapshotNowMs]);
+  }, [quizSessions, snapshotNowMs]);
 
   return (
     <>
@@ -204,7 +207,7 @@ export default function MyQuizEvents() {
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2">
                     {upcomingQuiz.map((quiz) => (
-                      <QuizCard key={quiz.invitationId || quiz.id} quiz={quiz} isPast={false} />
+                      <QuizCard key={quiz.sessionId || quiz.id} quiz={quiz} isPast={false} />
                     ))}
                   </div>
                 )}
@@ -224,7 +227,7 @@ export default function MyQuizEvents() {
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2">
                     {pastQuiz.map((quiz) => (
-                      <QuizCard key={quiz.invitationId || quiz.id} quiz={quiz} isPast />
+                      <QuizCard key={quiz.sessionId || quiz.id} quiz={quiz} isPast />
                     ))}
                   </div>
                 )}

@@ -10,10 +10,11 @@ import { useParams } from "react-router-dom";
 import Navbar from "../../components/Navbar.jsx";
 import SectionNavButtons from "../../components/SectionNavButtons.jsx";
 import { teamLinks } from "../../constants/navigationLinks.js";
+import { getQuiz } from "../quiz/index.js";
 import {
   auth,
   onAuthStateChangedListener,
-  subscribeUserQuizInvitation,
+  subscribeUserQuizSession,
 } from "../../firebase";
 
 const toTimestamp = (value) => {
@@ -37,15 +38,15 @@ const formatDateTime = (value) => {
 const normalizeParam = (value) => String(value || "").trim();
 
 export default function QuizInvitationDetail() {
-  const { quizId: quizIdParamRaw, invitationId: invitationIdParamRaw } = useParams();
+  const { quizId: quizIdParamRaw, sessionId: sessionIdParamRaw } = useParams();
   const quizIdParam = useMemo(() => normalizeParam(quizIdParamRaw), [quizIdParamRaw]);
-  const invitationIdParam = useMemo(
-    () => normalizeParam(invitationIdParamRaw),
-    [invitationIdParamRaw]
+  const sessionIdParam = useMemo(
+    () => normalizeParam(sessionIdParamRaw),
+    [sessionIdParamRaw]
   );
 
   const [uid, setUid] = useState(() => auth.currentUser?.uid || "");
-  const [invitation, setInvitation] = useState(null);
+  const [session, setSession] = useState(null);
   const [isLoading, setIsLoading] = useState(() => Boolean(auth.currentUser?.uid));
   const [loadError, setLoadError] = useState("");
   const uidRef = useRef(uid);
@@ -62,7 +63,7 @@ export default function QuizInvitationDetail() {
       setUid(nextUid);
 
       if (!nextUid) {
-        setInvitation(null);
+        setSession(null);
         setLoadError("");
         setIsLoading(false);
         return;
@@ -78,31 +79,33 @@ export default function QuizInvitationDetail() {
   }, []);
 
   useEffect(() => {
-    if (!uid || !invitationIdParam) return () => {};
+    if (!uid || !sessionIdParam) return () => {};
 
-    const unsubscribe = subscribeUserQuizInvitation(
+    const unsubscribe = subscribeUserQuizSession(
       uid,
-      invitationIdParam,
-      (nextInvitation) => {
-        setInvitation(nextInvitation);
+      sessionIdParam,
+      (nextSession) => {
+        setSession(nextSession);
         setLoadError("");
         setIsLoading(false);
       },
       () => {
-        setInvitation(null);
-        setLoadError("Impossible de charger l'invitation quiz pour le moment.");
+        setSession(null);
+        setLoadError("Impossible de charger la session quiz pour le moment.");
         setIsLoading(false);
       }
     );
 
     return () => unsubscribe();
-  }, [invitationIdParam, uid]);
+  }, [sessionIdParam, uid]);
 
   const hasQuizMismatch =
-    Boolean(invitation) &&
+    Boolean(session) &&
     Boolean(quizIdParam) &&
-    Boolean(invitation.quizId) &&
-    invitation.quizId !== quizIdParam;
+    Boolean(session.quizId) &&
+    session.quizId !== quizIdParam;
+
+  const resolvedQuizTitle = getQuiz(session?.quizId || quizIdParam)?.title || "Quiz motivation";
 
   const handleTemporaryCta = () => {
     alert("Le lancement du quiz depuis ce lien sera disponible bientôt.");
@@ -124,9 +127,9 @@ export default function QuizInvitationDetail() {
             </p>
           ) : loadError ? (
             <p className="rounded-xl bg-white p-4 text-sm text-red-600 shadow-sm">{loadError}</p>
-          ) : !invitation ? (
+          ) : !session ? (
             <p className="rounded-xl bg-white p-4 text-sm text-slate-600 shadow-sm">
-              Invitation introuvable.
+              Session introuvable.
             </p>
           ) : hasQuizMismatch ? (
             <p className="rounded-xl bg-white p-4 text-sm text-red-600 shadow-sm">
@@ -136,33 +139,33 @@ export default function QuizInvitationDetail() {
             <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">Invitation reçue</p>
               <h2 className="text-2xl font-bold text-slate-900 mb-4">
-                {invitation.quizTitle || "Quiz motivation"}
+                {resolvedQuizTitle}
               </h2>
 
               <div className="grid gap-4 sm:grid-cols-3 mb-6">
                 <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
                   <p className="text-xs text-slate-500">Quiz ID</p>
                   <p className="text-sm font-semibold text-slate-900 break-all">
-                    {invitation.quizId || "N/A"}
+                    {session.quizId || "N/A"}
                   </p>
                 </div>
                 <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
-                  <p className="text-xs text-slate-500">Invitation ID</p>
+                  <p className="text-xs text-slate-500">Session ID</p>
                   <p className="text-sm font-semibold text-slate-900 break-all">
-                    {invitation.invitationId || invitationIdParam}
+                    {session.sessionId || sessionIdParam}
                   </p>
                 </div>
                 <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
                   <p className="text-xs text-slate-500">Statut</p>
                   <p className="text-sm font-semibold text-slate-900">
-                    {invitation.status || "invited"}
+                    {session.status || "invited"}
                   </p>
                 </div>
               </div>
 
               <p className="text-slate-700 mb-6">
                 Date limite de réponse:{" "}
-                <span className="font-semibold">{formatDateTime(invitation.responseDeadline)}</span>
+                <span className="font-semibold">{formatDateTime(session.responseDeadline)}</span>
               </p>
 
               <button

@@ -42,16 +42,16 @@
       }
     },
 
-    "quizInvitations": {
-      // Optimisation : Permet de récupérer toutes les invitations d'une entreprise donnée
+    "quizSessions": {
+      // Optimisation : Permet de récupérer toutes les sessions quiz d'une entreprise donnée
       ".indexOn": ["companyId"],
 
-      "$invitationId": {
-        // LECTURE : Seuls les membres de la même entreprise que l'invitation peuvent la voir
+      "$sessionId": {
+        // LECTURE : Seuls les membres de la même entreprise que la session quiz peuvent la voir
         ".read": "auth != null && root.child('users').child(auth.uid).child('companyId').val() === data.child('companyId').val()",
 
         // ÉCRITURE : On vérifie le companyId.
-        // Si l'invitation existe déjà (data.exists()), on garde le companyId actuel.
+        // Si la session quiz existe déjà (data.exists()), on garde le companyId actuel.
         // Si c'est une création, on vérifie que le companyId envoyé (newData) est bien celui de l'utilisateur.
         ".write": "auth != null && root.child('users').child(auth.uid).child('companyId').val() === (data.exists() ? data.child('companyId').val() : newData.child('companyId').val())"
       }

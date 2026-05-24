@@ -2,8 +2,8 @@ import { onValue, push, ref, update } from "firebase/database";
 import { database } from "../index";
 
 /**
- * @module firebase/quiz/quiz-invitations.service
- * @description Quiz invitation creation helpers for motivation quizzes.
+ * @module firebase/quiz/quiz-sessions.service
+ * @description Quiz session creation helpers for motivation quizzes.
  * @author Gauthier Rammault
  * @version 1.0.0
  * @license proprietary
@@ -23,50 +23,45 @@ const normalizeGuests = (guests = []) =>
   }));
 
 const normalizeUserId = (value) => String(value || "").trim();
+
 const toTimestamp = (value) => {
   const time = new Date(String(value || "")).getTime();
   return Number.isFinite(time) ? time : 0;
 };
-const normalizeInvitationSummary = (id, data = {}) => ({
+
+const normalizeSessionSummary = (id, data = {}) => ({
   id,
-  invitationId: data?.invitationId || id,
+  sessionId: data?.sessionId || id,
   quizId: data?.quizId || "",
-  quizTitle: data?.quizTitle || "",
   responseDeadline: data?.responseDeadline || "",
-  responseDelayDays:
-    typeof data?.responseDelayDays === "number" ? data.responseDelayDays : 0,
   status: data?.status || "",
   createdAt: data?.createdAt || "",
   updatedAt: data?.updatedAt || "",
 });
 
 /**
- * Creates a quiz invitation and links it to company and participant users.
+ * Creates a quiz session and links it to company and participant users.
  * @param {string} companyId - Company id.
- * @param {Object} [payload={}] - Invitation creation payload.
- * @returns {Promise<{invitationId:string, companyInvitationSummary:Object, invitationDetails:Object}>}
+ * @param {Object} [payload={}] - Session creation payload.
+ * @returns {Promise<{sessionId:string, companySessionSummary:Object, sessionDetails:Object}>}
  */
-export const createQuizInvitation = async (companyId, payload = {}) => {
+export const createQuizSession = async (companyId, payload = {}) => {
   if (!companyId) {
-    throw new Error("createQuizInvitation: companyId manquant");
+    throw new Error("createQuizSession: companyId manquant");
   }
 
   const now = new Date().toISOString();
-  const invitationRef = push(ref(database, "quizInvitations"));
-  const invitationId = invitationRef.key;
+  const sessionRef = push(ref(database, "quizSessions"));
+  const sessionId = sessionRef.key;
 
-  if (!invitationId) {
-    throw new Error("Impossible de générer invitationId");
+  if (!sessionId) {
+    throw new Error("Impossible de générer sessionId");
   }
 
-  const invitationDetails = {
-    invitationId,
+  const sessionDetails = {
+    sessionId,
     companyId,
     quizId: payload.quizId || "",
-    quizTitle: payload.quizTitle || "",
-    quizDescription: payload.quizDescription || "",
-    responseDelayDays:
-      typeof payload.responseDelayDays === "number" ? payload.responseDelayDays : 14,
     responseDeadline: payload.responseDeadline || "",
     inviter: {
       uid: payload.inviter?.uid || "",
@@ -88,28 +83,26 @@ export const createQuizInvitation = async (companyId, payload = {}) => {
     updatedAt: now,
   };
 
-  const companyInvitationSummary = {
-    invitationId,
-    quizId: invitationDetails.quizId,
-    quizTitle: invitationDetails.quizTitle,
-    responseDeadline: invitationDetails.responseDeadline,
-    responseDelayDays: invitationDetails.responseDelayDays,
-    status: invitationDetails.status,
+  const companySessionSummary = {
+    sessionId,
+    quizId: sessionDetails.quizId,
+    responseDeadline: sessionDetails.responseDeadline,
+    status: sessionDetails.status,
     createdAt: now,
     updatedAt: now,
   };
 
   const updates = {};
-  updates[`companies/${companyId}/quizInvitations/${invitationId}`] = companyInvitationSummary;
-  updates[`quizInvitations/${invitationId}`] = invitationDetails;
+  updates[`companies/${companyId}/quizSessions/${sessionId}`] = companySessionSummary;
+  updates[`quizSessions/${sessionId}`] = sessionDetails;
 
   const participantUserIds = new Set();
-  const inviterUid = normalizeUserId(invitationDetails?.inviter?.uid);
+  const inviterUid = normalizeUserId(sessionDetails?.inviter?.uid);
   if (inviterUid) {
     participantUserIds.add(inviterUid);
   }
 
-  [invitationDetails.allGuests, invitationDetails.selectedGuests, invitationDetails.guestsFromSelectedDepartments]
+  [sessionDetails.allGuests, sessionDetails.selectedGuests, sessionDetails.guestsFromSelectedDepartments]
     .filter(Array.isArray)
     .forEach((guests) => {
       guests.forEach((guest) => {
@@ -121,22 +114,22 @@ export const createQuizInvitation = async (companyId, payload = {}) => {
     });
 
   participantUserIds.forEach((userId) => {
-    updates[`users/${userId}/quizInvitations/${invitationId}`] = companyInvitationSummary;
+    updates[`users/${userId}/quizSessions/${sessionId}`] = companySessionSummary;
   });
 
   await update(ref(database), updates);
 
-  return { invitationId, companyInvitationSummary, invitationDetails };
+  return { sessionId, companySessionSummary, sessionDetails };
 };
 
 /**
- * Subscribes to quiz invitations linked to a user.
+ * Subscribes to quiz sessions linked to a user.
  * @param {string} userId - User id.
- * @param {Function} callback - Listener receiving invitation summaries.
+ * @param {Function} callback - Listener receiving session summaries.
  * @param {Function} [onError] - Optional error callback.
  * @returns {Function} Unsubscribe callback.
  */
-export const subscribeUserQuizInvitations = (userId, callback, onError) => {
+export const subscribeUserQuizSessions = (userId, callback, onError) => {
   const safeCallback = typeof callback === "function" ? callback : () => {};
   const safeOnError = typeof onError === "function" ? onError : null;
 
@@ -145,23 +138,23 @@ export const subscribeUserQuizInvitations = (userId, callback, onError) => {
     return () => {};
   }
 
-  const userInvitationsRef = ref(database, `users/${userId}/quizInvitations`);
+  const userSessionsRef = ref(database, `users/${userId}/quizSessions`);
   return onValue(
-    userInvitationsRef,
+    userSessionsRef,
     (snapshot) => {
-      const invitationsRaw = snapshot.val() || {};
-      const invitations = Object.entries(invitationsRaw)
-        .map(([id, data]) => normalizeInvitationSummary(id, data))
+      const sessionsRaw = snapshot.val() || {};
+      const sessions = Object.entries(sessionsRaw)
+        .map(([id, data]) => normalizeSessionSummary(id, data))
         .sort(
           (a, b) =>
             toTimestamp(b.responseDeadline || b.createdAt) -
             toTimestamp(a.responseDeadline || a.createdAt)
         );
 
-      safeCallback(invitations);
+      safeCallback(sessions);
     },
     (error) => {
-      console.error("Impossible de charger les invitations quiz utilisateur :", error);
+      console.error("Impossible de charger les sessions quiz utilisateur :", error);
       if (safeOnError) {
         safeOnError(error);
         return;
@@ -172,40 +165,40 @@ export const subscribeUserQuizInvitations = (userId, callback, onError) => {
 };
 
 /**
- * Subscribes to a single quiz invitation linked to a user.
+ * Subscribes to a single quiz session linked to a user.
  * @param {string} userId - User id.
- * @param {string} invitationId - Invitation id.
- * @param {Function} callback - Listener receiving invitation summary or null.
+ * @param {string} sessionId - Session id.
+ * @param {Function} callback - Listener receiving session summary or null.
  * @param {Function} [onError] - Optional error callback.
  * @returns {Function} Unsubscribe callback.
  */
-export const subscribeUserQuizInvitation = (userId, invitationId, callback, onError) => {
+export const subscribeUserQuizSession = (userId, sessionId, callback, onError) => {
   const safeCallback = typeof callback === "function" ? callback : () => {};
   const safeOnError = typeof onError === "function" ? onError : null;
   const normalizedUserId = normalizeUserId(userId);
-  const normalizedInvitationId = normalizeUserId(invitationId);
+  const normalizedSessionId = normalizeUserId(sessionId);
 
-  if (!normalizedUserId || !normalizedInvitationId) {
+  if (!normalizedUserId || !normalizedSessionId) {
     safeCallback(null);
     return () => {};
   }
 
-  const invitationRef = ref(
+  const sessionRef = ref(
     database,
-    `users/${normalizedUserId}/quizInvitations/${normalizedInvitationId}`
+    `users/${normalizedUserId}/quizSessions/${normalizedSessionId}`
   );
   return onValue(
-    invitationRef,
+    sessionRef,
     (snapshot) => {
       if (!snapshot.exists()) {
         safeCallback(null);
         return;
       }
 
-      safeCallback(normalizeInvitationSummary(normalizedInvitationId, snapshot.val() || {}));
+      safeCallback(normalizeSessionSummary(normalizedSessionId, snapshot.val() || {}));
     },
     (error) => {
-      console.error("Impossible de charger l'invitation quiz utilisateur :", error);
+      console.error("Impossible de charger la session quiz utilisateur :", error);
       if (safeOnError) {
         safeOnError(error);
         return;

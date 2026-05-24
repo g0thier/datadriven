@@ -1,5 +1,6 @@
 import React from "react";
 import { render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
 import DesignThinkingSummary from "../../../../src/pages/workshops/design-thinking/Summary.jsx";
@@ -7,9 +8,10 @@ import DesignThinkingSummary from "../../../../src/pages/workshops/design-thinki
 describe("DesignThinkingSummary", () => {
   it("renders expected sections in order with sync error", () => {
     render(
-      <DesignThinkingSummary
-        sessionTitle="Session DT"
-        collaboration={{
+      <MemoryRouter>
+        <DesignThinkingSummary
+          sessionTitle="Session DT"
+          collaboration={{
           description: "Défi cadré",
           sharedNotes: [
             { id: "s1", text: "Observation 1" },
@@ -59,8 +61,9 @@ describe("DesignThinkingSummary", () => {
             problems: [{ id: "pf2", text: "Problème clé" }],
             improvements: [{ id: "pf3", text: "Piste d'amélioration" }],
           },
-        }}
-      />
+          }}
+        />
+      </MemoryRouter>
     );
 
     const challengeHeading = screen.getByRole("heading", { name: /sujet de l'atelier/i });

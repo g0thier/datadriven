@@ -5,9 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import Step2 from "../../../../src/pages/workshops/speed-boat/steps/Step2.jsx";
 import Step3 from "../../../../src/pages/workshops/speed-boat/steps/Step3.jsx";
-import Step4 from "../../../../src/pages/workshops/speed-boat/steps/Step4.jsx";
 import Step5 from "../../../../src/pages/workshops/speed-boat/steps/Step5.jsx";
-import Step6 from "../../../../src/pages/workshops/speed-boat/steps/Step6.jsx";
 import Step7 from "../../../../src/pages/workshops/speed-boat/steps/Step7.jsx";
 import Step8 from "../../../../src/pages/workshops/speed-boat/steps/Step8.jsx";
 
@@ -99,14 +97,12 @@ describe("speed-boat steps", () => {
           collaboration={shared}
           session={{ sessionId: "s1" }}
         />
-        <Step4 step={{ label: "S4", description: [] }} sessionTitle="SB" collaboration={shared} />
         <Step5
           step={{ label: "S5", description: [] }}
           sessionTitle="SB"
           collaboration={shared}
           session={{ sessionId: "s1" }}
         />
-        <Step6 step={{ label: "S6", description: [] }} sessionTitle="SB" collaboration={shared} />
         <Step7 step={{ label: "S7", description: [] }} sessionTitle="SB" collaboration={shared} />
         <Step8 step={{ label: "S8", description: [] }} sessionTitle="SB" collaboration={shared} />
       </>

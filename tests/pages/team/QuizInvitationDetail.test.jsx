@@ -12,22 +12,25 @@ const { firebaseMock } = vi.hoisted(() => ({
       authListener = cb;
       return () => {};
     }),
-    subscribeUserQuizInvitation: vi.fn(() => () => {}),
+    subscribeUserQuizSession: vi.fn(() => () => {}),
   },
 }));
 
 vi.mock("../../../src/firebase", () => firebaseMock);
+vi.mock("../../../src/pages/quiz/index.js", () => ({
+  getQuiz: (id) => (id === "theorie-x-y" ? { id, title: "Théorie X-Y" } : null),
+}));
 vi.mock("../../../src/components/Navbar.jsx", () => ({ default: () => <div>NAV</div> }));
 vi.mock("../../../src/components/SectionNavButtons.jsx", () => ({ default: () => <div>SECTIONS</div> }));
 
 import QuizInvitationDetail from "../../../src/pages/team/QuizInvitationDetail.jsx";
 
-function renderPage(route = "/team/motivation/theorie-x-y/inv-1") {
+function renderPage(route = "/team/motivation/theorie-x-y/s1") {
   return render(
     <MemoryRouter initialEntries={[route]}>
       <Routes>
         <Route
-          path="/team/motivation/:quizId/:invitationId"
+          path="/team/motivation/:quizId/:sessionId"
           element={<QuizInvitationDetail />}
         />
       </Routes>
@@ -44,20 +47,19 @@ describe("QuizInvitationDetail page", () => {
     });
 
     await waitFor(() => {
-      expect(firebaseMock.subscribeUserQuizInvitation).toHaveBeenCalledWith(
+      expect(firebaseMock.subscribeUserQuizSession).toHaveBeenCalledWith(
         "u1",
-        "inv-1",
+        "s1",
         expect.any(Function),
         expect.any(Function)
       );
     });
 
-    const onSuccess = firebaseMock.subscribeUserQuizInvitation.mock.calls.at(-1)[2];
+    const onSuccess = firebaseMock.subscribeUserQuizSession.mock.calls.at(-1)[2];
     await act(async () => {
       onSuccess({
-        invitationId: "inv-1",
+        sessionId: "s1",
         quizId: "theorie-x-y",
-        quizTitle: "Théorie X-Y",
         responseDeadline: "2099-01-01T10:00:00.000Z",
         status: "invited",
       });
@@ -68,34 +70,33 @@ describe("QuizInvitationDetail page", () => {
     expect(screen.getByText(/commencer le quiz/i)).toBeInTheDocument();
   });
 
-  it("renders not found state when invitation is missing", async () => {
+  it("renders not found state when session is missing", async () => {
     renderPage();
 
     await act(async () => {
       authListener({ uid: "u1" });
     });
 
-    const onSuccess = firebaseMock.subscribeUserQuizInvitation.mock.calls.at(-1)[2];
+    const onSuccess = firebaseMock.subscribeUserQuizSession.mock.calls.at(-1)[2];
     await act(async () => {
       onSuccess(null);
     });
 
-    expect(screen.getByText(/invitation introuvable/i)).toBeInTheDocument();
+    expect(screen.getByText(/session introuvable/i)).toBeInTheDocument();
   });
 
   it("renders mismatch state when quizId is inconsistent", async () => {
-    renderPage("/team/motivation/theorie-x-y/inv-1");
+    renderPage("/team/motivation/theorie-x-y/s1");
 
     await act(async () => {
       authListener({ uid: "u1" });
     });
 
-    const onSuccess = firebaseMock.subscribeUserQuizInvitation.mock.calls.at(-1)[2];
+    const onSuccess = firebaseMock.subscribeUserQuizSession.mock.calls.at(-1)[2];
     await act(async () => {
       onSuccess({
-        invitationId: "inv-1",
+        sessionId: "s1",
         quizId: "autodetermination",
-        quizTitle: "Autodétermination",
         responseDeadline: "2099-01-01T10:00:00.000Z",
         status: "invited",
       });
@@ -111,11 +112,11 @@ describe("QuizInvitationDetail page", () => {
       authListener({ uid: "u1" });
     });
 
-    const onError = firebaseMock.subscribeUserQuizInvitation.mock.calls.at(-1)[3];
+    const onError = firebaseMock.subscribeUserQuizSession.mock.calls.at(-1)[3];
     await act(async () => {
       onError(new Error("boom"));
     });
 
-    expect(screen.getByText(/impossible de charger l'invitation quiz/i)).toBeInTheDocument();
+    expect(screen.getByText(/impossible de charger la session quiz/i)).toBeInTheDocument();
   });
 });

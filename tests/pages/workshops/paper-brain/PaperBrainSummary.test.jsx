@@ -1,31 +1,34 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import PaperBrainSummary from "../../../../src/pages/workshops/paper-brain/Summary.jsx";
 
 describe("PaperBrainSummary", () => {
   it("renders ranked voted notes and sync error", () => {
     render(
-      <PaperBrainSummary
-        sessionTitle="Session PB"
-        collaboration={{
-          description: "Défi",
-          participant: { id: "p1" },
-          syncError: "Sync issue",
-          notes: [
-            { id: "n1", text: "Idea 1", createdAt: "1" },
-            { id: "n2", text: "Idea 2", createdAt: "2" },
-          ],
-          commentsByNote: {
-            n1: [{ id: "c1", text: "Comment" }],
-            n2: [],
-          },
-          votesByNote: {
-            n1: new Set(["p1", "p2"]),
-            n2: new Set(["p3"]),
-          },
-        }}
-      />
+      <MemoryRouter>
+        <PaperBrainSummary
+          sessionTitle="Session PB"
+          collaboration={{
+            description: "Défi",
+            participant: { id: "p1" },
+            syncError: "Sync issue",
+            notes: [
+              { id: "n1", text: "Idea 1", createdAt: "1" },
+              { id: "n2", text: "Idea 2", createdAt: "2" },
+            ],
+            commentsByNote: {
+              n1: [{ id: "c1", text: "Comment" }],
+              n2: [],
+            },
+            votesByNote: {
+              n1: new Set(["p1", "p2"]),
+              n2: new Set(["p3"]),
+            },
+          }}
+        />
+      </MemoryRouter>
     );
 
     expect(screen.getByText("Session PB")).toBeInTheDocument();

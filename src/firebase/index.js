@@ -16,4 +16,4 @@ export * from "./team/members.service";
 export * from "./management/management.service";
 export * from "./workshops/workshop-sessions.service";
 export * from "./workshops/workshop-voice.service";
-export * from "./quiz/quiz-invitations.service";
+export * from "./quiz/quiz-sessions.service";

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { auth, createQuizInvitation } from "../firebase";
+import { auth, createQuizSession } from "../firebase";
 import { QUIZZES, getQuiz } from "../pages/quiz/index.js";
 
 import useCompanyTeam from "./useCompanyTeam";
@@ -289,11 +289,8 @@ function useQuizInvitation() {
 
       const quizTitle = quiz?.title || quiz?.titre || "Quiz Motivation";
 
-      const { invitationId } = await createQuizInvitation(companyId, {
+      const { sessionId } = await createQuizSession(companyId, {
         quizId,
-        quizTitle,
-        quizDescription: quiz?.description || "",
-        responseDelayDays: resolvedResponseDelayDays,
         responseDeadline: resolvedResponseDeadline,
         inviter: {
           uid: auth.currentUser?.uid || "",
@@ -322,7 +319,7 @@ function useQuizInvitation() {
       });
 
       const quizLink = new URL(
-        `/team/motivation/${encodeURIComponent(quizId)}/${encodeURIComponent(invitationId)}`,
+        `/team/motivation/${encodeURIComponent(quizId)}/${encodeURIComponent(sessionId)}`,
         window.location.origin
       ).toString();
 
@@ -343,7 +340,7 @@ function useQuizInvitation() {
               responseDeadline: resolvedResponseDeadline,
               responseDelayDays: resolvedResponseDelayDays,
               quizLink,
-              invitationId,
+              sessionId,
               quizId,
               sendInviterConfirmation: index === 0,
               invitedCount: recipientsWithEmail.length,

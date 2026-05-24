@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderHook } from "../helpers/renderHook.js";
 
 const navigateMock = vi.fn();
-const createQuizInvitation = vi.fn();
+const createQuizSession = vi.fn();
 const auth = {
   currentUser: {
     uid: "u1",
@@ -20,7 +20,7 @@ vi.mock("react-router-dom", () => ({
 
 vi.mock("../../src/firebase", () => ({
   auth,
-  createQuizInvitation,
+  createQuizSession,
 }));
 
 vi.mock("../../src/hooks/useCompanyTeam", () => ({
@@ -49,7 +49,7 @@ describe("useQuizInvitation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv("VITE_SEND_QUIZ_INVITE_URL", "https://example.com/email");
-    createQuizInvitation.mockResolvedValue({ invitationId: "q1" });
+    createQuizSession.mockResolvedValue({ sessionId: "q1" });
     globalThis.fetch.mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({ success: true }),
@@ -71,7 +71,7 @@ describe("useQuizInvitation", () => {
       await hook.result.handleSendInvites();
     });
 
-    expect(createQuizInvitation).toHaveBeenCalledWith(
+    expect(createQuizSession).toHaveBeenCalledWith(
       "c1",
       expect.objectContaining({ quizId: "theorie-x-y", totalGuestCount: 1 })
     );
