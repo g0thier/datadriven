@@ -1,5 +1,4 @@
 const { onRequest } = require("firebase-functions/v2/https");
-const { defineSecret } = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
 const Stripe = require("stripe");
 
@@ -18,9 +17,6 @@ const {
   upsertStripeEvent,
 } = require("./billingStore");
 
-const STRIPE_SECRET_KEY = defineSecret("STRIPE_SECRET_KEY");
-const STRIPE_WEBHOOK_SECRET = defineSecret("STRIPE_WEBHOOK_SECRET");
-
 const HANDLED_EVENT_TYPES = new Set([
   "checkout.session.completed",
   "customer.subscription.created",
@@ -31,9 +27,7 @@ const HANDLED_EVENT_TYPES = new Set([
 ]);
 
 function getStripeClient() {
-  const secretKey = String(
-      STRIPE_SECRET_KEY.value() || process.env.STRIPE_SECRET_KEY || ""
-  ).trim();
+  const secretKey = process.env.STRIPE_SECRET_KEY?.trim();
 
   if (!secretKey) {
     throw new Error("missing_stripe_secret");
@@ -43,9 +37,7 @@ function getStripeClient() {
 }
 
 function getWebhookSecret() {
-  const webhookSecret = String(
-      STRIPE_WEBHOOK_SECRET.value() || process.env.STRIPE_WEBHOOK_SECRET || ""
-  ).trim();
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
 
   if (!webhookSecret) {
     throw new Error("missing_stripe_webhook_secret");
@@ -365,9 +357,7 @@ async function handleStripeEvent(event, stripe) {
   }
 }
 
-exports.stripeWebhook = onRequest({
-  secrets: [STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET],
-}, async (req, res) => {
+exports.stripeWebhook = onRequest(async (req, res) => {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "method_not_allowed" });
   }
