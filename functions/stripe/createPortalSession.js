@@ -1,5 +1,4 @@
 const { onRequest } = require("firebase-functions/v2/https");
-const { defineSecret } = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
 const Stripe = require("stripe");
 
@@ -15,12 +14,9 @@ const {
   writeCompanyBilling,
 } = require("./billingStore");
 
-const STRIPE_SECRET_KEY = defineSecret("STRIPE_SECRET_KEY");
-
 function getStripeClient() {
-  const secretKey = String(
-      STRIPE_SECRET_KEY.value() || process.env.STRIPE_SECRET_KEY || ""
-  ).trim();
+  const secretKey = process.env.STRIPE_SECRET_KEY?.trim();
+
   if (!secretKey) {
     throw new Error("missing_stripe_secret");
   }
@@ -28,9 +24,7 @@ function getStripeClient() {
   return new Stripe(secretKey);
 }
 
-exports.createPortalSession = onRequest({
-  secrets: [STRIPE_SECRET_KEY],
-}, async (req, res) => {
+exports.createPortalSession = onRequest(async (req, res) => {
   setCorsHeaders(res);
 
   if (req.method === "OPTIONS") {
