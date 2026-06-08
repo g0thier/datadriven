@@ -29,7 +29,7 @@ function isPricePaid(price) {
 }
 
 exports.createCheckoutSession = onRequest({
-  secrets: [STRIPE_SECRET_KEY],
+  cors: true,
 }, async (req, res) => {
   setCorsHeaders(res);
 
