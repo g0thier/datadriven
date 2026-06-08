@@ -1,12 +1,6 @@
 const { onRequest } = require("firebase-functions/v2/https");
-const { defineSecret } = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
 const nodemailer = require("nodemailer");
-
-const SMTP_USER = defineSecret("SMTP_USER");
-const SMTP_PASS = defineSecret("SMTP_PASS");
-const MAIL_FROM_NAME = defineSecret("MAIL_FROM_NAME");
-const MAIL_FROM_ADDRESS = defineSecret("MAIL_FROM_ADDRESS");
 
 const { buildInviteEmail } = require("./mailTemplate");
 const { buildWorkshopIcs } = require("./calendar");
@@ -29,234 +23,246 @@ function mergeName(firstName, lastName) {
   return merged;
 }
 
-exports.sendWorkshopInvite = onRequest(
-  {
-    secrets: [SMTP_USER, SMTP_PASS, MAIL_FROM_NAME, MAIL_FROM_ADDRESS],
-  },
-  async (req, res) => {
-    try {
-      const smtpUser = SMTP_USER.value();
-      const smtpPass = SMTP_PASS.value();
-      const mailFromName = MAIL_FROM_NAME.value();
-      const mailFromAddress = MAIL_FROM_ADDRESS.value();
+exports.sendWorkshopInvite = onRequest(async (req, res) => {
+  try {
+    const smtpUser = process.env.SMTP_USER?.trim();
+    const smtpPass = process.env.SMTP_PASS?.trim();
+    const mailFromName = process.env.MAIL_FROM_NAME?.trim();
+    const mailFromAddress = process.env.MAIL_FROM_ADDRESS?.trim();
 
-      const mailSenderAddress = smtpUser;
-      const mailReplyTo = mailFromAddress;
+    if (!smtpUser) {
+      throw new Error("missing_smtp_user");
+    }
 
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: smtpUser,
-          pass: smtpPass,
-        },
-      });
+    if (!smtpPass) {
+      throw new Error("missing_smtp_pass");
+    }
 
-      await transporter.verify();
+    if (!mailFromName) {
+      throw new Error("missing_mail_from_name");
+    }
 
-      res.set("Access-Control-Allow-Origin", "*");
-      res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-      res.set("Access-Control-Allow-Headers", "Content-Type");
+    if (!mailFromAddress) {
+      throw new Error("missing_mail_from_address");
+    }
 
-      if (req.method === "OPTIONS") {
-        return res.status(204).send("");
-      }
+    const mailSenderAddress = smtpUser;
+    const mailReplyTo = mailFromAddress;
 
-      if (req.method !== "POST") {
-        return res.status(405).json({ error: "Méthode non autorisée" });
-      }
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+    });
 
-      const {
-        inviteeEmail,
-        inviteeName = "Trucmuche",
-        inviterFirstName = "",
-        inviterLastName = "",
-        inviterEmail = "",
-        workshopTitle = "Paper Brain",
-        workshopDateLabel = "",
-        workshopDuration = "50 minutes",
-        workshopStartIso,
-        workshopSchedule = {},
-        workshopDate = "",
-        workshopTime = "",
-        workshopTimezone = "UTC",
-        workshopLink = "",
-        sendInviterConfirmation = false,
-        invitedCount = 0,
-      } = req.body || {};
+    await transporter.verify();
 
-      if (!inviteeEmail) {
-        return res.status(400).json({ error: "inviteeEmail requis" });
-      }
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.set("Access-Control-Allow-Headers", "Content-Type");
 
-      let normalizedWorkshopStartIso =
-        typeof workshopStartIso === "string" ? workshopStartIso.trim() : "";
-      const scheduleDate = String(workshopSchedule?.date || workshopDate || "").trim();
-      const scheduleTime = String(workshopSchedule?.time || workshopTime || "").trim();
-      const scheduleTimezone = String(
-        workshopSchedule?.timezone || workshopTimezone || "UTC"
-      ).trim();
-      const normalizedWorkshopLink = String(workshopLink || "").trim();
+    if (req.method === "OPTIONS") {
+      return res.status(204).send("");
+    }
 
-      if (!normalizedWorkshopLink) {
-        return res.status(400).json({ error: "workshopLink requis" });
-      }
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Méthode non autorisée" });
+    }
 
-      if (!normalizedWorkshopStartIso && scheduleDate && scheduleTime) {
-        normalizedWorkshopStartIso = toWorkshopStartIso(
-          scheduleDate,
-          scheduleTime,
-          scheduleTimezone
-        );
-      }
+    const {
+      inviteeEmail,
+      inviteeName = "Trucmuche",
+      inviterFirstName = "",
+      inviterLastName = "",
+      inviterEmail = "",
+      workshopTitle = "Paper Brain",
+      workshopDateLabel = "",
+      workshopDuration = "50 minutes",
+      workshopStartIso,
+      workshopSchedule = {},
+      workshopDate = "",
+      workshopTime = "",
+      workshopTimezone = "UTC",
+      workshopLink = "",
+      sendInviterConfirmation = false,
+      invitedCount = 0,
+    } = req.body || {};
 
-      if (!normalizedWorkshopStartIso) {
-        return res.status(400).json({ error: "workshopStartIso requis" });
-      }
+    if (!inviteeEmail) {
+      return res.status(400).json({ error: "inviteeEmail requis" });
+    }
 
-      const startDate = new Date(normalizedWorkshopStartIso);
-      if (Number.isNaN(startDate.getTime())) {
-        return res.status(400).json({ error: "workshopStartIso invalide" });
-      }
+    let normalizedWorkshopStartIso =
+      typeof workshopStartIso === "string" ? workshopStartIso.trim() : "";
+    const scheduleDate = String(workshopSchedule?.date || workshopDate || "").trim();
+    const scheduleTime = String(workshopSchedule?.time || workshopTime || "").trim();
+    const scheduleTimezone = String(
+      workshopSchedule?.timezone || workshopTimezone || "UTC"
+    ).trim();
+    const normalizedWorkshopLink = String(workshopLink || "").trim();
 
-      const durationMinutes = parseDurationToMinutes(workshopDuration);
-      const endDate = new Date(startDate.getTime() + durationMinutes * 60 * 1000);
-      const resolvedInviterName =
-        mergeName(inviterFirstName, inviterLastName) || "Organisateur";
+    if (!normalizedWorkshopLink) {
+      return res.status(400).json({ error: "workshopLink requis" });
+    }
 
-      const title = `Atelier : ${workshopTitle}`;
-      const description =
-        `Invitation de ${resolvedInviterName} pour participer à l’atelier ${workshopTitle}.`;
-      const workshopOrganizerName = resolvedInviterName || mailFromName;
-      const workshopOrganizerEmail = inviterEmail || mailFromAddress;
-      const resolvedWorkshopDateLabel =
-        workshopDateLabel ||
-        (scheduleDate && scheduleTime
-          ? `${scheduleDate} à ${scheduleTime}`
-          : normalizedWorkshopStartIso);
+    if (!normalizedWorkshopStartIso && scheduleDate && scheduleTime) {
+      normalizedWorkshopStartIso = toWorkshopStartIso(
+        scheduleDate,
+        scheduleTime,
+        scheduleTimezone
+      );
+    }
 
-      const icsContent = buildWorkshopIcs({
-        uid: `${Date.now()}-${inviteeEmail}@zzzbre.com`,
-        title,
-        description,
-        startDate,
-        endDate,
-        url: normalizedWorkshopLink,
-        organizerName: workshopOrganizerName,
-        organizerEmail: workshopOrganizerEmail,
-      });
+    if (!normalizedWorkshopStartIso) {
+      return res.status(400).json({ error: "workshopStartIso requis" });
+    }
 
-      const html = buildInviteEmail({
-        inviteeName,
-        inviterFirstName,
-        inviterLastName,
-        workshopTitle,
-        workshopDate: resolvedWorkshopDateLabel,
-        workshopDuration: `${durationMinutes} minutes`,
-        workshopLink: normalizedWorkshopLink,
-      });
+    const startDate = new Date(normalizedWorkshopStartIso);
+    if (Number.isNaN(startDate.getTime())) {
+      return res.status(400).json({ error: "workshopStartIso invalide" });
+    }
 
-      const info = await transporter.sendMail({
-        from: `${mailFromName} <${mailFromAddress}>`,
-        sender: mailSenderAddress,
-        replyTo: mailReplyTo,
-        to: inviteeEmail,
-        subject: `Invitation à l’atelier ${workshopTitle}`,
-        html,
-        text: [
-          `Bonjour ${inviteeName},`,
-          ``,
-          `Vous avez reçu une invitation de ${resolvedInviterName}.`,
-          `Atelier : ${workshopTitle}`,
-          `Date : ${resolvedWorkshopDateLabel}`,
-          `Durée : ${durationMinutes} minutes`,
-          `Lien atelier : ${normalizedWorkshopLink}`,
-        ].join("\n"),
-        /*
+    const durationMinutes = parseDurationToMinutes(workshopDuration);
+    const endDate = new Date(startDate.getTime() + durationMinutes * 60 * 1000);
+    const resolvedInviterName =
+      mergeName(inviterFirstName, inviterLastName) || "Organisateur";
+
+    const title = `Atelier : ${workshopTitle}`;
+    const description =
+      `Invitation de ${resolvedInviterName} pour participer à l’atelier ${workshopTitle}.`;
+    const workshopOrganizerName = resolvedInviterName || mailFromName;
+    const workshopOrganizerEmail = inviterEmail || mailFromAddress;
+    const resolvedWorkshopDateLabel =
+      workshopDateLabel ||
+      (scheduleDate && scheduleTime
+        ? `${scheduleDate} à ${scheduleTime}`
+        : normalizedWorkshopStartIso);
+
+    const icsContent = buildWorkshopIcs({
+      uid: `${Date.now()}-${inviteeEmail}@zzzbre.com`,
+      title,
+      description,
+      startDate,
+      endDate,
+      url: normalizedWorkshopLink,
+      organizerName: workshopOrganizerName,
+      organizerEmail: workshopOrganizerEmail,
+    });
+
+    const html = buildInviteEmail({
+      inviteeName,
+      inviterFirstName,
+      inviterLastName,
+      workshopTitle,
+      workshopDate: resolvedWorkshopDateLabel,
+      workshopDuration: `${durationMinutes} minutes`,
+      workshopLink: normalizedWorkshopLink,
+    });
+
+    const info = await transporter.sendMail({
+      from: `${mailFromName} <${mailFromAddress}>`,
+      sender: mailSenderAddress,
+      replyTo: mailReplyTo,
+      to: inviteeEmail,
+      subject: `Invitation à l’atelier ${workshopTitle}`,
+      html,
+      text: [
+        `Bonjour ${inviteeName},`,
+        ``,
+        `Vous avez reçu une invitation de ${resolvedInviterName}.`,
+        `Atelier : ${workshopTitle}`,
+        `Date : ${resolvedWorkshopDateLabel}`,
+        `Durée : ${durationMinutes} minutes`,
+        `Lien atelier : ${normalizedWorkshopLink}`,
+      ].join("\n"),
+      /*
         icalEvent: {
           filename: "workshop-invitation.ics",
           method: "REQUEST",
           content: icsContent,
         },*/
-        alternatives: [
-          {
-            contentType: "text/calendar; method=REQUEST; charset=UTF-8",
-            content: icsContent,
-            headers: {
-              "Content-Class": "urn:content-classes:calendarmessage",
-            },
+      alternatives: [
+        {
+          contentType: "text/calendar; method=REQUEST; charset=UTF-8",
+          content: icsContent,
+          headers: {
+            "Content-Class": "urn:content-classes:calendarmessage",
           },
-        ],
-      });
+        },
+      ],
+    });
 
-      logger.info("mail envoyé", {
-        messageId: info.messageId,
-        inviteeEmail,
-      });
+    logger.info("mail envoyé", {
+      messageId: info.messageId,
+      inviteeEmail,
+    });
 
-      let inviterConfirmationMessageId = null;
-      if (sendInviterConfirmation) {
-        if (!inviterEmail) {
-          logger.warn("mail expéditeur non envoyé: inviterEmail manquant", {
-            inviteeEmail,
-          });
-        } else {
-          const inviterHtml = buildInviteEmail({
-            inviteeName,
-            inviterFirstName,
-            inviterLastName,
-            workshopTitle,
-            workshopDate: resolvedWorkshopDateLabel,
-            workshopDuration: `${durationMinutes} minutes`,
-            workshopLink: normalizedWorkshopLink,
-            emailVariant: "inviterConfirmation",
-            invitedCount,
-          });
+    let inviterConfirmationMessageId = null;
+    if (sendInviterConfirmation) {
+      if (!inviterEmail) {
+        logger.warn("mail expéditeur non envoyé: inviterEmail manquant", {
+          inviteeEmail,
+        });
+      } else {
+        const inviterHtml = buildInviteEmail({
+          inviteeName,
+          inviterFirstName,
+          inviterLastName,
+          workshopTitle,
+          workshopDate: resolvedWorkshopDateLabel,
+          workshopDuration: `${durationMinutes} minutes`,
+          workshopLink: normalizedWorkshopLink,
+          emailVariant: "inviterConfirmation",
+          invitedCount,
+        });
 
-          const inviterInfo = await transporter.sendMail({
-            from: `${mailFromName} <${mailFromAddress}>`,
-            sender: mailSenderAddress,
-            replyTo: mailReplyTo,
-            to: inviterEmail,
-            subject: `Invitation créée : atelier ${workshopTitle}`,
-            html: inviterHtml,
-            text: [
-              `Bonjour ${inviterFirstName},`,
-              ``,
-              `Vous avez créé une invitation pour ${invitedCount} personne(s).`,
-              `Atelier : ${workshopTitle}`,
-              `Date : ${resolvedWorkshopDateLabel}`,
-              `Durée : ${durationMinutes} minutes`,
-              `Lien atelier : ${normalizedWorkshopLink}`,
-            ].join("\n"),
-            alternatives: [
-              {
-                contentType: "text/calendar; method=REQUEST; charset=UTF-8",
-                content: icsContent,
-                headers: {
-                  "Content-Class": "urn:content-classes:calendarmessage",
-                },
+        const inviterInfo = await transporter.sendMail({
+          from: `${mailFromName} <${mailFromAddress}>`,
+          sender: mailSenderAddress,
+          replyTo: mailReplyTo,
+          to: inviterEmail,
+          subject: `Invitation créée : atelier ${workshopTitle}`,
+          html: inviterHtml,
+          text: [
+            `Bonjour ${inviterFirstName},`,
+            ``,
+            `Vous avez créé une invitation pour ${invitedCount} personne(s).`,
+            `Atelier : ${workshopTitle}`,
+            `Date : ${resolvedWorkshopDateLabel}`,
+            `Durée : ${durationMinutes} minutes`,
+            `Lien atelier : ${normalizedWorkshopLink}`,
+          ].join("\n"),
+          alternatives: [
+            {
+              contentType: "text/calendar; method=REQUEST; charset=UTF-8",
+              content: icsContent,
+              headers: {
+                "Content-Class": "urn:content-classes:calendarmessage",
               },
-            ],
-          });
+            },
+          ],
+        });
 
-          inviterConfirmationMessageId = inviterInfo.messageId;
-          logger.info("mail expéditeur envoyé", {
-            messageId: inviterInfo.messageId,
-            inviterEmail,
-          });
-        }
+        inviterConfirmationMessageId = inviterInfo.messageId;
+        logger.info("mail expéditeur envoyé", {
+          messageId: inviterInfo.messageId,
+          inviterEmail,
+        });
       }
-
-      return res.json({
-        success: true,
-        messageId: info.messageId,
-        inviterConfirmationMessageId,
-      });
-    } catch (error) {
-      logger.error("erreur envoi mail", error);
-      return res.status(500).json({
-        error: "erreur envoi mail",
-        details: error.message,
-      });
     }
+
+    return res.json({
+      success: true,
+      messageId: info.messageId,
+      inviterConfirmationMessageId,
+    });
+  } catch (error) {
+    logger.error("erreur envoi mail", error);
+    return res.status(500).json({
+      error: "erreur envoi mail",
+      details: error.message,
+    });
+  }
 });
